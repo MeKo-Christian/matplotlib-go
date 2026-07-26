@@ -142,6 +142,118 @@ func TestComparePNG_PSNRIsDerivedFromRMSE(t *testing.T) {
 	}
 }
 
+// TestComparePNG_ResidualShape pins the localization metrics added in Phase
+// 3.2: how many pixels differ, how many 8-connected clusters they form, and how
+// large the biggest one is.
+func TestComparePNG_ResidualShape(t *testing.T) {
+	tests := []struct {
+		name           string
+		paint          func(img *image.RGBA)
+		diffPixels     int
+		clusters       int
+		largestCluster int
+	}{
+		{
+			name:  "identical images have no residual",
+			paint: func(*image.RGBA) {},
+		},
+		{
+			name:           "one pixel is one cluster",
+			paint:          func(img *image.RGBA) { img.Set(5, 5, color.RGBA{R: 200, A: 255}) },
+			diffPixels:     1,
+			clusters:       1,
+			largestCluster: 1,
+		},
+		{
+			name: "diagonal neighbours join under 8-connectivity",
+			paint: func(img *image.RGBA) {
+				img.Set(2, 2, color.RGBA{R: 200, A: 255})
+				img.Set(3, 3, color.RGBA{R: 200, A: 255})
+			},
+			diffPixels:     2,
+			clusters:       1,
+			largestCluster: 2,
+		},
+		{
+			name: "separated pixels stay separate clusters",
+			paint: func(img *image.RGBA) {
+				img.Set(1, 1, color.RGBA{R: 200, A: 255})
+				img.Set(8, 8, color.RGBA{R: 200, A: 255})
+				img.Set(1, 8, color.RGBA{R: 200, A: 255})
+			},
+			diffPixels:     3,
+			clusters:       3,
+			largestCluster: 1,
+		},
+		{
+			name: "largest cluster wins over the pixel count",
+			paint: func(img *image.RGBA) {
+				for y := 4; y < 8; y++ {
+					for x := 4; x < 7; x++ {
+						img.Set(x, y, color.RGBA{R: 200, A: 255})
+					}
+				}
+				img.Set(0, 0, color.RGBA{R: 200, A: 255})
+			},
+			diffPixels:     13,
+			clusters:       2,
+			largestCluster: 12,
+		},
+		{
+			name:  "differences within tolerance are not counted",
+			paint: func(img *image.RGBA) { img.Set(5, 5, color.RGBA{R: 1, A: 255}) },
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			img1 := createSolidImage(10, 10, color.RGBA{A: 255})
+			img2 := createSolidImage(10, 10, color.RGBA{A: 255})
+			tc.paint(img2)
+
+			result, err := ComparePNG(img1, img2, 1)
+			if err != nil {
+				t.Fatalf("ComparePNG failed: %v", err)
+			}
+			if result.DiffPixels != tc.diffPixels {
+				t.Errorf("DiffPixels = %d, want %d", result.DiffPixels, tc.diffPixels)
+			}
+			if result.Clusters != tc.clusters {
+				t.Errorf("Clusters = %d, want %d", result.Clusters, tc.clusters)
+			}
+			if result.LargestCluster != tc.largestCluster {
+				t.Errorf("LargestCluster = %d, want %d", result.LargestCluster, tc.largestCluster)
+			}
+		})
+	}
+}
+
+// TestComparePNG_ShapeSeesWhatRMSECannot is the reason Phase 3.2 exists: a
+// small, dense, maximum-amplitude residual — a glyph in the wrong place —
+// disappears into a whole-image average but is obvious as one cluster.
+func TestComparePNG_ShapeSeesWhatRMSECannot(t *testing.T) {
+	img1 := createSolidImage(640, 360, color.RGBA{R: 255, G: 255, B: 255, A: 255})
+	img2 := createSolidImage(640, 360, color.RGBA{R: 255, G: 255, B: 255, A: 255})
+	for y := 100; y < 106; y++ {
+		for x := 200; x < 206; x++ {
+			img2.Set(x, y, color.RGBA{A: 255})
+		}
+	}
+
+	result, err := ComparePNG(img1, img2, 1)
+	if err != nil {
+		t.Fatalf("ComparePNG failed: %v", err)
+	}
+	// 2.8 is basic_line's real MaxRMSE, and 36 black pixels on a 640x360 frame
+	// slip under it just as its misplaced tick label does.
+	if result.RMSE > 2.8 {
+		t.Fatalf("RMSE = %v, expected the misplaced block to hide under basic_line's bound", result.RMSE)
+	}
+	if result.LargestCluster != 36 || result.Clusters != 1 {
+		t.Errorf("Clusters = %d, LargestCluster = %d, want 1 and 36", result.Clusters, result.LargestCluster)
+	}
+}
+
 func TestComparePNG_GradientImages(t *testing.T) {
 	// Create gradient images to test PSNR calculation
 	img1 := createGradientImage(100, 100)

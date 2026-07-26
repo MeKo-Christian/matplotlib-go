@@ -375,8 +375,9 @@ func runReferenceCompareTest(t *testing.T, c *examplecatalog.Case) {
 		t.Fatalf("save diff image %s: %v", diffPath, err)
 	}
 
-	t.Logf("%s: MaxDiff=%d MeanAbs=%.2f RMSE=%.2f PSNR=%.2fdB",
-		c.ID, diff.MaxDiff, diff.MeanAbs, diff.RMSE, diff.PSNR)
+	t.Logf("%s: MaxDiff=%d MeanAbs=%.2f RMSE=%.2f PSNR=%.2fdB DiffPixels=%d Clusters=%d LargestCluster=%d",
+		c.ID, diff.MaxDiff, diff.MeanAbs, diff.RMSE, diff.PSNR,
+		diff.DiffPixels, diff.Clusters, diff.LargestCluster)
 
 	maxMeanAbs := referenceCompareMaxMeanAbs
 	if c.MaxMeanAbs > 0 {
@@ -385,6 +386,18 @@ func runReferenceCompareTest(t *testing.T, c *examplecatalog.Case) {
 	if diff.MeanAbs > maxMeanAbs || (c.MaxRMSE > 0 && diff.RMSE > c.MaxRMSE) {
 		t.Fatalf("reference mismatch for %s: MeanAbs=%.2f (max %.2f), RMSE=%.2f (max %.2f)",
 			c.ID, diff.MeanAbs, maxMeanAbs, diff.RMSE, c.MaxRMSE)
+	}
+
+	// Residual-shape gate. The amplitude gates above are whole-image averages
+	// and cannot see a small, dense, high-amplitude residual — a glyph drawn in
+	// the wrong place. These bounds can.
+	if c.MaxDiffPixels > 0 && diff.DiffPixels > c.MaxDiffPixels {
+		t.Fatalf("reference residual spread for %s: %d differing pixels (max %d), largest cluster %d (diff: %s)",
+			c.ID, diff.DiffPixels, c.MaxDiffPixels, diff.LargestCluster, diffPath)
+	}
+	if c.MaxLargestCluster > 0 && diff.LargestCluster > c.MaxLargestCluster {
+		t.Fatalf("reference residual cluster for %s: largest cluster %d px (max %d) across %d differing pixels (diff: %s)",
+			c.ID, diff.LargestCluster, c.MaxLargestCluster, diff.DiffPixels, diffPath)
 	}
 }
 

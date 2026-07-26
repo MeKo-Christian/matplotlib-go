@@ -20,12 +20,27 @@ import (
 // from separate accumulators and looked independent, but only because the PSNR
 // accumulator squared its differences in uint8 arithmetic and wrapped mod 256
 // for every difference above 15.
+//
+// DiffPixels, Clusters and LargestCluster describe the *shape* of the residual
+// rather than its amplitude, which is what MeanAbs, RMSE and PSNR — all
+// whole-image averages — structurally cannot do. A wholly misplaced glyph is a
+// few hundred pixels at near-maximum amplitude; averaged over a 640x360 frame
+// it disappears into a small RMSE, but it is unmistakable as one dense cluster.
+// See docs/plans/phase3-tolerance-audit.md.
 type DiffResult struct {
 	MaxDiff   uint8   // Maximum per-channel difference found
 	MeanAbs   float64 // Mean absolute difference across all channels
 	RMSE      float64 // Root-mean-square error across all channels
 	PSNR      float64 // Peak Signal-to-Noise Ratio in dB, = 20*log10(255/RMSE)
 	Identical bool    // True if images are pixel-perfect identical
+
+	// DiffPixels counts pixels whose largest per-channel difference exceeds
+	// tolerance — the same population SaveDiffImage highlights.
+	DiffPixels int
+	// Clusters counts the 8-connected components those pixels form.
+	Clusters int
+	// LargestCluster is the pixel count of the biggest such component.
+	LargestCluster int
 }
 
 // ComparePNG compares two images and returns difference metrics.
@@ -46,6 +61,12 @@ func ComparePNG(got, want image.Image, tolerance uint8) (DiffResult, error) {
 	var numPixels int64
 	var sumSquaredError float64
 	identical := true
+
+	width := gotBounds.Dx()
+	height := gotBounds.Dy()
+	// Mask of pixels exceeding tolerance, used below to measure residual shape.
+	mask := make([]bool, width*height)
+	var diffPixels int
 
 	// Iterate through all pixels
 	for y := gotBounds.Min.Y; y < gotBounds.Max.Y; y++ {
@@ -79,9 +100,13 @@ func ComparePNG(got, want image.Image, tolerance uint8) (DiffResult, error) {
 			// Check if pixel exceeds tolerance
 			if channelMax > tolerance {
 				identical = false
+				mask[(y-gotBounds.Min.Y)*width+(x-gotBounds.Min.X)] = true
+				diffPixels++
 			}
 		}
 	}
+
+	clusters, largestCluster := clusterStats(mask, width, height)
 
 	// Calculate metrics
 	meanAbs := sumDiff / float64(numPixels)
@@ -98,12 +123,71 @@ func ComparePNG(got, want image.Image, tolerance uint8) (DiffResult, error) {
 	}
 
 	return DiffResult{
-		MaxDiff:   maxDiff,
-		MeanAbs:   meanAbs,
-		RMSE:      rmse,
-		PSNR:      psnr,
-		Identical: identical && maxDiff <= tolerance,
+		MaxDiff:        maxDiff,
+		MeanAbs:        meanAbs,
+		RMSE:           rmse,
+		PSNR:           psnr,
+		Identical:      identical && maxDiff <= tolerance,
+		DiffPixels:     diffPixels,
+		Clusters:       clusters,
+		LargestCluster: largestCluster,
 	}, nil
+}
+
+// clusterStats labels the 8-connected components of mask and returns their
+// count along with the size of the largest one. Connectivity matches the
+// 3x3 structuring element the audit generator uses
+// (docs/plans/generate_phase3_tolerance_audit.py), so the two agree per case.
+func clusterStats(mask []bool, width, height int) (clusters, largest int) {
+	if width <= 0 || height <= 0 {
+		return 0, 0
+	}
+
+	visited := make([]bool, len(mask))
+	stack := make([]int, 0, 64)
+
+	for start := range mask {
+		if !mask[start] || visited[start] {
+			continue
+		}
+		clusters++
+		visited[start] = true
+		stack = append(stack[:0], start)
+		size := 0
+
+		for len(stack) > 0 {
+			cur := stack[len(stack)-1]
+			stack = stack[:len(stack)-1]
+			size++
+			x := cur % width
+			y := cur / width
+
+			for dy := -1; dy <= 1; dy++ {
+				ny := y + dy
+				if ny < 0 || ny >= height {
+					continue
+				}
+				for dx := -1; dx <= 1; dx++ {
+					nx := x + dx
+					if nx < 0 || nx >= width || (dx == 0 && dy == 0) {
+						continue
+					}
+					next := ny*width + nx
+					if !mask[next] || visited[next] {
+						continue
+					}
+					visited[next] = true
+					stack = append(stack, next)
+				}
+			}
+		}
+
+		if size > largest {
+			largest = size
+		}
+	}
+
+	return clusters, largest
 }
 
 // LoadPNG loads a PNG image from the given file path.

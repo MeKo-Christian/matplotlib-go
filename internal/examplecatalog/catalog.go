@@ -64,6 +64,20 @@ type Case struct {
 	// Neither metric localizes a residual — see docs/plans/phase3-tolerance-audit.md.
 	MaxMeanAbs float64
 	MaxRMSE    float64
+
+	// MaxDiffPixels / MaxLargestCluster bound the *shape* of the residual that
+	// MaxMeanAbs and MaxRMSE, being whole-image averages, cannot express: how
+	// many pixels differ at all, and how big the largest 8-connected clump of
+	// them is. Zero means "unbounded" (the amplitude gates still apply).
+	//
+	// This is the gate that catches a wholly misplaced glyph. basic_line's
+	// residual is one y tick label drawn a pixel low — 139 pixels at
+	// per-channel difference up to 249 — which still scores RMSE 2.49 against
+	// a 2.8 allowance, because 139 pixels out of 230,400 cannot move an
+	// average. A cluster ceiling sees it immediately. Added in Phase 3.2;
+	// Phase 3.6 ratchets the remaining cases.
+	MaxDiffPixels     int
+	MaxLargestCluster int
 }
 
 const (
@@ -73,14 +87,14 @@ const (
 )
 
 var cases = []Case{
-	{ID: "basic_line", Topic: "lines", Title: "Basic Line", Description: "A minimal line plot with explicit limits, labels, and one Line2D artist.", Showcase: true, GoBasicSmokeFamily: "line", SkiaParityFamily: "line", MaxRMSE: 2.8},
-	{ID: "basic_line_labels", Topic: "lines", Title: "Basic Line Labels", Description: "A minimal line plot with x and y axis labels for label layout parity checks.", Showcase: true, GoBasicSmokeFamily: "line", SkiaParityFamily: "line", MaxRMSE: 2.8},
+	{ID: "basic_line", Topic: "lines", Title: "Basic Line", Description: "A minimal line plot with explicit limits, labels, and one Line2D artist.", Showcase: true, GoBasicSmokeFamily: "line", SkiaParityFamily: "line", MaxRMSE: 2.8, MaxDiffPixels: 180, MaxLargestCluster: 92},
+	{ID: "basic_line_labels", Topic: "lines", Title: "Basic Line Labels", Description: "A minimal line plot with x and y axis labels for label layout parity checks.", Showcase: true, GoBasicSmokeFamily: "line", SkiaParityFamily: "line", MaxRMSE: 2.8, MaxDiffPixels: 180, MaxLargestCluster: 92},
 	{ID: "joins_caps", Topic: "lines", Title: "Line Joins and Caps", MaxRMSE: 0.3},
 	{ID: "dashes", Topic: "lines", Title: "Dash Patterns", Description: "Multiple line styles showing dash arrays, cap styles, and legend labeling.", Showcase: true, MaxRMSE: 1.6},
 	{ID: "lines_markers_gallery", Topic: "lines", Title: "Line and Marker Style Gallery", Description: "A combined gallery of dash arrays, line joins and caps, a built-in marker grid with open-fill markers, and a multi-series legend.", WebDemoID: "lines", Showcase: true, Width: 840, Height: 620, MaxMeanAbs: 1.0, MaxRMSE: 2.8},
-	{ID: "line2d_semantics", Topic: "lines", Title: "Line2D Semantics", FixtureOnly: true, MaxRMSE: 2.6},
+	{ID: "line2d_semantics", Topic: "lines", Title: "Line2D Semantics", FixtureOnly: true, MaxRMSE: 2.6, MaxDiffPixels: 380, MaxLargestCluster: 23},
 	// MaxRMSE 3.3: MeanAbs 0.14 / PSNR ~52 dB; residual is sub-pixel marker-edge antialiasing under the 3.10.9 reference set.
-	{ID: "line2d_markers", Topic: "lines", Title: "Line2D Markers", FixtureOnly: true, SkiaParityFamily: "markers", MaxRMSE: 3.3},
+	{ID: "line2d_markers", Topic: "lines", Title: "Line2D Markers", FixtureOnly: true, SkiaParityFamily: "markers", MaxRMSE: 3.3, MaxDiffPixels: 4300, MaxLargestCluster: 2600},
 	{ID: "path_effects", Topic: "effects", Title: "Path Effects", FixtureOnly: true, MaxRMSE: 0.3, SkiaParityFamily: "effects"},
 	{ID: "pattern_gradient_effects", Topic: "effects", Title: "Pattern and Gradient Effects", FixtureOnly: true, MaxMeanAbs: 1.0, MaxRMSE: 1.608, SkiaParityFamily: "effects"},
 	// PSNR ~64 dB / MeanAbs ~0.01 / RMSE ~0.5: the sketch wiggle is RNG-, phase-
@@ -117,8 +131,8 @@ var cases = []Case{
 	{ID: "multi_series_basic", Topic: "multi", Title: "Multiple Series", Description: "Several labeled lines sharing one axes, demonstrating color cycling and legends.", Showcase: true, SkiaParityFamily: "line", MaxRMSE: 0.8},
 	{ID: "multi_series_color_cycle", Topic: "multi", Title: "Color Cycle", MaxRMSE: 0.6},
 	// MaxRMSE 3.3: MeanAbs 0.12 / PSNR ~54 dB; residual is sub-pixel text/handle edge antialiasing under the 3.10.9 reference set.
-	{ID: "legend_layout_matrix", Topic: "legend", Title: "Legend Layout Matrix", FixtureOnly: true, MaxRMSE: 3.3},
-	{ID: "text_annotation_matrix", Topic: "annotation", Title: "Text Annotation Matrix", FixtureOnly: true, MaxRMSE: 4.2},
+	{ID: "legend_layout_matrix", Topic: "legend", Title: "Legend Layout Matrix", FixtureOnly: true, MaxRMSE: 3.3, MaxDiffPixels: 3300, MaxLargestCluster: 2900},
+	{ID: "text_annotation_matrix", Topic: "annotation", Title: "Text Annotation Matrix", FixtureOnly: true, MaxRMSE: 4.2, MaxDiffPixels: 2800, MaxLargestCluster: 380},
 	{ID: "hist_basic", Topic: "histogram", Title: "Histogram Counts", Description: "A deterministic histogram with count bins, labels, and default bar styling.", Showcase: true, SVGGoldenFamily: "hist", GoBasicSmokeFamily: "histogram", SkiaParityFamily: "histogram", MaxRMSE: 1.1},
 	{ID: "hist_log", Topic: "histogram", Title: "Logarithmic Histogram", Description: "A count histogram on a logarithmic y axis, matching matplotlib hist(log=True).", Showcase: true, MaxRMSE: 1.1},
 	{ID: "hist_density", Topic: "histogram", Title: "Histogram Density", MaxRMSE: 1.3},
@@ -133,28 +147,28 @@ var cases = []Case{
 	{ID: "axes_secondary_y_twiny", Topic: "axes", Title: "Twin and Secondary Y Axes", Description: "Focused visual coverage for TwinY shared-y overlays and transformed SecondaryYAxis ticks.", FixtureOnly: true, Width: 760, Height: 400, MaxMeanAbs: 0.05, MaxRMSE: 0.8},
 	{ID: "text_labels_strict", Topic: "text", Title: "Strict Text Labels", Optional: true, SVGGoldenFamily: "text_layout", GoBasicSmokeFamily: "text", SkiaParityFamily: "text", MaxRMSE: 0.3},
 	{ID: "title_strict", Topic: "text", Title: "Strict Title", MaxRMSE: 0.3},
-	{ID: "mathtext_basic", Topic: "mathtext", Title: "MathText Basic", FixtureOnly: true, SVGGoldenFamily: "mathtext", GoBasicSmokeFamily: "mathtext", SkiaParityFamily: "mathtext", MaxRMSE: 2.8},
-	{ID: "mathtext_fractions", Topic: "mathtext", Title: "MathText Fractions", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 4.5},
+	{ID: "mathtext_basic", Topic: "mathtext", Title: "MathText Basic", FixtureOnly: true, SVGGoldenFamily: "mathtext", GoBasicSmokeFamily: "mathtext", SkiaParityFamily: "mathtext", MaxRMSE: 2.8, MaxDiffPixels: 300, MaxLargestCluster: 80},
+	{ID: "mathtext_fractions", Topic: "mathtext", Title: "MathText Fractions", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 4.5, MaxDiffPixels: 110, MaxLargestCluster: 45},
 	{ID: "mathtext_integrals", Topic: "mathtext", Title: "MathText Operators", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 0.3},
 	{ID: "mathtext_matrices", Topic: "mathtext", Title: "MathText Matrices", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 0.5},
 	{ID: "mathtext_inline_labels", Topic: "mathtext", Title: "MathText Inline Labels", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 1.608},
-	{ID: "mathtext_accents", Topic: "mathtext", Title: "MathText Accents", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 1.608},
-	{ID: "mathtext_gallery", Topic: "mathtext", Title: "MathText Gallery", Description: "Fractions, roots, operators, fences, matrices, and inline MathText labels in one browsable figure.", Showcase: true, Width: 900, Height: 560, MaxRMSE: 2.6},
+	{ID: "mathtext_accents", Topic: "mathtext", Title: "MathText Accents", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 1.608, MaxDiffPixels: 10, MaxLargestCluster: 5},
+	{ID: "mathtext_gallery", Topic: "mathtext", Title: "MathText Gallery", Description: "Fractions, roots, operators, fences, matrices, and inline MathText labels in one browsable figure.", Showcase: true, Width: 900, Height: 560, MaxRMSE: 2.6, MaxDiffPixels: 210, MaxLargestCluster: 110},
 	{ID: "text_layout_gallery", Topic: "text", Title: "Text Layout Gallery", Description: "Alignment, rotation, multiline layout, wrapping, and text bbox styling in one gallery.", Showcase: true, Width: 900, Height: 560, MaxMeanAbs: 1.0, MaxRMSE: 5.0},
 	{ID: "text_bbox_styles", Topic: "text", Title: "Text BBox Styles", Description: "Every FancyBboxPatch boxstyle (square, round, round4, circle, ellipse, sawtooth, roundtooth, arrows) applied behind text via the Matplotlib boxstyle spec bridge.", FixtureOnly: true, Width: 640, Height: 360, MaxRMSE: 1.608},
-	{ID: "image_heatmap", Topic: "image", Title: "Heatmap Image", Description: "A gridded image plot with a colorbar and axis labels for matrix-style data.", WebDemoID: "heatmap", Showcase: true, SVGGoldenFamily: "image", GoBasicSmokeFamily: "image", SkiaParityFamily: "image", MaxRMSE: 1.3},
+	{ID: "image_heatmap", Topic: "image", Title: "Heatmap Image", Description: "A gridded image plot with a colorbar and axis labels for matrix-style data.", WebDemoID: "heatmap", Showcase: true, SVGGoldenFamily: "image", GoBasicSmokeFamily: "image", SkiaParityFamily: "image", MaxRMSE: 1.3, MaxDiffPixels: 340, MaxLargestCluster: 340},
 	{ID: "image_variants_gallery", Topic: "image", Title: "Image Variants Gallery", Description: "Side-by-side interpolation modes, alpha image overlays, MatShow ticks, and spy marker/image modes.", Showcase: true, Width: 1080, Height: 720, MaxRMSE: 2.7},
-	{ID: "imshow_clipped", Topic: "image", Title: "Clipped Imshow", FixtureOnly: true, MaxRMSE: 3.6},
+	{ID: "imshow_clipped", Topic: "image", Title: "Clipped Imshow", FixtureOnly: true, MaxRMSE: 3.6, MaxDiffPixels: 2900, MaxLargestCluster: 2900},
 	{ID: "imshow_rgb", Topic: "image", Title: "RGB/RGBA Imshow", FixtureOnly: true, MaxRMSE: 1.608},
 	{ID: "imshow_transformed", Topic: "image", Title: "Transformed Imshow", FixtureOnly: true, Width: 420, Height: 420, MaxRMSE: 2.9},
 	{ID: "imshow_bilinear", Topic: "image", Title: "Bilinear Imshow", FixtureOnly: true, Width: 256, Height: 256, MaxRMSE: 1.2},
 	{ID: "imshow_bicubic", Topic: "image", Title: "Bicubic Imshow", FixtureOnly: true, Width: 256, Height: 256, MaxRMSE: 1.6},
 	{ID: "imshow_interpolation_matrix", Topic: "image", Title: "Imshow Interpolation Matrix", FixtureOnly: true, Width: 800, Height: 480, MaxRMSE: 3.3},
 	{ID: "image_alpha", Topic: "image", Title: "Image Alpha", FixtureOnly: true, MaxRMSE: 0.7},
-	{ID: "matshow_basic", Topic: "image", Title: "Matshow", FixtureOnly: true, MaxRMSE: 1.608},
+	{ID: "matshow_basic", Topic: "image", Title: "Matshow", FixtureOnly: true, MaxRMSE: 1.608, MaxDiffPixels: 25, MaxLargestCluster: 25},
 	{ID: "spy_marker", Topic: "image", Title: "Spy Marker Mode", FixtureOnly: true, MaxRMSE: 0.5},
 	{ID: "spy_image", Topic: "image", Title: "Spy Image Mode", FixtureOnly: true, MaxRMSE: 1.608},
-	{ID: "colormap_diverging", Topic: "colormap", Title: "Diverging Colormap", FixtureOnly: true, MaxRMSE: 1.608},
+	{ID: "colormap_diverging", Topic: "colormap", Title: "Diverging Colormap", FixtureOnly: true, MaxRMSE: 1.608, MaxDiffPixels: 330, MaxLargestCluster: 330},
 	{ID: "colormap_qualitative", Topic: "colormap", Title: "Qualitative Colormap", FixtureOnly: true, MaxRMSE: 0.3},
 	{ID: "colormap_cyclic", Topic: "colormap", Title: "Cyclic Colormap", FixtureOnly: true, MaxRMSE: 1.0},
 	{ID: "colormap_families_gallery", Topic: "colormap", Title: "Colormap Family Gallery", Description: "Sequential, reversed, perceptual, diverging, qualitative, and cyclic colormap strips in one browsable figure.", Showcase: true, Width: 900, Height: 520, MaxRMSE: 0.5},
@@ -164,16 +178,16 @@ var cases = []Case{
 	{ID: "axline_slope", Topic: "axes", Title: "Slope-Defined AxLine", Description: "A focused parity fixture for an infinite line defined by a point and slope.", FixtureOnly: true, MaxMeanAbs: 0.02, MaxRMSE: 0.6},
 	// Twinned-axes frame ratchet: twinx/twiny now keep foreground frame spines
 	// visible like Matplotlib; refreshed golden-vs-reference RMSE is 2.90.
-	{ID: "axes_control_surface", Topic: "axes", Title: "Axes, Scales, and Twins", Optional: true, WebDemoID: "axes", Description: "Minor ticks, top/right axes, aspect controls, log scale, twin axes, and secondary axes.", Showcase: true, GoBasicSmokeFamily: "axes", MaxRMSE: 3.0},
-	{ID: "transform_coordinates", Topic: "axes", Title: "Transform Coordinates", Optional: true, MaxRMSE: 2.4},
-	{ID: "transform_annotation_modes", Topic: "axes", Title: "Annotation Coordinate Modes", FixtureOnly: true, Width: 720, Height: 420, MaxRMSE: 2.9},
+	{ID: "axes_control_surface", Topic: "axes", Title: "Axes, Scales, and Twins", Optional: true, WebDemoID: "axes", Description: "Minor ticks, top/right axes, aspect controls, log scale, twin axes, and secondary axes.", Showcase: true, GoBasicSmokeFamily: "axes", MaxRMSE: 3.0, MaxDiffPixels: 1300, MaxLargestCluster: 360},
+	{ID: "transform_coordinates", Topic: "axes", Title: "Transform Coordinates", Optional: true, MaxRMSE: 2.4, MaxDiffPixels: 330, MaxLargestCluster: 290},
+	{ID: "transform_annotation_modes", Topic: "axes", Title: "Annotation Coordinate Modes", FixtureOnly: true, Width: 720, Height: 420, MaxRMSE: 2.9, MaxDiffPixels: 510, MaxLargestCluster: 180},
 	{ID: "path_clipped_transformed", Topic: "axes", Title: "Clipped Transformed Path", FixtureOnly: true, Width: 720, Height: 420, MaxRMSE: 1.608},
 	{ID: "layout_bbox_helpers", Topic: "axes", Title: "Layout BBox Helpers", FixtureOnly: true, Width: 720, Height: 420, MaxRMSE: 1.1},
-	{ID: "formatter_engineering_labels", Topic: "axes", Title: "Engineering Formatter Labels", FixtureOnly: true, Width: 720, Height: 400, MaxRMSE: 3.0},
+	{ID: "formatter_engineering_labels", Topic: "axes", Title: "Engineering Formatter Labels", FixtureOnly: true, Width: 720, Height: 400, MaxRMSE: 3.0, MaxDiffPixels: 150, MaxLargestCluster: 35},
 	{ID: "formatter_fixed_null_labels", Topic: "axes", Title: "Fixed and Null Formatter Labels", FixtureOnly: true, MaxRMSE: 0.7},
 	{ID: "formatter_log_mathtext_labels", Topic: "axes", Title: "Log MathText Formatter Labels", FixtureOnly: true, MaxMeanAbs: 0.08, MaxRMSE: 0.303},
 	{ID: "formatter_percent_labels", Topic: "axes", Title: "Percent Formatter Labels", FixtureOnly: true, MaxRMSE: 0.4},
-	{ID: "formatter_scalar_scientific_labels", Topic: "axes", Title: "Scalar Scientific Formatter Labels", FixtureOnly: true, MaxRMSE: 3.8},
+	{ID: "formatter_scalar_scientific_labels", Topic: "axes", Title: "Scalar Scientific Formatter Labels", FixtureOnly: true, MaxRMSE: 3.8, MaxDiffPixels: 90, MaxLargestCluster: 88},
 	{ID: "locator_fixed_index_labels", Topic: "axes", Title: "Fixed and Index Locator Labels", FixtureOnly: true, Width: 720, Height: 420, MaxMeanAbs: 0.05, MaxRMSE: 0.08},
 	{ID: "locator_linear_labels", Topic: "axes", Title: "Linear Locator Labels", FixtureOnly: true, Width: 720, Height: 540, MaxMeanAbs: 0.05, MaxRMSE: 0.08},
 	{ID: "locator_log_minor_threshold_labels", Topic: "axes", Title: "Log Locator Minor Labels", FixtureOnly: true, Width: 720, Height: 420, MaxMeanAbs: 0.20, MaxRMSE: 1.278},
@@ -192,9 +206,9 @@ var cases = []Case{
 	{ID: "colorbar_composition", Topic: "colorbar", Title: "Colorbar Composition", Description: "A composed figure that exercises image color mapping, shared colorbars, and layout spacing.", Showcase: true, GoBasicSmokeFamily: "colorbar", MaxRMSE: 0.8},
 	{ID: "colorbar_variants_gallery", Topic: "colorbar", Title: "Colorbar Variants Gallery", Description: "LogNorm, TwoSlopeNorm, BoundaryNorm draw edges, and under/over extension colorbars with labels.", WebDemoID: "colorbars", Showcase: true, Width: 1040, Height: 720, MaxRMSE: 4.4},
 	{ID: "annotation_composition", Topic: "annotation", Title: "Annotations", Description: "Text annotations, arrows, anchored labels, and mixed coordinate placement.", Showcase: true, GoBasicSmokeFamily: "annotation", MaxRMSE: 1.608},
-	{ID: "annotation_legend_offsetbox_gallery", Topic: "annotation", Title: "Annotation, Legend, and Offset Box Gallery", Description: "Annotation arrows, bbox annotations, multi-column legends, proxy handles, anchored text, drawing areas, packers, image boxes, and size bars.", WebDemoID: "annotations", Showcase: true, Width: 1040, Height: 720, MaxRMSE: 5.0},
+	{ID: "annotation_legend_offsetbox_gallery", Topic: "annotation", Title: "Annotation, Legend, and Offset Box Gallery", Description: "Annotation arrows, bbox annotations, multi-column legends, proxy handles, anchored text, drawing areas, packers, image boxes, and size bars.", WebDemoID: "annotations", Showcase: true, Width: 1040, Height: 720, MaxRMSE: 5.0, MaxDiffPixels: 5100, MaxLargestCluster: 1800},
 	{ID: "patch_showcase", Topic: "patches", Title: "Patch Showcase", Description: "Rectangles, circles, ellipses, polygons, path patches, fancy arrows, fancy boxes, hatches, alpha, fills, and strokes.", Optional: true, WebDemoID: "patches", Showcase: true, SVGGoldenFamily: "hatch_bars", GoBasicSmokeFamily: "patch_hatch", SkiaParityFamily: "patch_hatch", MaxRMSE: 1.608},
-	{ID: "patch_style_matrix", Topic: "patches", Title: "Patch Style Matrix", FixtureOnly: true, MaxRMSE: 4.2},
+	{ID: "patch_style_matrix", Topic: "patches", Title: "Patch Style Matrix", FixtureOnly: true, MaxRMSE: 4.2, MaxDiffPixels: 3700, MaxLargestCluster: 83},
 	{ID: "mesh_contour_tri", Topic: "mesh", Title: "Meshes and Contours", Optional: true, WebDemoID: "mesh", Description: "PColorMesh, contour/contourf, Hist2D, triplot, tripcolor, and tricontour.", Showcase: true, GoBasicSmokeFamily: "mesh", SkiaParityFamily: "mesh", MaxRMSE: 2.6},
 	{ID: "contour_styles", Topic: "mesh", Title: "Contour Styles", Optional: true, Description: "Monochrome contour with negative_linestyles dashing and clabel format-string labels; contourf with extend and cycled hatches.", Width: 640, Height: 360, MaxRMSE: 2.8},
 	// Axis-below ratchet: showcase grids now mirror Matplotlib set_axisbelow(True);
@@ -204,10 +218,10 @@ var cases = []Case{
 	// regenerated golden-vs-reference RMSE is 1.15.
 	{ID: "spectrum_variants", Topic: "signal", Title: "Spectrum Variants", FixtureOnly: true, GoBasicSmokeFamily: "signal", MaxMeanAbs: 0.10, MaxRMSE: 1.5},
 	{ID: "psd_welch", Topic: "signal", Title: "Welch Power Spectral Density", Description: "Direct PSD coverage with overlapping Hann-windowed, mean-detrended segments and zero padding.", FixtureOnly: true, Width: 640, Height: 360, MaxMeanAbs: 0.05, MaxRMSE: 0.227},
-	{ID: "specgram_psd", Topic: "signal", Title: "PSD Spectrogram", Description: "Direct Specgram coverage for an overlapping-window chirp rendered in decibels.", FixtureOnly: true, Width: 640, Height: 360, MaxMeanAbs: 0.05, MaxRMSE: 1.2},
+	{ID: "specgram_psd", Topic: "signal", Title: "PSD Spectrogram", Description: "Direct Specgram coverage for an overlapping-window chirp rendered in decibels.", FixtureOnly: true, Width: 640, Height: 360, MaxMeanAbs: 0.05, MaxRMSE: 1.2, MaxDiffPixels: 550, MaxLargestCluster: 450},
 	{ID: "cohere_welch", Topic: "signal", Title: "Welch Coherence", Description: "Direct Cohere coverage for partially shared deterministic signals.", FixtureOnly: true, Width: 640, Height: 360, MaxMeanAbs: 0.05, MaxRMSE: 0.227},
 	{ID: "csd_welch", Topic: "signal", Title: "Welch Cross-Spectral Density", Description: "Direct CSD coverage with overlapping Hann-windowed, mean-detrended segments and zero padding.", FixtureOnly: true, Width: 640, Height: 360, MaxMeanAbs: 0.05, MaxRMSE: 0.227},
-	{ID: "stat_variants", Topic: "statistics", Title: "Statistical Views", Optional: true, WebDemoID: "statistics", Description: "Box plots, violin plots, empirical CDFs, and stack plots.", Showcase: true, GoBasicSmokeFamily: "statistics", MaxMeanAbs: 0.35, MaxRMSE: 3.4},
+	{ID: "stat_variants", Topic: "statistics", Title: "Statistical Views", Optional: true, WebDemoID: "statistics", Description: "Box plots, violin plots, empirical CDFs, and stack plots.", Showcase: true, GoBasicSmokeFamily: "statistics", MaxMeanAbs: 0.35, MaxRMSE: 3.4, MaxDiffPixels: 1400, MaxLargestCluster: 530},
 	{ID: "specialty_depth", Topic: "statistics", Title: "Specialty Depth", FixtureOnly: true, MaxRMSE: 1.608},
 	{ID: "stem_plot", Topic: "specialty", Title: "Stem Plot", Optional: true, MaxRMSE: 1.608},
 	// Phase 9 "misc artist kwargs" parity fixtures.
@@ -258,7 +272,7 @@ var cases = []Case{
 	{ID: "mplot3d_errorbar3d", Topic: "mplot3d", Title: "3D Error Bars", FixtureOnly: true, Width: 720, Height: 560, MaxRMSE: 3.0},
 	{ID: "mplot3d_stem3d", Topic: "mplot3d", Title: "3D Stem", FixtureOnly: true, Width: 720, Height: 560, MaxRMSE: 1.608},
 	{ID: "mplot3d_fill_between3d", Topic: "mplot3d", Title: "3D Fill Between", FixtureOnly: true, Width: 720, Height: 560, MaxRMSE: 1.608},
-	{ID: "unstructured_showcase", Topic: "unstructured", Title: "Unstructured Showcase", Description: "Triangulated and irregular data views covering triplot, tripcolor, and contour variants.", Optional: true, Showcase: true, GoBasicSmokeFamily: "unstructured", MaxRMSE: 3.2},
+	{ID: "unstructured_showcase", Topic: "unstructured", Title: "Unstructured Showcase", Description: "Triangulated and irregular data views covering triplot, tripcolor, and contour variants.", Optional: true, Showcase: true, GoBasicSmokeFamily: "unstructured", MaxRMSE: 3.2, MaxDiffPixels: 3900, MaxLargestCluster: 490},
 	{ID: "triangulation_gallery", Topic: "unstructured", Title: "Triangulation Gallery", Description: "A focused triangulation gallery covering triplot, tripcolor, tricontour, tricontourf, and masked pcolormesh behavior.", Optional: true, WebDemoID: "triangulation", Width: 1320, Height: 760, Showcase: true, MaxRMSE: 2.9},
 	{ID: "arrays_showcase", Topic: "arrays", Title: "Matrix Helpers", Optional: true, WebDemoID: "matrix", Description: "MatShow, sparsity spy plots, annotated heatmaps, and colorbars.", Width: 1240, Height: 620, Showcase: true, GoBasicSmokeFamily: "matrix", MaxRMSE: 3.1},
 	{ID: "widgets_gallery", Topic: "widgets", Title: "Widgets and Selectors", Description: "Buttons, sliders, range sliders, text boxes, check and radio buttons, selectors, cursor, and multi-cursor helpers.", Optional: true, Width: 1100, Height: 760, Showcase: true, GoBasicSmokeFamily: "widgets", MaxRMSE: 5.0},
@@ -266,7 +280,7 @@ var cases = []Case{
 	{ID: "animation_line_frame", Topic: "animation", Title: "Animated Line Frame", Description: "Deterministic frame-N capture of a traveling-wave FuncAnimation line plot.", FixtureOnly: true, Width: 640, Height: 360, MaxMeanAbs: 1.5, MaxRMSE: 1.433},
 	{ID: "animation_scatter_frame", Topic: "animation", Title: "Animated Scatter Frame", Description: "Deterministic frame-N capture of an orbiting scatter/collection animation with scalar-mapped marker colors.", FixtureOnly: true, Width: 640, Height: 360, MaxMeanAbs: 1.5, MaxRMSE: 1.433},
 	{ID: "animation_imshow_frame", Topic: "animation", Title: "Animated Heatmap Frame", Description: "Deterministic frame-N capture of a ripple imshow (heatmap) animation.", FixtureOnly: true, Width: 640, Height: 360, MaxMeanAbs: 1.5, MaxRMSE: 1.433},
-	{ID: "animation_subplots_frame", Topic: "animation", Title: "Animated Subplots Frame", Description: "Deterministic frame-N capture of a two-panel line + heatmap subplot composition animation.", FixtureOnly: true, Width: 800, Height: 360, MaxMeanAbs: 1.5, MaxRMSE: 4.5},
+	{ID: "animation_subplots_frame", Topic: "animation", Title: "Animated Subplots Frame", Description: "Deterministic frame-N capture of a two-panel line + heatmap subplot composition animation.", FixtureOnly: true, Width: 800, Height: 360, MaxMeanAbs: 1.5, MaxRMSE: 4.5, MaxDiffPixels: 230, MaxLargestCluster: 88},
 	{ID: "axisartist_showcase", Topic: "axisartist", Title: "AxisArtist Showcase", Description: "Floating and axis-artist style axes with custom spine placement and labels.", Optional: true, WebDemoID: "axisartist", Showcase: true, GoBasicSmokeFamily: "axisartist", MaxRMSE: 2.3},
 	{ID: "axes_grid1_showcase", Topic: "axes_grid1", Title: "Axes Grid1 Showcase", Description: "Axes divider, image-grid, inset, and anchored layout helpers in one composition.", Optional: true, WebDemoID: "axes_grid1", Showcase: true, GoBasicSmokeFamily: "axes_grid1", MaxMeanAbs: 0.16, MaxRMSE: 2.0},
 	{ID: "pcolor_flat", Topic: "mesh", Title: "PColor Flat", FixtureOnly: true, MaxRMSE: 0.7},
@@ -277,7 +291,7 @@ var cases = []Case{
 	{ID: "asinh_norm_image", Topic: "colorbar", Title: "AsinhNorm Image", FixtureOnly: true, MaxRMSE: 2.1},
 	{ID: "boundarynorm_pcolormesh", Topic: "colorbar", Title: "BoundaryNorm PColorMesh", FixtureOnly: true, MaxRMSE: 0.9},
 	{ID: "collection_mutable_scalarmap", Topic: "colorbar", Title: "Mutable Collection ScalarMap", FixtureOnly: true, MaxRMSE: 0.9},
-	{ID: "colorbar_boundary_values", Topic: "colorbar", Title: "Boundary Colorbar Values", FixtureOnly: true, MaxRMSE: 3.1},
+	{ID: "colorbar_boundary_values", Topic: "colorbar", Title: "Boundary Colorbar Values", FixtureOnly: true, MaxRMSE: 3.1, MaxDiffPixels: 470, MaxLargestCluster: 380},
 	{ID: "colorbar_horizontal_ticks", Topic: "colorbar", Title: "Horizontal Colorbar Ticks", FixtureOnly: true, MaxRMSE: 1.2},
 	{ID: "lognorm_imshow", Topic: "colorbar", Title: "LogNorm Imshow", FixtureOnly: true, MaxRMSE: 4.4},
 	{ID: "twoslope_norm_image", Topic: "colorbar", Title: "TwoSlopeNorm Image", FixtureOnly: true, MaxRMSE: 1.1},
@@ -287,7 +301,7 @@ var cases = []Case{
 	{ID: "large_scatter", Topic: "raster", Title: "Large Scatter Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathcollectionbatch"}, MaxMeanAbs: 0.5, MaxRMSE: 2.7},
 	{ID: "mixed_collection", Topic: "raster", Title: "Mixed Path Collection", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathcollectionbatch"}, SVGGoldenFamily: "collection", GoBasicSmokeFamily: "collection", MaxMeanAbs: 0.5, MaxRMSE: 1.7},
 	{ID: "mixed_raster_vector", Topic: "raster", Title: "Mixed Raster Vector Output", Description: "A polar mixed-output example with rasterized dense scatter points and vector-preserved line, text, axes, legend, SVG, and PDF artifacts.", Showcase: true, Width: 640, Height: 640, SVGGoldenFamily: "mixed_raster", MaxRMSE: 1.608},
-	{ID: "quad_mesh", Topic: "raster", Title: "Quad Mesh Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"quadmeshbatch"}, MaxMeanAbs: 1.0, MaxRMSE: 1.6},
+	{ID: "quad_mesh", Topic: "raster", Title: "Quad Mesh Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"quadmeshbatch"}, MaxMeanAbs: 1.0, MaxRMSE: 1.6, MaxDiffPixels: 88, MaxLargestCluster: 88},
 	{ID: "gouraud_triangles", Topic: "raster", Title: "Gouraud Triangles", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"gouraudtrianglebatch"}, SkiaParityFamily: "gouraud", MaxMeanAbs: 1.0, MaxRMSE: 0.6},
 	{ID: "clip_path_batch", Topic: "raster", Title: "Clip Path Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathclip", "quadmeshbatch"}, MaxMeanAbs: 1.0, MaxRMSE: 1.433},
 }

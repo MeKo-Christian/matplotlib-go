@@ -195,12 +195,30 @@ mentioned (`basic_line`) carry real divergences. Findings:
       The strict text cases came through unchanged: `text_labels_strict` measures
       RMSE 0.028 and `title_strict` 0, both far inside their translated bounds.
 
-- [ ] **3.2 Add a localization gate that RMSE cannot express.** Extend the
-      reference-compare harness with a residual-shape bound — differing-pixel
-      count and largest-cluster size are already computed by the audit
-      generator; port them to `imagecmp` and give `examplecatalog.Case` the
-      corresponding per-case fields. This is the gate that catches a wholly
-      misplaced glyph, and the reason `basic_line` currently passes.
+- [x] **3.2 Add a localization gate that RMSE cannot express.** Done
+      2026-07-26. `imagecmp.DiffResult` now carries `DiffPixels`, `Clusters` and
+      `LargestCluster`: the pixels whose largest per-channel difference exceeds
+      the tolerance, the 8-connected components they form, and the size of the
+      biggest one. Connectivity matches the audit generator's 3x3 structuring
+      element, and the ported numbers reproduce it exactly — `basic_line`
+      139/4/73, `specgram_psd` 435/4/353, `line2d_markers` 3385/167/2055,
+      `imshow_clipped` 2298/1/2298, `colormap_diverging` 259/2/258, all
+      identical to `phase3-tolerance-audit.json`.
+
+      `examplecatalog.Case` gained `MaxDiffPixels` / `MaxLargestCluster` (zero =
+      unbounded), gated in `runReferenceCompareTest` after the amplitude
+      gates and reported in its per-case log line.
+      `TestComparePNG_ShapeSeesWhatRMSECannot` pins the motivating case: 36
+      black pixels on a 640x360 white frame score RMSE 2.76 — inside
+      `basic_line`'s 2.8 allowance — while reading as one 36-px cluster.
+
+      Bounds are populated for the 27 localized cases named in 3.3 and 3.4, at
+      1.25x their measured values rounded up (`basic_line` 180/92,
+      `colormap_diverging` 330/330, `line2d_markers` 4300/2600). The remaining
+      163 cases are still unbounded on shape: their residuals are dense, where
+      the largest cluster ranges to 42,872 px (`colormap_cyclic`) against a
+      median of 87, so a single default would be meaningless — 3.6 sets them
+      per case from post-fix measurements.
 - [ ] **3.3 Fix the four shift families.** Each is a candidate shared root
       cause; confirm against `third_party/matplotlib` 3.10.9 and fix in the core
       library, not the fixtures.
