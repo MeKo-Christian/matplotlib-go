@@ -38,6 +38,17 @@ target with synchronized RGBA readback and native CPU fallback when a context is
 unavailable. `just test-skia-native` and `just test-skia-gpu-native` cover the
 native primitive/parity matrix and runtime capability split.
 
+**Caveat found in Phase 3.1 (2026-07-26):** the parity half of the third item was
+verified with a broken metric. `imagecmp`'s PSNR accumulator overflowed, so nine
+Skia-vs-AGG comparisons that reported passing the harness's 22 dB floor were in
+fact failing it — `line2d_markers` at RMSE 63, the MathText family at 21-30, and
+`patch_showcase`, `mesh_contour_tri`, `pattern_gradient_effects` between. Those
+bounds are now stated in RMSE and pinned to measured behavior so a further
+regression fails, but they are not evidence of parity: the
+`StatusDeferred`→`StatusImplemented` promotions need revalidation. Note also that
+`gouraud_triangles`, `pcolormesh_gouraud`, and `mathtext_accents` skip in that
+harness for want of a Go figure factory, so they were never measured at all.
+
 **Done when:** native batch primitives and real GPU acceleration are available
 under `skiacgo`/`skiagpu`, output is parity-checked, and per-mode capability
 reporting reflects runtime behavior.
@@ -140,25 +151,50 @@ mentioned (`basic_line`) carry real divergences. Findings:
 - 21 cases are pixel-identical; 124 differ on under 1% of the frame.
 - 14 cases have a residual that one integer pixel offset cancels — placement
   bugs, in four offset families.
-- 66 cases allow at least 3x their measured residual; 23 allow under 1.15x and
-  will flake on any change.
-- `imagecmp.ComparePNG` computes its PSNR sum as `float64(diffR*diffR)` in
-  `uint8` arithmetic, so every square above 15 wraps mod 256. 177 of 190 cases
-  report a corrupted PSNR, always flattering. Every `MinPSNR` floor in the
-  catalog was calibrated against that broken number.
+- After 3.1's fold, 44 cases allow at least 3x their measured residual and 31
+  allow under 1.15x. (Before it: 66 and 23, gated additionally by PSNR.)
+- `imagecmp.ComparePNG` computed its PSNR sum as `float64(diffR*diffR)` in
+  `uint8` arithmetic, so every square above 15 wrapped mod 256. 177 of 190 cases
+  reported a corrupted, always-flattering PSNR, and every `MinPSNR` floor in the
+  catalog had been calibrated against that broken number. Fixed in 3.1.
 - Whole-image RMSE cannot bound a localized error: `basic_line`'s residual is
   one y tick label rendered a pixel low — 139 pixels reaching per-channel
   difference 249 — and still scores RMSE 2.49 against a 2.8 allowance.
 
-- [ ] **3.1 Fix the comparison metric before ratcheting anything against it.**
-      Correct the `uint8` overflow in `imagecmp.ComparePNG`'s PSNR accumulator
-      and add a regression test with a >15 LSB difference. Note the consequence:
-      once fixed, `sumSquaredError` and `sumSquaredErrorPSNR` are the same
-      quantity, so `PSNR == 20*log10(255/RMSE)` exactly and `MinPSNR` becomes a
-      pure restatement of `MaxRMSE`. Decide between dropping `MinPSNR` from the
-      catalog and `Case` struct, or keeping the field and giving it independent
-      meaning. Either way the "add binding PSNR floors" plan is void — PSNR
-      adds no information RMSE lacks.
+- [x] **3.1 Fix the comparison metric before ratcheting anything against it.**
+      Done 2026-07-26. `imagecmp.ComparePNG` now accumulates squared error once,
+      in `float64`, and derives `PSNR = 20*log10(255/RMSE)`; the separate
+      accumulator that squared `uint8` differences in `uint8` arithmetic is gone.
+      `TestComparePNG_LargeDiffDoesNotOverflowPSNR` pins the boundary at 15/16
+      LSB and `TestComparePNG_PSNRIsDerivedFromRMSE` pins the identity.
+
+      Because PSNR is now provably a restatement of RMSE, `Case.MinPSNR` was
+      removed along with all 47 row-level values, and every PSNR gate in the tree
+      was restated in RMSE. No gate was allowed to loosen silently: of the 190
+      cases, 65 floors never bound (`MaxRMSE` was tighter), 60 bound and were
+      reachable and were folded into `MaxRMSE` at their exact equivalent
+      (`255/10^(dB/20)`), and 65 were unreachable — those cases were only ever
+      passing because the metric flattered them, so their floors were dropped for
+      3.6 to re-derive from measurement. The reference-compare harness now gates
+      on RMSE and MeanAbs alone; MeanAbs is kept because L1 and L2 residuals are
+      genuinely independent.
+
+      Four gates outside the catalog needed recalibration rather than
+      translation, having been unreachable under correct math:
+      `mathtext_vector_raster_test.go` (external PDF/PS/SVG rasterizers vs AGG
+      goldens; measured RMSE 19.3-32.1, bound 40), `skia_render_test.go` MathText
+      (measured 19.1-30.2, bound 35), and `backends/skia/parity_test.go`'s
+      default plus nine per-case bounds. That last one is a finding worth
+      flagging: nine Skia-vs-AGG comparisons had been failing the harness's 22 dB
+      default all along, `line2d_markers` by a wide margin at RMSE 63. **Phase
+      1's `NativePathRequirements` promotions from `StatusDeferred` to
+      `StatusImplemented` were therefore signed off against a broken metric and
+      need revalidation** — the new ceilings pin current behavior so a further
+      regression still fails, but they are not evidence of parity.
+
+      The strict text cases came through unchanged: `text_labels_strict` measures
+      RMSE 0.028 and `title_strict` 0, both far inside their translated bounds.
+
 - [ ] **3.2 Add a localization gate that RMSE cannot express.** Extend the
       reference-compare harness with a residual-shape bound — differing-pixel
       count and largest-cluster size are already computed by the audit
@@ -200,15 +236,17 @@ mentioned (`basic_line`) carry real divergences. Findings:
       `image_variants_gallery`, `ticks_styling_surface`, `widgets_gallery`.
 - [ ] **3.6 Ratchet every tolerance and enforce the ratchet.** Set each case's
       bound from its post-fix measured value plus stated headroom, in both
-      directions: tighten the 66 loose cases (worst offenders
-      `linecollection_linestyle` 389x, `spy_image` 208x, `errorbar_capthick`
-      168x, `scale_logit_ticks` 89x, `formatter_log_mathtext_labels` 87x,
-      `scatter_plotnonfinite` 81x, `animation_imshow_frame` 75x,
-      `errorbar_basic` 73x) and relieve the 23 fragile ones so CI does not
-      flake. Add a meta-test that regenerates the audit and fails when any
-      tolerance drifts from
-      measured-plus-headroom, so the set cannot loosen silently before Phase 4
-      freezes it.
+      directions: tighten the 44 loose cases (worst offenders
+      `linecollection_linestyle` 179x, `spy_image` 124x, `errorbar_capthick` 64x,
+      `bar_basic_frame` 50x, `scatter_plotnonfinite` 37x, `dashes` 36x) and
+      relieve the 31 cases now under 1.15x slack. Fragility there is not a flake
+      risk — `TestReferenceCompare` relates two committed files — but it does
+      mean any fix in 3.3-3.5 will trip a neighbouring case, so ratchet after
+      those land, not before. Also re-derive the 65 bounds whose PSNR floor 3.1
+      had to drop as unreachable, and the Skia ceilings 3.1 pinned to current
+      behavior. Add a meta-test that regenerates the audit and fails when any
+      tolerance drifts from measured-plus-headroom, so the set cannot loosen
+      silently before Phase 4 freezes it.
 - [ ] **3.7 Commit the per-case disposition table.** One row per case:
       `fixed`, `documented exception`, or `upstream difference`, carrying the
       measured residual it was signed off at. Fold it into the audit document so

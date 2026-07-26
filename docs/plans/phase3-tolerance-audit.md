@@ -221,5 +221,5 @@ Cases whose largest residual clusters are cancelled by one integer offset. Each 
 | `bar_basic_title` | 0.01 | 0.30 | 30.00x | loose | 0 | 0.000 | 0 | 0 | 0 | 1 | identical |
 | `linecollection_linestyle` | 0.01 | 1.61 | 178.67x | loose | 0 | 0.000 | 0 | 0 | 0 | 1 | identical |
 | `bar_basic_frame` | 0.01 | 0.30 | 50.00x | loose | 0 | 0.000 | 0 | 0 | 0 | 1 | identical |
-| `mathtext_integrals` | 0.00 | 0.30 | - | no-rmse-gate | 0 | 0.000 | 0 | 0 | 0 | 0 | identical |
-| `title_strict` | 0.00 | 0.30 | - | no-rmse-gate | 0 | 0.000 | 0 | 0 | 0 | 0 | identical |
+| `mathtext_integrals` | 0.00 | 0.30 | - | exact | 0 | 0.000 | 0 | 0 | 0 | 0 | identical |
+| `title_strict` | 0.00 | 0.30 | - | exact | 0 | 0.000 | 0 | 0 | 0 | 0 | identical |

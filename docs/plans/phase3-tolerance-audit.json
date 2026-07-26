@@ -972,7 +972,7 @@
   "rmse": 0.0,
   "shifts": {},
   "slack": null,
-  "verdict": "no-rmse-gate"
+  "verdict": "exact"
  },
  {
   "clusters": 19,
@@ -1034,7 +1034,7 @@
   "rmse": 0.0,
   "shifts": {},
   "slack": null,
-  "verdict": "no-rmse-gate"
+  "verdict": "exact"
  },
  {
   "clusters": 2,

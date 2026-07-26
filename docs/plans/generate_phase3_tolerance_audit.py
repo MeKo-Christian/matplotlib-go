@@ -185,7 +185,10 @@ def measure(row: Row) -> None:
 
     if row.max_rmse > 0 and row.rmse > 0:
         row.slack = round(row.max_rmse / row.rmse, 2)
-    if row.slack is None:
+    if row.rmse == 0:
+        # Slack is undefined against a zero residual, and no ratchet applies.
+        row.verdict = "exact"
+    elif row.slack is None:
         row.verdict = "no-rmse-gate"
     elif row.slack >= LOOSE_SLACK:
         row.verdict = "loose"
