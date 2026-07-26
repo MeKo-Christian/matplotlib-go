@@ -38,7 +38,7 @@ func Plot() *core.Figure {
 		y[i] = math.Sin(6 * math.Pi * t)
 		z[i] = math.Cos(6 * math.Pi * t)
 	}
-	ax.Plot3D(x, y, z)
+	ax.Plot3D(x, y, z, core.PlotOptions{})
 	return fig
 }
 

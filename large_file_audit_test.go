@@ -71,10 +71,10 @@ func TestContourAPISplitIsTracked(t *testing.T) {
 		"type ClabelOptions struct",
 		"type ContourLabel struct",
 		"type ContourSet struct",
-		"func (a *Axes) Contour(data [][]float64, opts ...ContourOptions) *ContourSet",
-		"func (a *Axes) Contourf(data [][]float64, opts ...ContourOptions) *ContourSet",
-		"func (a *Axes) TriContour(tri Triangulation, values []float64, opts ...ContourOptions) *ContourSet",
-		"func (a *Axes) TriContourf(tri Triangulation, values []float64, opts ...ContourOptions) *ContourSet",
+		"func (a *Axes) Contour(data [][]float64, opt ContourOptions) *ContourSet",
+		"func (a *Axes) Contourf(data [][]float64, opt ContourOptions) *ContourSet",
+		"func (a *Axes) TriContour(tri Triangulation, values []float64, opt ContourOptions) *ContourSet",
+		"func (a *Axes) TriContourf(tri Triangulation, values []float64, opt ContourOptions) *ContourSet",
 		"func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool, opt ContourOptions) *ContourSet",
 	} {
 		if !strings.Contains(api, want) {

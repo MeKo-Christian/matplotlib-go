@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
@@ -48,8 +49,8 @@ func Plot() *core.Figure {
 	lineColor := render.Color{R: 0.15, G: 0.35, B: 0.70, A: 1}
 	fillColor := render.Color{R: 0.18, G: 0.50, B: 0.82, A: 0.22}
 	lineWidth := 2.2
-	ax.Fill(closedAngles, closedValues, core.FillOptions{Color: &fillColor})
-	_, _ = ax.Plot(closedAngles, closedValues, core.PlotOptions{Color: &lineColor, LineWidth: &lineWidth, Label: "model A"})
+	ax.Fill(closedAngles, closedValues, core.FillOptions{Color: optional.Of(fillColor)})
+	_, _ = ax.Plot(closedAngles, closedValues, core.PlotOptions{Color: optional.Of(lineColor), LineWidth: optional.Of(lineWidth), Label: "model A"})
 	return fig
 }
 

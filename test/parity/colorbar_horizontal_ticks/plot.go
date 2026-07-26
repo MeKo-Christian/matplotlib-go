@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 )
 
 func Plot() *core.Figure {
@@ -25,9 +26,9 @@ func Plot() *core.Figure {
 		XEdges:   []float64{0, 1, 2, 3, 4},
 		YEdges:   []float64{0, 1, 2, 3},
 		Shading:  core.MeshShadingFlat,
-		Colormap: &cmap,
-		VMin:     &vmin,
-		VMax:     &vmax,
+		Colormap: optional.Of(cmap),
+		VMin:     optional.Of(vmin),
+		VMax:     optional.Of(vmax),
 	})
 	if mesh != nil {
 		fig.AddColorbar(ax, mesh, core.ColorbarOptions{

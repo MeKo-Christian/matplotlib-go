@@ -3,6 +3,7 @@ package core
 import (
 	"testing"
 
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -31,7 +32,7 @@ func TestHistHonorsExplicitZeroAlpha(t *testing.T) {
 
 	zero := 0.0
 	transparent := &recordingRenderer{}
-	transparentHist, err := newAlphaTestAxes().Hist(data, HistOptions{Color: &red, Alpha: &zero})
+	transparentHist, err := newAlphaTestAxes().Hist(data, HistOptions{Color: optional.Of(red), Alpha: optional.Of(zero)})
 	if err != nil {
 		t.Fatalf("Hist() returned error: %v", err)
 	}
@@ -41,7 +42,7 @@ func TestHistHonorsExplicitZeroAlpha(t *testing.T) {
 	}
 
 	opaque := &recordingRenderer{}
-	opaqueHist, err := newAlphaTestAxes().Hist(data, HistOptions{Color: &red})
+	opaqueHist, err := newAlphaTestAxes().Hist(data, HistOptions{Color: optional.Of(red)})
 	if err != nil {
 		t.Fatalf("Hist() returned error: %v", err)
 	}
@@ -61,7 +62,7 @@ func TestErrorBarHonorsExplicitZeroAlpha(t *testing.T) {
 
 	zero := 0.0
 	transparent := &recordingRenderer{}
-	transparentBar, err := newAlphaTestAxes().ErrorBar(x, y, e, e, ErrorBarOptions{Color: &red, Alpha: &zero})
+	transparentBar, err := newAlphaTestAxes().ErrorBar(x, y, e, e, ErrorBarOptions{Color: optional.Of(red), Alpha: optional.Of(zero)})
 	if err != nil {
 		t.Fatalf("ErrorBar() returned error: %v", err)
 	}
@@ -71,7 +72,7 @@ func TestErrorBarHonorsExplicitZeroAlpha(t *testing.T) {
 	}
 
 	opaque := &recordingRenderer{}
-	opaqueBar, err := newAlphaTestAxes().ErrorBar(x, y, e, e, ErrorBarOptions{Color: &red})
+	opaqueBar, err := newAlphaTestAxes().ErrorBar(x, y, e, e, ErrorBarOptions{Color: optional.Of(red)})
 	if err != nil {
 		t.Fatalf("ErrorBar() returned error: %v", err)
 	}
@@ -90,7 +91,7 @@ func TestBoxPlotHonorsExplicitZeroAlpha(t *testing.T) {
 	zero := 0.0
 	patchArtist := true
 	transparent := &recordingRenderer{}
-	box := newAlphaTestAxes().BoxPlot(data, BoxPlotOptions{PatchArtist: &patchArtist, Color: &red, EdgeColor: &red, Alpha: &zero})
+	box := newAlphaTestAxes().BoxPlot(data, BoxPlotOptions{PatchArtist: optional.Of(patchArtist), Color: optional.Of(red), EdgeColor: optional.Of(red), Alpha: optional.Of(zero)})
 	box.Draw(transparent, ctx)
 	maxFill := 0.0
 	for _, c := range transparent.pathCalls {
@@ -103,7 +104,7 @@ func TestBoxPlotHonorsExplicitZeroAlpha(t *testing.T) {
 	}
 
 	opaque := &recordingRenderer{}
-	newAlphaTestAxes().BoxPlot(data, BoxPlotOptions{PatchArtist: &patchArtist, Color: &red, EdgeColor: &red}).Draw(opaque, ctx)
+	newAlphaTestAxes().BoxPlot(data, BoxPlotOptions{PatchArtist: optional.Of(patchArtist), Color: optional.Of(red), EdgeColor: optional.Of(red)}).Draw(opaque, ctx)
 	ctlFill := 0.0
 	for _, c := range opaque.pathCalls {
 		if c.paint.Fill.A > ctlFill {
@@ -126,7 +127,7 @@ func TestStepHonorsExplicitZeroAlpha(t *testing.T) {
 	zero := 0.0
 	transparent := &recordingRenderer{}
 	newAlphaTestAxes().
-		Step(x, y, StepOptions{Color: &red, Alpha: &zero}).
+		Step(x, y, StepOptions{Color: optional.Of(red), Alpha: optional.Of(zero)}).
 		Draw(transparent, ctx)
 	if got := maxAnyAlpha(transparent); got != 0 {
 		t.Fatalf("Step alpha=0 should draw nothing opaque, got max alpha %v", got)
@@ -134,7 +135,7 @@ func TestStepHonorsExplicitZeroAlpha(t *testing.T) {
 
 	opaque := &recordingRenderer{}
 	newAlphaTestAxes().
-		Step(x, y, StepOptions{Color: &red}).
+		Step(x, y, StepOptions{Color: optional.Of(red)}).
 		Draw(opaque, ctx)
 	if maxAnyAlpha(opaque) == 0 {
 		t.Fatal("control opaque step drew nothing — harness problem")

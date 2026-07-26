@@ -204,7 +204,7 @@ func TestFigureLayoutAndTwinAxesWrappersDelegateToCurrentState(t *testing.T) {
 	resetForTests()
 
 	fig := GCF()
-	if text := FigText(0.1, 0.9, "figure note"); text == nil {
+	if text := FigText(0.1, 0.9, "figure note", core.TextOptions{}); text == nil {
 		t.Fatal("FigText() returned nil")
 	}
 	if got := len(fig.Artists); got != 1 {
@@ -250,7 +250,7 @@ func TestColorbarUsesCurrentAxesAndFigure(t *testing.T) {
 	img := Image([][]float64{
 		{0, 1},
 		{2, 3},
-	})
+	}, core.ImageOptions{})
 	cb := Colorbar(img, core.ColorbarOptions{Label: "Intensity"})
 	if cb == nil {
 		t.Fatal("Colorbar() returned nil")

@@ -5,7 +5,6 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -33,7 +32,9 @@ type RectangleSelector struct {
 }
 
 // NewRectangleSelector creates a rectangle selector bound to the axes.
-func NewRectangleSelector(a *core.Axes, opts ...RectangleSelectorOptions) *RectangleSelector {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func NewRectangleSelector(a *core.Axes, opt RectangleSelectorOptions) *RectangleSelector {
 	if a == nil {
 		return nil
 	}
@@ -42,9 +43,7 @@ func NewRectangleSelector(a *core.Axes, opts ...RectangleSelectorOptions) *Recta
 		FillColor: render.Color{R: 0.16, G: 0.42, B: 0.76, A: 0.18},
 		LineWidth: 1.2,
 	}
-	if opt, ok := optarg.Optional("rectangleselector", opts); ok {
-		config = mergeRectangleSelectorOptions(config, opt)
-	}
+	config = mergeRectangleSelectorOptions(config, opt)
 	sel := &RectangleSelector{
 		EdgeColor: config.EdgeColor,
 		FillColor: config.FillColor,

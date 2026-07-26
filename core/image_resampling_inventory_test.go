@@ -475,9 +475,9 @@ func TestTransformedImageFixturePriorityIsDocumented(t *testing.T) {
 		},
 		filepath.Join("..", "test", "parity", "imshow_transformed", "plot.go"): {
 			"angle := 28.0",
-			"XMin:          &xmin",
-			"YMax:          &ymax",
-			"Interpolation: &bilinear",
+			"XMin:          optional.Of(xmin)",
+			"YMax:          optional.Of(ymax)",
+			"Interpolation: optional.Of(bilinear)",
 		},
 		filepath.Join("..", "test", "matplotlib_ref", "plots", "imshow_transformed.py"): {
 			"rotate_deg_around(2, 2, 28)",

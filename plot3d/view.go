@@ -553,15 +553,15 @@ func faceColorAtIndex(colors []render.Color, idx int) render.Color {
 
 //nolint:gocritic // Shade selection reads a value-semantic PlotOptions snapshot.
 func surfaceShadeEnabled(opt core.PlotOptions, useMapping bool) bool {
-	if opt.Shade != nil {
-		return *opt.Shade
+	if shade, ok := opt.Shade.Get(); ok {
+		return shade
 	}
 	return !useMapping
 }
 
 //nolint:gocritic // Edge-color resolution reads a value-semantic PlotOptions snapshot.
 func surfaceEdgeColors(faceColors []render.Color, opt core.PlotOptions) []render.Color {
-	if opt.EdgeColor != nil || len(opt.FaceColors) == 0 {
+	if opt.EdgeColor.IsSet() || len(opt.FaceColors) == 0 {
 		return nil
 	}
 	edges := make([]render.Color, len(faceColors))
@@ -571,8 +571,8 @@ func surfaceEdgeColors(faceColors []render.Color, opt core.PlotOptions) []render
 
 //nolint:gocritic // Shade selection reads a value-semantic PlotOptions snapshot.
 func trisurfShadeEnabled(opt core.PlotOptions, useMapping bool) bool {
-	if opt.Shade != nil {
-		return *opt.Shade
+	if shade, ok := opt.Shade.Get(); ok {
+		return shade
 	}
 	return !useMapping
 }

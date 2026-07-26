@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -76,7 +77,7 @@ func TestAxesStep_UsesRequestedWhere(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
 	where := StepWhereMid
 
-	line := ax.Step([]float64{0, 1, 2}, []float64{1, 3, 2}, StepOptions{Where: &where})
+	line := ax.Step([]float64{0, 1, 2}, []float64{1, 3, 2}, StepOptions{Where: where})
 	if line == nil {
 		t.Fatal("expected step line")
 	}
@@ -129,7 +130,7 @@ func TestBar2D_Bounds_UsePerBarBaselines(t *testing.T) {
 func TestAxesBrokenBarH_UsesRangesAsBaselines(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
 
-	bar := ax.BrokenBarH([][2]float64{{1, 2.5}, {5, 1.25}}, [2]float64{3, 0.8})
+	bar := ax.BrokenBarH([][2]float64{{1, 2.5}, {5, 1.25}}, [2]float64{3, 0.8}, BarOptions{})
 	if bar == nil {
 		t.Fatal("expected broken_barh bar artist")
 	}
@@ -160,7 +161,7 @@ func TestAxesBarLabel_Placement(t *testing.T) {
 	}
 	ax.Add(bar)
 
-	labels := ax.BarLabel(bar, []string{"up", "down"})
+	labels := ax.BarLabel(bar, []string{"up", "down"}, BarLabelOptions{})
 	if len(labels) != 2 {
 		t.Fatalf("got %d labels, want 2", len(labels))
 	}
@@ -217,7 +218,7 @@ func TestAxesBarLabelEdgeFormatsEndpointForStackedBars(t *testing.T) {
 
 func TestAxesAxHLine_UsesBlendedCoordinates(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
-	line := ax.AxHLine(2)
+	line := ax.AxHLine(2, HLineOptions{})
 
 	r := &recordingRenderer{}
 	ctx := createTestDrawContext()
@@ -237,7 +238,7 @@ func TestAxesAxHLine_ScalesDashesLikeMatplotlibLine2D(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
 	lineWidth := 1.4
 	line := ax.AxHLine(0, HLineOptions{
-		LineWidth: &lineWidth,
+		LineWidth: optional.Of(lineWidth),
 		Dashes:    []float64{1.8, 1.08},
 	})
 
@@ -257,7 +258,7 @@ func TestAxesAxHLine_ScalesDashesLikeMatplotlibLine2D(t *testing.T) {
 
 func TestAxesAxHLine_UsesMatplotlibLine2DSnap(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
-	line := ax.AxHLine(0)
+	line := ax.AxHLine(0, HLineOptions{})
 
 	r := &recordingRenderer{}
 	ctx := createTestDrawContext()
@@ -273,7 +274,7 @@ func TestAxesAxHLine_UsesMatplotlibLine2DSnap(t *testing.T) {
 
 func TestAxesAxLine_ClipsToCurrentView(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
-	line := ax.AxLine(geom.Pt{X: 0, Y: 0}, geom.Pt{X: 10, Y: 10})
+	line := ax.AxLine(geom.Pt{X: 0, Y: 0}, geom.Pt{X: 10, Y: 10}, ReferenceLineOptions{})
 
 	r := &recordingRenderer{}
 	ctx := createTestDrawContext()
@@ -291,7 +292,7 @@ func TestAxesAxLine_ClipsToCurrentView(t *testing.T) {
 
 func TestAxesAxLine_UsesMatplotlibSolidCapstyle(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
-	line := ax.AxLine(geom.Pt{X: 0, Y: 0}, geom.Pt{X: 10, Y: 10})
+	line := ax.AxLine(geom.Pt{X: 0, Y: 0}, geom.Pt{X: 10, Y: 10}, ReferenceLineOptions{})
 
 	r := &recordingRenderer{}
 	ctx := createTestDrawContext()
@@ -370,7 +371,7 @@ func TestStairs2D_DrawFilled(t *testing.T) {
 func TestAxesAxVSpan_DrawsFilledRect(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
 	alpha := 0.5
-	span := ax.AxVSpan(2, 4, VSpanOptions{Alpha: &alpha})
+	span := ax.AxVSpan(2, 4, VSpanOptions{Alpha: optional.Of(alpha)})
 
 	r := &recordingRenderer{}
 	span.Draw(r, createTestDrawContext())
@@ -388,7 +389,7 @@ func TestAxesAxVSpan_DrawsFilledRect(t *testing.T) {
 
 func TestAxesAxVSpan_DefaultZOrderMatchesMatplotlibPatch(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
-	span := ax.AxVSpan(2, 4)
+	span := ax.AxVSpan(2, 4, VSpanOptions{})
 
 	if got := span.Z(); got != defaultPatchZ {
 		t.Fatalf("axvspan zorder = %v, want Matplotlib patch zorder %v", got, defaultPatchZ)

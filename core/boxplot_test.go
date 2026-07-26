@@ -165,7 +165,7 @@ func TestBoxPlotDefaultIsUnfilledAndDoesNotCycleColor(t *testing.T) {
 	before := ax.NextColor()
 	ax2 := NewFigure(640, 360).AddAxes(geom.Rect{})
 
-	box := ax2.BoxPlot([]float64{1, 2, 3, 4, 5})
+	box := ax2.BoxPlot([]float64{1, 2, 3, 4, 5}, BoxPlotOptions{})
 	if box == nil {
 		t.Fatal("expected box plot")
 	}

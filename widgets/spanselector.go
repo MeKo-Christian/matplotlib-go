@@ -6,7 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -19,8 +19,8 @@ type SpanSelectorOptions struct {
 	Color       render.Color
 	FillColor   render.Color
 	LineWidth   float64
-	Min         *float64
-	Max         *float64
+	Min         optional.Value[float64]
+	Max         optional.Value[float64]
 }
 
 // SpanSelector lets users select a data span along one axis.
@@ -38,7 +38,9 @@ type SpanSelector struct {
 }
 
 // NewSpanSelector creates a span selector bound to the axes.
-func NewSpanSelector(a *core.Axes, orientation string, opts ...SpanSelectorOptions) *SpanSelector {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func NewSpanSelector(a *core.Axes, orientation string, opt SpanSelectorOptions) *SpanSelector {
 	if a == nil {
 		return nil
 	}
@@ -48,9 +50,7 @@ func NewSpanSelector(a *core.Axes, orientation string, opts ...SpanSelectorOptio
 		FillColor:   render.Color{R: 0.16, G: 0.42, B: 0.76, A: 0.18},
 		LineWidth:   1.2,
 	}
-	if opt, ok := optarg.Optional("spanselector", opts); ok {
-		mergeSpanSelectorOptions(&config, &opt)
-	}
+	mergeSpanSelectorOptions(&config, &opt)
 	sel := &SpanSelector{
 		Orientation: normalizeSpanOrientation(config.Orientation),
 		Color:       config.Color,
@@ -58,14 +58,14 @@ func NewSpanSelector(a *core.Axes, orientation string, opts ...SpanSelectorOptio
 		LineWidth:   config.LineWidth,
 		z:           1200,
 	}
-	if config.Min != nil || config.Max != nil {
+	if config.Min.IsSet() || config.Max.IsSet() {
 		minV := sel.Start
 		maxV := sel.End
-		if config.Min != nil {
-			minV = *config.Min
+		if config.Min.IsSet() {
+			minV = config.Min.OrZero()
 		}
-		if config.Max != nil {
-			maxV = *config.Max
+		if config.Max.IsSet() {
+			maxV = config.Max.OrZero()
 		}
 		sel.SetSpan(minV, maxV)
 	}
@@ -226,10 +226,10 @@ func mergeSpanSelectorOptions(base, override *SpanSelectorOptions) {
 	if override.LineWidth > 0 {
 		base.LineWidth = override.LineWidth
 	}
-	if override.Min != nil {
+	if override.Min.IsSet() {
 		base.Min = override.Min
 	}
-	if override.Max != nil {
+	if override.Max.IsSet() {
 		base.Max = override.Max
 	}
 }

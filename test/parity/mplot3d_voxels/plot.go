@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/plot3d"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -47,7 +48,7 @@ func Plot() *core.Figure {
 
 	edgeColor := render.Color{R: 0, G: 0, B: 0, A: 1}
 	ax.Voxels(filled, plot3d.VoxelOptions{
-		EdgeColor: &edgeColor,
+		EdgeColor: optional.Of(edgeColor),
 	})
 	return fig
 }

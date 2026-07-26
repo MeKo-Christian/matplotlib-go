@@ -14,7 +14,7 @@ func ExampleNewButton() {
 		Min: geom.Pt{X: 0.2, Y: 0.4},
 		Max: geom.Pt{X: 0.8, Y: 0.6},
 	})
-	button := widgets.NewButton(ax, "Apply")
+	button := widgets.NewButton(ax, "Apply", widgets.ButtonOptions{})
 	button.OnClicked(func(*widgets.Button) {
 		fmt.Println("applied")
 	})

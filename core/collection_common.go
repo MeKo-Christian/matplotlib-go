@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -135,8 +136,8 @@ func (c *Collection) setArray(values []float64) error {
 		cfg.Norm = c.Norm
 	} else if c.scalarCLimSet {
 		vmin, vmax := c.VMin, c.VMax
-		cfg.VMin = &vmin
-		cfg.VMax = &vmax
+		cfg.VMin = optional.Of(vmin)
+		cfg.VMax = optional.Of(vmax)
 	}
 	mapping, err := ResolveScalarMapValues(c.ScalarValues, cfg)
 	if err != nil {

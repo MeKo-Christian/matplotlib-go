@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 )
 
 func Render() image.Image {
@@ -16,7 +17,7 @@ func Render() image.Image {
 		YBinEdges: []float64{-1.5, -0.5, 0.5, 1.5, 2.5},
 		Weights:   weights,
 		Norm:      core.HistNormDensity,
-		Colormap:  &cmap,
+		Colormap:  optional.Of(cmap),
 	})
 	if result != nil {
 		fig.AddColorbar(ax, result.Mesh, core.ColorbarOptions{Label: "density"})

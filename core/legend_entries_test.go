@@ -6,6 +6,7 @@ import (
 
 	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -19,7 +20,7 @@ func TestLegendCollectEntries(t *testing.T) {
 	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "line"})
 	ax.Scatter([]float64{0.5}, []float64{0.5}, ScatterOptions{Label: "points"})
 	ax.Bar([]float64{1}, []float64{2}, BarOptions{Label: "bars"})
-	_, _ = ax.Plot([]float64{0, 1}, []float64{1, 0})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{1, 0}, PlotOptions{})
 
 	legend := ax.AddLegend()
 	entries := legend.collectEntries()
@@ -51,10 +52,10 @@ func TestLegendCollectsLineMarkers(t *testing.T) {
 	edgeWidth := 2.0
 	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{
 		Label:           "line markers",
-		Marker:          &marker,
-		MarkerFaceColor: &face,
-		MarkerEdgeColor: &edge,
-		MarkerEdgeWidth: &edgeWidth,
+		Marker:          optional.Of(marker),
+		MarkerFaceColor: optional.Of(face),
+		MarkerEdgeColor: optional.Of(edge),
+		MarkerEdgeWidth: optional.Of(edgeWidth),
 	})
 
 	entries := ax.AddLegend().collectEntries()

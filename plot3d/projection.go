@@ -256,7 +256,7 @@ func (a *Axes3D) projectTriangulationFaces(tri core.Triangulation, z []float64, 
 	sort.SliceStable(faces, func(i, j int) bool {
 		return faces[i].depth > faces[j].depth
 	})
-	useMapping := opt.Colormap != nil && *opt.Colormap != ""
+	useMapping := opt.Colormap.OrZero() != ""
 	mapping := core.ScalarMapInfo{}
 	if useMapping {
 		mapping = resolvePlotScalarMap(values, opt)

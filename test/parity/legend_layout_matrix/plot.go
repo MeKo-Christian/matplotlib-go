@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -33,27 +34,27 @@ func Plot() *core.Figure {
 	square := core.MarkerSquare
 
 	_, _ = ax.Plot([]float64{0.4, 1.4, 2.4, 3.4, 4.4, 5.4}, []float64{1.0, 1.7, 1.4, 2.2, 2.0, 2.7}, core.PlotOptions{
-		Color:     &blue,
-		LineWidth: &lineWidth,
+		Color:     optional.Of(blue),
+		LineWidth: optional.Of(lineWidth),
 		Label:     "line",
 	})
 	ax.Scatter([]float64{0.7, 1.7, 2.7, 3.7, 4.7}, []float64{3.3, 3.8, 3.1, 3.6, 3.2}, core.ScatterOptions{
-		Color:     &orange,
-		EdgeColor: &red,
-		Marker:    &circle,
+		Color:     optional.Of(orange),
+		EdgeColor: optional.Of(red),
+		Marker:    optional.Of(circle),
 		Label:     "scatter",
 	})
 	_, _ = ax.ErrorBar([]float64{1.0, 2.3, 3.6, 4.9}, []float64{0.85, 1.15, 0.95, 1.25}, nil, []float64{0.22, 0.18, 0.25, 0.20}, core.ErrorBarOptions{
-		Color:      &green,
-		LineWidth:  &lineWidth,
-		CapSize:    &markerSize,
-		Marker:     &square,
-		MarkerSize: &markerSize,
+		Color:      optional.Of(green),
+		LineWidth:  optional.Of(lineWidth),
+		CapSize:    optional.Of(markerSize),
+		Marker:     optional.Of(square),
+		MarkerSize: optional.Of(markerSize),
 		Label:      "errorbar",
 	})
 	handlerLine, _ := ax.Plot([]float64{0.5, 1.6, 2.7, 3.8, 4.9}, []float64{4.5, 4.1, 4.35, 4.0, 4.25}, core.PlotOptions{
-		Color:     &purple,
-		LineWidth: &lineWidth,
+		Color:     optional.Of(purple),
+		LineWidth: optional.Of(lineWidth),
 		Label:     "handler patch",
 	})
 

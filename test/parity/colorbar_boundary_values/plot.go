@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 )
 
 func Plot() *core.Figure {
@@ -17,12 +18,12 @@ func Plot() *core.Figure {
 		{-0.5, 0.0, 0.6, 1.2},
 		{-0.1, 0.3, 0.9, 1.4},
 	}, core.ImageOptions{
-		Colormap: &cmap,
+		Colormap: optional.Of(cmap),
 		Norm:     core.Normalize{VMin: -0.5, VMax: 1.2},
-		XMin:     &xmin,
-		XMax:     &xmax,
-		YMin:     &ymin,
-		YMax:     &ymax,
+		XMin:     optional.Of(xmin),
+		XMax:     optional.Of(xmax),
+		YMin:     optional.Of(ymin),
+		YMax:     optional.Of(ymax),
 		Origin:   core.ImageOriginLower,
 	})
 	if img != nil {

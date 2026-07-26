@@ -8,6 +8,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/dates"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -38,10 +39,10 @@ func Plot() *core.Figure {
 	fillColor := render.Color{R: 0.85, G: 0.91, B: 0.96, A: 1}
 	lineColor := render.Color{R: 0.12, G: 0.47, B: 0.71, A: 1}
 	lineWidth := 2.0
-	if _, err := ax.FillBetween(dateValues, lower, upper, core.FillOptions{Color: &fillColor}); err != nil {
+	if _, err := ax.FillBetween(dateValues, lower, upper, core.FillOptions{Color: optional.Of(fillColor)}); err != nil {
 		panic(err)
 	}
-	if _, err := ax.Plot(dateValues, []float64{8, 12, 9, 15, 13}, core.PlotOptions{Color: &lineColor, LineWidth: &lineWidth}); err != nil {
+	if _, err := ax.Plot(dateValues, []float64{8, 12, 9, 15, 13}, core.PlotOptions{Color: optional.Of(lineColor), LineWidth: optional.Of(lineWidth)}); err != nil {
 		panic(err)
 	}
 	ax.XAxis.Locator = dates.DayLocator{ByMonthDay: []int{5, 12, 19}, Location: time.UTC}

@@ -38,7 +38,7 @@ func Plot() *core.Figure {
 		y[i] = math.Cos(t)
 		z[i] = float64(i) / float64(n-1)
 	}
-	ax.Stem(x, y, z)
+	ax.Stem(x, y, z, plot3d.Stem3DOptions{})
 	return fig
 }
 

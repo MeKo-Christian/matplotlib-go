@@ -8,6 +8,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/plot3d"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -55,8 +56,8 @@ func Plot() *core.Figure {
 	vmin := 2 * common.MinInGrid(z)
 	cmap := "Blues"
 	ax.Surface(x, y, z, core.PlotOptions{
-		VMin:     &vmin,
-		Colormap: &cmap,
+		VMin:     optional.Of(vmin),
+		Colormap: optional.Of(cmap),
 	})
 	return fig
 }

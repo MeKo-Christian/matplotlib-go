@@ -6,7 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -31,9 +31,9 @@ func Plot() *core.Figure {
 		[]float64{0.6, 1.4, 2.2, 3.0, 3.8, 4.6, 5.4},
 		[]float64{1.1, 2.5, 1.7, 3.4, 2.9, 4.1, 3.6},
 		core.StepOptions{
-			Where:     &stepWhere,
-			Color:     &render.Color{R: 0.15, G: 0.39, B: 0.78, A: 1},
-			LineWidth: common.FloatPtr(2.0),
+			Where:     stepWhere,
+			Color:     optional.Of(render.Color{R: 0.15, G: 0.39, B: 0.78, A: 1}),
+			LineWidth: optional.Of(2.0),
 		},
 	)
 	fillTrue := true
@@ -42,11 +42,11 @@ func Plot() *core.Figure {
 		[]float64{0.9, 1.7, 1.4, 2.6, 1.8, 2.2},
 		[]float64{0.4, 1.1, 2.0, 2.9, 3.7, 4.6, 5.5},
 		core.StairsOptions{
-			Fill:      &fillTrue,
-			Baseline:  &stairsBaseline,
-			Color:     &render.Color{R: 0.91, G: 0.49, B: 0.20, A: 0.72},
-			EdgeColor: &render.Color{R: 0.58, G: 0.26, B: 0.08, A: 1},
-			LineWidth: common.FloatPtr(1.5),
+			Fill:      fillTrue,
+			Baseline:  stairsBaseline,
+			Color:     optional.Of(render.Color{R: 0.91, G: 0.49, B: 0.20, A: 0.72}),
+			EdgeColor: optional.Of(render.Color{R: 0.58, G: 0.26, B: 0.08, A: 1}),
+			LineWidth: optional.Of(1.5),
 		},
 	)
 
@@ -61,31 +61,31 @@ func Plot() *core.Figure {
 		[]float64{1.3, 2.1, 1.7, 2.8, 2.2, 3.1, 2.6},
 		[]float64{3.4, 4.1, 4.8, 5.1, 5.6, 6.0, 6.3},
 		core.FillOptions{
-			Color:     &render.Color{R: 0.24, G: 0.68, B: 0.54, A: 0.72},
-			EdgeColor: &render.Color{R: 0.12, G: 0.38, B: 0.28, A: 1},
-			EdgeWidth: common.FloatPtr(1.2),
+			Color:     optional.Of(render.Color{R: 0.24, G: 0.68, B: 0.54, A: 0.72}),
+			EdgeColor: optional.Of(render.Color{R: 0.12, G: 0.38, B: 0.28, A: 1}),
+			EdgeWidth: optional.Of(1.2),
 		},
 	)
 	fillAx.AxVSpan(2.2, 3.1, core.VSpanOptions{
-		Color: &render.Color{R: 0.92, G: 0.75, B: 0.18, A: 1},
-		Alpha: common.FloatPtr(0.20),
+		Color: optional.Of(render.Color{R: 0.92, G: 0.75, B: 0.18, A: 1}),
+		Alpha: optional.Of(0.20),
 	})
 	fillAx.AxHLine(4.0, core.HLineOptions{
-		Color:     &render.Color{R: 0.52, G: 0.18, B: 0.18, A: 1},
-		LineWidth: common.FloatPtr(1.2),
+		Color:     optional.Of(render.Color{R: 0.52, G: 0.18, B: 0.18, A: 1}),
+		LineWidth: optional.Of(1.2),
 		Dashes:    []float64{4 * 36.0 / DPI, 3 * 36.0 / DPI},
 	})
 	fillAx.AxVLine(5.3, core.VLineOptions{
-		Color:     &render.Color{R: 0.18, G: 0.22, B: 0.55, A: 1},
-		LineWidth: common.FloatPtr(1.2),
+		Color:     optional.Of(render.Color{R: 0.18, G: 0.22, B: 0.55, A: 1}),
+		LineWidth: optional.Of(1.2),
 		Dashes:    []float64{2 * 36.0 / DPI, 2 * 36.0 / DPI},
 	})
 	fillAx.AxLine(
 		geom.Pt{X: 0.9, Y: 0.3},
 		geom.Pt{X: 6.4, Y: 5.6},
 		core.ReferenceLineOptions{
-			Color:     &render.Color{R: 0.22, G: 0.22, B: 0.22, A: 1},
-			LineWidth: common.FloatPtr(1.1),
+			Color:     optional.Of(render.Color{R: 0.22, G: 0.22, B: 0.22, A: 1}),
+			LineWidth: optional.Of(1.1),
 		},
 	)
 
@@ -98,12 +98,12 @@ func Plot() *core.Figure {
 	brokenAx.BrokenBarH(
 		[][2]float64{{0.8, 1.6}, {3.1, 2.2}, {6.5, 1.3}},
 		[2]float64{0.7, 0.9},
-		core.BarOptions{Color: &render.Color{R: 0.21, G: 0.51, B: 0.76, A: 1}},
+		core.BarOptions{Color: optional.Of(render.Color{R: 0.21, G: 0.51, B: 0.76, A: 1})},
 	)
 	brokenAx.BrokenBarH(
 		[][2]float64{{1.6, 1.0}, {4.0, 1.4}, {7.1, 1.7}},
 		[2]float64{2.1, 0.9},
-		core.BarOptions{Color: &render.Color{R: 0.86, G: 0.38, B: 0.16, A: 1}},
+		core.BarOptions{Color: optional.Of(render.Color{R: 0.86, G: 0.38, B: 0.16, A: 1})},
 	)
 	for _, label := range []struct {
 		x, y float64
@@ -136,11 +136,11 @@ func Plot() *core.Figure {
 	seriesB := []float64{2.1, 1.6, 2.4, 1.7}
 	bottom, _ := stackAx.Bar(x, seriesA, core.BarOptions{
 		Baselines: base,
-		Color:     &render.Color{R: 0.16, G: 0.59, B: 0.49, A: 1},
+		Color:     optional.Of(render.Color{R: 0.16, G: 0.59, B: 0.49, A: 1}),
 	})
 	top, _ := stackAx.Bar(x, seriesB, core.BarOptions{
 		Baselines: seriesA,
-		Color:     &render.Color{R: 0.88, G: 0.47, B: 0.16, A: 1},
+		Color:     optional.Of(render.Color{R: 0.88, G: 0.47, B: 0.16, A: 1}),
 	})
 	stackAx.BarLabel(bottom, []string{"A1", "A2", "A3", "A4"}, core.BarLabelOptions{
 		Position: "center",

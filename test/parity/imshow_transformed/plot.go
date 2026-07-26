@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 )
 
 func Plot() *core.Figure {
@@ -28,16 +29,16 @@ func Plot() *core.Figure {
 	angle := 28.0
 	bilinear := "bilinear"
 	ax.Image(common.WaveImageData(6, 6), core.ImageOptions{
-		Colormap:      &cmap,
-		VMin:          &vmin,
-		VMax:          &vmax,
-		XMin:          &xmin,
-		XMax:          &xmax,
-		YMin:          &ymin,
-		YMax:          &ymax,
+		Colormap:      optional.Of(cmap),
+		VMin:          optional.Of(vmin),
+		VMax:          optional.Of(vmax),
+		XMin:          optional.Of(xmin),
+		XMax:          optional.Of(xmax),
+		YMin:          optional.Of(ymin),
+		YMax:          optional.Of(ymax),
 		Origin:        core.ImageOriginLower,
-		Angle:         &angle,
-		Interpolation: &bilinear,
+		Angle:         optional.Of(angle),
+		Interpolation: optional.Of(bilinear),
 	})
 
 	return fig

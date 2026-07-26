@@ -4,7 +4,7 @@ import (
 	"math"
 
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -20,9 +20,9 @@ type AnchoredSizeBarOptions struct {
 	Sep     float64
 
 	SizeVertical float64
-	FillBar      *bool
+	FillBar      optional.Value[bool]
 	LabelTop     bool
-	FrameOn      *bool
+	FrameOn      optional.Value[bool]
 
 	Color           render.Color
 	BackgroundColor render.Color
@@ -33,7 +33,7 @@ type AnchoredSizeBarOptions struct {
 	FontKey         string
 	// FontProperties is a structured alternative to FontKey. FontKey wins when
 	// both are set.
-	FontProperties *render.FontProperties
+	FontProperties optional.Value[render.FontProperties]
 }
 
 // AnchoredSizeBar draws a Matplotlib-style anchored scale bar with a label.
@@ -68,19 +68,22 @@ type AnchoredSizeBar struct {
 }
 
 // AddAnchoredSizeBar appends an anchored scale bar to the axes.
-func (a *Axes) AddAnchoredSizeBar(size float64, label string, opts ...AnchoredSizeBarOptions) *AnchoredSizeBar {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) AddAnchoredSizeBar(size float64, label string, opt AnchoredSizeBarOptions) *AnchoredSizeBar {
 	rc := style.CurrentDefaults()
 	if a != nil {
 		rc = a.resolvedRC()
 	}
-	bar := newAnchoredSizeBar(size, label, rc, opts...)
+	bar := newAnchoredSizeBar(size, label, rc, opt)
 	if a != nil {
 		a.Add(bar)
 	}
 	return bar
 }
 
-func newAnchoredSizeBar(size float64, label string, rc style.RC, opts ...AnchoredSizeBarOptions) *AnchoredSizeBar {
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func newAnchoredSizeBar(size float64, label string, rc style.RC, opt AnchoredSizeBarOptions) *AnchoredSizeBar {
 	cfg := AnchoredSizeBarOptions{
 		Location:        LegendLowerRight,
 		Coords:          Coords(CoordData),
@@ -94,52 +97,50 @@ func newAnchoredSizeBar(size float64, label string, rc style.RC, opts ...Anchore
 		LineWidth:       1.5,
 	}
 	frameOn := true
-	cfg.FrameOn = &frameOn
-	if opt, ok := optarg.Optional("anchored size bar", opts); ok {
-		cfg.Location = opt.Location
-		cfg.Locator = opt.Locator
-		if opt.Coords != (CoordinateSpec{}) {
-			cfg.Coords = opt.Coords
-		}
-		if opt.Padding >= 0 {
-			cfg.Padding = opt.Padding
-		}
-		if opt.Inset >= 0 {
-			cfg.Inset = opt.Inset
-		}
-		if opt.Sep >= 0 {
-			cfg.Sep = opt.Sep
-		}
-		cfg.SizeVertical = opt.SizeVertical
-		cfg.FillBar = cloneBool(opt.FillBar)
-		cfg.LabelTop = opt.LabelTop
-		if opt.FrameOn != nil {
-			cfg.FrameOn = cloneBool(opt.FrameOn)
-		}
-		if opt.Color != (render.Color{}) {
-			cfg.Color = opt.Color
-		}
-		if opt.BackgroundColor != (render.Color{}) {
-			cfg.BackgroundColor = opt.BackgroundColor
-		}
-		if opt.BorderColor != (render.Color{}) {
-			cfg.BorderColor = opt.BorderColor
-		}
-		if opt.BorderWidth > 0 {
-			cfg.BorderWidth = opt.BorderWidth
-		}
-		if opt.LineWidth > 0 {
-			cfg.LineWidth = opt.LineWidth
-		}
-		if opt.FontSize > 0 {
-			cfg.FontSize = opt.FontSize
-		}
-		cfg.FontKey = opt.FontKey
-		cfg.FontProperties = cloneFontProperties(opt.FontProperties)
+	cfg.FrameOn = optional.Of(frameOn)
+	cfg.Location = opt.Location
+	cfg.Locator = opt.Locator
+	if opt.Coords != (CoordinateSpec{}) {
+		cfg.Coords = opt.Coords
 	}
+	if opt.Padding >= 0 {
+		cfg.Padding = opt.Padding
+	}
+	if opt.Inset >= 0 {
+		cfg.Inset = opt.Inset
+	}
+	if opt.Sep >= 0 {
+		cfg.Sep = opt.Sep
+	}
+	cfg.SizeVertical = opt.SizeVertical
+	cfg.FillBar = opt.FillBar
+	cfg.LabelTop = opt.LabelTop
+	if opt.FrameOn.IsSet() {
+		cfg.FrameOn = opt.FrameOn
+	}
+	if opt.Color != (render.Color{}) {
+		cfg.Color = opt.Color
+	}
+	if opt.BackgroundColor != (render.Color{}) {
+		cfg.BackgroundColor = opt.BackgroundColor
+	}
+	if opt.BorderColor != (render.Color{}) {
+		cfg.BorderColor = opt.BorderColor
+	}
+	if opt.BorderWidth > 0 {
+		cfg.BorderWidth = opt.BorderWidth
+	}
+	if opt.LineWidth > 0 {
+		cfg.LineWidth = opt.LineWidth
+	}
+	if opt.FontSize > 0 {
+		cfg.FontSize = opt.FontSize
+	}
+	cfg.FontKey = opt.FontKey
+	cfg.FontProperties = cloneFontPropertiesValue(opt.FontProperties)
 	fillBar := cfg.SizeVertical > 0
-	if cfg.FillBar != nil {
-		fillBar = *cfg.FillBar
+	if v, ok := cfg.FillBar.Get(); ok {
+		fillBar = v
 	}
 	return &AnchoredSizeBar{
 		Size:            size,
@@ -153,7 +154,7 @@ func newAnchoredSizeBar(size float64, label string, rc style.RC, opts ...Anchore
 		SizeVertical:    cfg.SizeVertical,
 		FillBar:         fillBar,
 		LabelTop:        cfg.LabelTop,
-		FrameOn:         cfg.FrameOn == nil || *cfg.FrameOn,
+		FrameOn:         !cfg.FrameOn.IsSet() || cfg.FrameOn.OrZero(),
 		Color:           cfg.Color,
 		BackgroundColor: cfg.BackgroundColor,
 		BorderColor:     cfg.BorderColor,
@@ -161,7 +162,7 @@ func newAnchoredSizeBar(size float64, label string, rc style.RC, opts ...Anchore
 		LineWidth:       cfg.LineWidth,
 		FontSize:        cfg.FontSize,
 		FontKey:         cfg.FontKey,
-		FontProperties:  cloneFontProperties(cfg.FontProperties),
+		FontProperties:  cloneFontPropertiesValue(cfg.FontProperties).Ptr(),
 		z:               950,
 	}
 }

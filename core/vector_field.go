@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -11,9 +12,9 @@ const (
 	quiverAnglesUV = "uv"
 	quiverAnglesXY = "xy"
 
-	vectorPivotTail   = "tail"
-	vectorPivotMiddle = "middle"
-	vectorPivotTip    = "tip"
+	vectorPivotTail   VectorPivot = "tail"
+	vectorPivotMiddle VectorPivot = "middle"
+	vectorPivotTip    VectorPivot = "tip"
 
 	streamDirectionForward  = "forward"
 	streamDirectionBackward = "backward"
@@ -22,31 +23,31 @@ const (
 
 // QuiverOptions configures vector-arrow plots.
 type QuiverOptions struct {
-	Color          *render.Color
+	Color          optional.Value[render.Color]
 	Colors         []render.Color
 	C              []float64
 	CGrid          [][]float64
-	Colormap       *string
+	Colormap       optional.Value[string]
 	Norm           ScalarNormalizer
-	VMin           *float64
-	VMax           *float64
-	Alpha          *float64
-	EdgeColor      *render.Color
-	EdgeWidth      *float64
-	Pivot          string
+	VMin           optional.Value[float64]
+	VMax           optional.Value[float64]
+	Alpha          optional.Value[float64]
+	EdgeColor      optional.Value[render.Color]
+	EdgeWidth      optional.Value[float64]
+	Pivot          VectorPivot
 	Angles         string
 	AngleValues    []float64
-	Scale          *float64
+	Scale          optional.Value[float64]
 	ScaleUnits     string
 	Units          string
-	Width          *float64
-	HeadWidth      *float64
-	HeadLength     *float64
-	HeadAxisLength *float64
-	MinShaft       *float64
-	MinLength      *float64
+	Width          optional.Value[float64]
+	HeadWidth      optional.Value[float64]
+	HeadLength     optional.Value[float64]
+	HeadAxisLength optional.Value[float64]
+	MinShaft       optional.Value[float64]
+	MinLength      optional.Value[float64]
 	Label          string
-	ZOrder         *float64
+	ZOrder         optional.Value[float64]
 }
 
 // Quiver renders repeated vector arrows anchored at data points.
@@ -62,7 +63,7 @@ type Quiver struct {
 	EdgeWidth    float64
 	Alpha        float64
 
-	Pivot          string
+	Pivot          VectorPivot
 	Angles         string
 	AngleValues    []float64
 	Scale          float64
@@ -96,7 +97,7 @@ type QuiverKeyOptions struct {
 	Color      render.Color
 	LabelColor render.Color
 	FontSize   float64
-	ZOrder     *float64
+	ZOrder     optional.Value[float64]
 }
 
 // QuiverKey renders a labeled reference arrow using an existing quiver style.
@@ -132,29 +133,29 @@ type BarbSizes struct {
 
 // BarbsOptions configures wind-barb style vector plots.
 type BarbsOptions struct {
-	Color      *render.Color
+	Color      optional.Value[render.Color]
 	Colors     []render.Color
 	C          []float64
 	CGrid      [][]float64
-	Colormap   *string
+	Colormap   optional.Value[string]
 	Norm       ScalarNormalizer
-	VMin       *float64
-	VMax       *float64
-	Alpha      *float64
-	BarbColor  *render.Color
-	FlagColor  *render.Color
-	LineWidth  *float64
-	Pivot      string
-	Length     *float64
+	VMin       optional.Value[float64]
+	VMax       optional.Value[float64]
+	Alpha      optional.Value[float64]
+	BarbColor  optional.Value[render.Color]
+	FlagColor  optional.Value[render.Color]
+	LineWidth  optional.Value[float64]
+	Pivot      VectorPivot
+	Length     optional.Value[float64]
 	Units      string
-	Sizes      *BarbSizes
-	Increments *BarbIncrements
-	FillEmpty  *bool
-	Rounding   *bool
-	FlipBarb   *bool
+	Sizes      optional.Value[BarbSizes]
+	Increments optional.Value[BarbIncrements]
+	FillEmpty  optional.Value[bool]
+	Rounding   optional.Value[bool]
+	FlipBarb   optional.Value[bool]
 	Flip       []bool
 	Label      string
-	ZOrder     *float64
+	ZOrder     optional.Value[float64]
 }
 
 // Barbs renders meteorological barb glyphs anchored at data points.
@@ -171,7 +172,7 @@ type Barbs struct {
 	LineWidth    float64
 	Alpha        float64
 
-	Pivot      string
+	Pivot      VectorPivot
 	Length     float64
 	Units      string
 	Sizes      BarbSizes
@@ -194,22 +195,22 @@ type StreamplotOptions struct {
 	DensityX             float64
 	DensityY             float64
 	CGrid                [][]float64
-	Colormap             *string
+	Colormap             optional.Value[string]
 	Norm                 ScalarNormalizer
-	VMin                 *float64
-	VMax                 *float64
+	VMin                 optional.Value[float64]
+	VMax                 optional.Value[float64]
 	StartPoints          []geom.Pt
-	MinLength            *float64
-	MaxLength            *float64
+	MinLength            optional.Value[float64]
+	MaxLength            optional.Value[float64]
 	IntegrationDirection string
-	BrokenStreamlines    *bool
-	ArrowSize            *float64
-	ArrowCount           *int
-	LineWidth            *float64
-	Color                *render.Color
-	ArrowColor           *render.Color
+	BrokenStreamlines    optional.Value[bool]
+	ArrowSize            optional.Value[float64]
+	ArrowCount           optional.Value[int]
+	LineWidth            optional.Value[float64]
+	Color                optional.Value[render.Color]
+	ArrowColor           optional.Value[render.Color]
 	Label                string
-	ZOrder               *float64
+	ZOrder               optional.Value[float64]
 }
 
 // StreamplotSet owns the line and arrow artists produced by Axes.Streamplot.
@@ -344,10 +345,7 @@ func flattenVectorGrid(x, y []float64, u, v [][]float64, scalars []float64) ([]g
 }
 
 //nolint:gocritic // QuiverOptions is read-only here and the result is copied out.
-func vectorScalarOptions(opt QuiverOptions, supplied bool) []float64 {
-	if !supplied {
-		return nil
-	}
+func vectorScalarOptions(opt QuiverOptions) []float64 {
 	if len(opt.CGrid) > 0 {
 		return flattenScalarGrid(opt.CGrid)
 	}
@@ -355,10 +353,7 @@ func vectorScalarOptions(opt QuiverOptions, supplied bool) []float64 {
 }
 
 //nolint:gocritic // BarbsOptions is read-only here and the result is copied out.
-func barbsScalarOptions(opt BarbsOptions, supplied bool) []float64 {
-	if !supplied {
-		return nil
-	}
+func barbsScalarOptions(opt BarbsOptions) []float64 {
 	if len(opt.CGrid) > 0 {
 		return flattenScalarGrid(opt.CGrid)
 	}
@@ -498,19 +493,19 @@ func derefColor(value *render.Color) render.Color {
 	return *value
 }
 
-func normalizeVectorPivot(value, fallback string) string {
-	switch strings.ToLower(value) {
+func normalizeVectorPivot(value, fallback VectorPivot) VectorPivot {
+	switch VectorPivot(strings.ToLower(string(value))) {
 	case "mid":
 		return vectorPivotMiddle
 	case vectorPivotMiddle, vectorPivotTip, vectorPivotTail:
-		return strings.ToLower(value)
+		return VectorPivot(strings.ToLower(string(value)))
 	default:
 		return fallback
 	}
 }
 
 func normalizeQuiverAngles(value string) string {
-	switch strings.ToLower(value) {
+	switch VectorPivot(strings.ToLower(string(value))) {
 	case quiverAnglesXY:
 		return quiverAnglesXY
 	default:

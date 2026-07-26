@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -62,13 +63,13 @@ func TestAxesTextDefaultsToUnclippedLikeMatplotlib(t *testing.T) {
 	fig := NewFigure(200, 120)
 	ax := fig.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
 
-	text := ax.Text(0.5, 0.5, "label")
+	text := ax.Text(0.5, 0.5, "label", TextOptions{})
 	if text.ClipOn {
 		t.Fatal("Axes.Text default ClipOn = true, want false")
 	}
 
 	clipOn := true
-	clipped := ax.Text(0.5, 0.5, "clipped", TextOptions{ClipOn: &clipOn})
+	clipped := ax.Text(0.5, 0.5, "clipped", TextOptions{ClipOn: optional.Of(clipOn)})
 	if !clipped.ClipOn {
 		t.Fatal("Axes.Text explicit ClipOn=true was not preserved")
 	}

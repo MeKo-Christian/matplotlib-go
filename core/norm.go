@@ -584,7 +584,7 @@ type BoundaryNorm struct {
 	Boundaries []float64
 	NColors    int
 	Clip       bool
-	Extend     string
+	Extend     ColorbarExtend
 }
 
 func (n BoundaryNorm) Map(value float64) float64 {
@@ -675,7 +675,7 @@ func boundaryNormRegionCount(n BoundaryNorm) int {
 	return regions
 }
 
-func boundaryNormOffset(extend string) int {
+func boundaryNormOffset(extend ColorbarExtend) int {
 	switch extend {
 	case "min", "both":
 		return 1

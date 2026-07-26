@@ -34,7 +34,7 @@ func Plot() *core.Figure {
 
 	lineWidth := 2.0
 	blue := render.Color{R: 31.0 / 255.0, G: 119.0 / 255.0, B: 180.0 / 255.0, A: 1}
-	_, _ = ax.Plot(x, y, core.PlotOptions{Color: &blue, LineWidth: &lineWidth})
+	_, _ = ax.Plot(x, y, core.PlotOptions{Color: optional.Of(blue), LineWidth: optional.Of(lineWidth)})
 	ax.SetTitle(`MathText $\alpha^2 + \beta_i$`)
 	ax.SetXLabel(`phase $\theta$`)
 	ax.SetYLabel(`amplitude $\frac{1}{\sqrt{2}}$`)
@@ -59,11 +59,11 @@ func Plot() *core.Figure {
 		HAlign:   core.TextAlignLeft,
 		VAlign:   core.TextVAlignTop,
 		FontSize: 11,
-		BBox: &core.TextBBoxOptions{
+		BBox: optional.Of(core.TextBBoxOptions{
 			FaceColor: render.Color{R: 1, G: 1, B: 1, A: 1},
 			EdgeColor: render.Color{R: 0.8, G: 0.8, B: 0.8, A: 1},
 			Padding:   0.3,
-		},
+		}),
 	})
 	return fig
 }

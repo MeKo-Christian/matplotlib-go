@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 )
 
 func Render() image.Image {
@@ -18,7 +19,7 @@ func Render() image.Image {
 		{0.18, 0.32, 0.48, 0.70},
 		{0.28, 0.46, 0.66, 0.86},
 		{0.40, 0.58, 0.78, 0.96},
-	}, core.MatShowOptions{Colormap: &cmap})
+	}, core.MatShowOptions{Colormap: optional.Of(cmap)})
 
 	return common.RenderImageFixture(fig, 640, 360)
 }

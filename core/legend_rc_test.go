@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -75,7 +76,7 @@ func TestLegendRCPointCountsAndShadowAffectDrawing(t *testing.T) {
 	fig := NewFigure(400, 300, style.WithTheme(style.Theme{RC: rc}))
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 	marker := MarkerCircle
-	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "line", Marker: &marker})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{Label: "line", Marker: optional.Of(marker)})
 	legend := ax.AddLegend()
 
 	sample := geom.Rect{Min: geom.Pt{X: 10, Y: 10}, Max: geom.Pt{X: 70, Y: 30}}

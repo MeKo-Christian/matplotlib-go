@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/style"
 )
 
@@ -30,9 +30,9 @@ func imageOriginFromRC(rc *style.RC) ImageOrigin {
 
 // imshowAspectDefault returns the image.aspect rcParam ("equal", "auto", or a
 // numeric ratio), falling back to matplotlib's "equal" default when unset.
-func imshowAspectDefault(rc *style.RC) string {
+func imshowAspectDefault(rc *style.RC) ImageAspect {
 	if aspect := strings.TrimSpace(rc.Image.Aspect); aspect != "" {
-		return aspect
+		return ImageAspect(aspect)
 	}
 	return "equal"
 }
@@ -63,29 +63,29 @@ const imageDefaultZ = -1100
 
 // ImageOptions controls Image2D rendering.
 type ImageOptions struct {
-	Colormap *string
+	Colormap optional.Value[string]
 	Norm     ScalarNormalizer
-	VMin     *float64
-	VMax     *float64
-	Alpha    *float64
-	XMin     *float64
-	XMax     *float64
-	YMin     *float64
-	YMax     *float64
+	VMin     optional.Value[float64]
+	VMax     optional.Value[float64]
+	Alpha    optional.Value[float64]
+	XMin     optional.Value[float64]
+	XMax     optional.Value[float64]
+	YMin     optional.Value[float64]
+	YMax     optional.Value[float64]
 	Origin   ImageOrigin
-	Angle    *float64
+	Angle    optional.Value[float64]
 	// RotationAnchor selects where rotation is centered.
 	RotationAnchor ImageAnchor
 	// AnchorX/Y are used only when RotationAnchor is ImageAnchorCustom
 	// and are interpreted in data coordinates.
-	RotationAnchorX *float64
-	RotationAnchorY *float64
+	RotationAnchorX optional.Value[float64]
+	RotationAnchorY optional.Value[float64]
 	Label           string
 	// Interpolation selects the filter used when resampling the image.
 	// An empty string (the default) lets the renderer choose its default
 	// (typically nearest-neighbor). Recognized values mirror matplotlib's
 	// imshow interpolation names (e.g. "nearest", "bilinear", "bicubic").
-	Interpolation *string
+	Interpolation optional.Value[string]
 }
 
 // Image2D renders scalar matrix data as an image/heatmap.
@@ -150,12 +150,12 @@ func (i *Image2D) ScalarMap() ScalarMapInfo {
 }
 
 // Image creates an Image2D artist for matrix-like heatmap rendering.
-func (a *Axes) Image(data [][]float64, opts ...ImageOptions) *Image2D {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) Image(data [][]float64, opt ImageOptions) *Image2D {
 	if len(data) == 0 {
 		return nil
 	}
-
-	opt := optarg.One("image", opts)
 
 	rows := len(data)
 	cols := 0
@@ -170,8 +170,8 @@ func (a *Axes) Image(data [][]float64, opts ...ImageOptions) *Image2D {
 
 	rc := a.resolvedRC()
 	cmap := rc.Image.Cmap
-	if opt.Colormap != nil {
-		cmap = *opt.Colormap
+	if v, ok := opt.Colormap.Get(); ok {
+		cmap = v
 	}
 	mapping, err := ResolveScalarMapGrid(data, ScalarMapConfig{
 		Colormap: cmap,
@@ -184,7 +184,7 @@ func (a *Axes) Image(data [][]float64, opts ...ImageOptions) *Image2D {
 	}
 
 	g := resolveImageGeometry(opt, cols, rows)
-	if opt.Interpolation == nil {
+	if !opt.Interpolation.IsSet() {
 		g.interp = imageInterpolationDefault(rc.Image.Interpolation)
 	}
 	image := &Image2D{
@@ -223,6 +223,8 @@ type imageGeometry struct {
 
 // resolveImageGeometry derives the placement-related Image2D fields from
 // ImageOptions, defaulting the extent to the pixel grid [0,cols]×[0,rows].
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
 func resolveImageGeometry(opt ImageOptions, cols, rows int) imageGeometry {
 	g := imageGeometry{
 		xMin:   0,
@@ -232,34 +234,34 @@ func resolveImageGeometry(opt ImageOptions, cols, rows int) imageGeometry {
 		alpha:  1,
 		anchor: opt.RotationAnchor,
 	}
-	if opt.XMin != nil && !math.IsNaN(*opt.XMin) && !math.IsInf(*opt.XMin, 0) {
-		g.xMin = *opt.XMin
+	if opt.XMin.IsSet() && !math.IsNaN(opt.XMin.OrZero()) && !math.IsInf(opt.XMin.OrZero(), 0) {
+		g.xMin = opt.XMin.OrZero()
 	}
-	if opt.XMax != nil && !math.IsNaN(*opt.XMax) && !math.IsInf(*opt.XMax, 0) {
-		g.xMax = *opt.XMax
+	if opt.XMax.IsSet() && !math.IsNaN(opt.XMax.OrZero()) && !math.IsInf(opt.XMax.OrZero(), 0) {
+		g.xMax = opt.XMax.OrZero()
 	}
-	if opt.YMin != nil && !math.IsNaN(*opt.YMin) && !math.IsInf(*opt.YMin, 0) {
-		g.yMin = *opt.YMin
+	if opt.YMin.IsSet() && !math.IsNaN(opt.YMin.OrZero()) && !math.IsInf(opt.YMin.OrZero(), 0) {
+		g.yMin = opt.YMin.OrZero()
 	}
-	if opt.YMax != nil && !math.IsNaN(*opt.YMax) && !math.IsInf(*opt.YMax, 0) {
-		g.yMax = *opt.YMax
+	if opt.YMax.IsSet() && !math.IsNaN(opt.YMax.OrZero()) && !math.IsInf(opt.YMax.OrZero(), 0) {
+		g.yMax = opt.YMax.OrZero()
 	}
-	if opt.Alpha != nil {
-		g.alpha = clampOneToOne(*opt.Alpha)
+	if opt.Alpha.IsSet() {
+		g.alpha = clampOneToOne(opt.Alpha.OrZero())
 	}
-	if opt.Angle != nil {
-		g.angle = *opt.Angle
+	if v, ok := opt.Angle.Get(); ok {
+		g.angle = v
 	}
 	if g.anchor == ImageAnchorCustom {
-		if opt.RotationAnchorX != nil {
-			g.rotateX = *opt.RotationAnchorX
+		if v, ok := opt.RotationAnchorX.Get(); ok {
+			g.rotateX = v
 		}
-		if opt.RotationAnchorY != nil {
-			g.rotateY = *opt.RotationAnchorY
+		if v, ok := opt.RotationAnchorY.Get(); ok {
+			g.rotateY = v
 		}
 	}
-	if opt.Interpolation != nil {
-		g.interp = *opt.Interpolation
+	if v, ok := opt.Interpolation.Get(); ok {
+		g.interp = v
 	}
 	return g
 }
@@ -267,6 +269,8 @@ func resolveImageGeometry(opt ImageOptions, cols, rows int) imageGeometry {
 // imageRGBA constructs an Image2D backed by pre-colored RGBA pixels, bypassing
 // the colormap+norm path. It mirrors Image's option handling minus the scalar
 // mapping. The extent defaults to the pixel grid unless overridden via opt.
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
 func (a *Axes) imageRGBA(rgba *image.RGBA, opt ImageOptions) *Image2D {
 	if a == nil || rgba == nil {
 		return nil
@@ -279,7 +283,7 @@ func (a *Axes) imageRGBA(rgba *image.RGBA, opt ImageOptions) *Image2D {
 	}
 
 	g := resolveImageGeometry(opt, cols, rows)
-	if opt.Interpolation == nil {
+	if !opt.Interpolation.IsSet() {
 		g.interp = imageInterpolationDefault(a.resolvedRC().Image.Interpolation)
 	}
 	img := &Image2D{

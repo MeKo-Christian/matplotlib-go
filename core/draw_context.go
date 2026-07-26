@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 	"github.com/cwbudde/matplotlib-go/transform"
@@ -51,10 +52,10 @@ type DrawOptions struct {
 	// FigureBackground, when non-nil, paints a full-viewport background fill
 	// before any content (used for savefig.facecolor on backends that cannot
 	// re-clear their surface).
-	FigureBackground *render.Color
+	FigureBackground optional.Value[render.Color]
 	// FigureEdge, when non-nil, strokes a border around the full viewport after
 	// the background fill (savefig.edgecolor).
-	FigureEdge *render.Color
+	FigureEdge optional.Value[render.Color]
 	// FigureEdgeWidth is the figure border stroke width in device pixels.
 	FigureEdgeWidth float64
 }

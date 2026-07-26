@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -29,8 +30,8 @@ func Plot() *core.Figure {
 		Window: "none",
 		Scale:  core.SignalSpectrumScaleDB,
 		PlotOptions: core.PlotOptions{
-			Color:     &render.Color{R: 0.12, G: 0.47, B: 0.71, A: 1},
-			LineWidth: &width,
+			Color:     optional.Of(render.Color{R: 0.12, G: 0.47, B: 0.71, A: 1}),
+			LineWidth: optional.Of(width),
 		},
 	})
 	magAx.AddYGrid()
@@ -43,8 +44,8 @@ func Plot() *core.Figure {
 		Window: "none",
 		Sides:  core.SignalSpectrumSidesTwoSided,
 		PlotOptions: core.PlotOptions{
-			Color:     &render.Color{R: 1.00, G: 0.50, B: 0.05, A: 1},
-			LineWidth: &width,
+			Color:     optional.Of(render.Color{R: 1.00, G: 0.50, B: 0.05, A: 1}),
+			LineWidth: optional.Of(width),
 		},
 	})
 	angleAx.AddYGrid()
@@ -56,8 +57,8 @@ func Plot() *core.Figure {
 		Window: "none",
 		Sides:  core.SignalSpectrumSidesOneSided,
 		PlotOptions: core.PlotOptions{
-			Color:     &render.Color{R: 0.17, G: 0.63, B: 0.17, A: 1},
-			LineWidth: &width,
+			Color:     optional.Of(render.Color{R: 0.17, G: 0.63, B: 0.17, A: 1}),
+			LineWidth: optional.Of(width),
 		},
 	})
 	phaseAx.AddYGrid()

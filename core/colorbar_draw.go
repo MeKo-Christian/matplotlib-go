@@ -23,7 +23,7 @@ func colorbarDrawExtendFracs(c *Colorbar) (float64, float64) {
 	return c.ExtendFracMin, c.ExtendFracMax
 }
 
-func colorbarExtensionPaths(clip geom.Rect, extend, orientation string, extendRect bool, fracMin, fracMax float64) []colorbarExtensionPath {
+func colorbarExtensionPaths(clip geom.Rect, extend ColorbarExtend, orientation PlotOrientation, extendRect bool, fracMin, fracMax float64) []colorbarExtensionPath {
 	extend = normalizeColorbarExtend(extend)
 	if extend == "neither" || clip.W() <= 0 || clip.H() <= 0 {
 		return nil
@@ -212,7 +212,7 @@ func (c *Colorbar) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 }
 
-func drawColorbarBoundaryDividers(r render.Renderer, clip geom.Rect, boundaries []float64, spacing, orientation string, color render.Color, width float64) {
+func drawColorbarBoundaryDividers(r render.Renderer, clip geom.Rect, boundaries []float64, spacing string, orientation PlotOrientation, color render.Color, width float64) {
 	if r == nil || len(boundaries) < 3 || clip.W() <= 0 || clip.H() <= 0 {
 		return
 	}
@@ -292,7 +292,7 @@ func (c *Colorbar) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 	}
 }
 
-func colorbarExtendedOutlinePath(clip geom.Rect, extend, orientation string, extendRect bool, fracMin, fracMax float64) geom.Path {
+func colorbarExtendedOutlinePath(clip geom.Rect, extend ColorbarExtend, orientation PlotOrientation, extendRect bool, fracMin, fracMax float64) geom.Path {
 	extend = normalizeColorbarExtend(extend)
 	if extend == "neither" || clip.W() <= 0 || clip.H() <= 0 {
 		return geom.Path{}
@@ -363,7 +363,7 @@ func colorbarExtendedOutlinePath(clip geom.Rect, extend, orientation string, ext
 	return geom.Path{V: verts, C: closedPolygonCmds(len(verts))}
 }
 
-func colorbarCellRect(clip geom.Rect, index, count int, orientation string) geom.Rect {
+func colorbarCellRect(clip geom.Rect, index, count int, orientation PlotOrientation) geom.Rect {
 	if count <= 0 {
 		return geom.Rect{}
 	}
@@ -386,7 +386,7 @@ func colorbarCellRect(clip geom.Rect, index, count int, orientation string) geom
 	}
 }
 
-func colorbarBoundaryCellRect(clip geom.Rect, low, high, vmin, vmax float64, orientation string) geom.Rect {
+func colorbarBoundaryCellRect(clip geom.Rect, low, high, vmin, vmax float64, orientation PlotOrientation) geom.Rect {
 	span := vmax - vmin
 	if span == 0 {
 		return geom.Rect{}
@@ -409,8 +409,8 @@ func colorbarBoundaryCellRect(clip geom.Rect, low, high, vmin, vmax float64, ori
 	}
 }
 
-func (c *Colorbar) normalizedOrientation() string {
-	if c != nil && strings.ToLower(strings.TrimSpace(c.Orientation)) == "horizontal" {
+func (c *Colorbar) normalizedOrientation() PlotOrientation {
+	if c != nil && strings.ToLower(strings.TrimSpace(string(c.Orientation))) == "horizontal" {
 		return "horizontal"
 	}
 	return "vertical"

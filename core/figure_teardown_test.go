@@ -47,7 +47,7 @@ func TestAxesRemoveRoutesThroughFigure(t *testing.T) {
 func TestFigureClearEmptiesEverything(t *testing.T) {
 	fig := NewFigure(400, 300)
 	ax := fig.AddAxes(unitRect())
-	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{})
 	fig.Add(&Line2D{})
 	fig.SupTitle = "super"
 	fig.SupXLabel = "sx"

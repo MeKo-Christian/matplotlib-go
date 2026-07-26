@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/plot3d"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -34,7 +35,7 @@ func Plot() *core.Figure {
 	yerr := []float64{0.10, 0.14, 0.09, 0.13}
 	zerr := []float64{0.18, 0.12, 0.16, 0.10}
 	color := render.Color{R: 0.12156862745098039, G: 0.4666666666666667, B: 0.7058823529411765, A: 1}
-	ax.ErrorBar3D(x, y, z, xerr, yerr, zerr, plot3d.ErrorBar3DOptions{Color: &color})
+	ax.ErrorBar3D(x, y, z, xerr, yerr, zerr, plot3d.ErrorBar3DOptions{Color: optional.Of(color)})
 	return fig
 }
 

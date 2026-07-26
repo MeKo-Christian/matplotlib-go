@@ -7,6 +7,7 @@ import (
 	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -53,10 +54,10 @@ func Plot() *core.Figure {
 	edgeColor := render.Color{R: 0.12, G: 0.12, B: 0.12, A: 1}
 	edgeWidth := 1.0
 	_, _ = ax.Bar(x, []float64{2.4, 3.4, 4.3, 5.2, 6.1, 4.8, 3.7}, core.BarOptions{
-		Width:     &width,
+		Width:     optional.Of(width),
 		Colors:    colors,
-		EdgeColor: &edgeColor,
-		EdgeWidth: &edgeWidth,
+		EdgeColor: optional.Of(edgeColor),
+		EdgeWidth: optional.Of(edgeWidth),
 	})
 	ax.XAxis.Locator = ticker.FixedLocator{TicksList: x}
 	ax.XAxis.Formatter = ticker.FixedFormatter{Labels: labels}

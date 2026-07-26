@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -21,12 +22,12 @@ func Render() image.Image {
 	lineColor := render.Color{R: 0.08, G: 0.08, B: 0.10, A: 1}
 	lineWidth := 2.0
 	_, _ = ax.Plot([]float64{0, 6}, []float64{0, 6}, core.PlotOptions{
-		Color:     &lineColor,
-		LineWidth: &lineWidth,
+		Color:     optional.Of(lineColor),
+		LineWidth: optional.Of(lineWidth),
 	})
 	_, _ = ax.Plot([]float64{0, 6}, []float64{6, 0}, core.PlotOptions{
-		Color:     &lineColor,
-		LineWidth: &lineWidth,
+		Color:     optional.Of(lineColor),
+		LineWidth: optional.Of(lineWidth),
 	})
 
 	cmap := "plasma"
@@ -39,16 +40,16 @@ func Render() image.Image {
 	ymax := 6.0
 	bilinear := "bilinear"
 	ax.Image(common.WaveImageData(6, 6), core.ImageOptions{
-		Colormap:      &cmap,
-		VMin:          &vmin,
-		VMax:          &vmax,
-		Alpha:         &alpha,
-		XMin:          &xmin,
-		XMax:          &xmax,
-		YMin:          &ymin,
-		YMax:          &ymax,
+		Colormap:      optional.Of(cmap),
+		VMin:          optional.Of(vmin),
+		VMax:          optional.Of(vmax),
+		Alpha:         optional.Of(alpha),
+		XMin:          optional.Of(xmin),
+		XMax:          optional.Of(xmax),
+		YMin:          optional.Of(ymin),
+		YMax:          optional.Of(ymax),
 		Origin:        core.ImageOriginLower,
-		Interpolation: &bilinear,
+		Interpolation: optional.Of(bilinear),
 	})
 
 	return common.RenderImageFixture(fig, 640, 360)

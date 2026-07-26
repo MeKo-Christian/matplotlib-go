@@ -6,7 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -51,8 +51,8 @@ func Plot() *core.Figure {
 	ecdfAx.ECDF(
 		[]float64{1.2, 1.8, 2.0, 2.0, 3.1, 3.7, 4.3, 5.0, 5.8, 6.6, 7.0},
 		core.ECDFOptions{
-			Color:     &render.Color{R: 0.18, G: 0.36, B: 0.75, A: 1},
-			LineWidth: common.FloatPtr(2),
+			Color:     optional.Of(render.Color{R: 0.18, G: 0.36, B: 0.75, A: 1}),
+			LineWidth: optional.Of(2.0),
 			Compress:  true,
 		},
 	)
@@ -70,9 +70,9 @@ func Plot() *core.Figure {
 			Norm:       core.HistNormProbability,
 			Cumulative: true,
 			HistType:   core.HistTypeStepFilled,
-			Color:      &render.Color{R: 0.42, G: 0.62, B: 0.90, A: 0.55},
-			EdgeColor:  &render.Color{R: 0.12, G: 0.25, B: 0.55, A: 1},
-			EdgeWidth:  common.FloatPtr(1.4),
+			Color:      optional.Of(render.Color{R: 0.42, G: 0.62, B: 0.90, A: 0.55}),
+			EdgeColor:  optional.Of(render.Color{R: 0.12, G: 0.25, B: 0.55, A: 1}),
+			EdgeWidth:  optional.Of(1.4),
 		},
 	)
 
@@ -96,8 +96,8 @@ func Plot() *core.Figure {
 				{R: 0.86, G: 0.42, B: 0.19, A: 0.8},
 				{R: 0.36, G: 0.62, B: 0.36, A: 0.8},
 			},
-			EdgeColor: &render.Color{R: 0.10, G: 0.10, B: 0.10, A: 1},
-			EdgeWidth: common.FloatPtr(0.7),
+			EdgeColor: optional.Of(render.Color{R: 0.10, G: 0.10, B: 0.10, A: 1}),
+			EdgeWidth: optional.Of(0.7),
 		},
 	)
 	return fig

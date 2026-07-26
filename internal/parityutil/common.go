@@ -12,6 +12,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/dates"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/plot3d"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
@@ -157,8 +158,8 @@ func ConfigureCompositionAxes(ax *core.Axes, title string, x, y []float64, c ren
 	ax.SetYLabel("y")
 	width := 2.0
 	_, _ = ax.Plot(x, y, core.PlotOptions{
-		Color:     &c,
-		LineWidth: &width,
+		Color:     optional.Of(c),
+		LineWidth: optional.Of(width),
 		Label:     title,
 	})
 	ax.AutoScale(0.10)
@@ -237,8 +238,8 @@ func PlotGeoProjectionAxes(projection, title string, lonMin, lonMax float64) *co
 	lineColor := render.Color{R: 0.14, G: 0.34, B: 0.70, A: 1}
 	lineWidth := 2.0
 	_, _ = ax.Plot(lon, lat, core.PlotOptions{
-		Color:     &lineColor,
-		LineWidth: &lineWidth,
+		Color:     optional.Of(lineColor),
+		LineWidth: optional.Of(lineWidth),
 	})
 
 	return fig

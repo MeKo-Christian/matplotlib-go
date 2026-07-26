@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -277,6 +278,18 @@ func cloneFontProperties(props *render.FontProperties) *render.FontProperties {
 	cloned.Families = append([]string(nil), props.Families...)
 	cloned.Features = append([]render.TextFeature(nil), props.Features...)
 	return &cloned
+}
+
+// cloneFontPropertiesValue deep-copies the slices inside a FontProperties so an
+// options value and the artist built from it never share backing arrays.
+func cloneFontPropertiesValue(props optional.Value[render.FontProperties]) optional.Value[render.FontProperties] {
+	value, ok := props.Get()
+	if !ok {
+		return props
+	}
+	value.Families = append([]string(nil), value.Families...)
+	value.Features = append([]render.TextFeature(nil), value.Features...)
+	return optional.Of(value)
 }
 
 func cloneBool(v *bool) *bool {

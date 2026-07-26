@@ -133,7 +133,7 @@ func TestAnchoredTextBoxDrawsFigureAndAxesBoxes(t *testing.T) {
 		Min: geom.Pt{X: 0.10, Y: 0.12},
 		Max: geom.Pt{X: 0.90, Y: 0.88},
 	})
-	ax.AddAnchoredText("Peak\nstable")
+	ax.AddAnchoredText("Peak\nstable", AnchoredTextOptions{})
 	fig.AddAnchoredText("Global", AnchoredTextOptions{Location: LegendLowerRight})
 
 	var r figureLayoutRecordingRenderer
@@ -482,8 +482,8 @@ func TestConstrainedLayoutNestedGridReservesColorbarAndOutsideLegend(t *testing.
 	inner := outer.Cell(0, 1).GridSpec(2, 1)
 	top := inner.Cell(0, 0).AddAxes()
 	bottom := inner.Cell(1, 0).AddAxes()
-	image := top.Image([][]float64{{0, 1}, {2, 3}})
-	colorbar := fig.AddColorbar(top, image)
+	image := top.Image([][]float64{{0, 1}, {2, 3}}, ImageOptions{})
+	colorbar := fig.AddColorbar(top, image, ColorbarOptions{})
 	if colorbar == nil {
 		t.Fatal("expected nested colorbar")
 	}
@@ -525,10 +525,10 @@ func TestConstrainedLayoutKeepsNestedYAxisTickDensityReadable(t *testing.T) {
 	outer.Span(0, 0, 2, 1).AddAxes()
 	nested := outer.Cell(0, 1).GridSpec(2, 1, WithGridSpecSpacing(0, 0.12))
 	top := nested.Cell(0, 0).AddAxes()
-	_, _ = top.Plot([]float64{0, 1, 2, 3}, []float64{3.4, 2.6, 2.9, 1.8})
+	_, _ = top.Plot([]float64{0, 1, 2, 3}, []float64{3.4, 2.6, 2.9, 1.8}, PlotOptions{})
 	top.AutoScale(0.10)
 	bottom := nested.Cell(1, 0).AddAxes(WithSharedX(top))
-	_, _ = bottom.Plot([]float64{0, 1, 2, 3}, []float64{1.0, 1.6, 1.3, 2.2})
+	_, _ = bottom.Plot([]float64{0, 1, 2, 3}, []float64{1.0, 1.6, 1.3, 2.2}, PlotOptions{})
 	bottom.AutoScale(0.10)
 	outer.Cell(1, 1).SubFigure().AddSubplot(1, 1, 1)
 
@@ -550,7 +550,7 @@ func TestConstrainedLayoutReservesColorbarSpaceAndTracksParent(t *testing.T) {
 		t.Fatalf("constrained layout pad = %v, want matplotlib default %v", got, want)
 	}
 	ax := fig.AddSubplot(1, 1, 1)
-	img := ax.Image([][]float64{{0, 1}, {2, 3}})
+	img := ax.Image([][]float64{{0, 1}, {2, 3}}, ImageOptions{})
 	cb := fig.AddColorbar(ax, img, ColorbarOptions{Label: "Intensity"})
 	if cb == nil {
 		t.Fatal("expected colorbar axes")
@@ -600,7 +600,7 @@ func TestConstrainedLayoutMeasuresBottomXLabelLineBox(t *testing.T) {
 	fig.ConstrainedLayout()
 	ax := fig.AddSubplot(1, 1, 1)
 	ax.SetXLabel("x")
-	img := ax.Image([][]float64{{0, 1}, {2, 3}})
+	img := ax.Image([][]float64{{0, 1}, {2, 3}}, ImageOptions{})
 	if cb := fig.AddColorbar(ax, img, ColorbarOptions{Label: "Intensity"}); cb == nil {
 		t.Fatal("expected colorbar axes")
 	}

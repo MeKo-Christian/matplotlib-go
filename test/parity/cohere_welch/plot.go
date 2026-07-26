@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -24,7 +25,7 @@ func Plot() *core.Figure {
 	ax.Cohere(x, y, core.SignalSpectrumOptions{
 		Fs: 64, Fc: 2, NFFT: 64, NOverlap: 32, PadTo: 128,
 		Window: "hann", Detrend: core.SignalDetrendMean,
-		PlotOptions: core.PlotOptions{Color: &render.Color{R: 0.17, G: 0.63, B: 0.17, A: 1}, LineWidth: &width},
+		PlotOptions: core.PlotOptions{Color: optional.Of(render.Color{R: 0.17, G: 0.63, B: 0.17, A: 1}), LineWidth: optional.Of(width)},
 	})
 	return fig
 }

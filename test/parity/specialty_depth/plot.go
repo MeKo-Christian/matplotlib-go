@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -35,11 +36,11 @@ func Plot() *core.Figure {
 		nil,
 		nil,
 		core.ErrorBarOptions{
-			Color:      &errColor,
-			LineWidth:  &errWidth,
-			CapSize:    &errCap,
-			Marker:     &errMarker,
-			MarkerSize: &errMarkerSize,
+			Color:      optional.Of(errColor),
+			LineWidth:  optional.Of(errWidth),
+			CapSize:    optional.Of(errCap),
+			Marker:     optional.Of(errMarker),
+			MarkerSize: optional.Of(errMarkerSize),
 			XErrLower:  []float64{0.25, 0.35, 0.20, 0.30},
 			XErrUpper:  []float64{0.45, 0.25, 0.35, 0.20},
 			YErrLower:  []float64{0.35, 0.50, 0.30, 0.60},
@@ -72,13 +73,13 @@ func Plot() *core.Figure {
 			{2.4, 3.1, 3.7, 4.3, 4.8, 5.2, 5.9, 7.2},
 		},
 		core.BoxPlotsOptions{
-			PatchArtist:         &patchArtist,
-			Notch:               &notch,
-			WhiskerPercentiles:  &whiskers,
+			PatchArtist:         optional.Of(patchArtist),
+			Notch:               optional.Of(notch),
+			WhiskerPercentiles:  optional.Of(whiskers),
 			ConfidenceIntervals: [][2]float64{ci1, ci2},
 			CustomMedians:       []float64{median1, median2},
-			FlierMarker:         &flierMarker,
-			FlierSize:           &flierSize,
+			FlierMarker:         optional.Of(flierMarker),
+			FlierSize:           optional.Of(flierSize),
 			Colors: []render.Color{
 				{R: 0.45, G: 0.65, B: 0.90, A: 0.78},
 				{R: 0.90, G: 0.55, B: 0.28, A: 0.78},
@@ -107,9 +108,9 @@ func Plot() *core.Figure {
 			Side:            "high",
 			Quantiles:       [][]float64{{0.25, 0.75}, {0.25, 0.75}},
 			BandwidthMethod: "scott",
-			EdgeColor:       &violinEdge,
-			ShowMedians:     &showMedians,
-			ShowExtrema:     &showExtrema,
+			EdgeColor:       optional.Of(violinEdge),
+			ShowMedians:     optional.Of(showMedians),
+			ShowExtrema:     optional.Of(showExtrema),
 			Colors: []render.Color{
 				{R: 0.30, G: 0.60, B: 0.78, A: 0.58},
 				{R: 0.30, G: 0.60, B: 0.78, A: 0.58},
@@ -123,12 +124,12 @@ func Plot() *core.Figure {
 	wedgeEdge := render.Color{R: 1, G: 1, B: 1, A: 1}
 	pie := pieAx.Pie([]float64{0.22, 0.18, 0.30}, core.PieOptions{
 		Labels:       []string{"Alpha", "Beta", "Gamma"},
-		Normalize:    &normalize,
+		Normalize:    optional.Of(normalize),
 		RotateLabels: true,
 		Hatches:      []string{"/", "x", "\\"},
 		Shadow:       true,
 		StartAngle:   30,
-		EdgeColor:    &wedgeEdge,
+		EdgeColor:    optional.Of(wedgeEdge),
 		LineWidth:    1.0,
 		Colors: []render.Color{
 			{R: 0.22, G: 0.55, B: 0.75, A: 1},

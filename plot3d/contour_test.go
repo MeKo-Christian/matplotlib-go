@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -20,11 +21,11 @@ func TestAxes3DContourAndContourfCreateCollections(t *testing.T) {
 		{0, 1},
 		{1, 2},
 	}
-	contour := ax.Contour(x, y, z)
+	contour := ax.Contour(x, y, z, PlotOptions{})
 	if contour == nil {
 		t.Fatal("Contour returned nil")
 	}
-	if contourf := ax.Contourf(x, y, z); contourf == nil {
+	if contourf := ax.Contourf(x, y, z, PlotOptions{}); contourf == nil {
 		t.Fatal("Contourf returned nil")
 	}
 }
@@ -190,7 +191,7 @@ func TestAxes3DContourfProjectsFilledContourBands(t *testing.T) {
 		{0, 1},
 		{1, 2},
 	}
-	fill := ax.Contourf(x, y, z)
+	fill := ax.Contourf(x, y, z, PlotOptions{})
 	if fill == nil {
 		t.Fatal("Contourf returned nil")
 	}
@@ -213,7 +214,7 @@ func TestAxes3DContourfUsesExplicitZOffset(t *testing.T) {
 		{1, 2},
 	}
 	offset := -3.0
-	fill := ax.Contourf(x, y, z, PlotOptions{LevelCount: 3, Offset: &offset})
+	fill := ax.Contourf(x, y, z, PlotOptions{LevelCount: 3, Offset: optional.Of(offset)})
 	if fill == nil || len(fill.Paths) == 0 || len(fill.Paths[0].V) == 0 {
 		t.Fatalf("Contourf returned no polygons: %+v", fill)
 	}
@@ -248,7 +249,7 @@ func TestAxes3DContourfUsesProjectedCollectionZLikeMatplotlib(t *testing.T) {
 	}
 	offset := -3.0
 	levelCount := 3
-	fill := ax.Contourf(x, y, z, PlotOptions{LevelCount: levelCount, Offset: &offset})
+	fill := ax.Contourf(x, y, z, PlotOptions{LevelCount: levelCount, Offset: optional.Of(offset)})
 	if fill == nil {
 		t.Fatal("Contourf returned nil")
 	}
@@ -313,7 +314,7 @@ func TestAxes3DContourfUsesStructuredGridBandPolygons(t *testing.T) {
 		[]float64{0, 1},
 		[]float64{0, 1},
 		[][]float64{{0, 1}, {1, 2}},
-		PlotOptions{Levels: []float64{0.5, 1.5}, Offset: &offset},
+		PlotOptions{Levels: []float64{0.5, 1.5}, Offset: optional.Of(offset)},
 	)
 	if fill == nil {
 		t.Fatal("Contourf returned nil")
@@ -469,9 +470,9 @@ func TestAxes3DContourExposesConfiguredScalarMapForColorbars(t *testing.T) {
 		[]float64{0, 1},
 		[][]float64{{0, 2}, {4, 6}},
 		PlotOptions{
-			Colormap: &cmap,
-			VMin:     &vmin,
-			VMax:     &vmax,
+			Colormap: optional.Of(cmap),
+			VMin:     optional.Of(vmin),
+			VMax:     optional.Of(vmax),
 			Levels:   levels,
 		},
 	)
@@ -505,7 +506,7 @@ func TestAxes3DContourExplicitColorDisablesScalarMapStateLikeMatplotlib(t *testi
 		[]float64{0, 1},
 		[]float64{0, 1},
 		[][]float64{{0, 2}, {4, 6}},
-		PlotOptions{Color: &override, LevelCount: 3},
+		PlotOptions{Color: optional.Of(override), LevelCount: 3},
 	)
 	if contour == nil {
 		t.Fatal("Contour returned nil")
@@ -538,9 +539,9 @@ func TestAxes3DTriContourExposesLevelArrayForColorbars(t *testing.T) {
 		tri,
 		[]float64{0, 1, 1},
 		PlotOptions{
-			Colormap: &cmap,
-			VMin:     &vmin,
-			VMax:     &vmax,
+			Colormap: optional.Of(cmap),
+			VMin:     optional.Of(vmin),
+			VMax:     optional.Of(vmax),
 			Levels:   levels,
 		},
 	)
@@ -576,7 +577,7 @@ func TestAxes3DTriContourExplicitColorDisablesScalarMapStateLikeMatplotlib(t *te
 		Triangles: [][3]int{{0, 1, 2}},
 	}
 	contour := ax.TriContour(tri, []float64{0, 1, 1}, PlotOptions{
-		Color:  &override,
+		Color:  optional.Of(override),
 		Levels: []float64{0.5},
 	})
 	if contour == nil {
@@ -606,9 +607,9 @@ func TestAxes3DContourfExposesConfiguredScalarMapForColorbars(t *testing.T) {
 		[]float64{0, 1},
 		[][]float64{{0, 2}, {4, 6}},
 		PlotOptions{
-			Colormap: &cmap,
-			VMin:     &vmin,
-			VMax:     &vmax,
+			Colormap: optional.Of(cmap),
+			VMin:     optional.Of(vmin),
+			VMax:     optional.Of(vmax),
 			Levels:   levels,
 		},
 	)
@@ -643,7 +644,7 @@ func TestAxes3DContourfExplicitColorDisablesScalarMapStateLikeMatplotlib(t *test
 		[]float64{0, 1},
 		[]float64{0, 1},
 		[][]float64{{0, 2}, {4, 6}},
-		PlotOptions{Color: &override, LevelCount: 3},
+		PlotOptions{Color: optional.Of(override), LevelCount: 3},
 	)
 	if contour == nil {
 		t.Fatal("Contourf returned nil")
@@ -676,9 +677,9 @@ func TestAxes3DTriContourfExposesLayerArrayForColorbars(t *testing.T) {
 		tri,
 		[]float64{0, 2, 4, 6},
 		PlotOptions{
-			Colormap: &cmap,
-			VMin:     &vmin,
-			VMax:     &vmax,
+			Colormap: optional.Of(cmap),
+			VMin:     optional.Of(vmin),
+			VMax:     optional.Of(vmax),
 			Levels:   levels,
 		},
 	)
@@ -715,7 +716,7 @@ func TestAxes3DTriContourfExplicitColorDisablesScalarMapStateLikeMatplotlib(t *t
 		Triangles: [][3]int{{0, 1, 2}, {1, 3, 2}},
 	}
 	contour := ax.TriContourf(tri, []float64{0, 2, 4, 6}, PlotOptions{
-		Color:  &override,
+		Color:  optional.Of(override),
 		Levels: []float64{0, 2, 4, 6},
 	})
 	if contour == nil {
@@ -772,7 +773,7 @@ func TestAxes3DContourUsesExplicitOffsetPlane(t *testing.T) {
 		[]float64{0, 1},
 		[]float64{0, 1},
 		[][]float64{{0, 1}, {1, 2}},
-		PlotOptions{Levels: []float64{1}, Offset: &offset},
+		PlotOptions{Levels: []float64{1}, Offset: optional.Of(offset)},
 	)
 	if contour == nil || len(contour.Segments) == 0 || len(contour.Segments[0]) == 0 {
 		t.Fatalf("Contour returned no segments: %+v", contour)
@@ -845,7 +846,7 @@ func TestAxes3DContourZOrderUsesContourGeometry(t *testing.T) {
 		{0.6, 1.0, 0.6},
 		{0.2, 0.6, 0.2},
 	}
-	surface := ax.Surface(x, y, z)
+	surface := ax.Surface(x, y, z, PlotOptions{})
 	contour := ax.Contour(x, y, z, PlotOptions{LevelCount: 4})
 	if surface == nil || contour == nil {
 		t.Fatalf("expected surface and contour collections, got surface=%v contour=%v", surface, contour)
@@ -895,7 +896,7 @@ func TestAxes3DContourfAxLimClipDropsOffsetBandsOutsideExplicitZLimits(t *testin
 		[]float64{0, 1},
 		[]float64{0, 1},
 		[][]float64{{0, 1}, {1, 2}},
-		PlotOptions{Levels: []float64{0, 1, 2}, Offset: &offset, AxLimClip: true},
+		PlotOptions{Levels: []float64{0, 1, 2}, Offset: optional.Of(offset), AxLimClip: true},
 	)
 	if fill != nil {
 		t.Fatalf("Contourf with offset plane outside z limits returned %+v, want nil", fill)

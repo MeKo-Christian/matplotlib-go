@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 )
 
 func Render() image.Image {
@@ -17,7 +18,7 @@ func Render() image.Image {
 	}, core.MeshOptions{
 		XEdges:   []float64{0, 1, 2, 3, 4},
 		YEdges:   []float64{0, 1, 2, 3},
-		Colormap: &cmap,
+		Colormap: optional.Of(cmap),
 		Norm: core.BoundaryNorm{
 			Boundaries: []float64{0, 1, 2, 3, 4},
 			NColors:    256,

@@ -8,6 +8,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -63,12 +64,12 @@ func linearGradient(ax *core.Axes) {
 	cmap := "pattern-gradient-linear"
 	x0, x1, y0, y1 := 42.0, 205.0, 142.0, 42.0
 	ax.Image(img, core.ImageOptions{
-		XMin:          &x0,
-		XMax:          &x1,
-		YMin:          &y0,
-		YMax:          &y1,
-		Colormap:      &cmap,
-		Interpolation: &interp,
+		XMin:          optional.Of(x0),
+		XMax:          optional.Of(x1),
+		YMin:          optional.Of(y0),
+		YMax:          optional.Of(y1),
+		Colormap:      optional.Of(cmap),
+		Interpolation: optional.Of(interp),
 	})
 	frame := &core.Rectangle{
 		XY:     geom.Pt{X: 42, Y: 42},
@@ -100,12 +101,12 @@ func radialGradient(ax *core.Axes) {
 	cmap := "pattern-gradient-radial"
 	x0, x1, y0, y1 := 235.0, 398.0, 142.0, 42.0
 	ax.Image(img, core.ImageOptions{
-		XMin:          &x0,
-		XMax:          &x1,
-		YMin:          &y0,
-		YMax:          &y1,
-		Colormap:      &cmap,
-		Interpolation: &interp,
+		XMin:          optional.Of(x0),
+		XMax:          optional.Of(x1),
+		YMin:          optional.Of(y0),
+		YMax:          optional.Of(y1),
+		Colormap:      optional.Of(cmap),
+		Interpolation: optional.Of(interp),
 	})
 	frame := &core.Rectangle{
 		XY:     geom.Pt{X: 235, Y: 42},

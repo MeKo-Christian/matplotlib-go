@@ -8,6 +8,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -42,8 +43,8 @@ func Plot() *core.Figure {
 			y[j] = math.Sin(float64(freq) * x[j])
 		}
 		_, _ = ax.Plot(x, y, core.PlotOptions{
-			Color:     &tab10[seriesIdx],
-			LineWidth: &lineWidth,
+			Color:     optional.Of(tab10[seriesIdx]),
+			LineWidth: optional.Of(lineWidth),
 		})
 	}
 	return fig

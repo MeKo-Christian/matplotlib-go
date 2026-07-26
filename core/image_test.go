@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
@@ -16,7 +17,7 @@ func TestAxesImage_DefaultOptions(t *testing.T) {
 		{2, 3},
 	}
 	ax := &Axes{}
-	img := ax.Image(data)
+	img := ax.Image(data, ImageOptions{})
 
 	if img == nil {
 		t.Fatal("expected image artist")
@@ -58,19 +59,19 @@ func TestAxesImage_CustomOptions(t *testing.T) {
 	img := ax.Image(
 		data,
 		ImageOptions{
-			Colormap:        &cmap,
-			VMin:            &vmin,
-			VMax:            &vmax,
-			Alpha:           &alpha,
-			Angle:           &angle,
-			XMin:            &xMin,
-			XMax:            &xMax,
-			YMin:            &yMin,
-			YMax:            &yMax,
+			Colormap:        optional.Of(cmap),
+			VMin:            optional.Of(vmin),
+			VMax:            optional.Of(vmax),
+			Alpha:           optional.Of(alpha),
+			Angle:           optional.Of(angle),
+			XMin:            optional.Of(xMin),
+			XMax:            optional.Of(xMax),
+			YMin:            optional.Of(yMin),
+			YMax:            optional.Of(yMax),
 			Origin:          ImageOriginUpper,
 			RotationAnchor:  ImageAnchorCustom,
-			RotationAnchorX: &rotateX,
-			RotationAnchorY: &rotateY,
+			RotationAnchorX: optional.Of(rotateX),
+			RotationAnchorY: optional.Of(rotateY),
 		},
 	)
 
@@ -105,7 +106,7 @@ func TestAxesImageRejectsNormWithVMinOrVMax(t *testing.T) {
 	ax := &Axes{}
 	img := ax.Image([][]float64{{1, 2}}, ImageOptions{
 		Norm: Normalize{VMin: 1, VMax: 2},
-		VMin: &vmin,
+		VMin: optional.Of(vmin),
 	})
 	if img != nil {
 		t.Fatal("expected image construction to reject explicit norm with vmin")
@@ -115,7 +116,7 @@ func TestAxesImageRejectsNormWithVMinOrVMax(t *testing.T) {
 func TestImage2D_InterpolationField(t *testing.T) {
 	bilinear := "bilinear"
 	ax := &Axes{}
-	img := ax.Image([][]float64{{0, 1}, {1, 0}}, ImageOptions{Interpolation: &bilinear})
+	img := ax.Image([][]float64{{0, 1}, {1, 0}}, ImageOptions{Interpolation: optional.Of(bilinear)})
 	if img == nil {
 		t.Fatal("Image returned nil")
 	}
@@ -139,7 +140,7 @@ func TestImageRasterizeUsesConfiguredLogNorm(t *testing.T) {
 	cmap := "gray"
 	ax := &Axes{}
 	img := ax.Image([][]float64{{1, 10, 100}}, ImageOptions{
-		Colormap: &cmap,
+		Colormap: optional.Of(cmap),
 		Norm:     LogNorm{VMin: 1, VMax: 100},
 	})
 	if img == nil {
@@ -399,7 +400,7 @@ func TestImage_DrawRotatedFallsBackToImage(t *testing.T) {
 func TestImage2D_DrawPrefilteredBilinearUsesNearestRendererInterpolation(t *testing.T) {
 	bilinear := "bilinear"
 	ax := &Axes{}
-	img := ax.Image([][]float64{{0, 1}, {1, 0}}, ImageOptions{Interpolation: &bilinear})
+	img := ax.Image([][]float64{{0, 1}, {1, 0}}, ImageOptions{Interpolation: optional.Of(bilinear)})
 	if img == nil {
 		t.Fatal("Image returned nil")
 	}
@@ -432,7 +433,7 @@ func TestImage2D_DrawPrefilteredBilinearUsesNearestRendererInterpolation(t *test
 func TestImage2D_DrawHighUpsampleBicubicUsesScalarDataStage(t *testing.T) {
 	bicubic := "bicubic"
 	ax := &Axes{}
-	img := ax.Image([][]float64{{0, 1}, {1, 0}}, ImageOptions{Interpolation: &bicubic})
+	img := ax.Image([][]float64{{0, 1}, {1, 0}}, ImageOptions{Interpolation: optional.Of(bicubic)})
 	if img == nil {
 		t.Fatal("Image returned nil")
 	}
@@ -518,8 +519,8 @@ func TestImage2D_DrawRotatedBilinearUsesScalarDataStage(t *testing.T) {
 	angle := 15.0
 	ax := &Axes{}
 	img := ax.Image([][]float64{{0, 1}, {1, 0}}, ImageOptions{
-		Interpolation: &bilinear,
-		Angle:         &angle,
+		Interpolation: optional.Of(bilinear),
+		Angle:         optional.Of(angle),
 	})
 	if img == nil {
 		t.Fatal("Image returned nil")

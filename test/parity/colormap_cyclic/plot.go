@@ -6,6 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 )
 
 func Render() image.Image {
@@ -16,15 +17,15 @@ func Render() image.Image {
 	ymin, ymax := 0.0, 6.0
 	vmin, vmax := 0.0, 1.0
 	ax.Image(cyclicData(6, 12), core.ImageOptions{
-		Colormap:      &cmap,
-		VMin:          &vmin,
-		VMax:          &vmax,
-		XMin:          &xmin,
-		XMax:          &xmax,
-		YMin:          &ymin,
-		YMax:          &ymax,
+		Colormap:      optional.Of(cmap),
+		VMin:          optional.Of(vmin),
+		VMax:          optional.Of(vmax),
+		XMin:          optional.Of(xmin),
+		XMax:          optional.Of(xmax),
+		YMin:          optional.Of(ymin),
+		YMax:          optional.Of(ymax),
 		Origin:        core.ImageOriginLower,
-		Interpolation: &nearest,
+		Interpolation: optional.Of(nearest),
 	})
 	ax.SetXLim(0, 12)
 	ax.SetYLim(0, 6)

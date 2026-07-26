@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
@@ -18,7 +19,7 @@ func TestFigureAddColorbarConfiguresAxes(t *testing.T) {
 	img := ax.Image([][]float64{
 		{0, 1},
 		{2, 3},
-	})
+	}, ImageOptions{})
 
 	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{Label: "Intensity"})
 	if cbAx == nil {
@@ -92,7 +93,7 @@ func TestFigureAddHorizontalColorbarConfiguresBottomAxes(t *testing.T) {
 	img := ax.Image([][]float64{
 		{0, 1},
 		{2, 3},
-	})
+	}, ImageOptions{})
 
 	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{Location: "bottom", Label: "Intensity"})
 	if cbAx == nil {
@@ -164,7 +165,7 @@ func TestFigureAddHorizontalColorbarConfiguresTopAxes(t *testing.T) {
 		Min: geom.Pt{X: 0.10, Y: 0.12},
 		Max: geom.Pt{X: 0.78, Y: 0.88},
 	})
-	img := ax.Image([][]float64{{0, 1}, {2, 3}})
+	img := ax.Image([][]float64{{0, 1}, {2, 3}}, ImageOptions{})
 
 	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{Location: "top", Label: "Intensity"})
 	if cbAx == nil {
@@ -197,11 +198,11 @@ func TestFigureAddColorbarShrinkAnchorsVerticalLongAxis(t *testing.T) {
 		Min: geom.Pt{X: 0.10, Y: 0.12},
 		Max: geom.Pt{X: 0.78, Y: 0.88},
 	})
-	img := ax.Image([][]float64{{0, 1}, {2, 3}})
+	img := ax.Image([][]float64{{0, 1}, {2, 3}}, ImageOptions{})
 	anchor := geom.Pt{X: 0, Y: 0}
 	base := colorbarBaseRect(ax)
 
-	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{Location: "right", Shrink: 0.5, Anchor: &anchor})
+	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{Location: "right", Shrink: 0.5, Anchor: optional.Of(anchor)})
 	if cbAx == nil {
 		t.Fatal("expected colorbar axes")
 	}
@@ -221,11 +222,11 @@ func TestFigureAddColorbarShrinkAnchorsHorizontalLongAxis(t *testing.T) {
 		Min: geom.Pt{X: 0.10, Y: 0.12},
 		Max: geom.Pt{X: 0.78, Y: 0.88},
 	})
-	img := ax.Image([][]float64{{0, 1}, {2, 3}})
+	img := ax.Image([][]float64{{0, 1}, {2, 3}}, ImageOptions{})
 	anchor := geom.Pt{X: 1, Y: 1}
 	base := colorbarBaseRect(ax)
 
-	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{Location: "bottom", Shrink: 0.5, Anchor: &anchor})
+	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{Location: "bottom", Shrink: 0.5, Anchor: optional.Of(anchor)})
 	if cbAx == nil {
 		t.Fatal("expected colorbar axes")
 	}
@@ -280,7 +281,7 @@ func TestColorbarDrawRendersGradientAndTickLabels(t *testing.T) {
 	img := ax.Image([][]float64{
 		{0, 1},
 		{2, 3},
-	})
+	}, ImageOptions{})
 
 	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{Label: "Value"})
 	if cbAx == nil {
@@ -317,9 +318,9 @@ func TestFigureAddColorbarUsesOriginalSubplotPositionAfterSetPosition(t *testing
 	img := ax.Image([][]float64{
 		{0, 1},
 		{2, 3},
-	})
+	}, ImageOptions{})
 
-	cbAx := fig.AddColorbar(ax, img)
+	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{})
 	if cbAx == nil {
 		t.Fatal("expected colorbar axes")
 	}
@@ -364,7 +365,7 @@ func TestFigureAddColorbarUsesLogNormTicks(t *testing.T) {
 		{10, 100},
 	}, ImageOptions{Norm: LogNorm{VMin: 1, VMax: 100}})
 
-	cbAx := fig.AddColorbar(ax, img)
+	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{})
 	if cbAx == nil {
 		t.Fatal("expected colorbar axes")
 	}
@@ -395,7 +396,7 @@ func TestFigureAddColorbarUsesAsinhNormScale(t *testing.T) {
 		{10, 120},
 	}, ImageOptions{Norm: AsinhNorm{LinearWidth: 2, VMin: -80, VMax: 120}})
 
-	cbAx := fig.AddColorbar(ax, img)
+	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{})
 	if cbAx == nil {
 		t.Fatal("expected colorbar axes")
 	}
@@ -429,7 +430,7 @@ func TestFigureAddColorbarUsesBoundaryNormTicks(t *testing.T) {
 		Norm: BoundaryNorm{Boundaries: []float64{0, 1, 2}, NColors: 3},
 	})
 
-	cbAx := fig.AddColorbar(ax, mesh)
+	cbAx := fig.AddColorbar(ax, mesh, ColorbarOptions{})
 	if cbAx == nil {
 		t.Fatal("expected colorbar axes")
 	}
@@ -454,7 +455,7 @@ func TestFigureAddColorbarUsesExplicitBoundariesAsTicks(t *testing.T) {
 		Min: geom.Pt{X: 0.10, Y: 0.12},
 		Max: geom.Pt{X: 0.78, Y: 0.88},
 	})
-	img := ax.Image([][]float64{{0, 2}, {4, 5}})
+	img := ax.Image([][]float64{{0, 2}, {4, 5}}, ImageOptions{})
 
 	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{Boundaries: []float64{0, 2, 5}, Values: []float64{1, 4}})
 	if cbAx == nil {
@@ -549,7 +550,7 @@ func TestFigureAddColorbarUsesExplicitTicks(t *testing.T) {
 		Min: geom.Pt{X: 0.10, Y: 0.12},
 		Max: geom.Pt{X: 0.78, Y: 0.88},
 	})
-	img := ax.Image([][]float64{{-1, 0}, {0.5, 1}})
+	img := ax.Image([][]float64{{-1, 0}, {0.5, 1}}, ImageOptions{})
 
 	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{Ticks: []float64{-1, 0, 1}})
 	if cbAx == nil {
@@ -576,7 +577,7 @@ func TestHorizontalColorbarUsesExplicitTicks(t *testing.T) {
 		Min: geom.Pt{X: 0.10, Y: 0.12},
 		Max: geom.Pt{X: 0.78, Y: 0.88},
 	})
-	img := ax.Image([][]float64{{-1, 0}, {0.5, 1}})
+	img := ax.Image([][]float64{{-1, 0}, {0.5, 1}}, ImageOptions{})
 
 	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{Location: "bottom", Ticks: []float64{-1, 0, 1}})
 	if cbAx == nil {
@@ -608,7 +609,7 @@ func TestFigureAddColorbarUsesFunctionScaleForTwoSlopeNorm(t *testing.T) {
 		{0, 6},
 	}, ImageOptions{Norm: TwoSlopeNorm{VMin: -3, VCenter: 0, VMax: 6}})
 
-	cbAx := fig.AddColorbar(ax, img)
+	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{})
 	if cbAx == nil {
 		t.Fatal("expected colorbar axes")
 	}
@@ -640,7 +641,7 @@ func TestFigureColorbarSyncsMutableCollectionMapping(t *testing.T) {
 	}
 	ax.Add(pc)
 
-	cbAx := fig.AddColorbar(ax, pc)
+	cbAx := fig.AddColorbar(ax, pc, ColorbarOptions{})
 	if cbAx == nil {
 		t.Fatal("expected colorbar axes")
 	}
@@ -684,7 +685,7 @@ func TestFigureColorbarSyncsMutableCollectionNormScale(t *testing.T) {
 	}
 	ax.Add(pc)
 
-	cbAx := fig.AddColorbar(ax, pc)
+	cbAx := fig.AddColorbar(ax, pc, ColorbarOptions{})
 	if cbAx == nil {
 		t.Fatal("expected colorbar axes")
 	}
@@ -1177,7 +1178,7 @@ func TestFigureAddColorbarUsesSymLogNormScale(t *testing.T) {
 		{1, 100},
 	}, ImageOptions{Norm: SymLogNorm{VMin: -100, VMax: 100, LinThresh: 1, LinScale: 1, Base: 10}})
 
-	cbAx := fig.AddColorbar(ax, img)
+	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{})
 	if cbAx == nil {
 		t.Fatal("expected colorbar axes")
 	}
@@ -1207,7 +1208,7 @@ func TestFigureAddColorbarUsesAutoLocatorForPowerNorm(t *testing.T) {
 		{16, 100},
 	}, ImageOptions{Norm: PowerNorm{Gamma: 0.5, VMin: 0, VMax: 100}})
 
-	cbAx := fig.AddColorbar(ax, img)
+	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{})
 	if cbAx == nil {
 		t.Fatal("expected colorbar axes")
 	}
@@ -1230,7 +1231,7 @@ func TestFigureAddColorbarUsesIndexLocatorForNoNorm(t *testing.T) {
 		{6, 9},
 	}, ImageOptions{Norm: NoNorm{}})
 
-	cbAx := fig.AddColorbar(ax, img)
+	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{})
 	if cbAx == nil {
 		t.Fatal("expected colorbar axes")
 	}
@@ -1313,7 +1314,7 @@ func TestColorbarMinorTicksLinearDefaultOff(t *testing.T) {
 		{2, 3},
 	}, ImageOptions{Norm: Normalize{VMin: 0, VMax: 3}})
 
-	cbAx := fig.AddColorbar(ax, img)
+	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{})
 	if cbAx == nil {
 		t.Fatal("expected colorbar axes")
 	}
@@ -1333,7 +1334,7 @@ func TestColorbarSymLogMinorTicksOnByDefault(t *testing.T) {
 		{1, 100},
 	}, ImageOptions{Norm: SymLogNorm{VMin: -100, VMax: 100, LinThresh: 1, LinScale: 1, Base: 10}})
 
-	cbAx := fig.AddColorbar(ax, img)
+	cbAx := fig.AddColorbar(ax, img, ColorbarOptions{})
 	if cbAx == nil {
 		t.Fatal("expected colorbar axes")
 	}

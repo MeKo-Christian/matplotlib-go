@@ -9,6 +9,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
@@ -92,8 +93,8 @@ func addPolarPanel(fig *core.Figure, rect geom.Rect) {
 	}
 	width := 2.0
 	fill := render.Color{R: 0.18, G: 0.50, B: 0.82, A: 0.22}
-	ax.Fill(theta, r, core.FillOptions{Color: &fill})
-	_, _ = ax.Plot(theta, r, core.PlotOptions{Color: &blue, LineWidth: &width})
+	ax.Fill(theta, r, core.FillOptions{Color: optional.Of(fill)})
+	_, _ = ax.Plot(theta, r, core.PlotOptions{Color: optional.Of(blue), LineWidth: optional.Of(width)})
 }
 
 func addGeoPanel(fig *core.Figure, rect geom.Rect, projection, title string, lonMin, lonMax float64) {
@@ -119,7 +120,7 @@ func addGeoPanel(fig *core.Figure, rect geom.Rect, projection, title string, lon
 		lat[i] = 0.35 * math.Sin(3*lon[i])
 	}
 	width := 1.8
-	_, _ = ax.Plot(lon, lat, core.PlotOptions{Color: &blue, LineWidth: &width})
+	_, _ = ax.Plot(lon, lat, core.PlotOptions{Color: optional.Of(blue), LineWidth: optional.Of(width)})
 }
 
 func addRadarPanel(fig *core.Figure, rect geom.Rect) {
@@ -143,8 +144,8 @@ func addRadarPanel(fig *core.Figure, rect geom.Rect) {
 	closedValues := append(append([]float64(nil), values...), values[0])
 	fill := render.Color{R: 0.18, G: 0.50, B: 0.82, A: 0.22}
 	width := 2.0
-	ax.Fill(closedAngles, closedValues, core.FillOptions{Color: &fill})
-	_, _ = ax.Plot(closedAngles, closedValues, core.PlotOptions{Color: &blue, LineWidth: &width})
+	ax.Fill(closedAngles, closedValues, core.FillOptions{Color: optional.Of(fill)})
+	_, _ = ax.Plot(closedAngles, closedValues, core.PlotOptions{Color: optional.Of(blue), LineWidth: optional.Of(width)})
 }
 
 func addSkewTPanel(fig *core.Figure, rect geom.Rect) {
@@ -175,8 +176,8 @@ func addSkewTPanel(fig *core.Figure, rect geom.Rect) {
 	temperature := []float64{24, 20, 15, 5, -4, -14, -28, -43, -51, -58}
 	dewpoint := []float64{18, 14, 8, -4, -14, -25, -38, -50, -57, -64}
 	width := 2.0
-	_, _ = ax.Plot(temperature, pressure, core.PlotOptions{Color: &red, LineWidth: &width, Label: "temp"})
-	_, _ = ax.Plot(dewpoint, pressure, core.PlotOptions{Color: &green, LineWidth: &width, Label: "dew"})
+	_, _ = ax.Plot(temperature, pressure, core.PlotOptions{Color: optional.Of(red), LineWidth: optional.Of(width), Label: "temp"})
+	_, _ = ax.Plot(dewpoint, pressure, core.PlotOptions{Color: optional.Of(green), LineWidth: optional.Of(width), Label: "dew"})
 	ax.AddLegend()
 }
 
@@ -199,16 +200,16 @@ func addAxisArtistPanel(fig *core.Figure, rect geom.Rect) {
 		cosScaled[i] = 55 + 35*math.Cos(x[i]*0.8)
 	}
 	width := 2.0
-	_, _ = ax.Plot(x, sine, core.PlotOptions{Color: &blue, LineWidth: &width, Label: "sin"})
+	_, _ = ax.Plot(x, sine, core.PlotOptions{Color: optional.Of(blue), LineWidth: optional.Of(width), Label: "sin"})
 	referenceWidth := 1.2
 	reference := render.Color{R: 0.26, G: 0.26, B: 0.30, A: 1}
-	ax.AxHLine(0, core.HLineOptions{Color: &reference, LineWidth: &referenceWidth, Dashes: []float64{5 * 36.0 / DPI, 3 * 36.0 / DPI}})
-	ax.AxVLine(0, core.VLineOptions{Color: &reference, LineWidth: &referenceWidth, Dashes: []float64{5 * 36.0 / DPI, 3 * 36.0 / DPI}})
+	ax.AxHLine(0, core.HLineOptions{Color: optional.Of(reference), LineWidth: optional.Of(referenceWidth), Dashes: []float64{5 * 36.0 / DPI, 3 * 36.0 / DPI}})
+	ax.AxVLine(0, core.VLineOptions{Color: optional.Of(reference), LineWidth: optional.Of(referenceWidth), Dashes: []float64{5 * 36.0 / DPI, 3 * 36.0 / DPI}})
 
 	overlay := ax.TwinX()
 	if overlay != nil {
 		overlay.SetYLim(0, 100)
-		_, _ = overlay.Plot(x, cosScaled, core.PlotOptions{Color: &orange, LineWidth: &width, Label: "scaled cos"})
+		_, _ = overlay.Plot(x, cosScaled, core.PlotOptions{Color: optional.Of(orange), LineWidth: optional.Of(width), Label: "scaled cos"})
 		if right := overlay.RightAxis(); right != nil {
 			right.Color = orange
 		}
@@ -217,11 +218,11 @@ func addAxisArtistPanel(fig *core.Figure, rect geom.Rect) {
 		Coords:   core.Coords(core.CoordAxes),
 		VAlign:   core.TextVAlignTop,
 		FontSize: 8,
-		BBox: &core.TextBBoxOptions{
+		BBox: optional.Of(core.TextBBoxOptions{
 			FaceColor: render.Color{R: 1, G: 1, B: 1, A: 1},
 			EdgeColor: render.Color{R: 0.75, G: 0.75, B: 0.75, A: 1},
 			Padding:   0.25,
-		},
+		}),
 	})
 }
 

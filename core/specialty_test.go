@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -52,10 +53,10 @@ func TestAxesHexbinAggregatesValues(t *testing.T) {
 			GridSizeY: 2,
 			C:         []float64{2, 4, 9},
 			Reduce:    "mean",
-			Extent: &geom.Rect{
+			Extent: optional.Of(geom.Rect{
 				Min: geom.Pt{X: 0, Y: 0},
 				Max: geom.Pt{X: 1, Y: 1},
-			},
+			}),
 			Label: "hex",
 		},
 	)
@@ -102,10 +103,10 @@ func TestAxesHexbinExposesConfiguredNorm(t *testing.T) {
 			C:         []float64{1, 10, 100},
 			Reduce:    "mean",
 			Norm:      LogNorm{VMin: 1, VMax: 100},
-			Extent: &geom.Rect{
+			Extent: optional.Of(geom.Rect{
 				Min: geom.Pt{X: 0, Y: 0},
 				Max: geom.Pt{X: 1, Y: 1},
-			},
+			}),
 		},
 	)
 	if hex == nil {
@@ -130,10 +131,10 @@ func TestAxesHexbinLogBinsReducersAndMarginals(t *testing.T) {
 			Reduce:    "max",
 			Bins:      "log",
 			Marginals: true,
-			Extent: &geom.Rect{
+			Extent: optional.Of(geom.Rect{
 				Min: geom.Pt{X: 0, Y: 0},
 				Max: geom.Pt{X: 2, Y: 2},
-			},
+			}),
 		},
 	)
 	if hex == nil {
@@ -296,7 +297,7 @@ func TestAxesPieAdvancedOptionsAndPieLabel(t *testing.T) {
 	normalize := false
 	pie := ax.Pie([]float64{0.25, 0.25}, PieOptions{
 		Labels:       []string{"A", "B"},
-		Normalize:    &normalize,
+		Normalize:    optional.Of(normalize),
 		RotateLabels: true,
 		Hatches:      []string{"/", "x"},
 		Shadow:       true,
@@ -327,7 +328,7 @@ func TestAxesPieAdvancedOptionsAndPieLabel(t *testing.T) {
 	}
 	deepPie := ax.Pie([]float64{0.22, 0.18, 0.30}, PieOptions{
 		Labels:       []string{"Alpha", "Beta", "Gamma"},
-		Normalize:    &normalize,
+		Normalize:    optional.Of(normalize),
 		RotateLabels: true,
 		StartAngle:   30,
 	})
@@ -357,7 +358,7 @@ func TestAxesViolinplotAddsCollections(t *testing.T) {
 		{1, 2, 2.5, 3, 4},
 		{2, 2.1, 2.2, 3.4, 3.6},
 	}, ViolinOptions{
-		ShowMeans: specialtyBoolPtr(true),
+		ShowMeans: optional.Of(true),
 		Alpha:     0.45,
 		Label:     "spread",
 	})
@@ -417,9 +418,9 @@ func TestAxesViolinUsesPrecomputedStats(t *testing.T) {
 		ViolinStatsOptions{
 			Positions:   []float64{1.5, 2.5},
 			Widths:      []float64{0.4, 0.6},
-			ShowMeans:   boolPtr(true),
-			ShowMedians: boolPtr(true),
-			ShowExtrema: boolPtr(true),
+			ShowMeans:   optional.Of(true),
+			ShowMedians: optional.Of(true),
+			ShowExtrema: optional.Of(true),
 			Side:        "high",
 		},
 	)
@@ -462,7 +463,7 @@ func TestAxesViolinUsesPrecomputedStats(t *testing.T) {
 func TestAxesViolinValidatesPrecomputedStats(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
 
-	if got := ax.Violin([]ViolinStat{{Coords: []float64{1, 2}, Vals: []float64{1}}}); got != nil {
+	if got := ax.Violin([]ViolinStat{{Coords: []float64{1, 2}, Vals: []float64{1}}}, ViolinStatsOptions{}); got != nil {
 		t.Fatalf("Violin with mismatched coords/vals returned %#v, want nil", got)
 	}
 	if got := ax.Violin(
@@ -487,7 +488,7 @@ func TestAxesViolinplotSideOrientationQuantilesAndBandwidthMethod(t *testing.T) 
 		Quantiles:       [][]float64{{0.25, 0.75}},
 		BandwidthMethod: "scott",
 		Colors:          []render.Color{{R: 0.30, G: 0.60, B: 0.78, A: 0.58}},
-		EdgeColor:       &edge,
+		EdgeColor:       optional.Of(edge),
 	})
 	if violins == nil || violins.Bodies == nil || len(violins.Bodies.Polygons) != 1 {
 		t.Fatal("expected horizontal violin body")

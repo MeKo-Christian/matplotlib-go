@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -234,11 +235,11 @@ func TestQuiverKeyDrawOverlay(t *testing.T) {
 		[]float64{1, 0.5},
 		[]float64{0.25, 0.75},
 		QuiverOptions{
-			Color:      &render.Color{R: 0.2, G: 0.4, B: 0.7, A: 1},
+			Color:      optional.Of(render.Color{R: 0.2, G: 0.4, B: 0.7, A: 1}),
 			ScaleUnits: "dots",
 			Units:      "dots",
-			Scale:      floatPtr(24),
-			Width:      floatPtr(4),
+			Scale:      optional.Of(24.0),
+			Width:      optional.Of(4.0),
 		},
 	)
 	if q == nil {
@@ -269,7 +270,7 @@ func TestQuiverKeyDrawOverlay(t *testing.T) {
 func TestQuiverKeyDefaultLabelSeparationMatchesMatplotlib(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax := fig.AddAxes(unitRect())
-	q := ax.Quiver([]float64{0}, []float64{0}, []float64{1}, []float64{0})
+	q := ax.Quiver([]float64{0}, []float64{0}, []float64{1}, []float64{0}, QuiverOptions{})
 	if q == nil {
 		t.Fatal("expected quiver artist")
 	}
@@ -293,7 +294,7 @@ func TestBarbsDefaultLengthUsesPoints(t *testing.T) {
 		[]float64{0},
 		[]float64{10},
 		[]float64{0},
-		BarbsOptions{Length: &length},
+		BarbsOptions{Length: optional.Of(length)},
 	)
 	if barbs == nil {
 		t.Fatal("expected barbs artist")
@@ -467,7 +468,7 @@ func TestAxesStreamplotProducesLinesAndArrows(t *testing.T) {
 	set := ax.Streamplot(x, y, u, v, StreamplotOptions{
 		Density:     0.35,
 		StartPoints: []geom.Pt{{X: 0.5, Y: 0.5}, {X: 0.5, Y: 1.5}},
-		ArrowCount:  intPtr(2),
+		ArrowCount:  optional.Of(2),
 		Label:       "stream",
 	})
 	if set == nil || set.Lines == nil || set.Arrows == nil {
@@ -508,7 +509,7 @@ func TestAxesStreamplotAcceptsSharedNorm(t *testing.T) {
 				{1, 10, 100},
 			},
 			Norm:       LogNorm{VMin: 1, VMax: 100},
-			ArrowCount: intPtr(1),
+			ArrowCount: optional.Of(1),
 		},
 	)
 	if set == nil {
@@ -550,13 +551,13 @@ func TestAxesStreamplotColorbarUsesLineScalarMap(t *testing.T) {
 				{1, 10, 100},
 			},
 			Norm:       LogNorm{VMin: 1, VMax: 100},
-			ArrowCount: intPtr(0),
+			ArrowCount: optional.Of(0),
 		},
 	)
 	if set == nil {
 		t.Fatal("expected streamplot set")
 	}
-	cbAx := fig.AddColorbar(ax, set)
+	cbAx := fig.AddColorbar(ax, set, ColorbarOptions{})
 	if cbAx == nil || len(cbAx.Artists) == 0 {
 		t.Fatal("expected colorbar for scalar-colored streamplot")
 	}

@@ -21,6 +21,7 @@ func ExampleAddAxes() {
 		[]float64{0, 1, 2},
 		[]float64{0, 1, 0},
 		[]float64{0, 0.5, 1},
+		core.PlotOptions{},
 	)
 
 	fmt.Println(ax.ProjectionName())

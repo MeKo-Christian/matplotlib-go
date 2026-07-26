@@ -3028,6 +3028,14 @@
           "declaration": "const AnnotationOffsetPoints"
         },
         {
+          "id": "const AspectAuto",
+          "declaration": "const AspectAuto ImageAspect = \"auto\""
+        },
+        {
+          "id": "const AspectEqual",
+          "declaration": "const AspectEqual ImageAspect = \"equal\""
+        },
+        {
           "id": "const AxisBottom",
           "declaration": "const AxisBottom AxisSide = iota"
         },
@@ -3164,6 +3172,22 @@
           "declaration": "const BoxStyleSquare BoxStyle = iota"
         },
         {
+          "id": "const ColorbarBottom",
+          "declaration": "const ColorbarBottom ColorbarLocation = \"bottom\""
+        },
+        {
+          "id": "const ColorbarLeft",
+          "declaration": "const ColorbarLeft ColorbarLocation = \"left\""
+        },
+        {
+          "id": "const ColorbarRight",
+          "declaration": "const ColorbarRight ColorbarLocation = \"right\""
+        },
+        {
+          "id": "const ColorbarTop",
+          "declaration": "const ColorbarTop ColorbarLocation = \"top\""
+        },
+        {
           "id": "const CoordAxes",
           "declaration": "const CoordAxes"
         },
@@ -3194,6 +3218,22 @@
         {
           "id": "const EventOrientationVertical",
           "declaration": "const EventOrientationVertical EventOrientation = iota"
+        },
+        {
+          "id": "const ExtendBoth",
+          "declaration": "const ExtendBoth ColorbarExtend = \"both\""
+        },
+        {
+          "id": "const ExtendMax",
+          "declaration": "const ExtendMax ColorbarExtend = \"max\""
+        },
+        {
+          "id": "const ExtendMin",
+          "declaration": "const ExtendMin ColorbarExtend = \"min\""
+        },
+        {
+          "id": "const ExtendNeither",
+          "declaration": "const ExtendNeither ColorbarExtend = \"neither\""
         },
         {
           "id": "const FillHorizontal",
@@ -3640,6 +3680,14 @@
           "declaration": "const MeshShadingNearest MeshShading = \"nearest\""
         },
         {
+          "id": "const OrientationHorizontal",
+          "declaration": "const OrientationHorizontal PlotOrientation = \"horizontal\""
+        },
+        {
+          "id": "const OrientationVertical",
+          "declaration": "const OrientationVertical PlotOrientation = \"vertical\""
+        },
+        {
           "id": "const PackAlignCenter",
           "declaration": "const PackAlignCenter"
         },
@@ -3662,6 +3710,18 @@
         {
           "id": "const PackVertical",
           "declaration": "const PackVertical"
+        },
+        {
+          "id": "const PivotMiddle",
+          "declaration": "const PivotMiddle VectorPivot = \"middle\""
+        },
+        {
+          "id": "const PivotTail",
+          "declaration": "const PivotTail VectorPivot = \"tail\""
+        },
+        {
+          "id": "const PivotTip",
+          "declaration": "const PivotTip VectorPivot = \"tip\""
         },
         {
           "id": "const ShareAll",
@@ -3802,6 +3862,18 @@
         {
           "id": "const TickDirectionOut",
           "declaration": "const TickDirectionOut TickDirection = iota"
+        },
+        {
+          "id": "const ViolinSideBoth",
+          "declaration": "const ViolinSideBoth ViolinSide = \"both\""
+        },
+        {
+          "id": "const ViolinSideHigh",
+          "declaration": "const ViolinSideHigh ViolinSide = \"high\""
+        },
+        {
+          "id": "const ViolinSideLow",
+          "declaration": "const ViolinSideLow ViolinSide = \"low\""
         },
         {
           "id": "func ArrowStyleFromString",
@@ -3945,7 +4017,7 @@
         },
         {
           "id": "func NewSankey",
-          "declaration": "func NewSankey(ax *Axes, opts ...SankeyOptions) *Sankey"
+          "declaration": "func NewSankey(ax *Axes, opt SankeyOptions) *Sankey"
         },
         {
           "id": "func NewTriangulation",
@@ -4185,7 +4257,7 @@
         },
         {
           "id": "method AnchoredPacker.AddText",
-          "declaration": "func (AnchoredPacker) AddText(text string, opts ...PackedTextOptions) *AnchoredPacker"
+          "declaration": "func (AnchoredPacker) AddText(text string, opt PackedTextOptions) *AnchoredPacker"
         },
         {
           "id": "method AnchoredPacker.Bounds",
@@ -4477,7 +4549,7 @@
         },
         {
           "id": "method Axes.ACorr",
-          "declaration": "func (Axes) ACorr(x []float64, opts ...CorrelationOptions) *CorrelationResult"
+          "declaration": "func (Axes) ACorr(x []float64, opt CorrelationOptions) *CorrelationResult"
         },
         {
           "id": "method Axes.Add",
@@ -4485,19 +4557,19 @@
         },
         {
           "id": "method Axes.AddAnchoredDrawingArea",
-          "declaration": "func (Axes) AddAnchoredDrawingArea(width, height float64, opts ...AnchoredDrawingAreaOptions) *AnchoredDrawingArea"
+          "declaration": "func (Axes) AddAnchoredDrawingArea(width, height float64, opt AnchoredDrawingAreaOptions) *AnchoredDrawingArea"
         },
         {
           "id": "method Axes.AddAnchoredPacker",
-          "declaration": "func (Axes) AddAnchoredPacker(orientation PackOrientation, opts ...AnchoredPackerOptions) *AnchoredPacker"
+          "declaration": "func (Axes) AddAnchoredPacker(orientation PackOrientation, opt AnchoredPackerOptions) *AnchoredPacker"
         },
         {
           "id": "method Axes.AddAnchoredSizeBar",
-          "declaration": "func (Axes) AddAnchoredSizeBar(size float64, label string, opts ...AnchoredSizeBarOptions) *AnchoredSizeBar"
+          "declaration": "func (Axes) AddAnchoredSizeBar(size float64, label string, opt AnchoredSizeBarOptions) *AnchoredSizeBar"
         },
         {
           "id": "method Axes.AddAnchoredText",
-          "declaration": "func (Axes) AddAnchoredText(text string, opts ...AnchoredTextOptions) *AnchoredTextBox"
+          "declaration": "func (Axes) AddAnchoredText(text string, opt AnchoredTextOptions) *AnchoredTextBox"
         },
         {
           "id": "method Axes.AddCollection",
@@ -4525,7 +4597,7 @@
         },
         {
           "id": "method Axes.AngleSpectrum",
-          "declaration": "func (Axes) AngleSpectrum(samples []float64, opts ...SignalSpectrumOptions) *SpectrumResult"
+          "declaration": "func (Axes) AngleSpectrum(samples []float64, opt SignalSpectrumOptions) *SpectrumResult"
         },
         {
           "id": "method Axes.Annotate",
@@ -4533,11 +4605,11 @@
         },
         {
           "id": "method Axes.AnnotatedHeatmap",
-          "declaration": "func (Axes) AnnotatedHeatmap(data [][]float64, opts ...AnnotatedHeatmapOptions) *AnnotatedHeatmapResult"
+          "declaration": "func (Axes) AnnotatedHeatmap(data [][]float64, opt AnnotatedHeatmapOptions) *AnnotatedHeatmapResult"
         },
         {
           "id": "method Axes.AnnotationBbox",
-          "declaration": "func (Axes) AnnotationBbox(text string, x, y float64, opts ...AnnotationBboxOptions) *AnnotationBbox"
+          "declaration": "func (Axes) AnnotationBbox(text string, x, y float64, opt AnnotationBboxOptions) *AnnotationBbox"
         },
         {
           "id": "method Axes.AutoScale",
@@ -4545,27 +4617,27 @@
         },
         {
           "id": "method Axes.AxHLine",
-          "declaration": "func (Axes) AxHLine(y float64, opts ...HLineOptions) *Segment2D"
+          "declaration": "func (Axes) AxHLine(y float64, opt HLineOptions) *Segment2D"
         },
         {
           "id": "method Axes.AxHSpan",
-          "declaration": "func (Axes) AxHSpan(yMin, yMax float64, opts ...HSpanOptions) *Span2D"
+          "declaration": "func (Axes) AxHSpan(yMin, yMax float64, opt HSpanOptions) *Span2D"
         },
         {
           "id": "method Axes.AxLine",
-          "declaration": "func (Axes) AxLine(p1, p2 geom.Pt, opts ...ReferenceLineOptions) *InfiniteLine2D"
+          "declaration": "func (Axes) AxLine(p1, p2 geom.Pt, opt ReferenceLineOptions) *InfiniteLine2D"
         },
         {
           "id": "method Axes.AxLineSlope",
-          "declaration": "func (Axes) AxLineSlope(point geom.Pt, slope float64, opts ...ReferenceLineOptions) *InfiniteLine2D"
+          "declaration": "func (Axes) AxLineSlope(point geom.Pt, slope float64, opt ReferenceLineOptions) *InfiniteLine2D"
         },
         {
           "id": "method Axes.AxVLine",
-          "declaration": "func (Axes) AxVLine(x float64, opts ...VLineOptions) *Segment2D"
+          "declaration": "func (Axes) AxVLine(x float64, opt VLineOptions) *Segment2D"
         },
         {
           "id": "method Axes.AxVSpan",
-          "declaration": "func (Axes) AxVSpan(xMin, xMax float64, opts ...VSpanOptions) *Span2D"
+          "declaration": "func (Axes) AxVSpan(xMin, xMax float64, opt VSpanOptions) *Span2D"
         },
         {
           "id": "method Axes.AxesLocator",
@@ -4573,47 +4645,47 @@
         },
         {
           "id": "method Axes.Bar",
-          "declaration": "func (Axes) Bar(posVals, heightVals any, opts ...BarOptions) (*Bar2D, error)"
+          "declaration": "func (Axes) Bar(posVals, heightVals any, opt BarOptions) (*Bar2D, error)"
         },
         {
           "id": "method Axes.BarContainer",
-          "declaration": "func (Axes) BarContainer(x, heights []float64, opts ...BarOptions) *BarContainer"
+          "declaration": "func (Axes) BarContainer(x, heights []float64, opt BarOptions) *BarContainer"
         },
         {
           "id": "method Axes.BarH",
-          "declaration": "func (Axes) BarH(yVals, widthVals any, opts ...BarOptions) (*Bar2D, error)"
+          "declaration": "func (Axes) BarH(yVals, widthVals any, opt BarOptions) (*Bar2D, error)"
         },
         {
           "id": "method Axes.BarLabel",
-          "declaration": "func (Axes) BarLabel(bar *Bar2D, labels []string, opts ...BarLabelOptions) []*Text"
+          "declaration": "func (Axes) BarLabel(bar *Bar2D, labels []string, opt BarLabelOptions) []*Text"
         },
         {
           "id": "method Axes.Barbs",
-          "declaration": "func (Axes) Barbs(x, y, u, v []float64, opts ...BarbsOptions) *Barbs"
+          "declaration": "func (Axes) Barbs(x, y, u, v []float64, opt BarbsOptions) *Barbs"
         },
         {
           "id": "method Axes.BarbsGrid",
-          "declaration": "func (Axes) BarbsGrid(x, y []float64, u, v [][]float64, opts ...BarbsOptions) *Barbs"
+          "declaration": "func (Axes) BarbsGrid(x, y []float64, u, v [][]float64, opt BarbsOptions) *Barbs"
         },
         {
           "id": "method Axes.BoxPlot",
-          "declaration": "func (Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D"
+          "declaration": "func (Axes) BoxPlot(data []float64, opt BoxPlotOptions) *BoxPlot2D"
         },
         {
           "id": "method Axes.BoxPlots",
-          "declaration": "func (Axes) BoxPlots(datasets [][]float64, opts ...BoxPlotsOptions) []*BoxPlot2D"
+          "declaration": "func (Axes) BoxPlots(datasets [][]float64, opt BoxPlotsOptions) []*BoxPlot2D"
         },
         {
           "id": "method Axes.BrokenBarH",
-          "declaration": "func (Axes) BrokenBarH(xRanges [][2]float64, yRange [2]float64, opts ...BarOptions) *Bar2D"
+          "declaration": "func (Axes) BrokenBarH(xRanges [][2]float64, yRange [2]float64, opt BarOptions) *Bar2D"
         },
         {
           "id": "method Axes.Bxp",
-          "declaration": "func (Axes) Bxp(stats []BxpStat, opts ...BxpOptions) *BxpContainer"
+          "declaration": "func (Axes) Bxp(stats []BxpStat, opt BxpOptions) *BxpContainer"
         },
         {
           "id": "method Axes.CSD",
-          "declaration": "func (Axes) CSD(x, y []float64, opts ...SignalSpectrumOptions) *SpectrumResult"
+          "declaration": "func (Axes) CSD(x, y []float64, opt SignalSpectrumOptions) *SpectrumResult"
         },
         {
           "id": "method Axes.Cla",
@@ -4621,7 +4693,7 @@
         },
         {
           "id": "method Axes.Clabel",
-          "declaration": "func (Axes) Clabel(cs *ContourSet, opts ...ClabelOptions) []ContourLabel"
+          "declaration": "func (Axes) Clabel(cs *ContourSet, opt ClabelOptions) []ContourLabel"
         },
         {
           "id": "method Axes.Clear",
@@ -4633,7 +4705,7 @@
         },
         {
           "id": "method Axes.Cohere",
-          "declaration": "func (Axes) Cohere(x, y []float64, opts ...SignalSpectrumOptions) *SpectrumResult"
+          "declaration": "func (Axes) Cohere(x, y []float64, opt SignalSpectrumOptions) *SpectrumResult"
         },
         {
           "id": "method Axes.ContainsDisplayPoint",
@@ -4641,11 +4713,11 @@
         },
         {
           "id": "method Axes.Contour",
-          "declaration": "func (Axes) Contour(data [][]float64, opts ...ContourOptions) *ContourSet"
+          "declaration": "func (Axes) Contour(data [][]float64, opt ContourOptions) *ContourSet"
         },
         {
           "id": "method Axes.Contourf",
-          "declaration": "func (Axes) Contourf(data [][]float64, opts ...ContourOptions) *ContourSet"
+          "declaration": "func (Axes) Contourf(data [][]float64, opt ContourOptions) *ContourSet"
         },
         {
           "id": "method Axes.DisplayRect",
@@ -4653,43 +4725,43 @@
         },
         {
           "id": "method Axes.ECDF",
-          "declaration": "func (Axes) ECDF(data []float64, opts ...ECDFOptions) *Line2D"
+          "declaration": "func (Axes) ECDF(data []float64, opt ECDFOptions) *Line2D"
         },
         {
           "id": "method Axes.ErrorBar",
-          "declaration": "func (Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) (*ErrorBar, error)"
+          "declaration": "func (Axes) ErrorBar(x, y, xErr, yErr []float64, opt ErrorBarOptions) (*ErrorBar, error)"
         },
         {
           "id": "method Axes.ErrorBarContainer",
-          "declaration": "func (Axes) ErrorBarContainer(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) (*ErrorbarContainer, error)"
+          "declaration": "func (Axes) ErrorBarContainer(x, y, xErr, yErr []float64, opt ErrorBarOptions) (*ErrorbarContainer, error)"
         },
         {
           "id": "method Axes.Eventplot",
-          "declaration": "func (Axes) Eventplot(positions [][]float64, opts ...EventPlotOptions) *EventCollection"
+          "declaration": "func (Axes) Eventplot(positions [][]float64, opt EventPlotOptions) *EventCollection"
         },
         {
           "id": "method Axes.Fill",
-          "declaration": "func (Axes) Fill(x, y []float64, opts ...FillOptions) *PolyCollection"
+          "declaration": "func (Axes) Fill(x, y []float64, opt FillOptions) *PolyCollection"
         },
         {
           "id": "method Axes.FillBetween",
-          "declaration": "func (Axes) FillBetween(xVals, y1Vals, y2Vals any, opts ...FillOptions) (*Fill2D, error)"
+          "declaration": "func (Axes) FillBetween(xVals, y1Vals, y2Vals any, opt FillOptions) (*Fill2D, error)"
         },
         {
           "id": "method Axes.FillBetweenPlot",
-          "declaration": "func (Axes) FillBetweenPlot(x, y1, y2 []float64, opts ...FillOptions) (*Fill2D, error)"
+          "declaration": "func (Axes) FillBetweenPlot(x, y1, y2 []float64, opt FillOptions) (*Fill2D, error)"
         },
         {
           "id": "method Axes.FillBetweenX",
-          "declaration": "func (Axes) FillBetweenX(y, x1, x2 []float64, opts ...FillOptions) (*Fill2D, error)"
+          "declaration": "func (Axes) FillBetweenX(y, x1, x2 []float64, opt FillOptions) (*Fill2D, error)"
         },
         {
           "id": "method Axes.FillToBaseline",
-          "declaration": "func (Axes) FillToBaseline(x, y []float64, opts ...FillOptions) *Fill2D"
+          "declaration": "func (Axes) FillToBaseline(x, y []float64, opt FillOptions) *Fill2D"
         },
         {
           "id": "method Axes.FillToBaselinePlot",
-          "declaration": "func (Axes) FillToBaselinePlot(x, y []float64, opts ...FillOptions) *Fill2D"
+          "declaration": "func (Axes) FillToBaselinePlot(x, y []float64, opt FillOptions) *Fill2D"
         },
         {
           "id": "method Axes.FloatingXAxis",
@@ -4709,7 +4781,7 @@
         },
         {
           "id": "method Axes.Hexbin",
-          "declaration": "func (Axes) Hexbin(x, y []float64, opts ...HexbinOptions) *HexbinCollection"
+          "declaration": "func (Axes) Hexbin(x, y []float64, opt HexbinOptions) *HexbinCollection"
         },
         {
           "id": "method Axes.HideRightAxis",
@@ -4721,15 +4793,15 @@
         },
         {
           "id": "method Axes.Hist",
-          "declaration": "func (Axes) Hist(data []float64, opts ...HistOptions) (*Hist2D, error)"
+          "declaration": "func (Axes) Hist(data []float64, opt HistOptions) (*Hist2D, error)"
         },
         {
           "id": "method Axes.Hist2D",
-          "declaration": "func (Axes) Hist2D(x, y []float64, opts ...Hist2DOptions) *Hist2DResult"
+          "declaration": "func (Axes) Hist2D(x, y []float64, opt Hist2DOptions) *Hist2DResult"
         },
         {
           "id": "method Axes.HistMulti",
-          "declaration": "func (Axes) HistMulti(data [][]float64, opts ...MultiHistOptions) []*Hist2D"
+          "declaration": "func (Axes) HistMulti(data [][]float64, opt MultiHistOptions) []*Hist2D"
         },
         {
           "id": "method Axes.ImShow",
@@ -4737,15 +4809,15 @@
         },
         {
           "id": "method Axes.ImShowImage",
-          "declaration": "func (Axes) ImShowImage(img image.Image, opts ...ImShowRGBOptions) *Image2D"
+          "declaration": "func (Axes) ImShowImage(img image.Image, opt ImShowRGBOptions) *Image2D"
         },
         {
           "id": "method Axes.ImShowRGB",
-          "declaration": "func (Axes) ImShowRGB(data [][][]float64, opts ...ImShowRGBOptions) (*Image2D, error)"
+          "declaration": "func (Axes) ImShowRGB(data [][][]float64, opt ImShowRGBOptions) (*Image2D, error)"
         },
         {
           "id": "method Axes.Image",
-          "declaration": "func (Axes) Image(data [][]float64, opts ...ImageOptions) *Image2D"
+          "declaration": "func (Axes) Image(data [][]float64, opt ImageOptions) *Image2D"
         },
         {
           "id": "method Axes.InsetAxes",
@@ -4773,11 +4845,11 @@
         },
         {
           "id": "method Axes.LogLog",
-          "declaration": "func (Axes) LogLog(x, y []float64, opts ...PlotOptions) *Line2D"
+          "declaration": "func (Axes) LogLog(x, y []float64, opt PlotOptions) *Line2D"
         },
         {
           "id": "method Axes.MagnitudeSpectrum",
-          "declaration": "func (Axes) MagnitudeSpectrum(samples []float64, opts ...SignalSpectrumOptions) *SpectrumResult"
+          "declaration": "func (Axes) MagnitudeSpectrum(samples []float64, opt SignalSpectrumOptions) *SpectrumResult"
         },
         {
           "id": "method Axes.Margins",
@@ -4785,7 +4857,7 @@
         },
         {
           "id": "method Axes.MatShow",
-          "declaration": "func (Axes) MatShow(data [][]float64, opts ...MatShowOptions) *Image2D"
+          "declaration": "func (Axes) MatShow(data [][]float64, opt MatShowOptions) *Image2D"
         },
         {
           "id": "method Axes.MinorticksOff",
@@ -4829,19 +4901,19 @@
         },
         {
           "id": "method Axes.PColor",
-          "declaration": "func (Axes) PColor(data [][]float64, opts ...MeshOptions) *QuadMesh"
+          "declaration": "func (Axes) PColor(data [][]float64, opt MeshOptions) *QuadMesh"
         },
         {
           "id": "method Axes.PColorFast",
-          "declaration": "func (Axes) PColorFast(data [][]float64, opts ...MeshOptions) *QuadMesh"
+          "declaration": "func (Axes) PColorFast(data [][]float64, opt MeshOptions) *QuadMesh"
         },
         {
           "id": "method Axes.PColorMesh",
-          "declaration": "func (Axes) PColorMesh(data [][]float64, opts ...MeshOptions) *QuadMesh"
+          "declaration": "func (Axes) PColorMesh(data [][]float64, opt MeshOptions) *QuadMesh"
         },
         {
           "id": "method Axes.PSD",
-          "declaration": "func (Axes) PSD(samples []float64, opts ...SignalSpectrumOptions) *SpectrumResult"
+          "declaration": "func (Axes) PSD(samples []float64, opt SignalSpectrumOptions) *SpectrumResult"
         },
         {
           "id": "method Axes.ParasiteAxes",
@@ -4857,15 +4929,15 @@
         },
         {
           "id": "method Axes.PhaseSpectrum",
-          "declaration": "func (Axes) PhaseSpectrum(samples []float64, opts ...SignalSpectrumOptions) *SpectrumResult"
+          "declaration": "func (Axes) PhaseSpectrum(samples []float64, opt SignalSpectrumOptions) *SpectrumResult"
         },
         {
           "id": "method Axes.Pie",
-          "declaration": "func (Axes) Pie(values []float64, opts ...PieOptions) *PieContainer"
+          "declaration": "func (Axes) Pie(values []float64, opt PieOptions) *PieContainer"
         },
         {
           "id": "method Axes.PieLabel",
-          "declaration": "func (Axes) PieLabel(container *PieContainer, labels []string, opts ...PieLabelOptions) []*Text"
+          "declaration": "func (Axes) PieLabel(container *PieContainer, labels []string, opt PieLabelOptions) []*Text"
         },
         {
           "id": "method Axes.PixelToData",
@@ -4873,11 +4945,11 @@
         },
         {
           "id": "method Axes.Plot",
-          "declaration": "func (Axes) Plot(xVals, yVals any, opts ...PlotOptions) (*Line2D, error)"
+          "declaration": "func (Axes) Plot(xVals, yVals any, opt PlotOptions) (*Line2D, error)"
         },
         {
           "id": "method Axes.PlotDate",
-          "declaration": "func (Axes) PlotDate(xVals []time.Time, yVals []float64, opts ...PlotOptions) (*Line2D, error)"
+          "declaration": "func (Axes) PlotDate(xVals []time.Time, yVals []float64, opt PlotOptions) (*Line2D, error)"
         },
         {
           "id": "method Axes.ProjectionName",
@@ -4885,15 +4957,15 @@
         },
         {
           "id": "method Axes.Quiver",
-          "declaration": "func (Axes) Quiver(x, y, u, v []float64, opts ...QuiverOptions) *Quiver"
+          "declaration": "func (Axes) Quiver(x, y, u, v []float64, opt QuiverOptions) *Quiver"
         },
         {
           "id": "method Axes.QuiverGrid",
-          "declaration": "func (Axes) QuiverGrid(x, y []float64, u, v [][]float64, opts ...QuiverOptions) *Quiver"
+          "declaration": "func (Axes) QuiverGrid(x, y []float64, u, v [][]float64, opt QuiverOptions) *Quiver"
         },
         {
           "id": "method Axes.QuiverKey",
-          "declaration": "func (Axes) QuiverKey(q *Quiver, x, y, u float64, label string, opts ...QuiverKeyOptions) *QuiverKey"
+          "declaration": "func (Axes) QuiverKey(q *Quiver, x, y, u float64, label string, opt QuiverKeyOptions) *QuiverKey"
         },
         {
           "id": "method Axes.Remove",
@@ -4913,7 +4985,7 @@
         },
         {
           "id": "method Axes.Scatter",
-          "declaration": "func (Axes) Scatter(xVals, yVals any, opts ...ScatterOptions) (*Scatter2D, error)"
+          "declaration": "func (Axes) Scatter(xVals, yVals any, opt ScatterOptions) (*Scatter2D, error)"
         },
         {
           "id": "method Axes.SecondaryXAxis",
@@ -4925,11 +4997,11 @@
         },
         {
           "id": "method Axes.SemilogX",
-          "declaration": "func (Axes) SemilogX(x, y []float64, opts ...PlotOptions) *Line2D"
+          "declaration": "func (Axes) SemilogX(x, y []float64, opt PlotOptions) *Line2D"
         },
         {
           "id": "method Axes.SemilogY",
-          "declaration": "func (Axes) SemilogY(x, y []float64, opts ...PlotOptions) *Line2D"
+          "declaration": "func (Axes) SemilogY(x, y []float64, opt PlotOptions) *Line2D"
         },
         {
           "id": "method Axes.SetAdjustable",
@@ -5001,7 +5073,7 @@
         },
         {
           "id": "method Axes.SetThetaZeroLocation",
-          "declaration": "func (Axes) SetThetaZeroLocation(location string, offsetDeg ...float64) error"
+          "declaration": "func (Axes) SetThetaZeroLocation(location ColorbarLocation, offsetDeg ...float64) error"
         },
         {
           "id": "method Axes.SetTitle",
@@ -5109,19 +5181,19 @@
         },
         {
           "id": "method Axes.Specgram",
-          "declaration": "func (Axes) Specgram(samples []float64, opts ...SpecgramOptions) *SpecgramResult"
+          "declaration": "func (Axes) Specgram(samples []float64, opt SpecgramOptions) *SpecgramResult"
         },
         {
           "id": "method Axes.Spy",
-          "declaration": "func (Axes) Spy(data [][]float64, opts ...SpyOptions) *SpyResult"
+          "declaration": "func (Axes) Spy(data [][]float64, opt SpyOptions) *SpyResult"
         },
         {
           "id": "method Axes.StackPlot",
-          "declaration": "func (Axes) StackPlot(x []float64, ys [][]float64, opts ...StackPlotOptions) []*Fill2D"
+          "declaration": "func (Axes) StackPlot(x []float64, ys [][]float64, opt StackPlotOptions) []*Fill2D"
         },
         {
           "id": "method Axes.Stairs",
-          "declaration": "func (Axes) Stairs(values, edges []float64, opts ...StairsOptions) *Stairs2D"
+          "declaration": "func (Axes) Stairs(values, edges []float64, opt StairsOptions) *Stairs2D"
         },
         {
           "id": "method Axes.Stem",
@@ -5129,19 +5201,19 @@
         },
         {
           "id": "method Axes.Step",
-          "declaration": "func (Axes) Step(x, y []float64, opts ...StepOptions) *Line2D"
+          "declaration": "func (Axes) Step(x, y []float64, opt StepOptions) *Line2D"
         },
         {
           "id": "method Axes.Streamplot",
-          "declaration": "func (Axes) Streamplot(x, y []float64, u, v [][]float64, opts ...StreamplotOptions) *StreamplotSet"
+          "declaration": "func (Axes) Streamplot(x, y []float64, u, v [][]float64, opt StreamplotOptions) *StreamplotSet"
         },
         {
           "id": "method Axes.Table",
-          "declaration": "func (Axes) Table(opts ...TableOptions) *Table"
+          "declaration": "func (Axes) Table(opt TableOptions) *Table"
         },
         {
           "id": "method Axes.Text",
-          "declaration": "func (Axes) Text(x, y float64, text string, opts ...TextOptions) *Text"
+          "declaration": "func (Axes) Text(x, y float64, text string, opt TextOptions) *Text"
         },
         {
           "id": "method Axes.TickParams",
@@ -5153,19 +5225,19 @@
         },
         {
           "id": "method Axes.TriColor",
-          "declaration": "func (Axes) TriColor(tri Triangulation, values []float64, opts ...TriColorOptions) *PolyCollection"
+          "declaration": "func (Axes) TriColor(tri Triangulation, values []float64, opt TriColorOptions) *PolyCollection"
         },
         {
           "id": "method Axes.TriContour",
-          "declaration": "func (Axes) TriContour(tri Triangulation, values []float64, opts ...ContourOptions) *ContourSet"
+          "declaration": "func (Axes) TriContour(tri Triangulation, values []float64, opt ContourOptions) *ContourSet"
         },
         {
           "id": "method Axes.TriContourf",
-          "declaration": "func (Axes) TriContourf(tri Triangulation, values []float64, opts ...ContourOptions) *ContourSet"
+          "declaration": "func (Axes) TriContourf(tri Triangulation, values []float64, opt ContourOptions) *ContourSet"
         },
         {
           "id": "method Axes.TriPlot",
-          "declaration": "func (Axes) TriPlot(tri Triangulation, opts ...TriPlotOptions) *LineCollection"
+          "declaration": "func (Axes) TriPlot(tri Triangulation, opt TriPlotOptions) *LineCollection"
         },
         {
           "id": "method Axes.TwinX",
@@ -5181,15 +5253,15 @@
         },
         {
           "id": "method Axes.Violin",
-          "declaration": "func (Axes) Violin(stats []ViolinStat, opts ...ViolinStatsOptions) *ViolinContainer"
+          "declaration": "func (Axes) Violin(stats []ViolinStat, opt ViolinStatsOptions) *ViolinContainer"
         },
         {
           "id": "method Axes.Violinplot",
-          "declaration": "func (Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContainer"
+          "declaration": "func (Axes) Violinplot(data [][]float64, opt ViolinOptions) *ViolinContainer"
         },
         {
           "id": "method Axes.XCorr",
-          "declaration": "func (Axes) XCorr(x, y []float64, opts ...CorrelationOptions) *CorrelationResult"
+          "declaration": "func (Axes) XCorr(x, y []float64, opt CorrelationOptions) *CorrelationResult"
         },
         {
           "id": "method Axes.XInverted",
@@ -5513,7 +5585,7 @@
         },
         {
           "id": "method ContourSet.Clabel",
-          "declaration": "func (ContourSet) Clabel(opts ...ClabelOptions) []ContourLabel"
+          "declaration": "func (ContourSet) Clabel(opt ClabelOptions) []ContourLabel"
         },
         {
           "id": "method ContourSet.Draw",
@@ -5637,7 +5709,7 @@
         },
         {
           "id": "method Figure.AddAnchoredText",
-          "declaration": "func (Figure) AddAnchoredText(text string, opts ...AnchoredTextOptions) *AnchoredTextBox"
+          "declaration": "func (Figure) AddAnchoredText(text string, opt AnchoredTextOptions) *AnchoredTextBox"
         },
         {
           "id": "method Figure.AddAxes",
@@ -5649,7 +5721,7 @@
         },
         {
           "id": "method Figure.AddColorbar",
-          "declaration": "func (Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...ColorbarOptions) *Axes"
+          "declaration": "func (Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opt ColorbarOptions) *Axes"
         },
         {
           "id": "method Figure.AddLegend",
@@ -5781,7 +5853,7 @@
         },
         {
           "id": "method Figure.Text",
-          "declaration": "func (Figure) Text(x, y float64, text string, opts ...TextOptions) *Text"
+          "declaration": "func (Figure) Text(x, y float64, text string, opt TextOptions) *Text"
         },
         {
           "id": "method Figure.TightLayout",
@@ -6441,7 +6513,7 @@
         },
         {
           "id": "method Sankey.Add",
-          "declaration": "func (Sankey) Add(flows []float64, opts ...SankeyAddOptions) *SankeyDiagram"
+          "declaration": "func (Sankey) Add(flows []float64, opt SankeyAddOptions) *SankeyDiagram"
         },
         {
           "id": "method Sankey.Finish",
@@ -6765,7 +6837,7 @@
         },
         {
           "id": "type AnchoredDrawingAreaOptions",
-          "declaration": "type AnchoredDrawingAreaOptions struct{ Location LegendLocation; Locator AnchoredBoxLocator; Padding float64; Inset float64; FrameOn *bool; Clip bool; BackgroundColor render.Color; BorderColor render.Color; BorderWidth float64 }"
+          "declaration": "type AnchoredDrawingAreaOptions struct{ Location LegendLocation; Locator AnchoredBoxLocator; Padding float64; Inset float64; FrameOn optional.Value[bool]; Clip bool; BackgroundColor render.Color; BorderColor render.Color; BorderWidth float64 }"
         },
         {
           "id": "type AnchoredPacker",
@@ -6773,7 +6845,7 @@
         },
         {
           "id": "type AnchoredPackerOptions",
-          "declaration": "type AnchoredPackerOptions struct{ Location LegendLocation; Locator AnchoredBoxLocator; Padding float64; Inset float64; Sep float64; FrameOn *bool; Align PackAlignment; BackgroundColor render.Color; BorderColor render.Color; BorderWidth float64; TextColor render.Color; FontSize float64; FontKey string; FontProperties *render.FontProperties }"
+          "declaration": "type AnchoredPackerOptions struct{ Location LegendLocation; Locator AnchoredBoxLocator; Padding float64; Inset float64; Sep float64; FrameOn optional.Value[bool]; Align PackAlignment; BackgroundColor render.Color; BorderColor render.Color; BorderWidth float64; TextColor render.Color; FontSize float64; FontKey string; FontProperties optional.Value[render.FontProperties] }"
         },
         {
           "id": "type AnchoredSizeBar",
@@ -6781,7 +6853,7 @@
         },
         {
           "id": "type AnchoredSizeBarOptions",
-          "declaration": "type AnchoredSizeBarOptions struct{ Location LegendLocation; Locator AnchoredBoxLocator; Coords CoordinateSpec; Padding float64; Inset float64; Sep float64; SizeVertical float64; FillBar *bool; LabelTop bool; FrameOn *bool; Color render.Color; BackgroundColor render.Color; BorderColor render.Color; BorderWidth float64; LineWidth float64; FontSize float64; FontKey string; FontProperties *render.FontProperties }"
+          "declaration": "type AnchoredSizeBarOptions struct{ Location LegendLocation; Locator AnchoredBoxLocator; Coords CoordinateSpec; Padding float64; Inset float64; Sep float64; SizeVertical float64; FillBar optional.Value[bool]; LabelTop bool; FrameOn optional.Value[bool]; Color render.Color; BackgroundColor render.Color; BorderColor render.Color; BorderWidth float64; LineWidth float64; FontSize float64; FontKey string; FontProperties optional.Value[render.FontProperties] }"
         },
         {
           "id": "type AnchoredTextBox",
@@ -6797,7 +6869,7 @@
         },
         {
           "id": "type AnnotatedHeatmapOptions",
-          "declaration": "type AnnotatedHeatmapOptions struct{ MatShowOptions; Format string; FontSize float64; TextColor render.Color; TextColorHigh render.Color; Threshold *float64; SkipNaN bool; NaNText string }"
+          "declaration": "type AnnotatedHeatmapOptions struct{ MatShowOptions; Format string; FontSize float64; TextColor render.Color; TextColorHigh render.Color; Threshold optional.Value[float64]; SkipNaN bool; NaNText string }"
         },
         {
           "id": "type AnnotatedHeatmapResult",
@@ -6813,7 +6885,7 @@
         },
         {
           "id": "type AnnotationBboxOptions",
-          "declaration": "type AnnotationBboxOptions struct{ XYCoords CoordinateSpec; BoxCoords CoordinateSpec; BoxPosition *geom.Pt; BoxAlignment *geom.Pt; FrameOn *bool; Padding float64; Image render.Image; ImageZoom float64; FaceColor render.Color; EdgeColor render.Color; LineWidth float64; TextColor render.Color; FontSize float64; FontKey string; FontProperties *render.FontProperties; Arrow bool; ArrowColor render.Color; ArrowWidth float64; ArrowHeadSize float64; ArrowStyle ArrowStyle; ConnectionStyle ConnectionStyle; AnnotationClip *bool }"
+          "declaration": "type AnnotationBboxOptions struct{ XYCoords CoordinateSpec; BoxCoords CoordinateSpec; BoxPosition optional.Value[geom.Pt]; BoxAlignment optional.Value[geom.Pt]; FrameOn optional.Value[bool]; Padding float64; Image render.Image; ImageZoom float64; FaceColor render.Color; EdgeColor render.Color; LineWidth float64; TextColor render.Color; FontSize float64; FontKey string; FontProperties optional.Value[render.FontProperties]; Arrow bool; ArrowColor render.Color; ArrowWidth float64; ArrowHeadSize float64; ArrowStyle ArrowStyle; ConnectionStyle ConnectionStyle; AnnotationClip optional.Value[bool] }"
         },
         {
           "id": "type AnnotationOffsetUnits",
@@ -6821,7 +6893,7 @@
         },
         {
           "id": "type AnnotationOptions",
-          "declaration": "type AnnotationOptions struct{ Coords CoordinateSpec; TextPosition optional.Value[geom.Pt]; TextCoords CoordinateSpec; OffsetX optional.Value[float64]; OffsetY optional.Value[float64]; OffsetUnits AnnotationOffsetUnits; FontSize float64; Color render.Color; ArrowColor render.Color; ArrowWidth optional.Value[float64]; ArrowHeadSize optional.Value[float64]; ArrowStyle ArrowStyle; ConnectionStyle ConnectionStyle; HAlign TextAlign; VAlign TextVerticalAlign; Angle float64; FontKey string; BBox *TextBBoxOptions; Linespacing float64; FontProperties *render.FontProperties; ParseMath optional.Value[bool]; AnnotationClip optional.Value[bool] }"
+          "declaration": "type AnnotationOptions struct{ Coords CoordinateSpec; TextPosition optional.Value[geom.Pt]; TextCoords CoordinateSpec; OffsetX optional.Value[float64]; OffsetY optional.Value[float64]; OffsetUnits AnnotationOffsetUnits; FontSize float64; Color render.Color; ArrowColor render.Color; ArrowWidth optional.Value[float64]; ArrowHeadSize optional.Value[float64]; ArrowStyle ArrowStyle; ConnectionStyle ConnectionStyle; HAlign TextAlign; VAlign TextVerticalAlign; Angle float64; FontKey string; BBox optional.Value[TextBBoxOptions]; Linespacing float64; FontProperties optional.Value[render.FontProperties]; ParseMath optional.Value[bool]; AnnotationClip optional.Value[bool] }"
         },
         {
           "id": "type Annulus",
@@ -6949,7 +7021,7 @@
         },
         {
           "id": "type BarOptions",
-          "declaration": "type BarOptions struct{ Color *render.Color; Colors []render.Color; Width *float64; Widths []float64; EdgeColor *render.Color; EdgeColors []render.Color; EdgeWidth *float64; Alpha *float64; Antialiased *bool; Baseline *float64; Baselines []float64; Orientation *BarOrientation; Align *BarAlign; Label string; XErr []float64; YErr []float64; ECol *render.Color; CapSize *float64; CapThick *float64; ErrorKw *ErrorBarOptions }"
+          "declaration": "type BarOptions struct{ Color optional.Value[render.Color]; Colors []render.Color; Width optional.Value[float64]; Widths []float64; EdgeColor optional.Value[render.Color]; EdgeColors []render.Color; EdgeWidth optional.Value[float64]; Alpha optional.Value[float64]; Antialiased optional.Value[bool]; Baseline optional.Value[float64]; Baselines []float64; Orientation optional.Value[BarOrientation]; Align optional.Value[BarAlign]; Label string; XErr []float64; YErr []float64; ECol optional.Value[render.Color]; CapSize optional.Value[float64]; CapThick optional.Value[float64]; ErrorKw optional.Value[ErrorBarOptions] }"
         },
         {
           "id": "type BarOrientation",
@@ -6965,11 +7037,11 @@
         },
         {
           "id": "type Barbs",
-          "declaration": "type Barbs struct{ Anchors []geom.Pt; U []float64; V []float64; Colors []render.Color; Color render.Color; ScalarColors []float64; BarbColor render.Color; FlagColor render.Color; LineWidth float64; Alpha float64; Pivot string; Length float64; Units string; Sizes BarbSizes; Increments BarbIncrements; FillEmpty bool; Rounding bool; Flip []bool; Label string; Colormap string; Norm ScalarNormalizer; VMin float64; VMax float64 }"
+          "declaration": "type Barbs struct{ Anchors []geom.Pt; U []float64; V []float64; Colors []render.Color; Color render.Color; ScalarColors []float64; BarbColor render.Color; FlagColor render.Color; LineWidth float64; Alpha float64; Pivot VectorPivot; Length float64; Units string; Sizes BarbSizes; Increments BarbIncrements; FillEmpty bool; Rounding bool; Flip []bool; Label string; Colormap string; Norm ScalarNormalizer; VMin float64; VMax float64 }"
         },
         {
           "id": "type BarbsOptions",
-          "declaration": "type BarbsOptions struct{ Color *render.Color; Colors []render.Color; C []float64; CGrid [][]float64; Colormap *string; Norm ScalarNormalizer; VMin *float64; VMax *float64; Alpha *float64; BarbColor *render.Color; FlagColor *render.Color; LineWidth *float64; Pivot string; Length *float64; Units string; Sizes *BarbSizes; Increments *BarbIncrements; FillEmpty *bool; Rounding *bool; FlipBarb *bool; Flip []bool; Label string; ZOrder *float64 }"
+          "declaration": "type BarbsOptions struct{ Color optional.Value[render.Color]; Colors []render.Color; C []float64; CGrid [][]float64; Colormap optional.Value[string]; Norm ScalarNormalizer; VMin optional.Value[float64]; VMax optional.Value[float64]; Alpha optional.Value[float64]; BarbColor optional.Value[render.Color]; FlagColor optional.Value[render.Color]; LineWidth optional.Value[float64]; Pivot VectorPivot; Length optional.Value[float64]; Units string; Sizes optional.Value[BarbSizes]; Increments optional.Value[BarbIncrements]; FillEmpty optional.Value[bool]; Rounding optional.Value[bool]; FlipBarb optional.Value[bool]; Flip []bool; Label string; ZOrder optional.Value[float64] }"
         },
         {
           "id": "type BinStrategy",
@@ -6977,7 +7049,7 @@
         },
         {
           "id": "type BoundaryNorm",
-          "declaration": "type BoundaryNorm struct{ Boundaries []float64; NColors int; Clip bool; Extend string }"
+          "declaration": "type BoundaryNorm struct{ Boundaries []float64; NColors int; Clip bool; Extend ColorbarExtend }"
         },
         {
           "id": "type BoxHorizontalAlign",
@@ -6985,15 +7057,15 @@
         },
         {
           "id": "type BoxPlot2D",
-          "declaration": "type BoxPlot2D struct{ Data []float64; Position float64; Width float64; Color render.Color; EdgeColor render.Color; MedianColor render.Color; WhiskerColor render.Color; CapColor render.Color; FlierColor render.Color; FlierEdgeColor render.Color; EdgeWidth float64; WhiskerWidth float64; MedianWidth float64; CapWidth float64; FlierSize float64; FlierEdgeWidth float64; Alpha float64; PatchArtist bool; Orientation string; ShowBox bool; ShowCaps bool; ShowFliers bool; ShowMeans bool; MeanLine bool; MeanColor render.Color; Notch bool; Bootstrap int; Whis *float64; ConfidenceInterval *[2]float64; CustomMedian *float64; WhiskerPercentiles *[2]float64; FlierMarker MarkerType; Label string }"
+          "declaration": "type BoxPlot2D struct{ Data []float64; Position float64; Width float64; Color render.Color; EdgeColor render.Color; MedianColor render.Color; WhiskerColor render.Color; CapColor render.Color; FlierColor render.Color; FlierEdgeColor render.Color; EdgeWidth float64; WhiskerWidth float64; MedianWidth float64; CapWidth float64; FlierSize float64; FlierEdgeWidth float64; Alpha float64; PatchArtist bool; Orientation PlotOrientation; ShowBox bool; ShowCaps bool; ShowFliers bool; ShowMeans bool; MeanLine bool; MeanColor render.Color; Notch bool; Bootstrap int; Whis *float64; ConfidenceInterval *[2]float64; CustomMedian *float64; WhiskerPercentiles *[2]float64; FlierMarker MarkerType; Label string }"
         },
         {
           "id": "type BoxPlotOptions",
-          "declaration": "type BoxPlotOptions struct{ Position *float64; Width *float64; Color *render.Color; EdgeColor *render.Color; MedianColor *render.Color; WhiskerColor *render.Color; CapColor *render.Color; FlierColor *render.Color; EdgeWidth *float64; WhiskerWidth *float64; MedianWidth *float64; CapWidth *float64; FlierSize *float64; Alpha *float64; ShowFliers *bool; Label string; PatchArtist *bool; Orientation *string; ShowBox *bool; ShowCaps *bool; ShowMeans *bool; MeanLine *bool; MeanColor *render.Color; Whis *float64; Sym *string; Notch *bool; Bootstrap int; ConfidenceInterval *[2]float64; CustomMedian *float64; WhiskerPercentiles *[2]float64; FlierMarker *MarkerType; FlierEdgeColor *render.Color; FlierEdgeWidth *float64 }"
+          "declaration": "type BoxPlotOptions struct{ Position optional.Value[float64]; Width optional.Value[float64]; Color optional.Value[render.Color]; EdgeColor optional.Value[render.Color]; MedianColor optional.Value[render.Color]; WhiskerColor optional.Value[render.Color]; CapColor optional.Value[render.Color]; FlierColor optional.Value[render.Color]; EdgeWidth optional.Value[float64]; WhiskerWidth optional.Value[float64]; MedianWidth optional.Value[float64]; CapWidth optional.Value[float64]; FlierSize optional.Value[float64]; Alpha optional.Value[float64]; ShowFliers optional.Value[bool]; Label string; PatchArtist optional.Value[bool]; Orientation optional.Value[PlotOrientation]; ShowBox optional.Value[bool]; ShowCaps optional.Value[bool]; ShowMeans optional.Value[bool]; MeanLine optional.Value[bool]; MeanColor optional.Value[render.Color]; Whis optional.Value[float64]; Sym optional.Value[string]; Notch optional.Value[bool]; Bootstrap int; ConfidenceInterval optional.Value[[2]float64]; CustomMedian optional.Value[float64]; WhiskerPercentiles optional.Value[[2]float64]; FlierMarker optional.Value[MarkerType]; FlierEdgeColor optional.Value[render.Color]; FlierEdgeWidth optional.Value[float64] }"
         },
         {
           "id": "type BoxPlotsOptions",
-          "declaration": "type BoxPlotsOptions struct{ Positions []float64; Width *float64; Colors []render.Color; EdgeColor *render.Color; MedianColor *render.Color; WhiskerColor *render.Color; CapColor *render.Color; FlierColor *render.Color; EdgeWidth *float64; WhiskerWidth *float64; MedianWidth *float64; CapWidth *float64; FlierSize *float64; Alpha *float64; ShowFliers *bool; ManageTicks *bool; Labels []string; PatchArtist *bool; Orientation *string; ShowBox *bool; ShowCaps *bool; ShowMeans *bool; MeanLine *bool; MeanColor *render.Color; Whis *float64; Sym *string; Notch *bool; Bootstrap int; ConfidenceIntervals [][2]float64; CustomMedians []float64; WhiskerPercentiles *[2]float64; FlierMarker *MarkerType; FlierEdgeColor *render.Color; FlierEdgeWidth *float64 }"
+          "declaration": "type BoxPlotsOptions struct{ Positions []float64; Width optional.Value[float64]; Colors []render.Color; EdgeColor optional.Value[render.Color]; MedianColor optional.Value[render.Color]; WhiskerColor optional.Value[render.Color]; CapColor optional.Value[render.Color]; FlierColor optional.Value[render.Color]; EdgeWidth optional.Value[float64]; WhiskerWidth optional.Value[float64]; MedianWidth optional.Value[float64]; CapWidth optional.Value[float64]; FlierSize optional.Value[float64]; Alpha optional.Value[float64]; ShowFliers optional.Value[bool]; ManageTicks optional.Value[bool]; Labels []string; PatchArtist optional.Value[bool]; Orientation optional.Value[PlotOrientation]; ShowBox optional.Value[bool]; ShowCaps optional.Value[bool]; ShowMeans optional.Value[bool]; MeanLine optional.Value[bool]; MeanColor optional.Value[render.Color]; Whis optional.Value[float64]; Sym optional.Value[string]; Notch optional.Value[bool]; Bootstrap int; ConfidenceIntervals [][2]float64; CustomMedians []float64; WhiskerPercentiles optional.Value[[2]float64]; FlierMarker optional.Value[MarkerType]; FlierEdgeColor optional.Value[render.Color]; FlierEdgeWidth optional.Value[float64] }"
         },
         {
           "id": "type BoxStyle",
@@ -7009,7 +7081,7 @@
         },
         {
           "id": "type BxpOptions",
-          "declaration": "type BxpOptions struct{ Positions []float64; Widths []float64; CapWidths []float64; Orientation string; ShowNotches *bool; ShowMeans *bool; ShowCaps *bool; ShowBox *bool; ShowFliers *bool; MeanLine bool; ManageTicks *bool; Color *render.Color; MedianColor *render.Color; MeanColor *render.Color; FlierColor *render.Color; LineWidth *float64; MarkerSize *float64; Label string; Labels []string }"
+          "declaration": "type BxpOptions struct{ Positions []float64; Widths []float64; CapWidths []float64; Orientation PlotOrientation; ShowNotches optional.Value[bool]; ShowMeans optional.Value[bool]; ShowCaps optional.Value[bool]; ShowBox optional.Value[bool]; ShowFliers optional.Value[bool]; MeanLine bool; ManageTicks optional.Value[bool]; Color optional.Value[render.Color]; MedianColor optional.Value[render.Color]; MeanColor optional.Value[render.Color]; FlierColor optional.Value[render.Color]; LineWidth optional.Value[float64]; MarkerSize optional.Value[float64]; Label string; Labels []string }"
         },
         {
           "id": "type BxpStat",
@@ -7033,7 +7105,7 @@
         },
         {
           "id": "type ClabelOptions",
-          "declaration": "type ClabelOptions struct{ Levels []float64; Formatter ticker.Formatter; FontSize *float64; Color *render.Color; Colors []render.Color; Inline *bool; InlineSpacing float64; ManualPositions []geom.Pt; FormatString string; FormatDict map[float64]string; RightSideUp *bool }"
+          "declaration": "type ClabelOptions struct{ Levels []float64; Formatter ticker.Formatter; FontSize optional.Value[float64]; Color optional.Value[render.Color]; Colors []render.Color; Inline optional.Value[bool]; InlineSpacing float64; ManualPositions []geom.Pt; FormatString string; FormatDict map[float64]string; RightSideUp optional.Value[bool] }"
         },
         {
           "id": "type Collection",
@@ -7041,11 +7113,19 @@
         },
         {
           "id": "type Colorbar",
-          "declaration": "type Colorbar struct{ Mapping ScalarMapInfo; Mappable ScalarMappable; Colormap string; Extend string; Orientation string; Boundaries []float64; Values []float64; Spacing string; DrawEdges bool; ExtendRect bool; ExtendFracMin float64; ExtendFracMax float64; Alpha float64; BorderColor render.Color; BorderWidth float64 }"
+          "declaration": "type Colorbar struct{ Mapping ScalarMapInfo; Mappable ScalarMappable; Colormap string; Extend ColorbarExtend; Orientation PlotOrientation; Boundaries []float64; Values []float64; Spacing string; DrawEdges bool; ExtendRect bool; ExtendFracMin float64; ExtendFracMax float64; Alpha float64; BorderColor render.Color; BorderWidth float64 }"
+        },
+        {
+          "id": "type ColorbarExtend",
+          "declaration": "type ColorbarExtend string"
+        },
+        {
+          "id": "type ColorbarLocation",
+          "declaration": "type ColorbarLocation string"
         },
         {
           "id": "type ColorbarOptions",
-          "declaration": "type ColorbarOptions struct{ Width float64; Padding float64; Aspect float64; Shrink float64; Anchor *geom.Pt; Label string; Colormap *string; VMin *float64; VMax *float64; Extend string; Location string; Orientation string; Ticks []float64; Boundaries []float64; Values []float64; Spacing string; DrawEdges bool; ExtendRect bool; ExtendFrac []float64; ExtendFracAuto bool; MinorTicks bool }"
+          "declaration": "type ColorbarOptions struct{ Width float64; Padding float64; Aspect float64; Shrink float64; Anchor optional.Value[geom.Pt]; Label string; Colormap optional.Value[string]; VMin optional.Value[float64]; VMax optional.Value[float64]; Extend ColorbarExtend; Location ColorbarLocation; Orientation PlotOrientation; Ticks []float64; Boundaries []float64; Values []float64; Spacing string; DrawEdges bool; ExtendRect bool; ExtendFrac []float64; ExtendFracAuto bool; MinorTicks bool }"
         },
         {
           "id": "type ConnectionPatch",
@@ -7061,7 +7141,7 @@
         },
         {
           "id": "type ContourOptions",
-          "declaration": "type ContourOptions struct{ X []float64; Y []float64; XEdges []float64; YEdges []float64; Levels []float64; LevelCount int; Colormap *string; Norm ScalarNormalizer; Colors []render.Color; Color *render.Color; LineWidth *float64; Alpha *float64; LabelLines bool; LabelFormatter ticker.Formatter; LabelFontSize *float64; LabelColor *render.Color; Label string; Algorithm string; CornerMask *bool; LineStyles []string; NegativeLineStyles *string; Extend string; Hatches []string }"
+          "declaration": "type ContourOptions struct{ X []float64; Y []float64; XEdges []float64; YEdges []float64; Levels []float64; LevelCount int; Colormap optional.Value[string]; Norm ScalarNormalizer; Colors []render.Color; Color optional.Value[render.Color]; LineWidth optional.Value[float64]; Alpha optional.Value[float64]; LabelLines bool; LabelFormatter ticker.Formatter; LabelFontSize optional.Value[float64]; LabelColor optional.Value[render.Color]; Label string; Algorithm string; CornerMask optional.Value[bool]; LineStyles []string; NegativeLineStyles optional.Value[string]; Extend ColorbarExtend; Hatches []string }"
         },
         {
           "id": "type ContourSet",
@@ -7081,7 +7161,7 @@
         },
         {
           "id": "type CorrelationOptions",
-          "declaration": "type CorrelationOptions struct{ MaxLags int; Normalize *bool; PlotOptions }"
+          "declaration": "type CorrelationOptions struct{ MaxLags int; Normalize optional.Value[bool]; PlotOptions }"
         },
         {
           "id": "type CorrelationResult",
@@ -7097,11 +7177,11 @@
         },
         {
           "id": "type DrawOptions",
-          "declaration": "type DrawOptions struct{ AnimatedFilter AnimatedFilter; Transparent bool; FigureBackground *render.Color; FigureEdge *render.Color; FigureEdgeWidth float64 }"
+          "declaration": "type DrawOptions struct{ AnimatedFilter AnimatedFilter; Transparent bool; FigureBackground optional.Value[render.Color]; FigureEdge optional.Value[render.Color]; FigureEdgeWidth float64 }"
         },
         {
           "id": "type ECDFOptions",
-          "declaration": "type ECDFOptions struct{ Color *render.Color; LineWidth *float64; Dashes []float64; Complementary bool; Compress bool; Label string; Alpha *float64 }"
+          "declaration": "type ECDFOptions struct{ Color optional.Value[render.Color]; LineWidth optional.Value[float64]; Dashes []float64; Complementary bool; Compress bool; Label string; Alpha optional.Value[float64] }"
         },
         {
           "id": "type Ellipse",
@@ -7113,7 +7193,7 @@
         },
         {
           "id": "type ErrorBarOptions",
-          "declaration": "type ErrorBarOptions struct{ Color *render.Color; LineWidth *float64; CapSize *float64; CapThick *float64; Marker *MarkerType; MarkerSize *float64; Alpha *float64; Label string; NoDataLine bool; ErrorEvery int; ErrorEveryStart int; XErrLower []float64; XErrUpper []float64; YErrLower []float64; YErrUpper []float64; LoLimits []bool; UpLimits []bool; XLoLimits []bool; XUpLimits []bool }"
+          "declaration": "type ErrorBarOptions struct{ Color optional.Value[render.Color]; LineWidth optional.Value[float64]; CapSize optional.Value[float64]; CapThick optional.Value[float64]; Marker optional.Value[MarkerType]; MarkerSize optional.Value[float64]; Alpha optional.Value[float64]; Label string; NoDataLine bool; ErrorEvery int; ErrorEveryStart int; XErrLower []float64; XErrUpper []float64; YErrLower []float64; YErrUpper []float64; LoLimits []bool; UpLimits []bool; XLoLimits []bool; XUpLimits []bool }"
         },
         {
           "id": "type ErrorbarContainer",
@@ -7161,7 +7241,7 @@
         },
         {
           "id": "type FillOptions",
-          "declaration": "type FillOptions struct{ Color *render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Antialiased *bool; Baseline *float64; Where []bool; Interpolate bool; Step FillStep; Label string }"
+          "declaration": "type FillOptions struct{ Color optional.Value[render.Color]; EdgeColor optional.Value[render.Color]; EdgeWidth optional.Value[float64]; Alpha optional.Value[float64]; Antialiased optional.Value[bool]; Baseline optional.Value[float64]; Where []bool; Interpolate bool; Step FillStep; Label string }"
         },
         {
           "id": "type FillOrientation",
@@ -7193,11 +7273,11 @@
         },
         {
           "id": "type HLineOptions",
-          "declaration": "type HLineOptions struct{ Color *render.Color; LineWidth *float64; Dashes []float64; Alpha *float64; XMin *float64; XMax *float64 }"
+          "declaration": "type HLineOptions struct{ Color optional.Value[render.Color]; LineWidth optional.Value[float64]; Dashes []float64; Alpha optional.Value[float64]; XMin optional.Value[float64]; XMax optional.Value[float64] }"
         },
         {
           "id": "type HSpanOptions",
-          "declaration": "type HSpanOptions struct{ Color *render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Antialiased *bool; XMin *float64; XMax *float64 }"
+          "declaration": "type HSpanOptions struct{ Color optional.Value[render.Color]; EdgeColor optional.Value[render.Color]; EdgeWidth optional.Value[float64]; Alpha optional.Value[float64]; Antialiased optional.Value[bool]; XMin optional.Value[float64]; XMax optional.Value[float64] }"
         },
         {
           "id": "type HexbinCollection",
@@ -7205,7 +7285,7 @@
         },
         {
           "id": "type HexbinOptions",
-          "declaration": "type HexbinOptions struct{ GridSizeX int; GridSizeY int; Extent *geom.Rect; C []float64; Reduce string; Bins string; BinCount int; BinEdges []float64; XScale string; YScale string; Marginals bool; MinCount int; Colormap string; Norm ScalarNormalizer; VMin *float64; VMax *float64; Alpha float64; EdgeColor *render.Color; LineWidth float64; Label string }"
+          "declaration": "type HexbinOptions struct{ GridSizeX int; GridSizeY int; Extent optional.Value[geom.Rect]; C []float64; Reduce string; Bins string; BinCount int; BinEdges []float64; XScale string; YScale string; Marginals bool; MinCount int; Colormap string; Norm ScalarNormalizer; VMin optional.Value[float64]; VMax optional.Value[float64]; Alpha float64; EdgeColor optional.Value[render.Color]; LineWidth float64; Label string }"
         },
         {
           "id": "type Hist2D",
@@ -7213,7 +7293,7 @@
         },
         {
           "id": "type Hist2DOptions",
-          "declaration": "type Hist2DOptions struct{ XBins int; YBins int; XBinEdges []float64; YBinEdges []float64; Weights []float64; Norm HistNorm; ColorNorm ScalarNormalizer; Colormap *string; VMin *float64; VMax *float64; Alpha *float64; EdgeColor *render.Color; EdgeWidth *float64; Label string }"
+          "declaration": "type Hist2DOptions struct{ XBins int; YBins int; XBinEdges []float64; YBinEdges []float64; Weights []float64; Norm HistNorm; ColorNorm ScalarNormalizer; Colormap optional.Value[string]; VMin optional.Value[float64]; VMax optional.Value[float64]; Alpha optional.Value[float64]; EdgeColor optional.Value[render.Color]; EdgeWidth optional.Value[float64]; Label string }"
         },
         {
           "id": "type Hist2DResult",
@@ -7225,7 +7305,7 @@
         },
         {
           "id": "type HistOptions",
-          "declaration": "type HistOptions struct{ Bins int; BinEdges []float64; Range *HistRange; Weights []float64; BinStrat BinStrategy; Norm HistNorm; Cumulative bool; ReverseCumulative bool; Log bool; HistType HistType; Baselines []float64; Color *render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Antialiased *bool; Label string }"
+          "declaration": "type HistOptions struct{ Bins int; BinEdges []float64; Range optional.Value[HistRange]; Weights []float64; BinStrat BinStrategy; Norm HistNorm; Cumulative bool; ReverseCumulative bool; Log bool; HistType HistType; Baselines []float64; Color optional.Value[render.Color]; EdgeColor optional.Value[render.Color]; EdgeWidth optional.Value[float64]; Alpha optional.Value[float64]; Antialiased optional.Value[bool]; Label string }"
         },
         {
           "id": "type HistRange",
@@ -7237,11 +7317,11 @@
         },
         {
           "id": "type ImShowOptions",
-          "declaration": "type ImShowOptions struct{ Colormap optional.Value[string]; Norm ScalarNormalizer; VMin optional.Value[float64]; VMax optional.Value[float64]; Alpha optional.Value[float64]; Aspect optional.Value[string]; Origin optional.Value[ImageOrigin]; Label string; Extent optional.Value[[4]float64]; Interpolation optional.Value[string] }"
+          "declaration": "type ImShowOptions struct{ Colormap optional.Value[string]; Norm ScalarNormalizer; VMin optional.Value[float64]; VMax optional.Value[float64]; Alpha optional.Value[float64]; Aspect optional.Value[ImageAspect]; Origin optional.Value[ImageOrigin]; Label string; Extent optional.Value[[4]float64]; Interpolation optional.Value[string] }"
         },
         {
           "id": "type ImShowRGBOptions",
-          "declaration": "type ImShowRGBOptions struct{ Alpha *float64; Aspect string; Origin ImageOrigin; Extent *[4]float64; Interpolation *string; Label string }"
+          "declaration": "type ImShowRGBOptions struct{ Alpha optional.Value[float64]; Aspect ImageAspect; Origin ImageOrigin; Extent optional.Value[[4]float64]; Interpolation optional.Value[string]; Label string }"
         },
         {
           "id": "type Image2D",
@@ -7252,12 +7332,16 @@
           "declaration": "type ImageAnchor int"
         },
         {
+          "id": "type ImageAspect",
+          "declaration": "type ImageAspect string"
+        },
+        {
           "id": "type ImageGrid",
           "declaration": "type ImageGrid struct{ Axes [][]*Axes }"
         },
         {
           "id": "type ImageOptions",
-          "declaration": "type ImageOptions struct{ Colormap *string; Norm ScalarNormalizer; VMin *float64; VMax *float64; Alpha *float64; XMin *float64; XMax *float64; YMin *float64; YMax *float64; Origin ImageOrigin; Angle *float64; RotationAnchor ImageAnchor; RotationAnchorX *float64; RotationAnchorY *float64; Label string; Interpolation *string }"
+          "declaration": "type ImageOptions struct{ Colormap optional.Value[string]; Norm ScalarNormalizer; VMin optional.Value[float64]; VMax optional.Value[float64]; Alpha optional.Value[float64]; XMin optional.Value[float64]; XMax optional.Value[float64]; YMin optional.Value[float64]; YMax optional.Value[float64]; Origin ImageOrigin; Angle optional.Value[float64]; RotationAnchor ImageAnchor; RotationAnchorX optional.Value[float64]; RotationAnchorY optional.Value[float64]; Label string; Interpolation optional.Value[string] }"
         },
         {
           "id": "type ImageOrigin",
@@ -7369,7 +7453,7 @@
         },
         {
           "id": "type MatShowOptions",
-          "declaration": "type MatShowOptions struct{ Colormap *string; Norm ScalarNormalizer; VMin *float64; VMax *float64; Alpha *float64; Aspect string; IntegerTicks *bool; Label string; Interpolation *string }"
+          "declaration": "type MatShowOptions struct{ Colormap optional.Value[string]; Norm ScalarNormalizer; VMin optional.Value[float64]; VMax optional.Value[float64]; Alpha optional.Value[float64]; Aspect ImageAspect; IntegerTicks optional.Value[bool]; Label string; Interpolation optional.Value[string] }"
         },
         {
           "id": "type MathTextLayout",
@@ -7385,7 +7469,7 @@
         },
         {
           "id": "type MeshOptions",
-          "declaration": "type MeshOptions struct{ XEdges []float64; YEdges []float64; Mask [][]bool; Shading MeshShading; Colormap *string; Norm ScalarNormalizer; VMin *float64; VMax *float64; Alpha *float64; EdgeColor *render.Color; EdgeWidth *float64; Antialias *bool; Label string }"
+          "declaration": "type MeshOptions struct{ XEdges []float64; YEdges []float64; Mask [][]bool; Shading MeshShading; Colormap optional.Value[string]; Norm ScalarNormalizer; VMin optional.Value[float64]; VMax optional.Value[float64]; Alpha optional.Value[float64]; EdgeColor optional.Value[render.Color]; EdgeWidth optional.Value[float64]; Antialias optional.Value[bool]; Label string }"
         },
         {
           "id": "type MeshShading",
@@ -7393,7 +7477,7 @@
         },
         {
           "id": "type MultiHistOptions",
-          "declaration": "type MultiHistOptions struct{ Bins int; BinEdges []float64; BinStrat BinStrategy; Norm HistNorm; Cumulative bool; HistType HistType; Stacked bool; Colors []render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Labels []string }"
+          "declaration": "type MultiHistOptions struct{ Bins int; BinEdges []float64; BinStrat BinStrategy; Norm HistNorm; Cumulative bool; HistType HistType; Stacked bool; Colors []render.Color; EdgeColor optional.Value[render.Color]; EdgeWidth optional.Value[float64]; Alpha optional.Value[float64]; Labels []string }"
         },
         {
           "id": "type NoNorm",
@@ -7421,7 +7505,7 @@
         },
         {
           "id": "type PackedTextOptions",
-          "declaration": "type PackedTextOptions struct{ TextColor render.Color; FontSize float64; FontKey string; FontProperties *render.FontProperties }"
+          "declaration": "type PackedTextOptions struct{ TextColor render.Color; FontSize float64; FontKey string; FontProperties optional.Value[render.FontProperties] }"
         },
         {
           "id": "type ParasiteAxes",
@@ -7465,11 +7549,15 @@
         },
         {
           "id": "type PieOptions",
-          "declaration": "type PieOptions struct{ Center geom.Pt; Radius float64; Width float64; StartAngle float64; CounterClockwise *bool; Colors []render.Color; Labels []string; Explode []float64; AutoPct string; LabelDistance float64; PctDistance float64; RotateLabels bool; Normalize *bool; Hatch string; Hatches []string; HatchColor render.Color; HatchWidth float64; Shadow bool; ShadowOffset geom.Pt; ShadowColor render.Color; EdgeColor *render.Color; LineWidth float64; Antialiased *bool; Alpha float64; Coords CoordinateSpec; Frame *bool }"
+          "declaration": "type PieOptions struct{ Center geom.Pt; Radius float64; Width float64; StartAngle float64; CounterClockwise optional.Value[bool]; Colors []render.Color; Labels []string; Explode []float64; AutoPct string; LabelDistance float64; PctDistance float64; RotateLabels bool; Normalize optional.Value[bool]; Hatch string; Hatches []string; HatchColor render.Color; HatchWidth float64; Shadow bool; ShadowOffset geom.Pt; ShadowColor render.Color; EdgeColor optional.Value[render.Color]; LineWidth float64; Antialiased optional.Value[bool]; Alpha float64; Coords CoordinateSpec; Frame optional.Value[bool] }"
         },
         {
           "id": "type PlotOptions",
-          "declaration": "type PlotOptions struct{ Color *render.Color; EdgeColor *render.Color; LineWidth *float64; LineCap *render.LineCap; LineJoin *render.LineJoin; EdgeWidth *float64; Dashes []float64; LineStyle LineStyle; DrawStyle *LineDrawStyle; Marker *MarkerType; MarkerStyle *MarkerStyle; MarkerPath *geom.Path; MarkerSize *float64; MarkerFaceColor *render.Color; MarkerEdgeColor *render.Color; MarkerFaceSpec *MarkerColorSpec; MarkerEdgeSpec *MarkerColorSpec; MarkerFaceAlt *MarkerColorSpec; MarkerEdgeWidth *float64; MarkEvery int; MarkEverySpec *MarkEverySpec; Label string; Alpha *float64; LevelCount int; Levels []float64; ZDir string; Offset *float64; RStride *int; CStride *int; RCount *int; CCount *int; FaceColors []render.Color; Shade *bool; Antialiased *bool; Colormap *string; Norm ScalarNormalizer; VMin *float64; VMax *float64; AxLimClip bool }"
+          "declaration": "type PlotOptions struct{ Color optional.Value[render.Color]; EdgeColor optional.Value[render.Color]; LineWidth optional.Value[float64]; LineCap optional.Value[render.LineCap]; LineJoin optional.Value[render.LineJoin]; EdgeWidth optional.Value[float64]; Dashes []float64; LineStyle LineStyle; DrawStyle LineDrawStyle; Marker optional.Value[MarkerType]; MarkerStyle optional.Value[MarkerStyle]; MarkerPath optional.Value[geom.Path]; MarkerSize optional.Value[float64]; MarkerFaceColor optional.Value[render.Color]; MarkerEdgeColor optional.Value[render.Color]; MarkerFaceSpec optional.Value[MarkerColorSpec]; MarkerEdgeSpec optional.Value[MarkerColorSpec]; MarkerFaceAlt MarkerColorSpec; MarkerEdgeWidth optional.Value[float64]; MarkEvery int; MarkEverySpec MarkEverySpec; Label string; Alpha optional.Value[float64]; LevelCount int; Levels []float64; ZDir string; Offset optional.Value[float64]; RStride optional.Value[int]; CStride optional.Value[int]; RCount optional.Value[int]; CCount optional.Value[int]; FaceColors []render.Color; Shade optional.Value[bool]; Antialiased optional.Value[bool]; Colormap optional.Value[string]; Norm ScalarNormalizer; VMin optional.Value[float64]; VMax optional.Value[float64]; AxLimClip bool }"
+        },
+        {
+          "id": "type PlotOrientation",
+          "declaration": "type PlotOrientation string"
         },
         {
           "id": "type PolyCollection",
@@ -7505,7 +7593,7 @@
         },
         {
           "id": "type Quiver",
-          "declaration": "type Quiver struct{ Anchors []geom.Pt; U []float64; V []float64; Colors []render.Color; Color render.Color; ScalarColors []float64; EdgeColor render.Color; EdgeWidth float64; Alpha float64; Pivot string; Angles string; AngleValues []float64; Scale float64; ScaleSet bool; ScaleUnits string; Units string; Width float64; HeadWidth float64; HeadLength float64; HeadAxisLength float64; MinShaft float64; MinLength float64; Label string; Colormap string; Norm ScalarNormalizer; VMin float64; VMax float64 }"
+          "declaration": "type Quiver struct{ Anchors []geom.Pt; U []float64; V []float64; Colors []render.Color; Color render.Color; ScalarColors []float64; EdgeColor render.Color; EdgeWidth float64; Alpha float64; Pivot VectorPivot; Angles string; AngleValues []float64; Scale float64; ScaleSet bool; ScaleUnits string; Units string; Width float64; HeadWidth float64; HeadLength float64; HeadAxisLength float64; MinShaft float64; MinLength float64; Label string; Colormap string; Norm ScalarNormalizer; VMin float64; VMax float64 }"
         },
         {
           "id": "type QuiverKey",
@@ -7513,11 +7601,11 @@
         },
         {
           "id": "type QuiverKeyOptions",
-          "declaration": "type QuiverKeyOptions struct{ Coords CoordinateSpec; Angle float64; LabelPos string; LabelSep float64; Color render.Color; LabelColor render.Color; FontSize float64; ZOrder *float64 }"
+          "declaration": "type QuiverKeyOptions struct{ Coords CoordinateSpec; Angle float64; LabelPos string; LabelSep float64; Color render.Color; LabelColor render.Color; FontSize float64; ZOrder optional.Value[float64] }"
         },
         {
           "id": "type QuiverOptions",
-          "declaration": "type QuiverOptions struct{ Color *render.Color; Colors []render.Color; C []float64; CGrid [][]float64; Colormap *string; Norm ScalarNormalizer; VMin *float64; VMax *float64; Alpha *float64; EdgeColor *render.Color; EdgeWidth *float64; Pivot string; Angles string; AngleValues []float64; Scale *float64; ScaleUnits string; Units string; Width *float64; HeadWidth *float64; HeadLength *float64; HeadAxisLength *float64; MinShaft *float64; MinLength *float64; Label string; ZOrder *float64 }"
+          "declaration": "type QuiverOptions struct{ Color optional.Value[render.Color]; Colors []render.Color; C []float64; CGrid [][]float64; Colormap optional.Value[string]; Norm ScalarNormalizer; VMin optional.Value[float64]; VMax optional.Value[float64]; Alpha optional.Value[float64]; EdgeColor optional.Value[render.Color]; EdgeWidth optional.Value[float64]; Pivot VectorPivot; Angles string; AngleValues []float64; Scale optional.Value[float64]; ScaleUnits string; Units string; Width optional.Value[float64]; HeadWidth optional.Value[float64]; HeadLength optional.Value[float64]; HeadAxisLength optional.Value[float64]; MinShaft optional.Value[float64]; MinLength optional.Value[float64]; Label string; ZOrder optional.Value[float64] }"
         },
         {
           "id": "type RGBAxes",
@@ -7533,7 +7621,7 @@
         },
         {
           "id": "type ReferenceLineOptions",
-          "declaration": "type ReferenceLineOptions struct{ Color *render.Color; LineWidth *float64; Dashes []float64; Alpha *float64 }"
+          "declaration": "type ReferenceLineOptions struct{ Color optional.Value[render.Color]; LineWidth optional.Value[float64]; Dashes []float64; Alpha optional.Value[float64] }"
         },
         {
           "id": "type RegularPolygon",
@@ -7557,11 +7645,11 @@
         },
         {
           "id": "type SankeyOptions",
-          "declaration": "type SankeyOptions struct{ Center geom.Pt; Coords CoordinateSpec; Scale float64; TrunkWidth float64; TrunkLength float64; PathLength float64; Gap float64; Radius float64; Shoulder float64; Offset float64; HeadAngle float64; Margin float64; Tolerance float64; Alpha float64; TextColor render.Color; FontSize float64; EdgeColor *render.Color; FaceColor *render.Color }"
+          "declaration": "type SankeyOptions struct{ Center geom.Pt; Coords CoordinateSpec; Scale float64; TrunkWidth float64; TrunkLength float64; PathLength float64; Gap float64; Radius float64; Shoulder float64; Offset float64; HeadAngle float64; Margin float64; Tolerance float64; Alpha float64; TextColor render.Color; FontSize float64; EdgeColor optional.Value[render.Color]; FaceColor optional.Value[render.Color] }"
         },
         {
           "id": "type ScalarMapConfig",
-          "declaration": "type ScalarMapConfig struct{ Colormap string; Norm ScalarNormalizer; VMin *float64; VMax *float64 }"
+          "declaration": "type ScalarMapConfig struct{ Colormap string; Norm ScalarNormalizer; VMin optional.Value[float64]; VMax optional.Value[float64] }"
         },
         {
           "id": "type ScalarMapInfo",
@@ -7581,7 +7669,7 @@
         },
         {
           "id": "type ScatterOptions",
-          "declaration": "type ScatterOptions struct{ Color *render.Color; Colors []render.Color; ScalarValues []float64; Colormap string; Norm ScalarNormalizer; VMin *float64; VMax *float64; Size *float64; Sizes []float64; Marker *MarkerType; MarkerStyle *MarkerStyle; MarkerPath *geom.Path; EdgeColor *render.Color; EdgeColors []render.Color; EdgeWidth *float64; Alpha *float64; Label string; AxLimClip bool; PlotNonfinite bool }"
+          "declaration": "type ScatterOptions struct{ Color optional.Value[render.Color]; Colors []render.Color; ScalarValues []float64; Colormap string; Norm ScalarNormalizer; VMin optional.Value[float64]; VMax optional.Value[float64]; Size optional.Value[float64]; Sizes []float64; Marker optional.Value[MarkerType]; MarkerStyle optional.Value[MarkerStyle]; MarkerPath optional.Value[geom.Path]; EdgeColor optional.Value[render.Color]; EdgeColors []render.Color; EdgeWidth optional.Value[float64]; Alpha optional.Value[float64]; Label string; AxLimClip bool; PlotNonfinite bool }"
         },
         {
           "id": "type Segment2D",
@@ -7617,11 +7705,11 @@
         },
         {
           "id": "type SpanOptions",
-          "declaration": "type SpanOptions struct{ Color *render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Antialiased *bool }"
+          "declaration": "type SpanOptions struct{ Color optional.Value[render.Color]; EdgeColor optional.Value[render.Color]; EdgeWidth optional.Value[float64]; Alpha optional.Value[float64]; Antialiased optional.Value[bool] }"
         },
         {
           "id": "type SpecgramOptions",
-          "declaration": "type SpecgramOptions struct{ Fs float64; NFFT int; NOverlap int; PadTo int; Window string; DB *bool; Colormap *string; VMin *float64; VMax *float64; Alpha *float64; Label string }"
+          "declaration": "type SpecgramOptions struct{ Fs float64; NFFT int; NOverlap int; PadTo int; Window string; DB optional.Value[bool]; Colormap optional.Value[string]; VMin optional.Value[float64]; VMax optional.Value[float64]; Alpha optional.Value[float64]; Label string }"
         },
         {
           "id": "type SpecgramResult",
@@ -7633,7 +7721,7 @@
         },
         {
           "id": "type SpyOptions",
-          "declaration": "type SpyOptions struct{ Precision float64; UseImage *bool; Marker *MarkerType; MarkerSize float64; Color *render.Color; Alpha *float64; Aspect string; Label string }"
+          "declaration": "type SpyOptions struct{ Precision float64; UseImage optional.Value[bool]; Marker optional.Value[MarkerType]; MarkerSize float64; Color optional.Value[render.Color]; Alpha optional.Value[float64]; Aspect ImageAspect; Label string }"
         },
         {
           "id": "type SpyResult",
@@ -7645,7 +7733,7 @@
         },
         {
           "id": "type StackPlotOptions",
-          "declaration": "type StackPlotOptions struct{ Colors []render.Color; Alpha *float64; EdgeColor *render.Color; EdgeWidth *float64; BaselineMode StackBaseline; Baseline []float64; Labels []string }"
+          "declaration": "type StackPlotOptions struct{ Colors []render.Color; Alpha optional.Value[float64]; EdgeColor optional.Value[render.Color]; EdgeWidth optional.Value[float64]; BaselineMode StackBaseline; Baseline []float64; Labels []string }"
         },
         {
           "id": "type Stairs2D",
@@ -7653,7 +7741,7 @@
         },
         {
           "id": "type StairsOptions",
-          "declaration": "type StairsOptions struct{ Color *render.Color; EdgeColor *render.Color; LineWidth *float64; Alpha *float64; Baseline *float64; Fill *bool; Label string }"
+          "declaration": "type StairsOptions struct{ Color optional.Value[render.Color]; EdgeColor optional.Value[render.Color]; LineWidth optional.Value[float64]; Alpha optional.Value[float64]; Baseline float64; Fill bool; Label string }"
         },
         {
           "id": "type StaleArtist",
@@ -7665,11 +7753,11 @@
         },
         {
           "id": "type StemOptions",
-          "declaration": "type StemOptions struct{ Color optional.Value[render.Color]; LineWidth optional.Value[float64]; Marker optional.Value[MarkerType]; MarkerPath optional.Value[geom.Path]; MarkerSize optional.Value[float64]; Baseline float64; BaselineColor optional.Value[render.Color]; BaselineWidth optional.Value[float64]; MarkerEdgeColor optional.Value[render.Color]; MarkerEdgeWidth optional.Value[float64]; Label string; Alpha optional.Value[float64]; Orientation string }"
+          "declaration": "type StemOptions struct{ Color optional.Value[render.Color]; LineWidth optional.Value[float64]; Marker optional.Value[MarkerType]; MarkerPath optional.Value[geom.Path]; MarkerSize optional.Value[float64]; Baseline float64; BaselineColor optional.Value[render.Color]; BaselineWidth optional.Value[float64]; MarkerEdgeColor optional.Value[render.Color]; MarkerEdgeWidth optional.Value[float64]; Label string; Alpha optional.Value[float64]; Orientation PlotOrientation }"
         },
         {
           "id": "type StepOptions",
-          "declaration": "type StepOptions struct{ Color *render.Color; LineWidth *float64; Dashes []float64; Where *StepWhere; Label string; Alpha *float64 }"
+          "declaration": "type StepOptions struct{ Color optional.Value[render.Color]; LineWidth optional.Value[float64]; Dashes []float64; Where StepWhere; Label string; Alpha optional.Value[float64] }"
         },
         {
           "id": "type StepPatch",
@@ -7685,7 +7773,7 @@
         },
         {
           "id": "type StreamplotOptions",
-          "declaration": "type StreamplotOptions struct{ Density float64; DensityX float64; DensityY float64; CGrid [][]float64; Colormap *string; Norm ScalarNormalizer; VMin *float64; VMax *float64; StartPoints []geom.Pt; MinLength *float64; MaxLength *float64; IntegrationDirection string; BrokenStreamlines *bool; ArrowSize *float64; ArrowCount *int; LineWidth *float64; Color *render.Color; ArrowColor *render.Color; Label string; ZOrder *float64 }"
+          "declaration": "type StreamplotOptions struct{ Density float64; DensityX float64; DensityY float64; CGrid [][]float64; Colormap optional.Value[string]; Norm ScalarNormalizer; VMin optional.Value[float64]; VMax optional.Value[float64]; StartPoints []geom.Pt; MinLength optional.Value[float64]; MaxLength optional.Value[float64]; IntegrationDirection string; BrokenStreamlines optional.Value[bool]; ArrowSize optional.Value[float64]; ArrowCount optional.Value[int]; LineWidth optional.Value[float64]; Color optional.Value[render.Color]; ArrowColor optional.Value[render.Color]; Label string; ZOrder optional.Value[float64] }"
         },
         {
           "id": "type StreamplotSet",
@@ -7741,7 +7829,7 @@
         },
         {
           "id": "type TextOptions",
-          "declaration": "type TextOptions struct{ FontSize float64; Color render.Color; HAlign TextAlign; VAlign TextVerticalAlign; Angle float64; RotationMode TextRotationMode; Coords CoordinateSpec; OffsetX float64; OffsetY float64; WrapWidth float64; Wrap bool; MultiAlignment *TextAlign; Linespacing float64; ClipOn *bool; BBox *TextBBoxOptions; FontKey string; FontProperties *render.FontProperties; ParseMath *bool; PathEffects []render.PathEffect }"
+          "declaration": "type TextOptions struct{ FontSize float64; Color render.Color; HAlign TextAlign; VAlign TextVerticalAlign; Angle float64; RotationMode TextRotationMode; Coords CoordinateSpec; OffsetX float64; OffsetY float64; WrapWidth float64; Wrap bool; MultiAlignment optional.Value[TextAlign]; Linespacing float64; ClipOn optional.Value[bool]; BBox optional.Value[TextBBoxOptions]; FontKey string; FontProperties optional.Value[render.FontProperties]; ParseMath optional.Value[bool]; PathEffects []render.PathEffect }"
         },
         {
           "id": "type TextRotationMode",
@@ -7773,11 +7861,11 @@
         },
         {
           "id": "type TriColorOptions",
-          "declaration": "type TriColorOptions struct{ Colormap *string; Norm ScalarNormalizer; VMin *float64; VMax *float64; Alpha *float64; EdgeColor *render.Color; EdgeWidth *float64; Label string }"
+          "declaration": "type TriColorOptions struct{ Colormap optional.Value[string]; Norm ScalarNormalizer; VMin optional.Value[float64]; VMax optional.Value[float64]; Alpha optional.Value[float64]; EdgeColor optional.Value[render.Color]; EdgeWidth optional.Value[float64]; Label string }"
         },
         {
           "id": "type TriPlotOptions",
-          "declaration": "type TriPlotOptions struct{ Color *render.Color; LineWidth *float64; Alpha *float64; Label string }"
+          "declaration": "type TriPlotOptions struct{ Color optional.Value[render.Color]; LineWidth optional.Value[float64]; Alpha optional.Value[float64]; Label string }"
         },
         {
           "id": "type Triangulation",
@@ -7801,11 +7889,15 @@
         },
         {
           "id": "type VLineOptions",
-          "declaration": "type VLineOptions struct{ Color *render.Color; LineWidth *float64; Dashes []float64; Alpha *float64; YMin *float64; YMax *float64 }"
+          "declaration": "type VLineOptions struct{ Color optional.Value[render.Color]; LineWidth optional.Value[float64]; Dashes []float64; Alpha optional.Value[float64]; YMin optional.Value[float64]; YMax optional.Value[float64] }"
         },
         {
           "id": "type VSpanOptions",
-          "declaration": "type VSpanOptions struct{ Color *render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Antialiased *bool; YMin *float64; YMax *float64 }"
+          "declaration": "type VSpanOptions struct{ Color optional.Value[render.Color]; EdgeColor optional.Value[render.Color]; EdgeWidth optional.Value[float64]; Alpha optional.Value[float64]; Antialiased optional.Value[bool]; YMin optional.Value[float64]; YMax optional.Value[float64] }"
+        },
+        {
+          "id": "type VectorPivot",
+          "declaration": "type VectorPivot string"
         },
         {
           "id": "type ViolinContainer",
@@ -7813,7 +7905,11 @@
         },
         {
           "id": "type ViolinOptions",
-          "declaration": "type ViolinOptions struct{ Positions []float64; Widths []float64; Colors []render.Color; EdgeColor *render.Color; EdgeWidth float64; Alpha float64; Bandwidth float64; BandwidthMethod string; Points int; Orientation string; Side string; Quantiles [][]float64; LineColor *render.Color; ShowMeans *bool; ShowMedians *bool; ShowExtrema *bool; Label string }"
+          "declaration": "type ViolinOptions struct{ Positions []float64; Widths []float64; Colors []render.Color; EdgeColor optional.Value[render.Color]; EdgeWidth float64; Alpha float64; Bandwidth float64; BandwidthMethod string; Points int; Orientation PlotOrientation; Side ViolinSide; Quantiles [][]float64; LineColor optional.Value[render.Color]; ShowMeans optional.Value[bool]; ShowMedians optional.Value[bool]; ShowExtrema optional.Value[bool]; Label string }"
+        },
+        {
+          "id": "type ViolinSide",
+          "declaration": "type ViolinSide string"
         },
         {
           "id": "type ViolinStat",
@@ -7821,7 +7917,7 @@
         },
         {
           "id": "type ViolinStatsOptions",
-          "declaration": "type ViolinStatsOptions struct{ Positions []float64; Widths []float64; Colors []render.Color; EdgeColor *render.Color; EdgeWidth float64; Alpha float64; Orientation string; Side string; LineColor *render.Color; ShowMeans *bool; ShowMedians *bool; ShowExtrema *bool; Label string }"
+          "declaration": "type ViolinStatsOptions struct{ Positions []float64; Widths []float64; Colors []render.Color; EdgeColor optional.Value[render.Color]; EdgeWidth float64; Alpha float64; Orientation PlotOrientation; Side ViolinSide; LineColor optional.Value[render.Color]; ShowMeans optional.Value[bool]; ShowMedians optional.Value[bool]; ShowExtrema optional.Value[bool]; Label string }"
         },
         {
           "id": "type Wedge",
@@ -8335,47 +8431,47 @@
         },
         {
           "id": "method Axes3D.Bar",
-          "declaration": "func (Axes3D) Bar(x, heights []float64, opts ...Bar3DPlaneOptions) *core.PolyCollection"
+          "declaration": "func (Axes3D) Bar(x, heights []float64, opt Bar3DPlaneOptions) *core.PolyCollection"
         },
         {
           "id": "method Axes3D.Bar3D",
-          "declaration": "func (Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opts ...Bar3DOptions) *core.LineCollection"
+          "declaration": "func (Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opt Bar3DOptions) *core.LineCollection"
         },
         {
           "id": "method Axes3D.Contour",
-          "declaration": "func (Axes3D) Contour(x, y []float64, z [][]float64, opts ...core.PlotOptions) *core.LineCollection"
+          "declaration": "func (Axes3D) Contour(x, y []float64, z [][]float64, opt core.PlotOptions) *core.LineCollection"
         },
         {
           "id": "method Axes3D.Contourf",
-          "declaration": "func (Axes3D) Contourf(x, y []float64, z [][]float64, opts ...core.PlotOptions) *core.PolyCollection"
+          "declaration": "func (Axes3D) Contourf(x, y []float64, z [][]float64, opt core.PlotOptions) *core.PolyCollection"
         },
         {
           "id": "method Axes3D.ErrorBar",
-          "declaration": "func (Axes3D) ErrorBar(x, y, z, xErr, yErr, zErr []float64, opts ...ErrorBar3DOptions) *core.LineCollection"
+          "declaration": "func (Axes3D) ErrorBar(x, y, z, xErr, yErr, zErr []float64, opt ErrorBar3DOptions) *core.LineCollection"
         },
         {
           "id": "method Axes3D.ErrorBar3D",
-          "declaration": "func (Axes3D) ErrorBar3D(x, y, z, xErr, yErr, zErr []float64, opts ...ErrorBar3DOptions) *core.LineCollection"
+          "declaration": "func (Axes3D) ErrorBar3D(x, y, z, xErr, yErr, zErr []float64, opt ErrorBar3DOptions) *core.LineCollection"
         },
         {
           "id": "method Axes3D.FillBetween",
-          "declaration": "func (Axes3D) FillBetween(x1, y1, z1, x2, y2, z2 []float64, opts ...FillBetween3DOptions) *core.PolyCollection"
+          "declaration": "func (Axes3D) FillBetween(x1, y1, z1, x2, y2, z2 []float64, opt FillBetween3DOptions) *core.PolyCollection"
         },
         {
           "id": "method Axes3D.FillBetween3D",
-          "declaration": "func (Axes3D) FillBetween3D(x1, y1, z1, x2, y2, z2 []float64, opts ...FillBetween3DOptions) *core.PolyCollection"
+          "declaration": "func (Axes3D) FillBetween3D(x1, y1, z1, x2, y2, z2 []float64, opt FillBetween3DOptions) *core.PolyCollection"
         },
         {
           "id": "method Axes3D.Plot3D",
-          "declaration": "func (Axes3D) Plot3D(x, y, z []float64, opts ...core.PlotOptions) *core.Line2D"
+          "declaration": "func (Axes3D) Plot3D(x, y, z []float64, opt core.PlotOptions) *core.Line2D"
         },
         {
           "id": "method Axes3D.PlotSurface",
-          "declaration": "func (Axes3D) PlotSurface(x, y, z []float64, opts ...core.PlotOptions) *core.Line2D"
+          "declaration": "func (Axes3D) PlotSurface(x, y, z []float64, opt core.PlotOptions) *core.Line2D"
         },
         {
           "id": "method Axes3D.PlotSurfaceGrid",
-          "declaration": "func (Axes3D) PlotSurfaceGrid(x, y []float64, z [][]float64, opts ...core.PlotOptions) *core.PolyCollection"
+          "declaration": "func (Axes3D) PlotSurfaceGrid(x, y []float64, z [][]float64, opt core.PlotOptions) *core.PolyCollection"
         },
         {
           "id": "method Axes3D.ProjectPoint",
@@ -8387,15 +8483,15 @@
         },
         {
           "id": "method Axes3D.Quiver",
-          "declaration": "func (Axes3D) Quiver(x, y, z, u, v, w []float64, opts ...Quiver3DOptions) *core.LineCollection"
+          "declaration": "func (Axes3D) Quiver(x, y, z, u, v, w []float64, opt Quiver3DOptions) *core.LineCollection"
         },
         {
           "id": "method Axes3D.Quiver3D",
-          "declaration": "func (Axes3D) Quiver3D(x, y, z, u, v, w []float64, opts ...Quiver3DOptions) *core.LineCollection"
+          "declaration": "func (Axes3D) Quiver3D(x, y, z, u, v, w []float64, opt Quiver3DOptions) *core.LineCollection"
         },
         {
           "id": "method Axes3D.Scatter3D",
-          "declaration": "func (Axes3D) Scatter3D(x, y, z []float64, opts ...core.ScatterOptions) *core.Scatter2D"
+          "declaration": "func (Axes3D) Scatter3D(x, y, z []float64, opt core.ScatterOptions) *core.Scatter2D"
         },
         {
           "id": "method Axes3D.SetBoxAspect3D",
@@ -8451,31 +8547,31 @@
         },
         {
           "id": "method Axes3D.Stem",
-          "declaration": "func (Axes3D) Stem(x, y, z []float64, opts ...Stem3DOptions) *core.StemContainer"
+          "declaration": "func (Axes3D) Stem(x, y, z []float64, opt Stem3DOptions) *core.StemContainer"
         },
         {
           "id": "method Axes3D.Stem3D",
-          "declaration": "func (Axes3D) Stem3D(x, y, z []float64, opts ...Stem3DOptions) *core.StemContainer"
+          "declaration": "func (Axes3D) Stem3D(x, y, z []float64, opt Stem3DOptions) *core.StemContainer"
         },
         {
           "id": "method Axes3D.Surface",
-          "declaration": "func (Axes3D) Surface(x, y []float64, z [][]float64, opts ...core.PlotOptions) *core.PolyCollection"
+          "declaration": "func (Axes3D) Surface(x, y []float64, z [][]float64, opt core.PlotOptions) *core.PolyCollection"
         },
         {
           "id": "method Axes3D.Text3D",
-          "declaration": "func (Axes3D) Text3D(x, y, z float64, text string, opts ...core.TextOptions) *core.Text"
+          "declaration": "func (Axes3D) Text3D(x, y, z float64, text string, opt core.TextOptions) *core.Text"
         },
         {
           "id": "method Axes3D.TriContour",
-          "declaration": "func (Axes3D) TriContour(tri core.Triangulation, z []float64, opts ...core.PlotOptions) *core.LineCollection"
+          "declaration": "func (Axes3D) TriContour(tri core.Triangulation, z []float64, opt core.PlotOptions) *core.LineCollection"
         },
         {
           "id": "method Axes3D.TriContourf",
-          "declaration": "func (Axes3D) TriContourf(tri core.Triangulation, z []float64, opts ...core.PlotOptions) *core.PolyCollection"
+          "declaration": "func (Axes3D) TriContourf(tri core.Triangulation, z []float64, opt core.PlotOptions) *core.PolyCollection"
         },
         {
           "id": "method Axes3D.Trisurf",
-          "declaration": "func (Axes3D) Trisurf(tri core.Triangulation, z []float64, opts ...core.PlotOptions) *core.PolyCollection"
+          "declaration": "func (Axes3D) Trisurf(tri core.Triangulation, z []float64, opt core.PlotOptions) *core.PolyCollection"
         },
         {
           "id": "method Axes3D.View",
@@ -8483,15 +8579,15 @@
         },
         {
           "id": "method Axes3D.Voxel",
-          "declaration": "func (Axes3D) Voxel(x, y, z, dx, dy, dz []float64, opts ...core.PlotOptions) *core.LineCollection"
+          "declaration": "func (Axes3D) Voxel(x, y, z, dx, dy, dz []float64, opt core.PlotOptions) *core.LineCollection"
         },
         {
           "id": "method Axes3D.Voxels",
-          "declaration": "func (Axes3D) Voxels(filled [][][]bool, opts ...VoxelOptions) map[[3]int]*core.PolyCollection"
+          "declaration": "func (Axes3D) Voxels(filled [][][]bool, opt VoxelOptions) map[[3]int]*core.PolyCollection"
         },
         {
           "id": "method Axes3D.Wireframe",
-          "declaration": "func (Axes3D) Wireframe(x, y []float64, z [][]float64, opts ...core.PlotOptions) *core.LineCollection"
+          "declaration": "func (Axes3D) Wireframe(x, y []float64, z [][]float64, opt core.PlotOptions) *core.LineCollection"
         },
         {
           "id": "method Axes3D.ZLabel",
@@ -8503,15 +8599,15 @@
         },
         {
           "id": "type Bar3DOptions",
-          "declaration": "type Bar3DOptions struct{ Color *render.Color; Colors []render.Color; LineWidth *float64; Alpha *float64; Label string; AxLimClip bool }"
+          "declaration": "type Bar3DOptions struct{ Color optional.Value[render.Color]; Colors []render.Color; LineWidth optional.Value[float64]; Alpha optional.Value[float64]; Label string; AxLimClip bool }"
         },
         {
           "id": "type Bar3DPlaneOptions",
-          "declaration": "type Bar3DPlaneOptions struct{ Color *render.Color; Width *float64; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Baseline *float64; Baselines []float64; Z *float64; Zs []float64; ZDir string; Label string }"
+          "declaration": "type Bar3DPlaneOptions struct{ Color optional.Value[render.Color]; Width optional.Value[float64]; EdgeColor optional.Value[render.Color]; EdgeWidth optional.Value[float64]; Alpha optional.Value[float64]; Baseline optional.Value[float64]; Baselines []float64; Z optional.Value[float64]; Zs []float64; ZDir string; Label string }"
         },
         {
           "id": "type ErrorBar3DOptions",
-          "declaration": "type ErrorBar3DOptions struct{ Color *render.Color; LineWidth *float64; CapSize *float64; Alpha *float64; Label string; AxLimClip bool; XErrLower []float64; XErrUpper []float64; YErrLower []float64; YErrUpper []float64; ZErrLower []float64; ZErrUpper []float64 }"
+          "declaration": "type ErrorBar3DOptions struct{ Color optional.Value[render.Color]; LineWidth optional.Value[float64]; CapSize optional.Value[float64]; Alpha optional.Value[float64]; Label string; AxLimClip bool; XErrLower []float64; XErrUpper []float64; YErrLower []float64; YErrUpper []float64; ZErrLower []float64; ZErrUpper []float64 }"
         },
         {
           "id": "type FillBetween3DMode",
@@ -8519,19 +8615,19 @@
         },
         {
           "id": "type FillBetween3DOptions",
-          "declaration": "type FillBetween3DOptions struct{ Color *render.Color; EdgeColor *render.Color; EdgeWidth *float64; Alpha *float64; Label string; Mode FillBetween3DMode; Shade *bool; AxLimClip bool }"
+          "declaration": "type FillBetween3DOptions struct{ Color optional.Value[render.Color]; EdgeColor optional.Value[render.Color]; EdgeWidth optional.Value[float64]; Alpha optional.Value[float64]; Label string; Mode FillBetween3DMode; Shade optional.Value[bool]; AxLimClip bool }"
         },
         {
           "id": "type Quiver3DOptions",
-          "declaration": "type Quiver3DOptions struct{ Color *render.Color; LineWidth *float64; Alpha *float64; Label string; Length *float64; ArrowLengthRatio *float64; Pivot string; Normalize bool; AxLimClip bool }"
+          "declaration": "type Quiver3DOptions struct{ Color optional.Value[render.Color]; LineWidth optional.Value[float64]; Alpha optional.Value[float64]; Label string; Length optional.Value[float64]; ArrowLengthRatio optional.Value[float64]; Pivot string; Normalize bool; AxLimClip bool }"
         },
         {
           "id": "type Stem3DOptions",
-          "declaration": "type Stem3DOptions struct{ Color *render.Color; LineWidth *float64; Marker *core.MarkerType; MarkerPath *geom.Path; MarkerSize *float64; Bottom *float64; Orientation string; BaselineColor *render.Color; BaselineWidth *float64; MarkerEdgeColor *render.Color; MarkerEdgeWidth *float64; Label string; Alpha *float64; AxLimClip bool }"
+          "declaration": "type Stem3DOptions struct{ Color optional.Value[render.Color]; LineWidth optional.Value[float64]; Marker optional.Value[core.MarkerType]; MarkerPath optional.Value[geom.Path]; MarkerSize optional.Value[float64]; Bottom optional.Value[float64]; Orientation string; BaselineColor optional.Value[render.Color]; BaselineWidth optional.Value[float64]; MarkerEdgeColor optional.Value[render.Color]; MarkerEdgeWidth optional.Value[float64]; Label string; Alpha optional.Value[float64]; AxLimClip bool }"
         },
         {
           "id": "type VoxelOptions",
-          "declaration": "type VoxelOptions struct{ FaceColor *render.Color; FaceColors map[[3]int]render.Color; EdgeColor *render.Color; EdgeColors map[[3]int]render.Color; Alpha *float64; Shade *bool; Label string; AxLimClip bool }"
+          "declaration": "type VoxelOptions struct{ FaceColor optional.Value[render.Color]; FaceColors map[[3]int]render.Color; EdgeColor optional.Value[render.Color]; EdgeColors map[[3]int]render.Color; Alpha optional.Value[float64]; Shade optional.Value[bool]; Label string; AxLimClip bool }"
         }
       ]
     },
@@ -8549,7 +8645,7 @@
         },
         {
           "id": "func ACorr",
-          "declaration": "func ACorr(x []float64, opts ...core.CorrelationOptions) *core.CorrelationResult"
+          "declaration": "func ACorr(x []float64, opt core.CorrelationOptions) *core.CorrelationResult"
         },
         {
           "id": "func AddAxes3D",
@@ -8561,7 +8657,7 @@
         },
         {
           "id": "func AngleSpectrum",
-          "declaration": "func AngleSpectrum(samples []float64, opts ...core.SignalSpectrumOptions) *core.SpectrumResult"
+          "declaration": "func AngleSpectrum(samples []float64, opt core.SignalSpectrumOptions) *core.SpectrumResult"
         },
         {
           "id": "func Annotate",
@@ -8569,11 +8665,11 @@
         },
         {
           "id": "func AnnotatedHeatmap",
-          "declaration": "func AnnotatedHeatmap(data [][]float64, opts ...core.AnnotatedHeatmapOptions) *core.AnnotatedHeatmapResult"
+          "declaration": "func AnnotatedHeatmap(data [][]float64, opt core.AnnotatedHeatmapOptions) *core.AnnotatedHeatmapResult"
         },
         {
           "id": "func Arrow",
-          "declaration": "func Arrow(x, y, dx, dy float64, opts ...core.Arrow) *core.Arrow"
+          "declaration": "func Arrow(x, y, dx, dy float64, arrow core.Arrow) *core.Arrow"
         },
         {
           "id": "func AutoScale",
@@ -8581,27 +8677,27 @@
         },
         {
           "id": "func AxHLine",
-          "declaration": "func AxHLine(y float64, opts ...core.HLineOptions) *core.Segment2D"
+          "declaration": "func AxHLine(y float64, opt core.HLineOptions) *core.Segment2D"
         },
         {
           "id": "func AxHSpan",
-          "declaration": "func AxHSpan(yMin, yMax float64, opts ...core.HSpanOptions) *core.Span2D"
+          "declaration": "func AxHSpan(yMin, yMax float64, opt core.HSpanOptions) *core.Span2D"
         },
         {
           "id": "func AxLine",
-          "declaration": "func AxLine(p1, p2 geom.Pt, opts ...core.ReferenceLineOptions) *core.InfiniteLine2D"
+          "declaration": "func AxLine(p1, p2 geom.Pt, opt core.ReferenceLineOptions) *core.InfiniteLine2D"
         },
         {
           "id": "func AxLineSlope",
-          "declaration": "func AxLineSlope(point geom.Pt, slope float64, opts ...core.ReferenceLineOptions) *core.InfiniteLine2D"
+          "declaration": "func AxLineSlope(point geom.Pt, slope float64, opt core.ReferenceLineOptions) *core.InfiniteLine2D"
         },
         {
           "id": "func AxVLine",
-          "declaration": "func AxVLine(x float64, opts ...core.VLineOptions) *core.Segment2D"
+          "declaration": "func AxVLine(x float64, opt core.VLineOptions) *core.Segment2D"
         },
         {
           "id": "func AxVSpan",
-          "declaration": "func AxVSpan(xMin, xMax float64, opts ...core.VSpanOptions) *core.Span2D"
+          "declaration": "func AxVSpan(xMin, xMax float64, opt core.VSpanOptions) *core.Span2D"
         },
         {
           "id": "func Axes",
@@ -8613,23 +8709,23 @@
         },
         {
           "id": "func Bar",
-          "declaration": "func Bar(x, heights any, opts ...core.BarOptions) (*core.Bar2D, error)"
+          "declaration": "func Bar(x, heights any, opt core.BarOptions) (*core.Bar2D, error)"
         },
         {
           "id": "func BarH",
-          "declaration": "func BarH(y, widths any, opts ...core.BarOptions) (*core.Bar2D, error)"
+          "declaration": "func BarH(y, widths any, opt core.BarOptions) (*core.Bar2D, error)"
         },
         {
           "id": "func BarLabel",
-          "declaration": "func BarLabel(bar *core.Bar2D, labels []string, opts ...core.BarLabelOptions) []*core.Text"
+          "declaration": "func BarLabel(bar *core.Bar2D, labels []string, opt core.BarLabelOptions) []*core.Text"
         },
         {
           "id": "func Barbs",
-          "declaration": "func Barbs(x, y, u, v []float64, opts ...core.BarbsOptions) *core.Barbs"
+          "declaration": "func Barbs(x, y, u, v []float64, opt core.BarbsOptions) *core.Barbs"
         },
         {
           "id": "func BarbsGrid",
-          "declaration": "func BarbsGrid(x, y []float64, u, v [][]float64, opts ...core.BarbsOptions) *core.Barbs"
+          "declaration": "func BarbsGrid(x, y []float64, u, v [][]float64, opt core.BarbsOptions) *core.Barbs"
         },
         {
           "id": "func Box",
@@ -8637,15 +8733,15 @@
         },
         {
           "id": "func BoxPlot",
-          "declaration": "func BoxPlot(data []float64, opts ...core.BoxPlotOptions) *core.BoxPlot2D"
+          "declaration": "func BoxPlot(data []float64, opt core.BoxPlotOptions) *core.BoxPlot2D"
         },
         {
           "id": "func BrokenBarH",
-          "declaration": "func BrokenBarH(xRanges [][2]float64, yRange [2]float64, opts ...core.BarOptions) *core.Bar2D"
+          "declaration": "func BrokenBarH(xRanges [][2]float64, yRange [2]float64, opt core.BarOptions) *core.Bar2D"
         },
         {
           "id": "func Bxp",
-          "declaration": "func Bxp(stats []core.BxpStat, opts ...core.BxpOptions) *core.BxpContainer"
+          "declaration": "func Bxp(stats []core.BxpStat, opt core.BxpOptions) *core.BxpContainer"
         },
         {
           "id": "func CLA",
@@ -8661,11 +8757,11 @@
         },
         {
           "id": "func CSD",
-          "declaration": "func CSD(x, y []float64, opts ...core.SignalSpectrumOptions) *core.SpectrumResult"
+          "declaration": "func CSD(x, y []float64, opt core.SignalSpectrumOptions) *core.SpectrumResult"
         },
         {
           "id": "func Clabel",
-          "declaration": "func Clabel(cs *core.ContourSet, opts ...core.ClabelOptions) []core.ContourLabel"
+          "declaration": "func Clabel(cs *core.ContourSet, opt core.ClabelOptions) []core.ContourLabel"
         },
         {
           "id": "func Close",
@@ -8677,11 +8773,11 @@
         },
         {
           "id": "func Cohere",
-          "declaration": "func Cohere(x, y []float64, opts ...core.SignalSpectrumOptions) *core.SpectrumResult"
+          "declaration": "func Cohere(x, y []float64, opt core.SignalSpectrumOptions) *core.SpectrumResult"
         },
         {
           "id": "func Colorbar",
-          "declaration": "func Colorbar(mappable core.ScalarMappable, opts ...core.ColorbarOptions) *core.Axes"
+          "declaration": "func Colorbar(mappable core.ScalarMappable, opt core.ColorbarOptions) *core.Axes"
         },
         {
           "id": "func Connect",
@@ -8689,19 +8785,19 @@
         },
         {
           "id": "func Contour",
-          "declaration": "func Contour(data [][]float64, opts ...core.ContourOptions) *core.ContourSet"
+          "declaration": "func Contour(data [][]float64, opt core.ContourOptions) *core.ContourSet"
         },
         {
           "id": "func Contour3D",
-          "declaration": "func Contour3D(x, y []float64, z [][]float64, opts ...core.PlotOptions) *core.LineCollection"
+          "declaration": "func Contour3D(x, y []float64, z [][]float64, opt core.PlotOptions) *core.LineCollection"
         },
         {
           "id": "func Contourf",
-          "declaration": "func Contourf(data [][]float64, opts ...core.ContourOptions) *core.ContourSet"
+          "declaration": "func Contourf(data [][]float64, opt core.ContourOptions) *core.ContourSet"
         },
         {
           "id": "func Contourf3D",
-          "declaration": "func Contourf3D(x, y []float64, z [][]float64, opts ...core.PlotOptions) *core.PolyCollection"
+          "declaration": "func Contourf3D(x, y []float64, z [][]float64, opt core.PlotOptions) *core.PolyCollection"
         },
         {
           "id": "func CurrentFigManager",
@@ -8725,15 +8821,15 @@
         },
         {
           "id": "func ECDF",
-          "declaration": "func ECDF(data []float64, opts ...core.ECDFOptions) *core.Line2D"
+          "declaration": "func ECDF(data []float64, opt core.ECDFOptions) *core.Line2D"
         },
         {
           "id": "func ErrorBar",
-          "declaration": "func ErrorBar(x, y, xErr, yErr []float64, opts ...core.ErrorBarOptions) (*core.ErrorBar, error)"
+          "declaration": "func ErrorBar(x, y, xErr, yErr []float64, opt core.ErrorBarOptions) (*core.ErrorBar, error)"
         },
         {
           "id": "func Eventplot",
-          "declaration": "func Eventplot(positions [][]float64, opts ...core.EventPlotOptions) *core.EventCollection"
+          "declaration": "func Eventplot(positions [][]float64, opt core.EventPlotOptions) *core.EventCollection"
         },
         {
           "id": "func FigLegend",
@@ -8741,7 +8837,7 @@
         },
         {
           "id": "func FigText",
-          "declaration": "func FigText(x, y float64, text string, opts ...core.TextOptions) *core.Text"
+          "declaration": "func FigText(x, y float64, text string, opt core.TextOptions) *core.Text"
         },
         {
           "id": "func Figure",
@@ -8753,15 +8849,15 @@
         },
         {
           "id": "func Fill",
-          "declaration": "func Fill(x, y []float64, opts ...core.FillOptions) *core.PolyCollection"
+          "declaration": "func Fill(x, y []float64, opt core.FillOptions) *core.PolyCollection"
         },
         {
           "id": "func FillBetween",
-          "declaration": "func FillBetween(x, y1, y2 any, opts ...core.FillOptions) (*core.Fill2D, error)"
+          "declaration": "func FillBetween(x, y1, y2 any, opt core.FillOptions) (*core.Fill2D, error)"
         },
         {
           "id": "func FillBetweenX",
-          "declaration": "func FillBetweenX(y, x1, x2 []float64, opts ...core.FillOptions) (*core.Fill2D, error)"
+          "declaration": "func FillBetweenX(y, x1, x2 []float64, opt core.FillOptions) (*core.Fill2D, error)"
         },
         {
           "id": "func FloatingXAxis",
@@ -8785,7 +8881,7 @@
         },
         {
           "id": "func Grid",
-          "declaration": "func Grid(visible bool, params ...core.TickParams) ([]*core.Grid, error)"
+          "declaration": "func Grid(visible bool, tickParams core.TickParams) ([]*core.Grid, error)"
         },
         {
           "id": "func HLines",
@@ -8793,15 +8889,15 @@
         },
         {
           "id": "func Hexbin",
-          "declaration": "func Hexbin(x, y []float64, opts ...core.HexbinOptions) *core.HexbinCollection"
+          "declaration": "func Hexbin(x, y []float64, opt core.HexbinOptions) *core.HexbinCollection"
         },
         {
           "id": "func Hist",
-          "declaration": "func Hist(data []float64, opts ...core.HistOptions) (*core.Hist2D, error)"
+          "declaration": "func Hist(data []float64, opt core.HistOptions) (*core.Hist2D, error)"
         },
         {
           "id": "func Hist2D",
-          "declaration": "func Hist2D(x, y []float64, opts ...core.Hist2DOptions) *core.Hist2DResult"
+          "declaration": "func Hist2D(x, y []float64, opt core.Hist2DOptions) *core.Hist2DResult"
         },
         {
           "id": "func ImRead",
@@ -8817,7 +8913,7 @@
         },
         {
           "id": "func Image",
-          "declaration": "func Image(data [][]float64, opts ...core.ImageOptions) *core.Image2D"
+          "declaration": "func Image(data [][]float64, opt core.ImageOptions) *core.Image2D"
         },
         {
           "id": "func Ioff",
@@ -8849,15 +8945,15 @@
         },
         {
           "id": "func LogLog",
-          "declaration": "func LogLog(x, y []float64, opts ...core.PlotOptions) *core.Line2D"
+          "declaration": "func LogLog(x, y []float64, opt core.PlotOptions) *core.Line2D"
         },
         {
           "id": "func MagnitudeSpectrum",
-          "declaration": "func MagnitudeSpectrum(samples []float64, opts ...core.SignalSpectrumOptions) *core.SpectrumResult"
+          "declaration": "func MagnitudeSpectrum(samples []float64, opt core.SignalSpectrumOptions) *core.SpectrumResult"
         },
         {
           "id": "func MatShow",
-          "declaration": "func MatShow(data [][]float64, opts ...core.MatShowOptions) *core.Image2D"
+          "declaration": "func MatShow(data [][]float64, opt core.MatShowOptions) *core.Image2D"
         },
         {
           "id": "func MinorTicksOff",
@@ -8877,19 +8973,19 @@
         },
         {
           "id": "func PColor",
-          "declaration": "func PColor(data [][]float64, opts ...core.MeshOptions) *core.QuadMesh"
+          "declaration": "func PColor(data [][]float64, opt core.MeshOptions) *core.QuadMesh"
         },
         {
           "id": "func PColorFast",
-          "declaration": "func PColorFast(data [][]float64, opts ...core.MeshOptions) *core.QuadMesh"
+          "declaration": "func PColorFast(data [][]float64, opt core.MeshOptions) *core.QuadMesh"
         },
         {
           "id": "func PColorMesh",
-          "declaration": "func PColorMesh(data [][]float64, opts ...core.MeshOptions) *core.QuadMesh"
+          "declaration": "func PColorMesh(data [][]float64, opt core.MeshOptions) *core.QuadMesh"
         },
         {
           "id": "func PSD",
-          "declaration": "func PSD(samples []float64, opts ...core.SignalSpectrumOptions) *core.SpectrumResult"
+          "declaration": "func PSD(samples []float64, opt core.SignalSpectrumOptions) *core.SpectrumResult"
         },
         {
           "id": "func ParasiteAxes",
@@ -8901,39 +8997,39 @@
         },
         {
           "id": "func PhaseSpectrum",
-          "declaration": "func PhaseSpectrum(samples []float64, opts ...core.SignalSpectrumOptions) *core.SpectrumResult"
+          "declaration": "func PhaseSpectrum(samples []float64, opt core.SignalSpectrumOptions) *core.SpectrumResult"
         },
         {
           "id": "func Pie",
-          "declaration": "func Pie(values []float64, opts ...core.PieOptions) *core.PieContainer"
+          "declaration": "func Pie(values []float64, opt core.PieOptions) *core.PieContainer"
         },
         {
           "id": "func PieLabel",
-          "declaration": "func PieLabel(container *core.PieContainer, labels []string, opts ...core.PieLabelOptions) []*core.Text"
+          "declaration": "func PieLabel(container *core.PieContainer, labels []string, opt core.PieLabelOptions) []*core.Text"
         },
         {
           "id": "func Plot",
-          "declaration": "func Plot(x, y any, opts ...core.PlotOptions) (*core.Line2D, error)"
+          "declaration": "func Plot(x, y any, opt core.PlotOptions) (*core.Line2D, error)"
         },
         {
           "id": "func Plot3D",
-          "declaration": "func Plot3D(x, y, z []float64, opts ...core.PlotOptions) *core.Line2D"
+          "declaration": "func Plot3D(x, y, z []float64, opt core.PlotOptions) *core.Line2D"
         },
         {
           "id": "func PlotDate",
-          "declaration": "func PlotDate(x []time.Time, y []float64, opts ...core.PlotOptions) (*core.Line2D, error)"
+          "declaration": "func PlotDate(x []time.Time, y []float64, opt core.PlotOptions) (*core.Line2D, error)"
         },
         {
           "id": "func Quiver",
-          "declaration": "func Quiver(x, y, u, v []float64, opts ...core.QuiverOptions) *core.Quiver"
+          "declaration": "func Quiver(x, y, u, v []float64, opt core.QuiverOptions) *core.Quiver"
         },
         {
           "id": "func QuiverGrid",
-          "declaration": "func QuiverGrid(x, y []float64, u, v [][]float64, opts ...core.QuiverOptions) *core.Quiver"
+          "declaration": "func QuiverGrid(x, y []float64, u, v [][]float64, opt core.QuiverOptions) *core.Quiver"
         },
         {
           "id": "func QuiverKey",
-          "declaration": "func QuiverKey(q *core.Quiver, x, y, u float64, label string, opts ...core.QuiverKeyOptions) *core.QuiverKey"
+          "declaration": "func QuiverKey(q *core.Quiver, x, y, u float64, label string, opt core.QuiverKeyOptions) *core.QuiverKey"
         },
         {
           "id": "func RC",
@@ -8957,7 +9053,7 @@
         },
         {
           "id": "func Sankey",
-          "declaration": "func Sankey(opts ...core.SankeyOptions) *core.Sankey"
+          "declaration": "func Sankey(opt core.SankeyOptions) *core.Sankey"
         },
         {
           "id": "func Savefig",
@@ -8965,19 +9061,19 @@
         },
         {
           "id": "func Scatter",
-          "declaration": "func Scatter(x, y any, opts ...core.ScatterOptions) (*core.Scatter2D, error)"
+          "declaration": "func Scatter(x, y any, opt core.ScatterOptions) (*core.Scatter2D, error)"
         },
         {
           "id": "func Scatter3D",
-          "declaration": "func Scatter3D(x, y, z []float64, opts ...core.ScatterOptions) *core.Scatter2D"
+          "declaration": "func Scatter3D(x, y, z []float64, opt core.ScatterOptions) *core.Scatter2D"
         },
         {
           "id": "func SemilogX",
-          "declaration": "func SemilogX(x, y []float64, opts ...core.PlotOptions) *core.Line2D"
+          "declaration": "func SemilogX(x, y []float64, opt core.PlotOptions) *core.Line2D"
         },
         {
           "id": "func SemilogY",
-          "declaration": "func SemilogY(x, y []float64, opts ...core.PlotOptions) *core.Line2D"
+          "declaration": "func SemilogY(x, y []float64, opt core.PlotOptions) *core.Line2D"
         },
         {
           "id": "func SetManagerFactory",
@@ -8993,19 +9089,19 @@
         },
         {
           "id": "func Specgram",
-          "declaration": "func Specgram(samples []float64, opts ...core.SpecgramOptions) *core.SpecgramResult"
+          "declaration": "func Specgram(samples []float64, opt core.SpecgramOptions) *core.SpecgramResult"
         },
         {
           "id": "func Spy",
-          "declaration": "func Spy(data [][]float64, opts ...core.SpyOptions) *core.SpyResult"
+          "declaration": "func Spy(data [][]float64, opt core.SpyOptions) *core.SpyResult"
         },
         {
           "id": "func StackPlot",
-          "declaration": "func StackPlot(x []float64, ys [][]float64, opts ...core.StackPlotOptions) []*core.Fill2D"
+          "declaration": "func StackPlot(x []float64, ys [][]float64, opt core.StackPlotOptions) []*core.Fill2D"
         },
         {
           "id": "func Stairs",
-          "declaration": "func Stairs(values, edges []float64, opts ...core.StairsOptions) *core.Stairs2D"
+          "declaration": "func Stairs(values, edges []float64, opt core.StairsOptions) *core.Stairs2D"
         },
         {
           "id": "func Stem",
@@ -9013,11 +9109,11 @@
         },
         {
           "id": "func Step",
-          "declaration": "func Step(x, y []float64, opts ...core.StepOptions) *core.Line2D"
+          "declaration": "func Step(x, y []float64, opt core.StepOptions) *core.Line2D"
         },
         {
           "id": "func Streamplot",
-          "declaration": "func Streamplot(x, y []float64, u, v [][]float64, opts ...core.StreamplotOptions) *core.StreamplotSet"
+          "declaration": "func Streamplot(x, y []float64, u, v [][]float64, opt core.StreamplotOptions) *core.StreamplotSet"
         },
         {
           "id": "func Subplot",
@@ -9053,7 +9149,7 @@
         },
         {
           "id": "func Surface",
-          "declaration": "func Surface(x, y []float64, z [][]float64, opts ...core.PlotOptions) *core.PolyCollection"
+          "declaration": "func Surface(x, y []float64, z [][]float64, opt core.PlotOptions) *core.PolyCollection"
         },
         {
           "id": "func SwitchBackend",
@@ -9061,15 +9157,15 @@
         },
         {
           "id": "func Table",
-          "declaration": "func Table(opts ...core.TableOptions) *core.Table"
+          "declaration": "func Table(opt core.TableOptions) *core.Table"
         },
         {
           "id": "func Text",
-          "declaration": "func Text(x, y float64, text string, opts ...core.TextOptions) *core.Text"
+          "declaration": "func Text(x, y float64, text string, opt core.TextOptions) *core.Text"
         },
         {
           "id": "func Text3D",
-          "declaration": "func Text3D(x, y, z float64, text string, opts ...core.TextOptions) *core.Text"
+          "declaration": "func Text3D(x, y, z float64, text string, opt core.TextOptions) *core.Text"
         },
         {
           "id": "func TickLabelFormat",
@@ -9089,23 +9185,23 @@
         },
         {
           "id": "func TriColor",
-          "declaration": "func TriColor(tri core.Triangulation, values []float64, opts ...core.TriColorOptions) *core.PolyCollection"
+          "declaration": "func TriColor(tri core.Triangulation, values []float64, opt core.TriColorOptions) *core.PolyCollection"
         },
         {
           "id": "func TriContour",
-          "declaration": "func TriContour(tri core.Triangulation, values []float64, opts ...core.ContourOptions) *core.ContourSet"
+          "declaration": "func TriContour(tri core.Triangulation, values []float64, opt core.ContourOptions) *core.ContourSet"
         },
         {
           "id": "func TriContourf",
-          "declaration": "func TriContourf(tri core.Triangulation, values []float64, opts ...core.ContourOptions) *core.ContourSet"
+          "declaration": "func TriContourf(tri core.Triangulation, values []float64, opt core.ContourOptions) *core.ContourSet"
         },
         {
           "id": "func TriPlot",
-          "declaration": "func TriPlot(tri core.Triangulation, opts ...core.TriPlotOptions) *core.LineCollection"
+          "declaration": "func TriPlot(tri core.Triangulation, opt core.TriPlotOptions) *core.LineCollection"
         },
         {
           "id": "func Trisurf",
-          "declaration": "func Trisurf(tri core.Triangulation, z []float64, opts ...core.PlotOptions) *core.PolyCollection"
+          "declaration": "func Trisurf(tri core.Triangulation, z []float64, opt core.PlotOptions) *core.PolyCollection"
         },
         {
           "id": "func TwinX",
@@ -9121,23 +9217,23 @@
         },
         {
           "id": "func Violin",
-          "declaration": "func Violin(stats []core.ViolinStat, opts ...core.ViolinStatsOptions) *core.ViolinContainer"
+          "declaration": "func Violin(stats []core.ViolinStat, opt core.ViolinStatsOptions) *core.ViolinContainer"
         },
         {
           "id": "func Violinplot",
-          "declaration": "func Violinplot(data [][]float64, opts ...core.ViolinOptions) *core.ViolinContainer"
+          "declaration": "func Violinplot(data [][]float64, opt core.ViolinOptions) *core.ViolinContainer"
         },
         {
           "id": "func Voxel",
-          "declaration": "func Voxel(x, y, z, dx, dy, dz []float64, opts ...core.PlotOptions) *core.LineCollection"
+          "declaration": "func Voxel(x, y, z, dx, dy, dz []float64, opt core.PlotOptions) *core.LineCollection"
         },
         {
           "id": "func Wireframe",
-          "declaration": "func Wireframe(x, y []float64, z [][]float64, opts ...core.PlotOptions) *core.LineCollection"
+          "declaration": "func Wireframe(x, y []float64, z [][]float64, opt core.PlotOptions) *core.LineCollection"
         },
         {
           "id": "func XCorr",
-          "declaration": "func XCorr(x, y []float64, opts ...core.CorrelationOptions) *core.CorrelationResult"
+          "declaration": "func XCorr(x, y []float64, opt core.CorrelationOptions) *core.CorrelationResult"
         },
         {
           "id": "func XLabel",
@@ -11921,23 +12017,23 @@
         },
         {
           "id": "func NewButton",
-          "declaration": "func NewButton(a *core.Axes, label string, opts ...ButtonOptions) *Button"
+          "declaration": "func NewButton(a *core.Axes, label string, opt ButtonOptions) *Button"
         },
         {
           "id": "func NewCheckButtons",
-          "declaration": "func NewCheckButtons(a *core.Axes, labels []string, active []bool, opts ...CheckButtonsOptions) *CheckButtons"
+          "declaration": "func NewCheckButtons(a *core.Axes, labels []string, active []bool, opt CheckButtonsOptions) *CheckButtons"
         },
         {
           "id": "func NewCursor",
-          "declaration": "func NewCursor(a *core.Axes, opts ...CursorOptions) *Cursor"
+          "declaration": "func NewCursor(a *core.Axes, opt CursorOptions) *Cursor"
         },
         {
           "id": "func NewEllipseSelector",
-          "declaration": "func NewEllipseSelector(a *core.Axes, opts ...EllipseSelectorOptions) *EllipseSelector"
+          "declaration": "func NewEllipseSelector(a *core.Axes, opt EllipseSelectorOptions) *EllipseSelector"
         },
         {
           "id": "func NewLassoSelector",
-          "declaration": "func NewLassoSelector(a *core.Axes, opts ...LassoSelectorOptions) *LassoSelector"
+          "declaration": "func NewLassoSelector(a *core.Axes, opt LassoSelectorOptions) *LassoSelector"
         },
         {
           "id": "func NewMultiCursor",
@@ -11945,31 +12041,31 @@
         },
         {
           "id": "func NewMultiCursorWithOptions",
-          "declaration": "func NewMultiCursorWithOptions(a *core.Axes, opts []MultiCursorOptions, axes ...*core.Axes) *MultiCursor"
+          "declaration": "func NewMultiCursorWithOptions(a *core.Axes, opt MultiCursorOptions, axes ...*core.Axes) *MultiCursor"
         },
         {
           "id": "func NewPolygonSelector",
-          "declaration": "func NewPolygonSelector(a *core.Axes, opts ...PolygonSelectorOptions) *PolygonSelector"
+          "declaration": "func NewPolygonSelector(a *core.Axes, opt PolygonSelectorOptions) *PolygonSelector"
         },
         {
           "id": "func NewRadioButtons",
-          "declaration": "func NewRadioButtons(a *core.Axes, labels []string, active int, opts ...RadioButtonsOptions) *RadioButtons"
+          "declaration": "func NewRadioButtons(a *core.Axes, labels []string, active int, opt RadioButtonsOptions) *RadioButtons"
         },
         {
           "id": "func NewRangeSlider",
-          "declaration": "func NewRangeSlider(a *core.Axes, label string, minValue, maxValue, low, high float64, opts ...RangeSliderOptions) *RangeSlider"
+          "declaration": "func NewRangeSlider(a *core.Axes, label string, minValue, maxValue, low, high float64, opt RangeSliderOptions) *RangeSlider"
         },
         {
           "id": "func NewRectangleSelector",
-          "declaration": "func NewRectangleSelector(a *core.Axes, opts ...RectangleSelectorOptions) *RectangleSelector"
+          "declaration": "func NewRectangleSelector(a *core.Axes, opt RectangleSelectorOptions) *RectangleSelector"
         },
         {
           "id": "func NewSlider",
-          "declaration": "func NewSlider(a *core.Axes, label string, minValue, maxValue, value float64, opts ...SliderOptions) *Slider"
+          "declaration": "func NewSlider(a *core.Axes, label string, minValue, maxValue, value float64, opt SliderOptions) *Slider"
         },
         {
           "id": "func NewSpanSelector",
-          "declaration": "func NewSpanSelector(a *core.Axes, orientation string, opts ...SpanSelectorOptions) *SpanSelector"
+          "declaration": "func NewSpanSelector(a *core.Axes, orientation string, opt SpanSelectorOptions) *SpanSelector"
         },
         {
           "id": "func NewSubFigureAxes",
@@ -11981,7 +12077,7 @@
         },
         {
           "id": "func NewTextBox",
-          "declaration": "func NewTextBox(a *core.Axes, label, value string, opts ...TextBoxOptions) *TextBox"
+          "declaration": "func NewTextBox(a *core.Axes, label, value string, opt TextBoxOptions) *TextBox"
         },
         {
           "id": "method Button.Bounds",
@@ -12593,7 +12689,7 @@
         },
         {
           "id": "type ButtonOptions",
-          "declaration": "type ButtonOptions struct{ FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; Pressed *bool; Disabled *bool; FontSize float64 }"
+          "declaration": "type ButtonOptions struct{ FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; Pressed optional.Value[bool]; Disabled optional.Value[bool]; FontSize float64 }"
         },
         {
           "id": "type CheckButtons",
@@ -12605,7 +12701,7 @@
         },
         {
           "id": "type CheckButtonsOptions",
-          "declaration": "type CheckButtonsOptions struct{ FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; CheckColor render.Color; FontSize float64; Disabled *bool }"
+          "declaration": "type CheckButtonsOptions struct{ FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; CheckColor render.Color; FontSize float64; Disabled optional.Value[bool] }"
         },
         {
           "id": "type Cursor",
@@ -12613,7 +12709,7 @@
         },
         {
           "id": "type CursorOptions",
-          "declaration": "type CursorOptions struct{ Color render.Color; LineWidth float64; HorizOn *bool; VerticalOn *bool }"
+          "declaration": "type CursorOptions struct{ Color render.Color; LineWidth float64; HorizOn optional.Value[bool]; VerticalOn optional.Value[bool] }"
         },
         {
           "id": "type EllipseSelector",
@@ -12645,7 +12741,7 @@
         },
         {
           "id": "type MultiCursorOptions",
-          "declaration": "type MultiCursorOptions struct{ Color render.Color; LineWidth float64; HorizOn *bool; VerticalOn *bool }"
+          "declaration": "type MultiCursorOptions struct{ Color render.Color; LineWidth float64; HorizOn optional.Value[bool]; VerticalOn optional.Value[bool] }"
         },
         {
           "id": "type PolygonSelector",
@@ -12669,7 +12765,7 @@
         },
         {
           "id": "type RadioButtonsOptions",
-          "declaration": "type RadioButtonsOptions struct{ FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; DotColor render.Color; FontSize float64; Disabled *bool }"
+          "declaration": "type RadioButtonsOptions struct{ FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; DotColor render.Color; FontSize float64; Disabled optional.Value[bool] }"
         },
         {
           "id": "type RangeSlider",
@@ -12705,7 +12801,7 @@
         },
         {
           "id": "type SliderOptions",
-          "declaration": "type SliderOptions struct{ FaceColor render.Color; TrackColor render.Color; FillColor render.Color; HandleColor render.Color; TextColor render.Color; ValueStep *float64; ValueFormat *string; FontSize float64 }"
+          "declaration": "type SliderOptions struct{ FaceColor render.Color; TrackColor render.Color; FillColor render.Color; HandleColor render.Color; TextColor render.Color; ValueStep optional.Value[float64]; ValueFormat optional.Value[string]; FontSize float64 }"
         },
         {
           "id": "type SpanSelector",
@@ -12717,7 +12813,7 @@
         },
         {
           "id": "type SpanSelectorOptions",
-          "declaration": "type SpanSelectorOptions struct{ Orientation string; Color render.Color; FillColor render.Color; LineWidth float64; Min *float64; Max *float64 }"
+          "declaration": "type SpanSelectorOptions struct{ Orientation string; Color render.Color; FillColor render.Color; LineWidth float64; Min optional.Value[float64]; Max optional.Value[float64] }"
         },
         {
           "id": "type TextBox",
@@ -12729,7 +12825,7 @@
         },
         {
           "id": "type TextBoxOptions",
-          "declaration": "type TextBoxOptions struct{ FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; Placeholder string; FontSize float64; Active *bool }"
+          "declaration": "type TextBoxOptions struct{ FaceColor render.Color; EdgeColor render.Color; TextColor render.Color; Placeholder string; FontSize float64; Active optional.Value[bool] }"
         },
         {
           "id": "type TextBoxSubmitCallback",

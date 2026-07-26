@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -57,11 +58,11 @@ func Plot() *core.Figure {
 			HAlign:   core.TextAlignCenter,
 			VAlign:   core.TextVAlignMiddle,
 			FontSize: 16,
-			BBox: &core.TextBBoxOptions{
+			BBox: optional.Of(core.TextBBoxOptions{
 				Style:     b.style,
 				FaceColor: faceColor,
 				EdgeColor: edgeColor,
-			},
+			}),
 		})
 	}
 	return fig

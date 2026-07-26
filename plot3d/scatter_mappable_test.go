@@ -4,6 +4,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -15,9 +16,9 @@ func TestAxes3DScatterDefaultColorUsesShapeCycle(t *testing.T) {
 	}
 	palette := fig.RC.Palette()
 
-	line := ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1})
-	scatter := ax.Scatter3D([]float64{0.5}, []float64{0.2}, []float64{0.1})
-	nextLine := ax.Plot3D([]float64{0, 1}, []float64{1, 0}, []float64{0, 1})
+	line := ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1}, PlotOptions{})
+	scatter := ax.Scatter3D([]float64{0.5}, []float64{0.2}, []float64{0.1}, ScatterOptions{})
+	nextLine := ax.Plot3D([]float64{0, 1}, []float64{1, 0}, []float64{0, 1}, PlotOptions{})
 
 	if got, want := line.Col, palette[0]; got != want {
 		t.Fatalf("first 3D line color = %+v, want %+v", got, want)
@@ -37,7 +38,7 @@ func TestAxes3DScatterUsesMatplotlibDefaultSize(t *testing.T) {
 		t.Fatalf("AddAxes3D: %v", err)
 	}
 
-	scatter := ax.Scatter3D([]float64{0.5}, []float64{0.2}, []float64{0.1})
+	scatter := ax.Scatter3D([]float64{0.5}, []float64{0.2}, []float64{0.1}, ScatterOptions{})
 	if scatter == nil {
 		t.Fatal("Scatter3D returned nil")
 	}
@@ -50,7 +51,7 @@ func TestAxes3DScatterUsesMatplotlibDefaultSize(t *testing.T) {
 		[]float64{0.5},
 		[]float64{0.2},
 		[]float64{0.1},
-		ScatterOptions{Size: &explicit},
+		ScatterOptions{Size: optional.Of(explicit)},
 	)
 	if scatter == nil {
 		t.Fatal("Scatter3D with explicit size returned nil")
@@ -71,6 +72,7 @@ func TestAxes3DScatterDepthShadesAndSortsMarkersLikeMatplotlib(t *testing.T) {
 		[]float64{0, 1},
 		[]float64{0, 1},
 		[]float64{0, 1},
+		ScatterOptions{},
 	)
 	if scatter == nil {
 		t.Fatal("Scatter3D returned nil")
@@ -135,7 +137,7 @@ func TestAxes3DScatterScalarValuesKeepMappedColorsThroughDepthShade(t *testing.T
 			t.Fatalf("3D scatter Array = %v, want values %v", scatter.Array(), scatter.ScalarValues)
 		}
 	}
-	cbAx := fig.AddColorbar(ax.Axes, scatter)
+	cbAx := fig.AddColorbar(ax.Axes, scatter, ColorbarOptions{})
 	if cbAx == nil || len(cbAx.Artists) == 0 {
 		t.Fatal("AddColorbar returned no colorbar axes for 3D scatter scalar mappable")
 	}
@@ -166,7 +168,7 @@ func TestAxes3DScatterScalarValuesFollowAxLimClip(t *testing.T) {
 		x,
 		y,
 		z,
-		ScatterOptions{ScalarValues: values, Colormap: "viridis", VMin: &vmin, VMax: &vmax, AxLimClip: true},
+		ScatterOptions{ScalarValues: values, Colormap: "viridis", VMin: optional.Of(vmin), VMax: optional.Of(vmax), AxLimClip: true},
 	)
 	if scatter == nil {
 		t.Fatal("Scatter3D returned nil")
@@ -193,7 +195,7 @@ func TestAxes3DScatterScalarValuesFollowAxLimClip(t *testing.T) {
 	if got, want := scatter.Array(), scatter.ScalarValues; len(got) != len(want) {
 		t.Fatalf("3D scatter clipped Array = %v, want %v", got, want)
 	}
-	cbAx := fig.AddColorbar(ax.Axes, scatter)
+	cbAx := fig.AddColorbar(ax.Axes, scatter, ColorbarOptions{})
 	if cbAx == nil || len(cbAx.Artists) == 0 {
 		t.Fatal("AddColorbar returned no colorbar axes for clipped 3D scatter")
 	}
@@ -235,42 +237,42 @@ func TestAxes3DScalarMappableContractAudit(t *testing.T) {
 		{
 			name: "Surface",
 			make: func(ax *Axes3D) scalarArrayMappable {
-				return ax.Surface(gridX, gridY, gridZ, PlotOptions{Colormap: &cmap, VMin: &vmin, VMax: &vmax})
+				return ax.Surface(gridX, gridY, gridZ, PlotOptions{Colormap: optional.Of(cmap), VMin: optional.Of(vmin), VMax: optional.Of(vmax)})
 			},
 			wantLen: 1,
 		},
 		{
 			name: "Trisurf",
 			make: func(ax *Axes3D) scalarArrayMappable {
-				return ax.Trisurf(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: &cmap, VMin: &vmin, VMax: &vmax})
+				return ax.Trisurf(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: optional.Of(cmap), VMin: optional.Of(vmin), VMax: optional.Of(vmax)})
 			},
 			wantLen: 2,
 		},
 		{
 			name: "Contour",
 			make: func(ax *Axes3D) scalarArrayMappable {
-				return ax.Contour(gridX, gridY, gridZ, PlotOptions{Colormap: &cmap, VMin: &vmin, VMax: &vmax, Levels: []float64{2, 4}})
+				return ax.Contour(gridX, gridY, gridZ, PlotOptions{Colormap: optional.Of(cmap), VMin: optional.Of(vmin), VMax: optional.Of(vmax), Levels: []float64{2, 4}})
 			},
 			wantLen: 2,
 		},
 		{
 			name: "Contourf",
 			make: func(ax *Axes3D) scalarArrayMappable {
-				return ax.Contourf(gridX, gridY, gridZ, PlotOptions{Colormap: &cmap, VMin: &vmin, VMax: &vmax, Levels: []float64{0, 2, 4, 6}})
+				return ax.Contourf(gridX, gridY, gridZ, PlotOptions{Colormap: optional.Of(cmap), VMin: optional.Of(vmin), VMax: optional.Of(vmax), Levels: []float64{0, 2, 4, 6}})
 			},
 			wantLen: 3,
 		},
 		{
 			name: "TriContour",
 			make: func(ax *Axes3D) scalarArrayMappable {
-				return ax.TriContour(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: &cmap, VMin: &vmin, VMax: &vmax, Levels: []float64{2, 4}})
+				return ax.TriContour(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: optional.Of(cmap), VMin: optional.Of(vmin), VMax: optional.Of(vmax), Levels: []float64{2, 4}})
 			},
 			wantLen: 2,
 		},
 		{
 			name: "TriContourf",
 			make: func(ax *Axes3D) scalarArrayMappable {
-				return ax.TriContourf(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: &cmap, VMin: &vmin, VMax: &vmax, Levels: []float64{0, 2, 4, 6}})
+				return ax.TriContourf(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: optional.Of(cmap), VMin: optional.Of(vmin), VMax: optional.Of(vmax), Levels: []float64{0, 2, 4, 6}})
 			},
 			wantLen: 3,
 		},
@@ -281,7 +283,7 @@ func TestAxes3DScalarMappableContractAudit(t *testing.T) {
 					[]float64{0, 1},
 					[]float64{0, 1},
 					[]float64{0, 1},
-					ScatterOptions{ScalarValues: []float64{2, 8}, Colormap: cmap, VMin: &vmin, VMax: &vmax},
+					ScatterOptions{ScalarValues: []float64{2, 8}, Colormap: cmap, VMin: optional.Of(vmin), VMax: optional.Of(vmax)},
 				)
 			},
 			wantLen: 2,
@@ -330,37 +332,37 @@ func TestAxes3DScalarMappableHelpersApplyAlphaToMappedColors(t *testing.T) {
 		{
 			name: "Surface",
 			colors: func(ax *Axes3D) []render.Color {
-				return ax.Surface(gridX, gridY, gridZ, PlotOptions{Colormap: &cmap, Alpha: &alpha}).FaceColors
+				return ax.Surface(gridX, gridY, gridZ, PlotOptions{Colormap: optional.Of(cmap), Alpha: optional.Of(alpha)}).FaceColors
 			},
 		},
 		{
 			name: "Trisurf",
 			colors: func(ax *Axes3D) []render.Color {
-				return ax.Trisurf(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: &cmap, Alpha: &alpha}).FaceColors
+				return ax.Trisurf(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: optional.Of(cmap), Alpha: optional.Of(alpha)}).FaceColors
 			},
 		},
 		{
 			name: "Contour",
 			colors: func(ax *Axes3D) []render.Color {
-				return ax.Contour(gridX, gridY, gridZ, PlotOptions{Colormap: &cmap, Alpha: &alpha, Levels: []float64{2, 4}}).Colors
+				return ax.Contour(gridX, gridY, gridZ, PlotOptions{Colormap: optional.Of(cmap), Alpha: optional.Of(alpha), Levels: []float64{2, 4}}).Colors
 			},
 		},
 		{
 			name: "Contourf",
 			colors: func(ax *Axes3D) []render.Color {
-				return ax.Contourf(gridX, gridY, gridZ, PlotOptions{Colormap: &cmap, Alpha: &alpha, Levels: []float64{0, 2, 4, 6}}).FaceColors
+				return ax.Contourf(gridX, gridY, gridZ, PlotOptions{Colormap: optional.Of(cmap), Alpha: optional.Of(alpha), Levels: []float64{0, 2, 4, 6}}).FaceColors
 			},
 		},
 		{
 			name: "TriContour",
 			colors: func(ax *Axes3D) []render.Color {
-				return ax.TriContour(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: &cmap, Alpha: &alpha, Levels: []float64{2, 4}}).Colors
+				return ax.TriContour(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: optional.Of(cmap), Alpha: optional.Of(alpha), Levels: []float64{2, 4}}).Colors
 			},
 		},
 		{
 			name: "TriContourf",
 			colors: func(ax *Axes3D) []render.Color {
-				return ax.TriContourf(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: &cmap, Alpha: &alpha, Levels: []float64{0, 2, 4, 6}}).FaceColors
+				return ax.TriContourf(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: optional.Of(cmap), Alpha: optional.Of(alpha), Levels: []float64{0, 2, 4, 6}}).FaceColors
 			},
 		},
 	}
@@ -393,7 +395,7 @@ func TestAxes3DScalarMappableHelpersApplyAlphaToMappedColors(t *testing.T) {
 		[]float64{0, 1},
 		[]float64{0, 1},
 		[]float64{0, 1},
-		ScatterOptions{ScalarValues: []float64{0, 1}, Colormap: cmap, Alpha: &alpha},
+		ScatterOptions{ScalarValues: []float64{0, 1}, Colormap: cmap, Alpha: optional.Of(alpha)},
 	)
 	if scatter == nil {
 		t.Fatal("Scatter3D returned nil")
@@ -426,37 +428,37 @@ func TestAxes3DCollectionMappablesCreateColorbars(t *testing.T) {
 		{
 			name: "Surface",
 			make: func(ax *Axes3D) ScalarMappable {
-				return ax.Surface(gridX, gridY, gridZ, PlotOptions{Colormap: &cmap, VMin: &vmin, VMax: &vmax})
+				return ax.Surface(gridX, gridY, gridZ, PlotOptions{Colormap: optional.Of(cmap), VMin: optional.Of(vmin), VMax: optional.Of(vmax)})
 			},
 		},
 		{
 			name: "Trisurf",
 			make: func(ax *Axes3D) ScalarMappable {
-				return ax.Trisurf(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: &cmap, VMin: &vmin, VMax: &vmax})
+				return ax.Trisurf(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: optional.Of(cmap), VMin: optional.Of(vmin), VMax: optional.Of(vmax)})
 			},
 		},
 		{
 			name: "Contour",
 			make: func(ax *Axes3D) ScalarMappable {
-				return ax.Contour(gridX, gridY, gridZ, PlotOptions{Colormap: &cmap, VMin: &vmin, VMax: &vmax, Levels: []float64{2, 4}})
+				return ax.Contour(gridX, gridY, gridZ, PlotOptions{Colormap: optional.Of(cmap), VMin: optional.Of(vmin), VMax: optional.Of(vmax), Levels: []float64{2, 4}})
 			},
 		},
 		{
 			name: "Contourf",
 			make: func(ax *Axes3D) ScalarMappable {
-				return ax.Contourf(gridX, gridY, gridZ, PlotOptions{Colormap: &cmap, VMin: &vmin, VMax: &vmax, Levels: []float64{0, 2, 4, 6}})
+				return ax.Contourf(gridX, gridY, gridZ, PlotOptions{Colormap: optional.Of(cmap), VMin: optional.Of(vmin), VMax: optional.Of(vmax), Levels: []float64{0, 2, 4, 6}})
 			},
 		},
 		{
 			name: "TriContour",
 			make: func(ax *Axes3D) ScalarMappable {
-				return ax.TriContour(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: &cmap, VMin: &vmin, VMax: &vmax, Levels: []float64{2, 4}})
+				return ax.TriContour(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: optional.Of(cmap), VMin: optional.Of(vmin), VMax: optional.Of(vmax), Levels: []float64{2, 4}})
 			},
 		},
 		{
 			name: "TriContourf",
 			make: func(ax *Axes3D) ScalarMappable {
-				return ax.TriContourf(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: &cmap, VMin: &vmin, VMax: &vmax, Levels: []float64{0, 2, 4, 6}})
+				return ax.TriContourf(tri, []float64{0, 2, 4, 6}, PlotOptions{Colormap: optional.Of(cmap), VMin: optional.Of(vmin), VMax: optional.Of(vmax), Levels: []float64{0, 2, 4, 6}})
 			},
 		},
 	}
@@ -472,7 +474,7 @@ func TestAxes3DCollectionMappablesCreateColorbars(t *testing.T) {
 			if mappable == nil {
 				t.Fatalf("%s returned nil", tt.name)
 			}
-			cbAx := fig.AddColorbar(ax.Axes, mappable)
+			cbAx := fig.AddColorbar(ax.Axes, mappable, ColorbarOptions{})
 			if cbAx == nil || len(cbAx.Artists) == 0 {
 				t.Fatalf("AddColorbar returned no colorbar axes for %s", tt.name)
 			}
@@ -506,12 +508,12 @@ func TestAxes3DCollectionColorbarSyncsMutableMapping(t *testing.T) {
 		[]float64{0, 1},
 		[]float64{0, 1},
 		[][]float64{{0, 2}, {4, 6}},
-		PlotOptions{Colormap: &cmap},
+		PlotOptions{Colormap: optional.Of(cmap)},
 	)
 	if surface == nil {
 		t.Fatal("Surface returned nil")
 	}
-	cbAx := fig.AddColorbar(ax.Axes, surface)
+	cbAx := fig.AddColorbar(ax.Axes, surface, ColorbarOptions{})
 	if cbAx == nil || len(cbAx.Artists) == 0 {
 		t.Fatal("AddColorbar returned no colorbar axes for mutable 3D surface")
 	}
@@ -551,25 +553,25 @@ func TestAxes3DUnsupportedColorbarHelpersExposeNoScalarData(t *testing.T) {
 		{
 			name: "Wireframe",
 			make: func(ax *Axes3D) scalarArrayMappable {
-				return ax.Wireframe([]float64{0, 1}, []float64{0, 1}, [][]float64{{0, 1}, {1, 2}})
+				return ax.Wireframe([]float64{0, 1}, []float64{0, 1}, [][]float64{{0, 1}, {1, 2}}, PlotOptions{})
 			},
 		},
 		{
 			name: "Quiver3D",
 			make: func(ax *Axes3D) scalarArrayMappable {
-				return ax.Quiver3D([]float64{0}, []float64{0}, []float64{0}, []float64{1}, []float64{0}, []float64{0})
+				return ax.Quiver3D([]float64{0}, []float64{0}, []float64{0}, []float64{1}, []float64{0}, []float64{0}, Quiver3DOptions{})
 			},
 		},
 		{
 			name: "ErrorBar3D",
 			make: func(ax *Axes3D) scalarArrayMappable {
-				return ax.ErrorBar3D([]float64{0}, []float64{0}, []float64{0}, nil, nil, []float64{0.1})
+				return ax.ErrorBar3D([]float64{0}, []float64{0}, []float64{0}, nil, nil, []float64{0.1}, ErrorBar3DOptions{})
 			},
 		},
 		{
 			name: "Stem3D lines",
 			make: func(ax *Axes3D) scalarArrayMappable {
-				container := ax.Stem3D([]float64{0, 1}, []float64{0, 1}, []float64{1, 2})
+				container := ax.Stem3D([]float64{0, 1}, []float64{0, 1}, []float64{1, 2}, Stem3DOptions{})
 				if container == nil {
 					return nil
 				}
@@ -579,7 +581,7 @@ func TestAxes3DUnsupportedColorbarHelpersExposeNoScalarData(t *testing.T) {
 		{
 			name: "Stem3D markers",
 			make: func(ax *Axes3D) scalarArrayMappable {
-				container := ax.Stem3D([]float64{0, 1}, []float64{0, 1}, []float64{1, 2})
+				container := ax.Stem3D([]float64{0, 1}, []float64{0, 1}, []float64{1, 2}, Stem3DOptions{})
 				if container == nil {
 					return nil
 				}
@@ -603,13 +605,13 @@ func TestAxes3DUnsupportedColorbarHelpersExposeNoScalarData(t *testing.T) {
 		{
 			name: "Bar3D edges",
 			make: func(ax *Axes3D) scalarArrayMappable {
-				return ax.Bar3D([]float64{0}, []float64{0}, []float64{0}, []float64{1}, []float64{1}, []float64{1})
+				return ax.Bar3D([]float64{0}, []float64{0}, []float64{0}, []float64{1}, []float64{1}, []float64{1}, Bar3DOptions{})
 			},
 		},
 		{
 			name: "Bar3D faces",
 			make: func(ax *Axes3D) scalarArrayMappable {
-				if ax.Bar3D([]float64{0}, []float64{0}, []float64{0}, []float64{1}, []float64{1}, []float64{1}) == nil {
+				if ax.Bar3D([]float64{0}, []float64{0}, []float64{0}, []float64{1}, []float64{1}, []float64{1}, Bar3DOptions{}) == nil {
 					return nil
 				}
 				return latestBar3DFaceCollection(t, ax, 6)
@@ -618,7 +620,7 @@ func TestAxes3DUnsupportedColorbarHelpersExposeNoScalarData(t *testing.T) {
 		{
 			name: "Voxels",
 			make: func(ax *Axes3D) scalarArrayMappable {
-				voxels := ax.Voxels([][][]bool{{{true}}})
+				voxels := ax.Voxels([][][]bool{{{true}}}, VoxelOptions{})
 				return voxels[[3]int{0, 0, 0}]
 			},
 		},
@@ -642,7 +644,7 @@ func TestAxes3DUnsupportedColorbarHelpersExposeNoScalarData(t *testing.T) {
 			if mapping.Colormap != "" || mapping.Norm != nil || mapping.VMin != 0 || mapping.VMax != 0 {
 				t.Fatalf("%s scalar map = %+v, want no scalar-map metadata", tt.name, mapping)
 			}
-			cbAx := fig.AddColorbar(ax.Axes, mappable)
+			cbAx := fig.AddColorbar(ax.Axes, mappable, ColorbarOptions{})
 			if cbAx == nil || len(cbAx.Artists) == 0 {
 				t.Fatalf("AddColorbar returned no axes for empty %s mappable", tt.name)
 			}
@@ -661,7 +663,7 @@ func TestAxes3DUnsupportedColorbarHelpersExposeNoScalarData(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AddAxes3D: %v", err)
 	}
-	line := ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1})
+	line := ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1}, PlotOptions{})
 	if line == nil {
 		t.Fatal("Plot3D returned nil")
 	}
@@ -703,16 +705,18 @@ func TestAxes3DCollectionsUseComputedDepthZOrder(t *testing.T) {
 		t.Fatalf("AddAxes3D: %v", err)
 	}
 
-	line := ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1})
+	line := ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1}, PlotOptions{})
 	low := ax.Surface(
 		[]float64{0, 1},
 		[]float64{0, 1},
 		[][]float64{{0, 0}, {0, 0}},
+		PlotOptions{},
 	)
 	high := ax.Surface(
 		[]float64{0, 1},
 		[]float64{0, 1},
 		[][]float64{{1, 1}, {1, 1}},
+		PlotOptions{},
 	)
 	if line == nil || low == nil || high == nil {
 		t.Fatalf("expected line and surface artists, got line=%v low=%v high=%v", line, low, high)

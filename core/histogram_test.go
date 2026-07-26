@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
@@ -317,7 +318,7 @@ func TestAxes_Hist(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
 	data := []float64{1, 2, 2, 3, 3, 3, 4, 5}
-	hist, err := ax.Hist(data)
+	hist, err := ax.Hist(data, HistOptions{})
 	if err != nil {
 		t.Fatalf("Hist() returned error: %v", err)
 	}
@@ -326,7 +327,7 @@ func TestAxes_Hist(t *testing.T) {
 	}
 
 	// Empty data is rejected input, not an accepted degradation.
-	got, err := ax.Hist([]float64{})
+	got, err := ax.Hist([]float64{}, HistOptions{})
 	if got != nil || err == nil {
 		t.Fatalf("Hist([]) = (%v, %v), want nil artist and an error", got, err)
 	}
@@ -345,10 +346,10 @@ func TestAxes_Hist_Options(t *testing.T) {
 	hist, err := ax.Hist([]float64{1, 2, 3, 4, 5}, HistOptions{
 		Bins:      bins,
 		Norm:      HistNormProbability,
-		Color:     &col,
-		EdgeColor: &edge,
-		EdgeWidth: &ew,
-		Alpha:     &alpha,
+		Color:     optional.Of(col),
+		EdgeColor: optional.Of(edge),
+		EdgeWidth: optional.Of(ew),
+		Alpha:     optional.Of(alpha),
 		Label:     "test",
 	})
 	if err != nil {
@@ -394,7 +395,7 @@ func TestHistWithoutLogKeepsLinearYScale(t *testing.T) {
 	fig := NewFigure(640, 360)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
-	if hist, err := ax.Hist([]float64{1, 2, 3, 4, 5}); hist == nil || err != nil {
+	if hist, err := ax.Hist([]float64{1, 2, 3, 4, 5}, HistOptions{}); hist == nil || err != nil {
 		t.Fatalf("Hist() = (%v, %v), want a histogram and no error", hist, err)
 	}
 	if _, ok := ax.YScale.(transform.Linear); !ok {
@@ -419,7 +420,7 @@ func TestAxesHistPreservesColorAlphaWhenAlphaOmitted(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
 	col := render.Color{R: 0.2, G: 0.4, B: 0.8, A: 0.35}
-	hist, err := ax.Hist([]float64{1, 2, 2, 3}, HistOptions{Color: &col})
+	hist, err := ax.Hist([]float64{1, 2, 2, 3}, HistOptions{Color: optional.Of(col)})
 	if err != nil {
 		t.Fatalf("Hist() returned error: %v", err)
 	}

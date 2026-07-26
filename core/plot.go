@@ -7,7 +7,7 @@ import (
 
 	mplcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 	"github.com/cwbudde/matplotlib-go/ticker"
@@ -18,44 +18,44 @@ const defaultAutoScaleMargin = 0.05
 
 // PlotOptions holds optional parameters for plotting functions.
 type PlotOptions struct {
-	Color           *render.Color // if nil, uses automatic color cycling
-	EdgeColor       *render.Color
-	LineWidth       *float64 // if nil, uses default
-	LineCap         *render.LineCap
-	LineJoin        *render.LineJoin
-	EdgeWidth       *float64
-	Dashes          []float64 // dash pattern in pixels; overrides LineStyle
-	LineStyle       LineStyle // typed matplotlib linestyle ("-", "--", "-.", ":", "none"); "" = unset
-	DrawStyle       *LineDrawStyle
-	Marker          *MarkerType
-	MarkerStyle     *MarkerStyle
-	MarkerPath      *geom.Path
-	MarkerSize      *float64
-	MarkerFaceColor *render.Color
-	MarkerEdgeColor *render.Color
-	MarkerFaceSpec  *MarkerColorSpec
-	MarkerEdgeSpec  *MarkerColorSpec
-	MarkerFaceAlt   *MarkerColorSpec
-	MarkerEdgeWidth *float64
+	Color           optional.Value[render.Color] // unset uses automatic color cycling
+	EdgeColor       optional.Value[render.Color]
+	LineWidth       optional.Value[float64] // unset uses the cycled or rc width
+	LineCap         optional.Value[render.LineCap]
+	LineJoin        optional.Value[render.LineJoin]
+	EdgeWidth       optional.Value[float64]
+	Dashes          []float64     // dash pattern in pixels; overrides LineStyle
+	LineStyle       LineStyle     // typed matplotlib linestyle ("-", "--", "-.", ":", "none"); "" = unset
+	DrawStyle       LineDrawStyle // zero value connects points directly
+	Marker          optional.Value[MarkerType]
+	MarkerStyle     optional.Value[MarkerStyle]
+	MarkerPath      optional.Value[geom.Path]
+	MarkerSize      optional.Value[float64]
+	MarkerFaceColor optional.Value[render.Color]
+	MarkerEdgeColor optional.Value[render.Color]
+	MarkerFaceSpec  optional.Value[MarkerColorSpec]
+	MarkerEdgeSpec  optional.Value[MarkerColorSpec]
+	MarkerFaceAlt   MarkerColorSpec // zero value leaves the alternate face color unset
+	MarkerEdgeWidth optional.Value[float64]
 	MarkEvery       int
-	MarkEverySpec   *MarkEverySpec
-	Label           string   // series label for legend
-	Alpha           *float64 // alpha transparency
-	LevelCount      int      // contour level count for contour-like plot types
+	MarkEverySpec   MarkEverySpec // zero value draws a marker at every point
+	Label           string        // series label for legend
+	Alpha           optional.Value[float64]
+	LevelCount      int // contour level count for contour-like plot types
 	Levels          []float64
 	ZDir            string
-	Offset          *float64 // fixed projection offset for contour-like plot types
-	RStride         *int     // row stride for 3D surface/wireframe sampling
-	CStride         *int     // column stride for 3D surface/wireframe sampling
-	RCount          *int     // maximum sampled row count for 3D surface/wireframe sampling
-	CCount          *int     // maximum sampled column count for 3D surface/wireframe sampling
+	Offset          optional.Value[float64] // fixed projection offset for contour-like plot types
+	RStride         optional.Value[int]     // row stride for 3D surface/wireframe sampling
+	CStride         optional.Value[int]     // column stride for 3D surface/wireframe sampling
+	RCount          optional.Value[int]     // maximum sampled row count for 3D surface/wireframe sampling
+	CCount          optional.Value[int]     // maximum sampled column count for 3D surface/wireframe sampling
 	FaceColors      []render.Color
-	Shade           *bool
-	Antialiased     *bool
-	Colormap        *string // scalar colormap for mappable plot types
+	Shade           optional.Value[bool]
+	Antialiased     optional.Value[bool]
+	Colormap        optional.Value[string] // scalar colormap for mappable plot types
 	Norm            ScalarNormalizer
-	VMin            *float64
-	VMax            *float64
+	VMin            optional.Value[float64]
+	VMax            optional.Value[float64]
 	AxLimClip       bool
 }
 
@@ -65,12 +65,8 @@ type PlotOptions struct {
 // conversion beside the option definition ensures both surfaces pass the same
 // colormap, normalizer, and explicit limits to ResolveScalarMapValues.
 func (o PlotOptions) ScalarMapConfig() ScalarMapConfig {
-	colormap := ""
-	if o.Colormap != nil {
-		colormap = *o.Colormap
-	}
 	return ScalarMapConfig{
-		Colormap: colormap,
+		Colormap: o.Colormap.OrZero(),
 		Norm:     o.Norm,
 		VMin:     o.VMin,
 		VMax:     o.VMax,
@@ -82,15 +78,12 @@ func (o PlotOptions) ScalarMapConfig() ScalarMapConfig {
 //
 // Rejected input leaves the axes, its unit configuration, and its property
 // cycle unchanged.
-func (a *Axes) Plot(xVals, yVals any, opts ...PlotOptions) (*Line2D, error) {
+//
+//nolint:gocritic // PlotOptions is an immutable snapshot retained by the line artist.
+func (a *Axes) Plot(xVals, yVals any, opt PlotOptions) (*Line2D, error) {
 	if a == nil {
 		return nil, fmt.Errorf("plot axes cannot be nil")
 	}
-	opt, err := optarg.Only("plot", opts)
-	if err != nil {
-		return nil, err
-	}
-
 	tx := a.beginUnitConversion()
 	x, err := a.convertValues(xVals, true)
 	if err != nil {
@@ -139,10 +132,7 @@ func (a *Axes) plot(x, y []float64, opt PlotOptions) *Line2D {
 	// Pull one step from the property cycle (color plus any
 	// linestyle/marker/linewidth carried by axes.prop_cycle).
 	cycle := a.NextLineProps()
-	color := cycle.Color
-	if opt.Color != nil {
-		color = *opt.Color
-	}
+	color := opt.Color.Or(cycle.Color)
 
 	// Get line width: explicit option, else cycled linewidth, else the
 	// lines.linewidth rc value (matplotlib default 1.5 points); converted to
@@ -154,9 +144,7 @@ func (a *Axes) plot(x, y []float64, opt PlotOptions) *Line2D {
 	if cycle.HasLineWidth {
 		lineWidth = cycle.LineWidth
 	}
-	if opt.LineWidth != nil {
-		lineWidth = *opt.LineWidth
-	}
+	lineWidth = opt.LineWidth.Or(lineWidth)
 
 	// Resolve dashes: an explicit dash pattern wins, then the typed LineStyle
 	// option, then a cycled linestyle, then a non-default lines.linestyle rc
@@ -189,7 +177,7 @@ func (a *Axes) plot(x, y []float64, opt PlotOptions) *Line2D {
 		W:                 lineWidth,
 		Col:               color,
 		Dashes:            dashes,
-		DrawStyle:         LineDrawStyleDefault,
+		DrawStyle:         opt.DrawStyle,
 		Label:             opt.Label,
 		DashCap:           rcLines.DashCap,
 		DashJoin:          rcLines.DashJoin,
@@ -197,19 +185,16 @@ func (a *Axes) plot(x, y []float64, opt PlotOptions) *Line2D {
 		SolidJoin:         rcLines.SolidJoin,
 		RCStrokeStylesSet: true,
 	}
-	if opt.LineCap != nil {
-		line.LineCap = *opt.LineCap
+	if lineCap, ok := opt.LineCap.Get(); ok {
+		line.LineCap = lineCap
 		line.LineCapSet = true
 	}
-	if opt.LineJoin != nil {
-		line.LineJoin = *opt.LineJoin
+	if lineJoin, ok := opt.LineJoin.Get(); ok {
+		line.LineJoin = lineJoin
 		line.LineJoinSet = true
 	}
-	if opt.DrawStyle != nil {
-		line.DrawStyle = *opt.DrawStyle
-	}
-	if opt.Marker != nil {
-		line.Marker = *opt.Marker
+	if marker, ok := opt.Marker.Get(); ok {
+		line.Marker = marker
 		line.MarkerSet = true
 	} else if cycle.HasMarker {
 		if marker, ok := MarkerTypeFromString(cycle.Marker); ok && marker != MarkerNone {
@@ -223,79 +208,75 @@ func (a *Axes) plot(x, y []float64, opt PlotOptions) *Line2D {
 			line.MarkerSet = true
 		}
 	}
-	if opt.MarkerStyle != nil {
-		line.MarkerStyle = *opt.MarkerStyle
+	if markerStyle, ok := opt.MarkerStyle.Get(); ok {
+		line.MarkerStyle = markerStyle
 	} else if line.MarkerSet {
 		line.MarkerStyle = NewMarkerStyle(line.Marker)
 		line.MarkerStyle.FillStyle = markerFillStyleFromRC(rcLines.MarkerFillStyle)
 	}
-	if opt.MarkerPath != nil {
-		line.MarkerPath = *opt.MarkerPath
+	if markerPath, ok := opt.MarkerPath.Get(); ok {
+		line.MarkerPath = markerPath
 	}
-	if opt.MarkerSize != nil {
-		line.MarkerSize = *opt.MarkerSize
+	if markerSize, ok := opt.MarkerSize.Get(); ok {
+		line.MarkerSize = markerSize
 	} else if rcLines.MarkerSize > 0 && rcLines.MarkerSize != 6 {
 		// Line2D treats 0 as "use the 6 pt default", so only a non-default
 		// lines.markersize rc value needs seeding.
 		line.MarkerSize = rcLines.MarkerSize
 	}
+	markerFaceColor, markerFaceColorSet := opt.MarkerFaceColor.Get()
 	line.MarkerFaceColor = color
-	if opt.MarkerFaceColor != nil {
-		line.MarkerFaceColor = *opt.MarkerFaceColor
-		line.MarkerFaceSpec = ExplicitMarkerColor(*opt.MarkerFaceColor)
-	} else if opt.MarkerFaceSpec == nil {
+	if markerFaceColorSet {
+		line.MarkerFaceColor = markerFaceColor
+		line.MarkerFaceSpec = ExplicitMarkerColor(markerFaceColor)
+	} else if !opt.MarkerFaceSpec.IsSet() {
 		line.MarkerFaceSpec = markerColorSpecFromRC(rcLines.MarkerFaceColor, &resolvedRC)
 	}
+	markerEdgeColor, markerEdgeColorSet := opt.MarkerEdgeColor.Get()
 	line.MarkerEdgeColor = color
-	if opt.MarkerEdgeColor != nil {
-		line.MarkerEdgeColor = *opt.MarkerEdgeColor
-		line.MarkerEdgeSpec = ExplicitMarkerColor(*opt.MarkerEdgeColor)
-	} else if opt.MarkerEdgeSpec == nil {
+	if markerEdgeColorSet {
+		line.MarkerEdgeColor = markerEdgeColor
+		line.MarkerEdgeSpec = ExplicitMarkerColor(markerEdgeColor)
+	} else if !opt.MarkerEdgeSpec.IsSet() {
 		line.MarkerEdgeSpec = markerColorSpecFromRC(rcLines.MarkerEdgeColor, &resolvedRC)
 	}
-	if opt.MarkerFaceSpec != nil {
-		line.MarkerFaceSpec = *opt.MarkerFaceSpec
+	if spec, ok := opt.MarkerFaceSpec.Get(); ok {
+		line.MarkerFaceSpec = spec
 	}
-	if opt.MarkerEdgeSpec != nil {
-		line.MarkerEdgeSpec = *opt.MarkerEdgeSpec
+	if spec, ok := opt.MarkerEdgeSpec.Get(); ok {
+		line.MarkerEdgeSpec = spec
 	}
-	line.Antialiased = rcLines.Antialiased
+	line.Antialiased = opt.Antialiased.Or(rcLines.Antialiased)
 	line.AntialiasedSet = true
-	if opt.Antialiased != nil {
-		line.Antialiased = *opt.Antialiased
-	}
-	if opt.MarkerFaceAlt != nil {
-		line.MarkerFaceAlt = *opt.MarkerFaceAlt
-	}
-	if opt.MarkerEdgeWidth != nil {
-		line.MarkerEdgeWidth = *opt.MarkerEdgeWidth
+	line.MarkerFaceAlt = opt.MarkerFaceAlt
+	if markerEdgeWidth, ok := opt.MarkerEdgeWidth.Get(); ok {
+		line.MarkerEdgeWidth = markerEdgeWidth
 	} else if rcLines.MarkerEdgeWidth > 0 && rcLines.MarkerEdgeWidth != 1 {
 		// Line2D treats 0 as "use the 1 pt default", so only a non-default
 		// lines.markeredgewidth rc value needs seeding.
 		line.MarkerEdgeWidth = rcLines.MarkerEdgeWidth
 	}
 	line.MarkEvery = opt.MarkEvery
-	if opt.MarkEverySpec != nil {
-		line.SetMarkEvery(*opt.MarkEverySpec)
-	}
+	line.SetMarkEvery(opt.MarkEverySpec)
 
-	// Apply alpha if specified
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		line.Col.A = *opt.Alpha
-		if opt.MarkerFaceColor == nil {
-			line.MarkerFaceColor.A = *opt.Alpha
+	// Apply alpha if specified. An alpha outside [0, 1] is ignored rather than
+	// clamped, matching the pointer-model behavior this replaced.
+	if alpha, ok := opt.Alpha.Get(); ok && alpha >= 0 && alpha <= 1 {
+		line.Col.A = alpha
+		if !markerFaceColorSet {
+			line.MarkerFaceColor.A = alpha
 		}
-		if opt.MarkerEdgeColor == nil {
-			line.MarkerEdgeColor.A = *opt.Alpha
+		if !markerEdgeColorSet {
+			line.MarkerEdgeColor.A = alpha
 		}
 		if line.MarkerFaceSpec.Mode == MarkerColorExplicit {
-			line.MarkerFaceSpec.Color.A = *opt.Alpha
+			line.MarkerFaceSpec.Color.A = alpha
 		}
 		if line.MarkerEdgeSpec.Mode == MarkerColorExplicit {
-			line.MarkerEdgeSpec.Color.A = *opt.Alpha
+			line.MarkerEdgeSpec.Color.A = alpha
 		}
 		if line.MarkerFaceAlt.Mode == MarkerColorExplicit {
-			line.MarkerFaceAlt.Color.A = *opt.Alpha
+			line.MarkerFaceAlt.Color.A = alpha
 		}
 	}
 
@@ -381,8 +362,10 @@ func applyLineRCDefaults(line *Line2D, rc *style.RC) {
 
 // SemilogX is a convenience wrapper for creating a line plot on a logarithmic
 // x-axis.
-func (a *Axes) SemilogX(x, y []float64, opts ...PlotOptions) *Line2D {
-	line := a.plot(x, y, optarg.One("semilogx", opts))
+//
+//nolint:gocritic // PlotOptions is an immutable snapshot retained by the line artist.
+func (a *Axes) SemilogX(x, y []float64, opt PlotOptions) *Line2D {
+	line := a.plot(x, y, opt)
 	if line == nil {
 		return nil
 	}
@@ -392,8 +375,10 @@ func (a *Axes) SemilogX(x, y []float64, opts ...PlotOptions) *Line2D {
 
 // SemilogY is a convenience wrapper for creating a line plot on a logarithmic
 // y-axis.
-func (a *Axes) SemilogY(x, y []float64, opts ...PlotOptions) *Line2D {
-	line := a.plot(x, y, optarg.One("semilogy", opts))
+//
+//nolint:gocritic // PlotOptions is an immutable snapshot retained by the line artist.
+func (a *Axes) SemilogY(x, y []float64, opt PlotOptions) *Line2D {
+	line := a.plot(x, y, opt)
 	if line == nil {
 		return nil
 	}
@@ -403,8 +388,10 @@ func (a *Axes) SemilogY(x, y []float64, opts ...PlotOptions) *Line2D {
 
 // LogLog is a convenience wrapper for creating a line plot on logarithmic x/y
 // axes.
-func (a *Axes) LogLog(x, y []float64, opts ...PlotOptions) *Line2D {
-	line := a.plot(x, y, optarg.One("loglog", opts))
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) LogLog(x, y []float64, opt PlotOptions) *Line2D {
+	line := a.plot(x, y, opt)
 	if line == nil {
 		return nil
 	}
@@ -434,24 +421,24 @@ func setLogScaleFromData(ax *Axes, values []float64, isX bool) {
 
 // ScatterOptions holds optional parameters for scatter plots.
 type ScatterOptions struct {
-	Color        *render.Color    // if nil, uses automatic color cycling
-	Colors       []render.Color   // per-point marker face colors
-	ScalarValues []float64        // per-point scalar values mapped through Colormap/Norm
-	Colormap     string           // colormap name for ScalarValues
-	Norm         ScalarNormalizer // normalizer for ScalarValues
-	VMin         *float64         // lower color limit for ScalarValues
-	VMax         *float64         // upper color limit for ScalarValues
-	Size         *float64         // marker area in points^2
-	Sizes        []float64        // per-point marker areas in points^2
-	Marker       *MarkerType      // marker type
-	MarkerStyle  *MarkerStyle     // marker style; overrides Marker when non-nil
-	MarkerPath   *geom.Path       // custom marker path (overrides Marker when non-nil)
-	EdgeColor    *render.Color    // edge color
-	EdgeColors   []render.Color   // per-point marker edge colors
-	EdgeWidth    *float64         // edge width
-	Alpha        *float64         // alpha transparency
-	Label        string           // series label for legend
-	AxLimClip    bool             // 3D scatter: hide points outside explicit axes limits
+	Color        optional.Value[render.Color] // if nil, uses automatic color cycling
+	Colors       []render.Color               // per-point marker face colors
+	ScalarValues []float64                    // per-point scalar values mapped through Colormap/Norm
+	Colormap     string                       // colormap name for ScalarValues
+	Norm         ScalarNormalizer             // normalizer for ScalarValues
+	VMin         optional.Value[float64]      // lower color limit for ScalarValues
+	VMax         optional.Value[float64]      // upper color limit for ScalarValues
+	Size         optional.Value[float64]      // marker area in points^2
+	Sizes        []float64                    // per-point marker areas in points^2
+	Marker       optional.Value[MarkerType]   // marker type
+	MarkerStyle  optional.Value[MarkerStyle]  // marker style; overrides Marker when non-nil
+	MarkerPath   optional.Value[geom.Path]    // custom marker path (overrides Marker when non-nil)
+	EdgeColor    optional.Value[render.Color] // edge color
+	EdgeColors   []render.Color               // per-point marker edge colors
+	EdgeWidth    optional.Value[float64]      // edge width
+	Alpha        optional.Value[float64]      // alpha transparency
+	Label        string                       // series label for legend
+	AxLimClip    bool                         // 3D scatter: hide points outside explicit axes limits
 	// PlotNonfinite mirrors Matplotlib's plotnonfinite kwarg. When false
 	// (default), points with a non-finite x/y/size/scalar/color are masked out.
 	// When true, points with non-finite color/scalar values are kept and ride
@@ -465,13 +452,11 @@ type ScatterOptions struct {
 //
 // Rejected input leaves the axes, its unit configuration, and its property
 // cycle unchanged.
-func (a *Axes) Scatter(xVals, yVals any, opts ...ScatterOptions) (*Scatter2D, error) {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) Scatter(xVals, yVals any, opt ScatterOptions) (*Scatter2D, error) {
 	if a == nil {
 		return nil, fmt.Errorf("scatter axes cannot be nil")
-	}
-	opt, err := optarg.Only("scatter", opts)
-	if err != nil {
-		return nil, err
 	}
 
 	tx := a.beginUnitConversion()
@@ -546,8 +531,8 @@ func (a *Axes) scatter(x, y []float64, opt ScatterOptions) *Scatter2D {
 
 	// Get color (automatic shape/fill cycling if not specified)
 	color := a.NextPatchColor()
-	if opt.Color != nil {
-		color = *opt.Color
+	if v, ok := opt.Color.Get(); ok {
+		color = v
 	}
 
 	// Get size. Matplotlib's scatter "s" parameter is marker area in points^2;
@@ -557,8 +542,8 @@ func (a *Axes) scatter(x, y []float64, opt ScatterOptions) *Scatter2D {
 	if ms := rcScatter.Lines.MarkerSize; ms > 0 && ms != 6 {
 		size = ms * ms
 	}
-	if opt.Size != nil {
-		size = *opt.Size
+	if v, ok := opt.Size.Get(); ok {
+		size = v
 	}
 	var sizes []float64
 	if len(opt.Sizes) > 0 {
@@ -580,8 +565,8 @@ func (a *Axes) scatter(x, y []float64, opt ScatterOptions) *Scatter2D {
 			marker = m
 		}
 	}
-	if opt.Marker != nil {
-		marker = *opt.Marker
+	if v, ok := opt.Marker.Get(); ok {
+		marker = v
 	}
 
 	// Matplotlib defaults scatter marker edges to "face" with linewidth 1;
@@ -597,8 +582,8 @@ func (a *Axes) scatter(x, y []float64, opt ScatterOptions) *Scatter2D {
 			edgeColor = parsed
 		}
 	}
-	if opt.EdgeColor != nil {
-		edgeColor = *opt.EdgeColor
+	if v, ok := opt.EdgeColor.Get(); ok {
+		edgeColor = v
 	}
 	var colors []render.Color
 	if len(opt.Colors) > 0 {
@@ -607,7 +592,7 @@ func (a *Axes) scatter(x, y []float64, opt ScatterOptions) *Scatter2D {
 		}
 		if len(opt.Colors) == 1 {
 			color = opt.Colors[0]
-			if opt.EdgeColor == nil && edgeFollowsFace {
+			if !opt.EdgeColor.IsSet() && edgeFollowsFace {
 				edgeColor = color
 			}
 		} else {
@@ -654,14 +639,14 @@ func (a *Axes) scatter(x, y []float64, opt ScatterOptions) *Scatter2D {
 	}
 
 	edgeWidth := 1.0
-	if opt.EdgeWidth != nil {
-		edgeWidth = *opt.EdgeWidth
+	if v, ok := opt.EdgeWidth.Get(); ok {
+		edgeWidth = v
 	}
 
 	// Get alpha
 	alpha := 1.0
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		alpha = *opt.Alpha
+	if v, ok := opt.Alpha.Get(); ok && v >= 0 && opt.Alpha.OrZero() <= 1 {
+		alpha = opt.Alpha.OrZero()
 	}
 
 	// Drop points Matplotlib would mask for being non-finite (cbook._combine_masks
@@ -692,13 +677,13 @@ func (a *Axes) scatter(x, y []float64, opt ScatterOptions) *Scatter2D {
 		scatter.VMin = scalarMap.VMin
 		scatter.VMax = scalarMap.VMax
 		scatter.scalarCLimSet = true
-		scatter.EdgeColorsFace = opt.EdgeColor == nil && len(opt.EdgeColors) == 0
+		scatter.EdgeColorsFace = !opt.EdgeColor.IsSet() && len(opt.EdgeColors) == 0
 	}
-	if opt.MarkerStyle != nil {
-		scatter.MarkerStyle = *opt.MarkerStyle
+	if v, ok := opt.MarkerStyle.Get(); ok {
+		scatter.MarkerStyle = v
 	}
-	if opt.MarkerPath != nil {
-		scatter.MarkerPath = *opt.MarkerPath
+	if v, ok := opt.MarkerPath.Get(); ok {
+		scatter.MarkerPath = v
 	}
 
 	a.Add(scatter)
@@ -794,30 +779,30 @@ const (
 )
 
 type BarOptions struct {
-	Color       *render.Color   // if nil, uses automatic color cycling
-	Colors      []render.Color  // per-bar fill colors
-	Width       *float64        // bar width
-	Widths      []float64       // per-bar widths
-	EdgeColor   *render.Color   // edge color
-	EdgeColors  []render.Color  // per-bar edge colors
-	EdgeWidth   *float64        // edge width
-	Alpha       *float64        // alpha transparency
-	Antialiased *bool           // nil uses patch.antialiased
-	Baseline    *float64        // baseline value
-	Baselines   []float64       // per-bar baseline/left values
-	Orientation *BarOrientation // vertical or horizontal
-	Align       *BarAlign       // center or edge alignment
-	Label       string          // series label for legend
+	Color       optional.Value[render.Color]   // if nil, uses automatic color cycling
+	Colors      []render.Color                 // per-bar fill colors
+	Width       optional.Value[float64]        // bar width
+	Widths      []float64                      // per-bar widths
+	EdgeColor   optional.Value[render.Color]   // edge color
+	EdgeColors  []render.Color                 // per-bar edge colors
+	EdgeWidth   optional.Value[float64]        // edge width
+	Alpha       optional.Value[float64]        // alpha transparency
+	Antialiased optional.Value[bool]           // nil uses patch.antialiased
+	Baseline    optional.Value[float64]        // baseline value
+	Baselines   []float64                      // per-bar baseline/left values
+	Orientation optional.Value[BarOrientation] // vertical or horizontal
+	Align       optional.Value[BarAlign]       // center or edge alignment
+	Label       string                         // series label for legend
 
 	// Error bars (matplotlib bar(yerr=/xerr=)). When any error data is present,
 	// bars draw error bars anchored at the bar top (vertical) or end
 	// (horizontal), matching matplotlib's placement.
-	XErr     []float64        // symmetric x errors (per-bar or scalar broadcast)
-	YErr     []float64        // symmetric y errors (per-bar or scalar broadcast)
-	ECol     *render.Color    // error-bar color; nil = matplotlib default black ('k')
-	CapSize  *float64         // cap size in points; nil = errorbar.capsize rc value
-	CapThick *float64         // cap line thickness in points; nil = 1pt default
-	ErrorKw  *ErrorBarOptions // passthrough for asymmetric errors, errorevery, etc.
+	XErr     []float64                       // symmetric x errors (per-bar or scalar broadcast)
+	YErr     []float64                       // symmetric y errors (per-bar or scalar broadcast)
+	ECol     optional.Value[render.Color]    // error-bar color; nil = matplotlib default black ('k')
+	CapSize  optional.Value[float64]         // cap size in points; nil = errorbar.capsize rc value
+	CapThick optional.Value[float64]         // cap line thickness in points; nil = 1pt default
+	ErrorKw  optional.Value[ErrorBarOptions] // passthrough for asymmetric errors, errorevery, etc.
 }
 
 // Bar converts positions and heights through the axes units machinery and
@@ -825,35 +810,34 @@ type BarOptions struct {
 //
 // Rejected input leaves the axes, its unit configuration, and its property
 // cycle unchanged.
-func (a *Axes) Bar(posVals, heightVals any, opts ...BarOptions) (*Bar2D, error) {
-	return a.barWithOrientation(posVals, heightVals, nil, opts...)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) Bar(posVals, heightVals any, opt BarOptions) (*Bar2D, error) {
+	return a.barWithOrientation(posVals, heightVals, nil, opt)
 }
 
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
 func (a *Axes) barWithOrientation(
 	posVals, heightVals any,
 	forcedOrientation *BarOrientation,
-	opts ...BarOptions,
+	opt BarOptions,
 ) (*Bar2D, error) {
 	if a == nil {
 		return nil, fmt.Errorf("bar axes cannot be nil")
 	}
-	opt, err := optarg.Only("bar", opts)
-	if err != nil {
-		return nil, err
-	}
 	if forcedOrientation != nil {
 		orientation := *forcedOrientation
-		opt.Orientation = &orientation
+		opt.Orientation = optional.Of(orientation)
 	}
 	orientation := BarVertical
-	if opt.Orientation != nil {
-		orientation = *opt.Orientation
+	if v, ok := opt.Orientation.Get(); ok {
+		orientation = v
 	}
 	if orientation != BarVertical && orientation != BarHorizontal {
 		return nil, fmt.Errorf("bar orientation must be BarVertical or BarHorizontal (got %d)", orientation)
 	}
-	if opt.Align != nil && *opt.Align != BarAlignCenter && *opt.Align != BarAlignEdge {
-		return nil, fmt.Errorf("bar alignment must be BarAlignCenter or BarAlignEdge (got %d)", *opt.Align)
+	if v, ok := opt.Align.Get(); ok && v != BarAlignCenter && opt.Align.OrZero() != BarAlignEdge {
+		return nil, fmt.Errorf("bar alignment must be BarAlignCenter or BarAlignEdge (got %d)", opt.Align.OrZero())
 	}
 
 	tx := a.beginUnitConversion()
@@ -909,10 +893,10 @@ func validateBarInput(positions, heights []float64, opt *BarOptions) error {
 	if !validErrorValues(opt.XErr, n) || !validErrorValues(opt.YErr, n) {
 		return fmt.Errorf("bar XErr and YErr must each be empty or length 1 or %d, with finite non-negative values", n)
 	}
-	if opt.ErrorKw == nil {
+	kw, ok := opt.ErrorKw.Get()
+	if !ok {
 		return nil
 	}
-	kw := opt.ErrorKw
 	if !validErrorValues(kw.XErrLower, n) || !validErrorValues(kw.XErrUpper, n) ||
 		!validErrorValues(kw.YErrLower, n) || !validErrorValues(kw.YErrUpper, n) {
 		return fmt.Errorf("bar ErrorKw error arrays must each be empty or length 1 or %d, with finite non-negative values", n)
@@ -942,14 +926,14 @@ func (a *Axes) bar(x, heights []float64, opt BarOptions) *Bar2D {
 
 	// Get color (automatic cycling if not specified)
 	color := a.NextColor()
-	if opt.Color != nil {
-		color = *opt.Color
+	if v, ok := opt.Color.Get(); ok {
+		color = v
 	}
 
 	// Get width
 	width := 0.8
-	if opt.Width != nil {
-		width = *opt.Width
+	if v, ok := opt.Width.Get(); ok {
+		width = v
 	}
 	var widths []float64
 	if len(opt.Widths) > 0 {
@@ -969,8 +953,8 @@ func (a *Axes) bar(x, heights []float64, opt BarOptions) *Bar2D {
 	if rcPatch.ForceEdgeColor {
 		edgeColor = rcPatch.EdgeColor
 	}
-	if opt.EdgeColor != nil {
-		edgeColor = *opt.EdgeColor
+	if v, ok := opt.EdgeColor.Get(); ok {
+		edgeColor = v
 	}
 	var colors []render.Color
 	if len(opt.Colors) > 0 {
@@ -996,8 +980,8 @@ func (a *Axes) bar(x, heights []float64, opt BarOptions) *Bar2D {
 	}
 
 	edgeWidth := rcPatch.LineWidth
-	if opt.EdgeWidth != nil {
-		edgeWidth = *opt.EdgeWidth
+	if v, ok := opt.EdgeWidth.Get(); ok {
+		edgeWidth = v
 	}
 
 	// Alpha override: an explicit value (including 0 for fully transparent) is
@@ -1014,18 +998,18 @@ func (a *Axes) bar(x, heights []float64, opt BarOptions) *Bar2D {
 
 	// Get baseline
 	baseline := 0.0
-	if opt.Baseline != nil {
-		baseline = *opt.Baseline
+	if v, ok := opt.Baseline.Get(); ok {
+		baseline = v
 	}
 
 	// Get orientation
 	orientation := BarVertical
-	if opt.Orientation != nil {
-		orientation = *opt.Orientation
+	if v, ok := opt.Orientation.Get(); ok {
+		orientation = v
 	}
 	align := BarAlignCenter
-	if opt.Align != nil {
-		align = *opt.Align
+	if v, ok := opt.Align.Get(); ok {
+		align = v
 	}
 	positions := cloneFloat64s(x)
 	if align == BarAlignEdge {
@@ -1067,7 +1051,7 @@ func barHasErrorData(opt *BarOptions) bool {
 	if len(opt.XErr) > 0 || len(opt.YErr) > 0 {
 		return true
 	}
-	if kw := opt.ErrorKw; kw != nil {
+	if kw, ok := opt.ErrorKw.Get(); ok {
 		if len(kw.XErrLower) > 0 || len(kw.XErrUpper) > 0 ||
 			len(kw.YErrLower) > 0 || len(kw.YErrUpper) > 0 {
 			return true
@@ -1099,8 +1083,8 @@ func (b *Bar2D) addErrorBars(a *Axes, opt *BarOptions) {
 	// Start from the ErrorKw passthrough (asymmetric errors, errorevery, …); the
 	// bar-level fields then apply with fmt="none" data-line suppression.
 	var eb ErrorBarOptions
-	if opt.ErrorKw != nil {
-		eb = *opt.ErrorKw
+	if v, ok := opt.ErrorKw.Get(); ok {
+		eb = v
 	}
 	eb.NoDataLine = true
 	eb.Label = ""
@@ -1108,18 +1092,18 @@ func (b *Bar2D) addErrorBars(a *Axes, opt *BarOptions) {
 	// ECol wins, else an ErrorKw.Color passthrough is preserved, else the default
 	// black ('k'). Never clobber a caller-supplied ErrorKw color.
 	switch {
-	case opt.ECol != nil:
-		ecolor := *opt.ECol
-		eb.Color = &ecolor
-	case eb.Color != nil:
+	case opt.ECol.IsSet():
+		ecolor := opt.ECol.OrZero()
+		eb.Color = optional.Of(ecolor)
+	case eb.Color.IsSet():
 		// keep the ErrorKw passthrough color
 	default:
-		eb.Color = &render.Color{R: 0, G: 0, B: 0, A: 1}
+		eb.Color = optional.Of(render.Color{R: 0, G: 0, B: 0, A: 1})
 	}
-	if opt.CapSize != nil {
+	if opt.CapSize.IsSet() {
 		eb.CapSize = opt.CapSize
 	}
-	if opt.CapThick != nil {
+	if opt.CapThick.IsSet() {
 		eb.CapThick = opt.CapThick
 	}
 
@@ -1148,18 +1132,20 @@ func validBarOptionLength(length, n int) bool {
 // alpha leaves the color (and its own alpha channel) untouched. Baking the
 // override into the resolved color at construction lets artists honor an
 // explicit alpha=0 — which a plain float64 "0 means unset" field cannot express.
-func bakeExplicitAlpha(c render.Color, alpha *float64) render.Color {
-	if alpha != nil && *alpha >= 0 && *alpha <= 1 {
-		c.A = *alpha
+func bakeExplicitAlpha(c render.Color, alpha optional.Value[float64]) render.Color {
+	if v, ok := alpha.Get(); ok && v >= 0 && v <= 1 {
+		c.A = v
 	}
 	return c
 }
 
 // BarH converts positions and widths through the axes units machinery and
 // creates a horizontal bar chart.
-func (a *Axes) BarH(yVals, widthVals any, opts ...BarOptions) (*Bar2D, error) {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) BarH(yVals, widthVals any, opt BarOptions) (*Bar2D, error) {
 	orientation := BarHorizontal
-	return a.barWithOrientation(yVals, widthVals, &orientation, opts...)
+	return a.barWithOrientation(yVals, widthVals, &orientation, opt)
 }
 
 // FillBetween converts x, y1, and y2 through the axes units machinery and fills
@@ -1167,13 +1153,11 @@ func (a *Axes) BarH(yVals, widthVals any, opts ...BarOptions) (*Bar2D, error) {
 //
 // Rejected input leaves the axes, its unit configuration, and its property
 // cycle unchanged.
-func (a *Axes) FillBetween(xVals, y1Vals, y2Vals any, opts ...FillOptions) (*Fill2D, error) {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) FillBetween(xVals, y1Vals, y2Vals any, opt FillOptions) (*Fill2D, error) {
 	if a == nil {
 		return nil, fmt.Errorf("fill between axes cannot be nil")
-	}
-	opt, err := optarg.Only("fill between", opts)
-	if err != nil {
-		return nil, err
 	}
 
 	// Convert every input before touching the artist list or the property
@@ -1244,7 +1228,9 @@ func (n fillInputNames) validate(independent, first, second []float64, opt *Fill
 }
 
 // Fill creates an arbitrary closed polygon fill using data-space coordinates.
-func (a *Axes) Fill(x, y []float64, opts ...FillOptions) *PolyCollection {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) Fill(x, y []float64, opt FillOptions) *PolyCollection {
 	if len(x) == 0 || len(y) == 0 {
 		return nil
 	}
@@ -1253,16 +1239,14 @@ func (a *Axes) Fill(x, y []float64, opts ...FillOptions) *PolyCollection {
 		return nil
 	}
 
-	opt := optarg.One("fill", opts)
-
 	points := make([]geom.Pt, n)
 	for i := 0; i < n; i++ {
 		points[i] = geom.Pt{X: x[i], Y: y[i]}
 	}
 
 	color := a.NextColor()
-	if opt.Color != nil {
-		color = *opt.Color
+	if v, ok := opt.Color.Get(); ok {
+		color = v
 	}
 
 	rcPatch := a.resolvedRC().Patch
@@ -1270,13 +1254,13 @@ func (a *Axes) Fill(x, y []float64, opts ...FillOptions) *PolyCollection {
 	if rcPatch.ForceEdgeColor {
 		edgeColor = rcPatch.EdgeColor
 	}
-	if opt.EdgeColor != nil {
-		edgeColor = *opt.EdgeColor
+	if v, ok := opt.EdgeColor.Get(); ok {
+		edgeColor = v
 	}
 
 	edgeWidth := rcPatch.LineWidth
-	if opt.EdgeWidth != nil {
-		edgeWidth = *opt.EdgeWidth
+	if v, ok := opt.EdgeWidth.Get(); ok {
+		edgeWidth = v
 	}
 
 	color = bakeExplicitAlpha(color, opt.Alpha)
@@ -1305,28 +1289,28 @@ func (a *Axes) Fill(x, y []float64, opts ...FillOptions) *PolyCollection {
 }
 
 // FillToBaseline is a convenience alias for FillToBaselinePlot.
-func (a *Axes) FillToBaseline(x, y []float64, opts ...FillOptions) *Fill2D {
-	return a.FillToBaselinePlot(x, y, opts...)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) FillToBaseline(x, y []float64, opt FillOptions) *Fill2D {
+	return a.FillToBaselinePlot(x, y, opt)
 }
 
 // FillBetweenX creates a horizontal fill between x-curves across y values.
 //
 // Rejected input leaves the axes and its property cycle unchanged.
-func (a *Axes) FillBetweenX(y, x1, x2 []float64, opts ...FillOptions) (*Fill2D, error) {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) FillBetweenX(y, x1, x2 []float64, opt FillOptions) (*Fill2D, error) {
 	if a == nil {
 		return nil, fmt.Errorf("fill between x axes cannot be nil")
-	}
-	opt, err := optarg.Only("fill between x", opts)
-	if err != nil {
-		return nil, err
 	}
 	if err := fillBetweenXNames.validate(y, x1, x2, &opt); err != nil {
 		return nil, err
 	}
 
 	color := a.NextColor()
-	if opt.Color != nil {
-		color = *opt.Color
+	if v, ok := opt.Color.Get(); ok {
+		color = v
 	}
 
 	rcPatch := a.resolvedRC().Patch
@@ -1334,13 +1318,13 @@ func (a *Axes) FillBetweenX(y, x1, x2 []float64, opts ...FillOptions) (*Fill2D, 
 	if rcPatch.ForceEdgeColor {
 		edgeColor = rcPatch.EdgeColor
 	}
-	if opt.EdgeColor != nil {
-		edgeColor = *opt.EdgeColor
+	if v, ok := opt.EdgeColor.Get(); ok {
+		edgeColor = v
 	}
 
 	edgeWidth := rcPatch.LineWidth
-	if opt.EdgeWidth != nil {
-		edgeWidth = *opt.EdgeWidth
+	if v, ok := opt.EdgeWidth.Get(); ok {
+		edgeWidth = v
 	}
 
 	color = bakeExplicitAlpha(color, opt.Alpha)
@@ -1368,23 +1352,20 @@ func (a *Axes) FillBetweenX(y, x1, x2 []float64, opts ...FillOptions) (*Fill2D, 
 
 // FillOptions holds optional parameters for fill plots.
 type FillOptions struct {
-	Color       *render.Color // if nil, uses automatic color cycling
-	EdgeColor   *render.Color // edge color
-	EdgeWidth   *float64      // edge width
-	Alpha       *float64      // alpha transparency
-	Antialiased *bool         // nil uses patch.antialiased
-	Baseline    *float64      // baseline value
-	Where       []bool        // fill only contiguous regions where adjacent points are true
-	Interpolate bool          // interpolate region boundaries at curve crossings
-	Step        FillStep      // optional step mode
-	Label       string        // series label for legend
+	Color       optional.Value[render.Color] // if nil, uses automatic color cycling
+	EdgeColor   optional.Value[render.Color] // edge color
+	EdgeWidth   optional.Value[float64]      // edge width
+	Alpha       optional.Value[float64]      // alpha transparency
+	Antialiased optional.Value[bool]         // nil uses patch.antialiased
+	Baseline    optional.Value[float64]      // baseline value
+	Where       []bool                       // fill only contiguous regions where adjacent points are true
+	Interpolate bool                         // interpolate region boundaries at curve crossings
+	Step        FillStep                     // optional step mode
+	Label       string                       // series label for legend
 }
 
-func patchAntialiasMode(rc *style.PatchRC, explicit *bool) render.AntialiasMode {
-	enabled := rc == nil || rc.Antialiased
-	if explicit != nil {
-		enabled = *explicit
-	}
+func patchAntialiasMode(rc *style.PatchRC, explicit optional.Value[bool]) render.AntialiasMode {
+	enabled := explicit.Or(rc == nil || rc.Antialiased)
 	if enabled {
 		return render.AntialiasOn
 	}
@@ -1396,13 +1377,11 @@ func patchAntialiasMode(rc *style.PatchRC, explicit *bool) render.AntialiasMode 
 // converts unit-carrying values.
 //
 // Rejected input leaves the axes and its property cycle unchanged.
-func (a *Axes) FillBetweenPlot(x, y1, y2 []float64, opts ...FillOptions) (*Fill2D, error) {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) FillBetweenPlot(x, y1, y2 []float64, opt FillOptions) (*Fill2D, error) {
 	if a == nil {
 		return nil, fmt.Errorf("fill between axes cannot be nil")
-	}
-	opt, err := optarg.Only("fill between", opts)
-	if err != nil {
-		return nil, err
 	}
 	if err := fillBetweenNames.validate(x, y1, y2, &opt); err != nil {
 		return nil, err
@@ -1414,8 +1393,8 @@ func (a *Axes) FillBetweenPlot(x, y1, y2 []float64, opts ...FillOptions) (*Fill2
 func (a *Axes) fillBetween(x, y1, y2 []float64, opt *FillOptions) *Fill2D {
 	// Get color (automatic cycling if not specified)
 	color := a.NextColor()
-	if opt.Color != nil {
-		color = *opt.Color
+	if v, ok := opt.Color.Get(); ok {
+		color = v
 	}
 
 	// Get edge properties
@@ -1424,13 +1403,13 @@ func (a *Axes) fillBetween(x, y1, y2 []float64, opt *FillOptions) *Fill2D {
 	if rcPatch.ForceEdgeColor {
 		edgeColor = rcPatch.EdgeColor
 	}
-	if opt.EdgeColor != nil {
-		edgeColor = *opt.EdgeColor
+	if v, ok := opt.EdgeColor.Get(); ok {
+		edgeColor = v
 	}
 
 	edgeWidth := rcPatch.LineWidth
-	if opt.EdgeWidth != nil {
-		edgeWidth = *opt.EdgeWidth
+	if v, ok := opt.EdgeWidth.Get(); ok {
+		edgeWidth = v
 	}
 
 	// When alpha is omitted, preserve the color's own alpha, matching
@@ -1460,35 +1439,33 @@ func (a *Axes) fillBetween(x, y1, y2 []float64, opt *FillOptions) *Fill2D {
 
 // HistOptions holds optional parameters for histogram plots.
 type HistOptions struct {
-	Bins              int         // number of bins (0 = hist.bins rc default, 10)
-	BinEdges          []float64   // explicit bin edges (overrides Bins)
-	Range             *HistRange  // explicit histogram range; ignored when BinEdges is set
-	Weights           []float64   // per-sample weights, same length as data when provided
-	BinStrat          BinStrategy // automatic binning strategy
-	Norm              HistNorm    // normalization mode
-	Cumulative        bool        // accumulate bin heights from left to right
-	ReverseCumulative bool        // accumulate from right to left, matching cumulative < 0
-	Log               bool        // set the count (y) axis to log scale, matching matplotlib hist(log=True)
-	HistType          HistType    // bar, step, or filled step presentation
-	Baselines         []float64   // optional per-bin baselines for stacked histograms
-	Color             *render.Color
-	EdgeColor         *render.Color
-	EdgeWidth         *float64
-	Alpha             *float64
-	Antialiased       *bool
+	Bins              int                       // number of bins (0 = hist.bins rc default, 10)
+	BinEdges          []float64                 // explicit bin edges (overrides Bins)
+	Range             optional.Value[HistRange] // explicit histogram range; ignored when BinEdges is set
+	Weights           []float64                 // per-sample weights, same length as data when provided
+	BinStrat          BinStrategy               // automatic binning strategy
+	Norm              HistNorm                  // normalization mode
+	Cumulative        bool                      // accumulate bin heights from left to right
+	ReverseCumulative bool                      // accumulate from right to left, matching cumulative < 0
+	Log               bool                      // set the count (y) axis to log scale, matching matplotlib hist(log=True)
+	HistType          HistType                  // bar, step, or filled step presentation
+	Baselines         []float64                 // optional per-bin baselines for stacked histograms
+	Color             optional.Value[render.Color]
+	EdgeColor         optional.Value[render.Color]
+	EdgeWidth         optional.Value[float64]
+	Alpha             optional.Value[float64]
+	Antialiased       optional.Value[bool]
 	Label             string
 }
 
 // Hist creates a histogram from raw data with automatic color cycling.
 //
 // Rejected input leaves the axes and its property cycle unchanged.
-func (a *Axes) Hist(data []float64, opts ...HistOptions) (*Hist2D, error) {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) Hist(data []float64, opt HistOptions) (*Hist2D, error) {
 	if a == nil {
 		return nil, fmt.Errorf("hist axes cannot be nil")
-	}
-	opt, err := optarg.Only("hist", opts)
-	if err != nil {
-		return nil, err
 	}
 	if len(data) == 0 {
 		return nil, fmt.Errorf("hist data cannot be empty")
@@ -1511,8 +1488,8 @@ func (a *Axes) Hist(data []float64, opts ...HistOptions) (*Hist2D, error) {
 	}
 
 	color := a.NextColor()
-	if opt.Color != nil {
-		color = *opt.Color
+	if v, ok := opt.Color.Get(); ok {
+		color = v
 	}
 
 	rcPatch := a.resolvedRC().Patch
@@ -1520,15 +1497,15 @@ func (a *Axes) Hist(data []float64, opts ...HistOptions) (*Hist2D, error) {
 	if rcPatch.ForceEdgeColor {
 		edgeColor = rcPatch.EdgeColor
 	}
-	if opt.EdgeColor != nil {
-		edgeColor = *opt.EdgeColor
+	if v, ok := opt.EdgeColor.Get(); ok {
+		edgeColor = v
 	} else if opt.HistType != HistTypeBar {
 		edgeColor = color
 	}
 
 	edgeWidth := rcPatch.LineWidth
-	if opt.EdgeWidth != nil {
-		edgeWidth = *opt.EdgeWidth
+	if v, ok := opt.EdgeWidth.Get(); ok {
+		edgeWidth = v
 	} else if opt.HistType != HistTypeBar {
 		edgeWidth = rcPatch.LineWidth
 	}
@@ -1545,7 +1522,7 @@ func (a *Axes) Hist(data []float64, opts ...HistOptions) (*Hist2D, error) {
 		Weights:           append([]float64(nil), opt.Weights...),
 		Bins:              bins,
 		BinEdges:          opt.BinEdges,
-		Range:             opt.Range,
+		Range:             opt.Range.Ptr(),
 		BinStrat:          binStrat,
 		Norm:              opt.Norm,
 		Cumulative:        opt.Cumulative,
@@ -1574,17 +1551,17 @@ func (a *Axes) Hist(data []float64, opts ...HistOptions) (*Hist2D, error) {
 
 // ErrorBarOptions holds optional parameters for error bar plots.
 type ErrorBarOptions struct {
-	Color           *render.Color // if nil, uses automatic color cycling
-	LineWidth       *float64      // error bar line width (px); nil uses Matplotlib's default
-	CapSize         *float64      // Matplotlib capsize in points
-	CapThick        *float64      // Matplotlib capthick in points (cap line thickness); nil uses the 1pt default
-	Marker          *MarkerType   // optional data marker equivalent to Matplotlib fmt markers
-	MarkerSize      *float64      // marker size in points
-	Alpha           *float64      // alpha transparency
-	Label           string        // series label for legend
-	NoDataLine      bool          // true matches Matplotlib fmt="none"
-	ErrorEvery      int           // draw error bars every N points, default 1
-	ErrorEveryStart int           // starting point for ErrorEvery, matching errorevery=(start,N)
+	Color           optional.Value[render.Color] // if nil, uses automatic color cycling
+	LineWidth       optional.Value[float64]      // error bar line width (px); nil uses Matplotlib's default
+	CapSize         optional.Value[float64]      // Matplotlib capsize in points
+	CapThick        optional.Value[float64]      // Matplotlib capthick in points (cap line thickness); nil uses the 1pt default
+	Marker          optional.Value[MarkerType]   // optional data marker equivalent to Matplotlib fmt markers
+	MarkerSize      optional.Value[float64]      // marker size in points
+	Alpha           optional.Value[float64]      // alpha transparency
+	Label           string                       // series label for legend
+	NoDataLine      bool                         // true matches Matplotlib fmt="none"
+	ErrorEvery      int                          // draw error bars every N points, default 1
+	ErrorEveryStart int                          // starting point for ErrorEvery, matching errorevery=(start,N)
 
 	XErrLower []float64 // optional asymmetric lower x errors
 	XErrUpper []float64 // optional asymmetric upper x errors
@@ -1599,13 +1576,11 @@ type ErrorBarOptions struct {
 // ErrorBar renders symmetric or asymmetric error bars for x and/or y values.
 //
 // Rejected input leaves the axes and its property cycle unchanged.
-func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) (*ErrorBar, error) {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opt ErrorBarOptions) (*ErrorBar, error) {
 	if a == nil {
 		return nil, fmt.Errorf("errorbar axes cannot be nil")
-	}
-	opt, err := optarg.Only("errorbar", opts)
-	if err != nil {
-		return nil, err
 	}
 
 	// Validate before the property cycle advances so a rejected call leaves the
@@ -1616,21 +1591,21 @@ func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) (*E
 	}
 
 	color := a.NextColor()
-	if opt.Color != nil {
-		color = *opt.Color
+	if v, ok := opt.Color.Get(); ok {
+		color = v
 	}
 
 	lineWidth := 0.0
-	if opt.LineWidth != nil {
-		lineWidth = *opt.LineWidth
+	if v, ok := opt.LineWidth.Get(); ok {
+		lineWidth = v
 	}
 
 	// Cap size: explicit option, else the errorbar.capsize rc value
 	// (matplotlib default 0 — no caps).
 	capSizePx := 0.0
 	switch {
-	case opt.CapSize != nil:
-		capSizePx = pointsToPixels(a.resolvedRC(), 2*(*opt.CapSize))
+	case opt.CapSize.IsSet():
+		capSizePx = pointsToPixels(a.resolvedRC(), 2*opt.CapSize.OrZero())
 	default:
 		if rcCap := a.resolvedRC().Errorbar.CapSize; rcCap > 0 {
 			capSizePx = pointsToPixels(a.resolvedRC(), 2*rcCap)
@@ -1638,8 +1613,8 @@ func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) (*E
 	}
 
 	capThick := 0.0 // points; ErrorBar converts at its cap Paint sink
-	if opt.CapThick != nil && *opt.CapThick > 0 {
-		capThick = *opt.CapThick
+	if v, ok := opt.CapThick.Get(); ok && v > 0 {
+		capThick = opt.CapThick.OrZero()
 	}
 
 	// Bake an explicit alpha (including 0) into the stroke color; the Alpha
@@ -1677,12 +1652,12 @@ func (a *Axes) ErrorBar(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) (*E
 		ErrorEvery:      errorEvery,
 		ErrorEveryStart: opt.ErrorEveryStart,
 	}
-	if opt.Marker != nil {
-		bar.Marker = *opt.Marker
+	if opt.Marker.IsSet() {
+		bar.Marker = opt.Marker.OrZero()
 		bar.MarkerSet = true
 	}
-	if opt.MarkerSize != nil {
-		bar.MarkerSize = *opt.MarkerSize
+	if v, ok := opt.MarkerSize.Get(); ok {
+		bar.MarkerSize = v
 	}
 	a.Add(bar)
 	return bar, nil
@@ -1732,174 +1707,174 @@ func validBoolValues(values []bool, n int) bool {
 
 // BoxPlotOptions holds optional parameters for box plots.
 type BoxPlotOptions struct {
-	Position     *float64      // x position of the box center
-	Width        *float64      // box width in data units
-	Color        *render.Color // box fill color
-	EdgeColor    *render.Color // box outline color
-	MedianColor  *render.Color // median line color
-	WhiskerColor *render.Color // whisker and cap color
-	CapColor     *render.Color // whisker cap color
-	FlierColor   *render.Color // outlier marker color
-	EdgeWidth    *float64      // box outline width in pixels
-	WhiskerWidth *float64      // whisker line width in pixels
-	MedianWidth  *float64      // median line width in pixels
-	CapWidth     *float64      // cap length in data units
-	FlierSize    *float64      // outlier marker size in points
-	Alpha        *float64      // alpha transparency
-	ShowFliers   *bool         // whether to draw outliers
-	Label        string        // series label for legend
+	Position     optional.Value[float64]      // x position of the box center
+	Width        optional.Value[float64]      // box width in data units
+	Color        optional.Value[render.Color] // box fill color
+	EdgeColor    optional.Value[render.Color] // box outline color
+	MedianColor  optional.Value[render.Color] // median line color
+	WhiskerColor optional.Value[render.Color] // whisker and cap color
+	CapColor     optional.Value[render.Color] // whisker cap color
+	FlierColor   optional.Value[render.Color] // outlier marker color
+	EdgeWidth    optional.Value[float64]      // box outline width in pixels
+	WhiskerWidth optional.Value[float64]      // whisker line width in pixels
+	MedianWidth  optional.Value[float64]      // median line width in pixels
+	CapWidth     optional.Value[float64]      // cap length in data units
+	FlierSize    optional.Value[float64]      // outlier marker size in points
+	Alpha        optional.Value[float64]      // alpha transparency
+	ShowFliers   optional.Value[bool]         // whether to draw outliers
+	Label        string                       // series label for legend
 
-	PatchArtist *bool         // fill the box (Matplotlib patch_artist=True); default is unfilled
-	Orientation *string       // "vertical" (default) or "horizontal"
-	ShowBox     *bool         // whether to draw the box (default true)
-	ShowCaps    *bool         // whether to draw the whisker caps (default true)
-	ShowMeans   *bool         // whether to draw the mean
-	MeanLine    *bool         // draw the mean as a line across the box instead of a marker
-	MeanColor   *render.Color // mean line/marker color
-	Whis        *float64      // IQR multiplier for whiskers (default 1.5)
-	Sym         *string       // Matplotlib flier format string, e.g. "b+"; "" disables fliers
+	PatchArtist optional.Value[bool]            // fill the box (Matplotlib patch_artist=True); default is unfilled
+	Orientation optional.Value[PlotOrientation] // "vertical" (default) or "horizontal"
+	ShowBox     optional.Value[bool]            // whether to draw the box (default true)
+	ShowCaps    optional.Value[bool]            // whether to draw the whisker caps (default true)
+	ShowMeans   optional.Value[bool]            // whether to draw the mean
+	MeanLine    optional.Value[bool]            // draw the mean as a line across the box instead of a marker
+	MeanColor   optional.Value[render.Color]    // mean line/marker color
+	Whis        optional.Value[float64]         // IQR multiplier for whiskers (default 1.5)
+	Sym         optional.Value[string]          // Matplotlib flier format string, e.g. "b+"; "" disables fliers
 
-	Notch              *bool       // draw a notched box using the confidence interval
-	Bootstrap          int         // number of bootstrap resamples for the notch CI (0 = analytic)
-	ConfidenceInterval *[2]float64 // custom median confidence interval for notches
-	CustomMedian       *float64    // override the computed median
-	WhiskerPercentiles *[2]float64 // percentile whisker range, e.g. [5, 95]
-	FlierMarker        *MarkerType // marker for outlier points
-	FlierEdgeColor     *render.Color
-	FlierEdgeWidth     *float64
+	Notch              optional.Value[bool]       // draw a notched box using the confidence interval
+	Bootstrap          int                        // number of bootstrap resamples for the notch CI (0 = analytic)
+	ConfidenceInterval optional.Value[[2]float64] // custom median confidence interval for notches
+	CustomMedian       optional.Value[float64]    // override the computed median
+	WhiskerPercentiles optional.Value[[2]float64] // percentile whisker range, e.g. [5, 95]
+	FlierMarker        optional.Value[MarkerType] // marker for outlier points
+	FlierEdgeColor     optional.Value[render.Color]
+	FlierEdgeWidth     optional.Value[float64]
 }
 
 // BoxPlotsOptions holds optional parameters for multi-series box plots.
 type BoxPlotsOptions struct {
-	Positions    []float64      // x positions for each box center
-	Width        *float64       // box width in data units
-	Colors       []render.Color // box fill colors, one per dataset
-	EdgeColor    *render.Color  // box outline color
-	MedianColor  *render.Color  // median line color
-	WhiskerColor *render.Color  // whisker and cap color
-	CapColor     *render.Color  // whisker cap color
-	FlierColor   *render.Color  // outlier marker color
-	EdgeWidth    *float64       // box outline width in pixels
-	WhiskerWidth *float64       // whisker line width in pixels
-	MedianWidth  *float64       // median line width in pixels
-	CapWidth     *float64       // cap length in data units
-	FlierSize    *float64       // outlier marker size in points
-	Alpha        *float64       // alpha transparency
-	ShowFliers   *bool          // whether to draw outliers
-	ManageTicks  *bool          // whether to place position ticks at box positions
-	Labels       []string       // series labels for legend
+	Positions    []float64                    // x positions for each box center
+	Width        optional.Value[float64]      // box width in data units
+	Colors       []render.Color               // box fill colors, one per dataset
+	EdgeColor    optional.Value[render.Color] // box outline color
+	MedianColor  optional.Value[render.Color] // median line color
+	WhiskerColor optional.Value[render.Color] // whisker and cap color
+	CapColor     optional.Value[render.Color] // whisker cap color
+	FlierColor   optional.Value[render.Color] // outlier marker color
+	EdgeWidth    optional.Value[float64]      // box outline width in pixels
+	WhiskerWidth optional.Value[float64]      // whisker line width in pixels
+	MedianWidth  optional.Value[float64]      // median line width in pixels
+	CapWidth     optional.Value[float64]      // cap length in data units
+	FlierSize    optional.Value[float64]      // outlier marker size in points
+	Alpha        optional.Value[float64]      // alpha transparency
+	ShowFliers   optional.Value[bool]         // whether to draw outliers
+	ManageTicks  optional.Value[bool]         // whether to place position ticks at box positions
+	Labels       []string                     // series labels for legend
 
-	PatchArtist *bool         // fill the boxes (Matplotlib patch_artist=True); default is unfilled
-	Orientation *string       // "vertical" (default) or "horizontal"
-	ShowBox     *bool         // whether to draw the box (default true)
-	ShowCaps    *bool         // whether to draw the whisker caps (default true)
-	ShowMeans   *bool         // whether to draw the mean
-	MeanLine    *bool         // draw the mean as a line across the box instead of a marker
-	MeanColor   *render.Color // mean line/marker color
-	Whis        *float64      // IQR multiplier for whiskers (default 1.5)
-	Sym         *string       // Matplotlib flier format string, e.g. "b+"; "" disables fliers
+	PatchArtist optional.Value[bool]            // fill the boxes (Matplotlib patch_artist=True); default is unfilled
+	Orientation optional.Value[PlotOrientation] // "vertical" (default) or "horizontal"
+	ShowBox     optional.Value[bool]            // whether to draw the box (default true)
+	ShowCaps    optional.Value[bool]            // whether to draw the whisker caps (default true)
+	ShowMeans   optional.Value[bool]            // whether to draw the mean
+	MeanLine    optional.Value[bool]            // draw the mean as a line across the box instead of a marker
+	MeanColor   optional.Value[render.Color]    // mean line/marker color
+	Whis        optional.Value[float64]         // IQR multiplier for whiskers (default 1.5)
+	Sym         optional.Value[string]          // Matplotlib flier format string, e.g. "b+"; "" disables fliers
 
-	Notch               *bool
+	Notch               optional.Value[bool]
 	Bootstrap           int
 	ConfidenceIntervals [][2]float64
 	CustomMedians       []float64
-	WhiskerPercentiles  *[2]float64
-	FlierMarker         *MarkerType
-	FlierEdgeColor      *render.Color
-	FlierEdgeWidth      *float64
+	WhiskerPercentiles  optional.Value[[2]float64]
+	FlierMarker         optional.Value[MarkerType]
+	FlierEdgeColor      optional.Value[render.Color]
+	FlierEdgeWidth      optional.Value[float64]
 }
 
 // BoxPlot creates a box plot from raw sample data with automatic color cycling.
-func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) BoxPlot(data []float64, opt BoxPlotOptions) *BoxPlot2D {
 	if len(data) == 0 {
 		return nil
 	}
 
-	opt := optarg.One("boxplot", opts)
-
 	rc := a.resolvedRC()
 
 	position := 1.0
-	if opt.Position != nil {
-		position = *opt.Position
+	if v, ok := opt.Position.Get(); ok {
+		position = v
 	}
 
 	// Matplotlib's bxp default is clip(0.15*ptp(positions), 0.15, 0.5).
 	// A direct BoxPlot has exactly one position, so ptp is zero and the
 	// resulting default width is 0.15.
 	width := 0.15
-	if opt.Width != nil {
-		width = *opt.Width
+	if v, ok := opt.Width.Get(); ok {
+		width = v
 	}
 
 	// Matplotlib's default boxplot is patch_artist=False: an unfilled box that
 	// does not consume the color cycle. Only fill (and default the facecolor to
 	// white) when patch_artist is requested.
 	patchArtist := rc.Boxplot.PatchArtist
-	if opt.PatchArtist != nil {
-		patchArtist = *opt.PatchArtist
+	if v, ok := opt.PatchArtist.Get(); ok {
+		patchArtist = v
 	}
 	color := render.Color{}
 	if patchArtist {
 		color = render.Color{R: 1, G: 1, B: 1, A: 1}
 	}
-	if opt.Color != nil {
-		color = *opt.Color
+	if v, ok := opt.Color.Get(); ok {
+		color = v
 	}
 
 	edgeColor := render.Color{R: 0, G: 0, B: 0, A: 1}
-	if opt.EdgeColor != nil {
-		edgeColor = *opt.EdgeColor
+	if v, ok := opt.EdgeColor.Get(); ok {
+		edgeColor = v
 	}
 
 	medianColor := rc.Boxplot.MedianColor
-	if opt.MedianColor != nil {
-		medianColor = *opt.MedianColor
+	if v, ok := opt.MedianColor.Get(); ok {
+		medianColor = v
 	}
 
 	meanColor := rc.Boxplot.MeanColor
-	if opt.MeanColor != nil {
-		meanColor = *opt.MeanColor
+	if v, ok := opt.MeanColor.Get(); ok {
+		meanColor = v
 	}
 
 	whiskerColor := edgeColor
-	if opt.WhiskerColor != nil {
-		whiskerColor = *opt.WhiskerColor
+	if v, ok := opt.WhiskerColor.Get(); ok {
+		whiskerColor = v
 	}
 
 	capColor := whiskerColor
-	if opt.CapColor != nil {
-		capColor = *opt.CapColor
+	if v, ok := opt.CapColor.Get(); ok {
+		capColor = v
 	}
 
 	flierColor := render.Color{}
-	if opt.FlierColor != nil {
-		flierColor = *opt.FlierColor
+	if v, ok := opt.FlierColor.Get(); ok {
+		flierColor = v
 	}
 
 	edgeWidth := rc.Boxplot.BoxLineWidth // points; BoxPlot2D converts at its sinks
-	if opt.EdgeWidth != nil {
-		edgeWidth = *opt.EdgeWidth
+	if v, ok := opt.EdgeWidth.Get(); ok {
+		edgeWidth = v
 	}
 
 	whiskerWidth := rc.Boxplot.WhiskerLineWidth // points
-	if opt.WhiskerWidth != nil {
-		whiskerWidth = *opt.WhiskerWidth
+	if v, ok := opt.WhiskerWidth.Get(); ok {
+		whiskerWidth = v
 	}
 
 	medianWidth := rc.Boxplot.MedianLineWidth // points
-	if opt.MedianWidth != nil {
-		medianWidth = *opt.MedianWidth
+	if v, ok := opt.MedianWidth.Get(); ok {
+		medianWidth = v
 	}
 
 	capWidth := width * 0.5
-	if opt.CapWidth != nil {
-		capWidth = *opt.CapWidth
+	if v, ok := opt.CapWidth.Get(); ok {
+		capWidth = v
 	}
 
 	flierSize := rc.Boxplot.FlierMarkerSize
-	if opt.FlierSize != nil {
-		flierSize = *opt.FlierSize
+	if v, ok := opt.FlierSize.Get(); ok {
+		flierSize = v
 	}
 
 	// Bake an explicit alpha (including 0) into the box fill and edge colors —
@@ -1909,60 +1884,60 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 	edgeColor = bakeExplicitAlpha(edgeColor, opt.Alpha)
 
 	showFliers := rc.Boxplot.ShowFliers
-	if opt.ShowFliers != nil {
-		showFliers = *opt.ShowFliers
+	if v, ok := opt.ShowFliers.Get(); ok {
+		showFliers = v
 	}
 	showBox := rc.Boxplot.ShowBox
-	if opt.ShowBox != nil {
-		showBox = *opt.ShowBox
+	if v, ok := opt.ShowBox.Get(); ok {
+		showBox = v
 	}
 	showCaps := rc.Boxplot.ShowCaps
-	if opt.ShowCaps != nil {
-		showCaps = *opt.ShowCaps
+	if v, ok := opt.ShowCaps.Get(); ok {
+		showCaps = v
 	}
 	showMeans := rc.Boxplot.ShowMeans
-	if opt.ShowMeans != nil {
-		showMeans = *opt.ShowMeans
+	if v, ok := opt.ShowMeans.Get(); ok {
+		showMeans = v
 	}
 	meanLine := rc.Boxplot.MeanLine
-	if opt.MeanLine != nil {
-		meanLine = *opt.MeanLine
+	if v, ok := opt.MeanLine.Get(); ok {
+		meanLine = v
 	}
-	orientation := ""
-	if opt.Orientation != nil {
-		orientation = *opt.Orientation
+	var orientation PlotOrientation
+	if v, ok := opt.Orientation.Get(); ok {
+		orientation = v
 	}
 	notch := rc.Boxplot.Notch
-	if opt.Notch != nil {
-		notch = *opt.Notch
+	if v, ok := opt.Notch.Get(); ok {
+		notch = v
 	}
 	flierMarker := MarkerCircle
-	if opt.FlierMarker != nil {
-		flierMarker = *opt.FlierMarker
+	if v, ok := opt.FlierMarker.Get(); ok {
+		flierMarker = v
 	}
 	flierEdgeColor := rc.Boxplot.FlierColor
-	if opt.FlierColor != nil {
+	if opt.FlierColor.IsSet() {
 		flierEdgeColor = flierColor
 	}
-	if opt.FlierEdgeColor != nil {
-		flierEdgeColor = *opt.FlierEdgeColor
+	if v, ok := opt.FlierEdgeColor.Get(); ok {
+		flierEdgeColor = v
 	}
 	flierEdgeWidth := rc.Boxplot.FlierEdgeWidth // points; BoxPlot2D converts at its sinks
-	if opt.FlierEdgeWidth != nil {
-		flierEdgeWidth = *opt.FlierEdgeWidth
+	if v, ok := opt.FlierEdgeWidth.Get(); ok {
+		flierEdgeWidth = v
 	}
 
 	// Matplotlib's sym shorthand overrides the flier marker/color; sym="" hides
 	// fliers entirely. Structured FlierMarker/FlierColor options take precedence.
-	if opt.Sym != nil {
-		if *opt.Sym == "" {
+	if opt.Sym.IsSet() {
+		if opt.Sym.OrZero() == "" {
 			showFliers = false
 		} else {
-			marker, symColor, hasMarker, hasColor := parseBoxplotSym(*opt.Sym)
-			if hasMarker && opt.FlierMarker == nil {
+			marker, symColor, hasMarker, hasColor := parseBoxplotSym(opt.Sym.OrZero())
+			if hasMarker && !opt.FlierMarker.IsSet() {
 				flierMarker = marker
 			}
-			if hasColor && opt.FlierColor == nil {
+			if hasColor && !opt.FlierColor.IsSet() {
 				flierColor = symColor
 				flierEdgeColor = symColor
 			}
@@ -1996,10 +1971,10 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 		MeanLine:           meanLine,
 		Notch:              notch,
 		Bootstrap:          opt.Bootstrap,
-		Whis:               opt.Whis,
-		ConfidenceInterval: opt.ConfidenceInterval,
-		CustomMedian:       opt.CustomMedian,
-		WhiskerPercentiles: opt.WhiskerPercentiles,
+		Whis:               opt.Whis.Ptr(),
+		ConfidenceInterval: opt.ConfidenceInterval.Ptr(),
+		CustomMedian:       opt.CustomMedian.Ptr(),
+		WhiskerPercentiles: opt.WhiskerPercentiles.Ptr(),
 		FlierMarker:        flierMarker,
 		Label:              opt.Label,
 		// Matplotlib draws boxplot artists at Line2D.zorder (2) so they render
@@ -2012,17 +1987,17 @@ func (a *Axes) BoxPlot(data []float64, opts ...BoxPlotOptions) *BoxPlot2D {
 }
 
 // BoxPlots creates a group of box plots from raw sample datasets.
-func (a *Axes) BoxPlots(datasets [][]float64, opts ...BoxPlotsOptions) []*BoxPlot2D {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) BoxPlots(datasets [][]float64, opt BoxPlotsOptions) []*BoxPlot2D {
 	if len(datasets) == 0 {
 		return nil
 	}
 
-	opt := optarg.One("boxplots", opts)
-
 	width := opt.Width
-	if width == nil {
+	if !width.IsSet() {
 		defaultWidth := matplotlibBoxPlotDefaultWidth(len(datasets), opt.Positions)
-		width = &defaultWidth
+		width = optional.Of(defaultWidth)
 	}
 
 	boxes := make([]*BoxPlot2D, 0, len(datasets))
@@ -2035,7 +2010,7 @@ func (a *Axes) BoxPlots(datasets [][]float64, opts ...BoxPlotsOptions) []*BoxPlo
 		positions = append(positions, position)
 
 		boxOpt := BoxPlotOptions{
-			Position:           &position,
+			Position:           optional.Of(position),
 			Width:              width,
 			EdgeColor:          opt.EdgeColor,
 			MedianColor:        opt.MedianColor,
@@ -2067,14 +2042,14 @@ func (a *Axes) BoxPlots(datasets [][]float64, opts ...BoxPlotsOptions) []*BoxPlo
 		}
 		if i < len(opt.ConfidenceIntervals) {
 			ci := opt.ConfidenceIntervals[i]
-			boxOpt.ConfidenceInterval = &ci
+			boxOpt.ConfidenceInterval = optional.Of(ci)
 		}
 		if i < len(opt.CustomMedians) && isFinite(opt.CustomMedians[i]) {
 			median := opt.CustomMedians[i]
-			boxOpt.CustomMedian = &median
+			boxOpt.CustomMedian = optional.Of(median)
 		}
 		if i < len(opt.Colors) {
-			boxOpt.Color = &opt.Colors[i]
+			boxOpt.Color = optional.Of(opt.Colors[i])
 		}
 		if i < len(opt.Labels) {
 			boxOpt.Label = opt.Labels[i]
@@ -2085,13 +2060,13 @@ func (a *Axes) BoxPlots(datasets [][]float64, opts ...BoxPlotsOptions) []*BoxPlo
 		}
 	}
 	manageTicks := true
-	if opt.ManageTicks != nil {
-		manageTicks = *opt.ManageTicks
+	if v, ok := opt.ManageTicks.Get(); ok {
+		manageTicks = v
 	}
 	if manageTicks && len(positions) > 0 {
 		// Matplotlib boxplot(..., manage_ticks=True) places the position-axis ticks
 		// at the box positions by default — the y axis for horizontal orientation.
-		horizontal := opt.Orientation != nil && normalizeViolinOrientation(*opt.Orientation) == "horizontal"
+		horizontal := opt.Orientation.IsSet() && normalizeViolinOrientation(PlotOrientation(opt.Orientation.OrZero())) == "horizontal"
 		if horizontal {
 			if a.YAxis != nil {
 				a.YAxis.Locator = ticker.FixedLocator{TicksList: positions}
@@ -2159,18 +2134,19 @@ func parseBoxplotSym(sym string) (marker MarkerType, color render.Color, hasMark
 }
 
 // FillToBaselinePlot creates a fill from a curve to baseline with automatic color cycling.
-func (a *Axes) FillToBaselinePlot(x, y []float64, opts ...FillOptions) *Fill2D {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) FillToBaselinePlot(x, y []float64, opt FillOptions) *Fill2D {
 	if len(x) == 0 || len(y) == 0 {
 		return nil
 	}
 
 	// Default options
-	opt := optarg.One("fill to baseline", opts)
 
 	// Get color (automatic cycling if not specified)
 	color := a.NextColor()
-	if opt.Color != nil {
-		color = *opt.Color
+	if v, ok := opt.Color.Get(); ok {
+		color = v
 	}
 
 	// Get edge properties
@@ -2179,13 +2155,13 @@ func (a *Axes) FillToBaselinePlot(x, y []float64, opts ...FillOptions) *Fill2D {
 	if rcPatch.ForceEdgeColor {
 		edgeColor = rcPatch.EdgeColor
 	}
-	if opt.EdgeColor != nil {
-		edgeColor = *opt.EdgeColor
+	if v, ok := opt.EdgeColor.Get(); ok {
+		edgeColor = v
 	}
 
 	edgeWidth := rcPatch.LineWidth
-	if opt.EdgeWidth != nil {
-		edgeWidth = *opt.EdgeWidth
+	if v, ok := opt.EdgeWidth.Get(); ok {
+		edgeWidth = v
 	}
 
 	// When alpha is omitted, preserve the color's own alpha, matching
@@ -2195,8 +2171,8 @@ func (a *Axes) FillToBaselinePlot(x, y []float64, opts ...FillOptions) *Fill2D {
 
 	// Get baseline
 	baseline := 0.0
-	if opt.Baseline != nil {
-		baseline = *opt.Baseline
+	if v, ok := opt.Baseline.Get(); ok {
+		baseline = v
 	}
 
 	// Create fill

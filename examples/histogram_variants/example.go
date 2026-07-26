@@ -17,6 +17,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -49,7 +50,7 @@ func addCountsPanel(ax *core.Axes) {
 	color := render.Color{R: 0.26, G: 0.53, B: 0.80, A: 0.85}
 	ew := 0.8
 	bins := 18
-	_, _ = ax.Hist(data, core.HistOptions{Bins: bins, Color: &color, EdgeColor: &black, EdgeWidth: &ew})
+	_, _ = ax.Hist(data, core.HistOptions{Bins: bins, Color: optional.Of(color), EdgeColor: optional.Of(black), EdgeWidth: optional.Of(ew)})
 }
 
 // addDensityPanel mirrors the hist_density fixture content.
@@ -61,7 +62,7 @@ func addDensityPanel(ax *core.Axes) {
 	color := render.Color{R: 0.20, G: 0.65, B: 0.30, A: 0.8}
 	ew := 0.8
 	bins := 20
-	_, _ = ax.Hist(data, core.HistOptions{Bins: bins, Norm: core.HistNormDensity, Color: &color, EdgeColor: &black, EdgeWidth: &ew})
+	_, _ = ax.Hist(data, core.HistOptions{Bins: bins, Norm: core.HistNormDensity, Color: optional.Of(color), EdgeColor: optional.Of(black), EdgeWidth: optional.Of(ew)})
 }
 
 // addCumulativePanel draws a cumulative-count histogram.
@@ -73,7 +74,7 @@ func addCumulativePanel(ax *core.Axes) {
 	color := render.Color{R: 0.55, G: 0.35, B: 0.75, A: 0.85}
 	ew := 0.8
 	bins := 18
-	_, _ = ax.Hist(data, core.HistOptions{Bins: bins, Cumulative: true, Color: &color, EdgeColor: &black, EdgeWidth: &ew})
+	_, _ = ax.Hist(data, core.HistOptions{Bins: bins, Cumulative: true, Color: optional.Of(color), EdgeColor: optional.Of(black), EdgeWidth: optional.Of(ew)})
 }
 
 // addMultiplePanel mirrors the hist_strategies fixture content.
@@ -87,8 +88,8 @@ func addMultiplePanel(ax *core.Axes) {
 	orange := render.Color{R: 0.90, G: 0.50, B: 0.10, A: 0.6}
 	ew := 0.5
 	bins := 15
-	_, _ = ax.Hist(data1, core.HistOptions{Bins: bins, Norm: core.HistNormProbability, Color: &blue, EdgeColor: &black, EdgeWidth: &ew})
-	_, _ = ax.Hist(data2, core.HistOptions{Bins: bins, Norm: core.HistNormProbability, Color: &orange, EdgeColor: &black, EdgeWidth: &ew})
+	_, _ = ax.Hist(data1, core.HistOptions{Bins: bins, Norm: core.HistNormProbability, Color: optional.Of(blue), EdgeColor: optional.Of(black), EdgeWidth: optional.Of(ew)})
+	_, _ = ax.Hist(data2, core.HistOptions{Bins: bins, Norm: core.HistNormProbability, Color: optional.Of(orange), EdgeColor: optional.Of(black), EdgeWidth: optional.Of(ew)})
 }
 
 // Render is the AGG-rendered showcase image.

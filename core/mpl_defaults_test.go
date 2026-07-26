@@ -22,7 +22,7 @@ func TestDefaultLineWidthMatchesMatplotlib(t *testing.T) {
 
 	fig := NewFigure(100, 100)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{})
 	if line == nil {
 		t.Fatal("Plot returned nil")
 	}
@@ -44,7 +44,7 @@ func TestDefaultHistBinsMatchesMatplotlib(t *testing.T) {
 
 	fig := NewFigure(100, 100)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	hist, err := ax.Hist(data)
+	hist, err := ax.Hist(data, HistOptions{})
 	if err != nil {
 		t.Fatalf("Hist() returned error: %v", err)
 	}
@@ -149,7 +149,7 @@ func TestMPLStyleHistBinsReachesHist(t *testing.T) {
 		}
 		fig := NewFigure(100, 100, style.WithTheme(theme))
 		ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-		hist, err := ax.Hist(data)
+		hist, err := ax.Hist(data, HistOptions{})
 		if err != nil {
 			t.Fatalf("Hist() returned error: %v", err)
 		}
@@ -174,7 +174,7 @@ func TestMPLStyleLinesLinewidthReachesPlot(t *testing.T) {
 
 	fig := NewFigure(100, 100, style.WithTheme(theme))
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{})
 	if line == nil {
 		t.Fatal("Plot returned nil")
 	}
@@ -184,7 +184,7 @@ func TestMPLStyleLinesLinewidthReachesPlot(t *testing.T) {
 
 	// An explicit option still wins over the rc value.
 	w := 0.7
-	line, _ = ax.Plot([]float64{0, 1}, []float64{1, 0}, PlotOptions{LineWidth: &w})
+	line, _ = ax.Plot([]float64{0, 1}, []float64{1, 0}, PlotOptions{LineWidth: optional.Of(w)})
 	if line.W != 0.7 {
 		t.Fatalf("explicit LineWidth = %v, want 0.7", line.W)
 	}
@@ -216,7 +216,7 @@ func TestMPLStyleImageOriginReachesImShow(t *testing.T) {
 
 	// MatShow pins origin=upper regardless of rc, mirroring matplotlib matshow.
 	ax2 := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	mat := ax2.MatShow(data)
+	mat := ax2.MatShow(data, MatShowOptions{})
 	if mat == nil {
 		t.Fatal("MatShow returned nil")
 	}
@@ -238,7 +238,7 @@ func TestMPLStyleImageOriginReachesImShowRGB(t *testing.T) {
 
 	fig := NewFigure(100, 100, style.WithTheme(theme))
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	img, err := ax.ImShowRGB(rgb)
+	img, err := ax.ImShowRGB(rgb, ImShowRGBOptions{})
 	if err != nil {
 		t.Fatalf("ImShowRGB() returned error: %v", err)
 	}
@@ -281,7 +281,7 @@ func TestMPLStyleImageAspectReachesImShow(t *testing.T) {
 
 		// An explicit option still wins over the rc value.
 		ax2 := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-		if img := ax2.ImShow(data, ImShowOptions{Aspect: optional.Of("equal")}); img == nil {
+		if img := ax2.ImShow(data, ImShowOptions{Aspect: optional.Of(AspectEqual)}); img == nil {
 			t.Fatal("ImShow returned nil")
 		}
 		if ax2.aspectMode != "equal" {
@@ -323,7 +323,7 @@ func TestMPLStyleMarginsReachAutoscale(t *testing.T) {
 
 	fig := NewFigure(100, 100, style.WithTheme(theme))
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	_, _ = ax.Plot([]float64{0, 10}, []float64{0, 10})
+	_, _ = ax.Plot([]float64{0, 10}, []float64{0, 10}, PlotOptions{})
 
 	xMin, xMax := ax.XScale.Domain()
 	yMin, yMax := ax.YScale.Domain()
@@ -375,7 +375,7 @@ func TestMPLStyleLinesStyleAndMarkersReachPlot(t *testing.T) {
 
 	fig := NewFigure(100, 100, style.WithTheme(theme))
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{})
 	if line == nil {
 		t.Fatal("Plot returned nil")
 	}
@@ -398,8 +398,8 @@ func TestMPLStyleLinesStyleAndMarkersReachPlot(t *testing.T) {
 	size := 4.0
 	line2, _ := ax.Plot([]float64{0, 1}, []float64{1, 0}, PlotOptions{
 		LineStyle:  solid,
-		Marker:     &marker,
-		MarkerSize: &size,
+		Marker:     optional.Of(marker),
+		MarkerSize: optional.Of(size),
 	})
 	if len(line2.Dashes) != 0 {
 		t.Fatalf("explicit solid linestyle still produced dashes %v", line2.Dashes)
@@ -433,7 +433,7 @@ lines.antialiased: False
 
 	fig := NewFigure(100, 100, style.WithTheme(theme))
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{})
 	pointPx := theme.RC.DPI / 72
 	if len(line.Dashes) != 2 || math.Abs(line.Dashes[0]-4*pointPx) > 1e-9 ||
 		math.Abs(line.Dashes[1]-2*pointPx) > 1e-9 {
@@ -488,11 +488,11 @@ lines.antialiased: False
 	markerStyle := NewMarkerStyle(MarkerCircle)
 	markerStyle.FillStyle = MarkerFillTop
 	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{
-		LineCap:         &capStyle,
-		LineJoin:        &joinStyle,
-		MarkerStyle:     &markerStyle,
-		MarkerFaceColor: &face,
-		Antialiased:     &antialiased,
+		LineCap:         optional.Of(capStyle),
+		LineJoin:        optional.Of(joinStyle),
+		MarkerStyle:     optional.Of(markerStyle),
+		MarkerFaceColor: optional.Of(face),
+		Antialiased:     optional.Of(antialiased),
 	})
 	if line.LineCap != render.CapButt || line.LineJoin != render.JoinMiter ||
 		line.MarkerStyle.FillStyle != MarkerFillTop || !line.Antialiased {
@@ -582,7 +582,7 @@ func TestMPLStyleLinesStyleNoneSuppressesLine(t *testing.T) {
 
 	fig := NewFigure(100, 100, style.WithTheme(theme))
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{})
 	if line == nil {
 		t.Fatal("Plot returned nil")
 	}
@@ -606,7 +606,7 @@ func TestMPLStyleScatterDefaultsReachScatter(t *testing.T) {
 
 	fig := NewFigure(100, 100, style.WithTheme(theme))
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	sc, _ := ax.Scatter([]float64{0, 1}, []float64{0, 1})
+	sc, _ := ax.Scatter([]float64{0, 1}, []float64{0, 1}, ScatterOptions{})
 	if sc == nil {
 		t.Fatal("Scatter returned nil")
 	}
@@ -626,7 +626,7 @@ func TestMPLStyleScatterDefaultsReachScatter(t *testing.T) {
 	edge := render.Color{R: 1, A: 1}
 	size := 25.0
 	sc2, _ := ax.Scatter([]float64{0, 1}, []float64{1, 0}, ScatterOptions{
-		Marker: &marker, EdgeColor: &edge, Size: &size,
+		Marker: optional.Of(marker), EdgeColor: optional.Of(edge), Size: optional.Of(size),
 	})
 	if sc2.Marker != MarkerCircle || sc2.EdgeColor != edge || sc2.Size != 25 {
 		t.Fatalf("explicit scatter options lost: %v/%+v/%v", sc2.Marker, sc2.EdgeColor, sc2.Size)
@@ -641,7 +641,7 @@ func TestMPLStyleErrorbarCapsizeReachesErrorBar(t *testing.T) {
 
 	fig := NewFigure(100, 100, style.WithTheme(theme))
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	eb, err := ax.ErrorBar([]float64{0, 1}, []float64{0, 1}, nil, []float64{0.1, 0.1})
+	eb, err := ax.ErrorBar([]float64{0, 1}, []float64{0, 1}, nil, []float64{0.1, 0.1}, ErrorBarOptions{})
 	if err != nil {
 		t.Fatalf("ErrorBar() returned error: %v", err)
 	}
@@ -657,7 +657,7 @@ func TestMPLStyleErrorbarCapsizeReachesErrorBar(t *testing.T) {
 	// Default rc keeps caps off.
 	fig2 := NewFigure(100, 100)
 	ax2 := fig2.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	eb2, err := ax2.ErrorBar([]float64{0, 1}, []float64{0, 1}, nil, []float64{0.1, 0.1})
+	eb2, err := ax2.ErrorBar([]float64{0, 1}, []float64{0, 1}, nil, []float64{0.1, 0.1}, ErrorBarOptions{})
 	if err != nil {
 		t.Fatalf("ErrorBar() returned error: %v", err)
 	}

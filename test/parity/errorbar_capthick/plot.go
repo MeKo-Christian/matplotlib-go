@@ -9,6 +9,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -44,15 +45,15 @@ func Plot() *core.Figure {
 	pointSize := core.ScatterAreaFromRadius(4.5, style.Default.DPI)
 
 	ax.Scatter(xs, ys, core.ScatterOptions{
-		Color:     &pointColor,
-		Size:      &pointSize,
-		EdgeWidth: &edgeWidth,
+		Color:     optional.Of(pointColor),
+		Size:      optional.Of(pointSize),
+		EdgeWidth: optional.Of(edgeWidth),
 	})
 	_, _ = ax.ErrorBar(xs, ys, xErr, yErr, core.ErrorBarOptions{
-		Color:      &black,
-		LineWidth:  &errorWidth,
-		CapSize:    &capSize,
-		CapThick:   &capThick,
+		Color:      optional.Of(black),
+		LineWidth:  optional.Of(errorWidth),
+		CapSize:    optional.Of(capSize),
+		CapThick:   optional.Of(capThick),
 		NoDataLine: true,
 	})
 	return fig

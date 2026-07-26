@@ -58,7 +58,7 @@ func main() {
 		W:     2,
 		Label: "diag",
 	})
-	ax.Text(4.2, 0.4, "native SVG text")
+	ax.Text(4.2, 0.4, "native SVG text", core.TextOptions{})
 	ax.AddLegend()
 	ax.Annotate("marker", 2.5, 0.3, core.AnnotationOptions{
 		HAlign: core.TextAlignCenter,

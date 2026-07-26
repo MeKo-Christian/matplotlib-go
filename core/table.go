@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -53,62 +52,50 @@ type Table struct {
 }
 
 // Table adds a simple table artist positioned in axes coordinates by default.
-func (a *Axes) Table(opts ...TableOptions) *Table {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) Table(opt TableOptions) *Table {
 	if a == nil {
 		return nil
 	}
-	cfg := TableOptions{
-		BBox:            geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}},
-		Coords:          Coords(CoordAxes),
-		FontSize:        a.resolvedRC().FontSize,
-		TextColor:       a.resolvedRC().DefaultTextColor(),
-		HeaderTextColor: a.resolvedRC().DefaultTextColor(),
-		HeaderFillColor: render.Color{R: 1, G: 1, B: 1, A: 1},
-		CellFillColor:   render.Color{R: 1, G: 1, B: 1, A: 1},
-		EdgeColor:       render.Color{R: 0, G: 0, B: 0, A: 1},
-		LineWidth:       1.0, // points; converted at the Paint sink
-		CellLoc:         "right",
-		RowLoc:          "left",
-		ColLoc:          "center",
+	// Every field below is re-defaulted by its own zero guard, so the caller's
+	// options can be taken as-is.
+	cfg := opt
+	if cfg.BBox == (geom.Rect{}) {
+		cfg.BBox = geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}}
 	}
-	if supplied, ok := optarg.Optional("table", opts); ok {
-		cfg = supplied
-		if cfg.BBox == (geom.Rect{}) {
-			cfg.BBox = geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}}
-		}
-		if cfg.Coords == (CoordinateSpec{}) {
-			cfg.Coords = Coords(CoordAxes)
-		}
-		if cfg.FontSize <= 0 {
-			cfg.FontSize = a.resolvedRC().FontSize
-		}
-		if cfg.TextColor == (render.Color{}) {
-			cfg.TextColor = a.resolvedRC().DefaultTextColor()
-		}
-		if cfg.HeaderTextColor == (render.Color{}) {
-			cfg.HeaderTextColor = a.resolvedRC().DefaultTextColor()
-		}
-		if cfg.HeaderFillColor == (render.Color{}) {
-			cfg.HeaderFillColor = render.Color{R: 1, G: 1, B: 1, A: 1}
-		}
-		if cfg.CellFillColor == (render.Color{}) {
-			cfg.CellFillColor = render.Color{R: 1, G: 1, B: 1, A: 1}
-		}
-		if cfg.EdgeColor == (render.Color{}) {
-			cfg.EdgeColor = render.Color{R: 0, G: 0, B: 0, A: 1}
-		}
-		if cfg.LineWidth <= 0 {
-			cfg.LineWidth = 1.0 // points; converted at the Paint sink
-		}
-		if cfg.CellLoc == "" {
-			cfg.CellLoc = "right"
-		}
-		if cfg.RowLoc == "" {
-			cfg.RowLoc = "left"
-		}
-		if cfg.ColLoc == "" {
-			cfg.ColLoc = "center"
-		}
+	if cfg.Coords == (CoordinateSpec{}) {
+		cfg.Coords = Coords(CoordAxes)
+	}
+	if cfg.FontSize <= 0 {
+		cfg.FontSize = a.resolvedRC().FontSize
+	}
+	if cfg.TextColor == (render.Color{}) {
+		cfg.TextColor = a.resolvedRC().DefaultTextColor()
+	}
+	if cfg.HeaderTextColor == (render.Color{}) {
+		cfg.HeaderTextColor = a.resolvedRC().DefaultTextColor()
+	}
+	if cfg.HeaderFillColor == (render.Color{}) {
+		cfg.HeaderFillColor = render.Color{R: 1, G: 1, B: 1, A: 1}
+	}
+	if cfg.CellFillColor == (render.Color{}) {
+		cfg.CellFillColor = render.Color{R: 1, G: 1, B: 1, A: 1}
+	}
+	if cfg.EdgeColor == (render.Color{}) {
+		cfg.EdgeColor = render.Color{R: 0, G: 0, B: 0, A: 1}
+	}
+	if cfg.LineWidth <= 0 {
+		cfg.LineWidth = 1.0 // points; converted at the Paint sink
+	}
+	if cfg.CellLoc == "" {
+		cfg.CellLoc = "right"
+	}
+	if cfg.RowLoc == "" {
+		cfg.RowLoc = "left"
+	}
+	if cfg.ColLoc == "" {
+		cfg.ColLoc = "center"
 	}
 
 	rows := len(cfg.CellText)

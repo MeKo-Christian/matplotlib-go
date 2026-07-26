@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -21,7 +22,7 @@ func Plot() *core.Figure {
 	fig := core.NewFigure(Width, Height)
 	color := render.Color{R: 0.12, G: 0.47, B: 0.71, A: 1}
 	lineWidth := 2.0
-	opts := core.PlotOptions{Color: &color, LineWidth: &lineWidth}
+	opts := core.PlotOptions{Color: optional.Of(color), LineWidth: optional.Of(lineWidth)}
 
 	semilogX := fig.AddAxes(geom.Rect{
 		Min: geom.Pt{X: 0.07, Y: 0.18},

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 	"github.com/cwbudde/matplotlib-go/transform"
@@ -639,11 +640,11 @@ func TestAxesPlotConfiguresLineMarkers(t *testing.T) {
 	edgeWidth := 2.0
 
 	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{
-		Marker:          &marker,
-		MarkerSize:      &size,
-		MarkerFaceColor: &face,
-		MarkerEdgeColor: &edge,
-		MarkerEdgeWidth: &edgeWidth,
+		Marker:          optional.Of(marker),
+		MarkerSize:      optional.Of(size),
+		MarkerFaceColor: optional.Of(face),
+		MarkerEdgeColor: optional.Of(edge),
+		MarkerEdgeWidth: optional.Of(edgeWidth),
 		MarkEvery:       3,
 	})
 
@@ -877,7 +878,7 @@ func TestAutoScaleRespectsManualLimitsLikeMatplotlibMargins(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
-	_, _ = ax.Plot([]float64{0, 10}, []float64{0.08, 0.48})
+	_, _ = ax.Plot([]float64{0, 10}, []float64{0.08, 0.48}, PlotOptions{})
 	ax.SetYLim(0, 1)
 	ax.AutoScale(0.04)
 
@@ -909,7 +910,7 @@ func TestPlotAutoScalesWithDefaultMargin(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
-	_, _ = ax.Plot([]float64{0, 10}, []float64{-1, 3})
+	_, _ = ax.Plot([]float64{0, 10}, []float64{-1, 3}, PlotOptions{})
 
 	xMin, xMax := ax.XScale.Domain()
 	yMin, yMax := ax.YScale.Domain()
@@ -925,8 +926,8 @@ func TestPlotAutoScaleExpandsAcrossLines(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
-	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1})
-	_, _ = ax.Plot([]float64{-2, 4}, []float64{-3, 5})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{})
+	_, _ = ax.Plot([]float64{-2, 4}, []float64{-3, 5}, PlotOptions{})
 
 	xMin, xMax := ax.XScale.Domain()
 	yMin, yMax := ax.YScale.Domain()
@@ -944,7 +945,7 @@ func TestPlotAutoScalePreservesExplicitLimits(t *testing.T) {
 
 	ax.SetXLim(0, 10)
 	ax.SetYLim(-2, 2)
-	_, _ = ax.Plot([]float64{-100, 100}, []float64{-50, 50})
+	_, _ = ax.Plot([]float64{-100, 100}, []float64{-50, 50}, PlotOptions{})
 
 	xMin, xMax := ax.XScale.Domain()
 	yMin, yMax := ax.YScale.Domain()
@@ -961,7 +962,7 @@ func TestPlotAutoScalePreservesOnlyExplicitAxis(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
 	ax.SetXLim(0, 10)
-	_, _ = ax.Plot([]float64{-100, 100}, []float64{-50, 50})
+	_, _ = ax.Plot([]float64{-100, 100}, []float64{-50, 50}, PlotOptions{})
 
 	xMin, xMax := ax.XScale.Domain()
 	yMin, yMax := ax.YScale.Domain()
@@ -976,7 +977,7 @@ func TestPlotAutoScalePreservesOnlyExplicitAxis(t *testing.T) {
 func TestPerAxesMargins(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
-	_, _ = ax.Plot([]float64{0, 10}, []float64{0, 10})
+	_, _ = ax.Plot([]float64{0, 10}, []float64{0, 10}, PlotOptions{})
 
 	ax.SetXMargin(0.1)
 	ax.SetYMargin(0)
@@ -994,7 +995,7 @@ func TestPerAxesMargins(t *testing.T) {
 func TestRoundNumbersAutolimit(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
-	_, _ = ax.Plot([]float64{0.3, 9.7}, []float64{0.3, 9.7})
+	_, _ = ax.Plot([]float64{0.3, 9.7}, []float64{0.3, 9.7}, PlotOptions{})
 	ax.SetAutolimitMode("round_numbers")
 
 	xMin, xMax := ax.XScale.Domain()

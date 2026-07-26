@@ -5,6 +5,7 @@ import (
 
 	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -134,7 +135,7 @@ func TestAxesBoxPlots_CreatesMultipleBoxes(t *testing.T) {
 		},
 		BoxPlotsOptions{
 			Positions: positions,
-			Width:     &width,
+			Width:     optional.Of(width),
 			Colors:    colors,
 		},
 	)
@@ -167,7 +168,7 @@ func TestAxesBxpCreatesComponentArtistsAndTicks(t *testing.T) {
 			{Med: 2, Q1: 1, Q3: 3, Whislo: 0.5, Whishi: 3.5, Mean: &mean, Fliers: []float64{4.2}, Label: "A"},
 			{Med: 5, Q1: 4, Q3: 6, Whislo: 3.5, Whishi: 6.5, Label: "B"},
 		},
-		BxpOptions{ShowMeans: boolPtr(true), Label: "stats"},
+		BxpOptions{ShowMeans: optional.Of(true), Label: "stats"},
 	)
 
 	if container == nil {
@@ -244,7 +245,7 @@ func TestAxesBoxPlotsManageTicksFalsePreservesLocator(t *testing.T) {
 			{1, 2, 3},
 			{4, 5, 6},
 		},
-		BoxPlotsOptions{ManageTicks: &manageTicks},
+		BoxPlotsOptions{ManageTicks: optional.Of(manageTicks)},
 	)
 
 	if _, ok := ax.XAxis.Locator.(ticker.AutoLocator); !ok {
@@ -284,7 +285,7 @@ func TestAxesBoxPlotsDefaultWidthMatchesMatplotlibPositions(t *testing.T) {
 	boxes := ax.BoxPlots([][]float64{
 		{1, 2, 3},
 		{2, 3, 4},
-	})
+	}, BoxPlotsOptions{})
 
 	if len(boxes) != 2 {
 		t.Fatalf("got %d boxes, want 2", len(boxes))
@@ -299,7 +300,7 @@ func TestAxesBoxPlotsDefaultWidthMatchesMatplotlibPositions(t *testing.T) {
 func TestAxesBoxPlotDefaultWidthMatchesMatplotlibSinglePosition(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
 
-	box := ax.BoxPlot([]float64{1, 2, 3})
+	box := ax.BoxPlot([]float64{1, 2, 3}, BoxPlotOptions{})
 	if box == nil {
 		t.Fatal("expected box plot")
 	}
@@ -311,7 +312,7 @@ func TestAxesBoxPlotDefaultWidthMatchesMatplotlibSinglePosition(t *testing.T) {
 func TestAxesBoxPlotDefaultMedianStyleMatchesMatplotlib(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
 
-	box := ax.BoxPlot([]float64{1, 2, 3, 4, 5})
+	box := ax.BoxPlot([]float64{1, 2, 3, 4, 5}, BoxPlotOptions{})
 	if box == nil {
 		t.Fatal("expected box plot")
 	}
@@ -326,7 +327,7 @@ func TestAxesBoxPlotDefaultMedianStyleMatchesMatplotlib(t *testing.T) {
 
 func TestAxesBoxPlotSubArtistsUseMatplotlibPathSnapping(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
-	box := ax.BoxPlot([]float64{1, 2, 3, 4, 5})
+	box := ax.BoxPlot([]float64{1, 2, 3, 4, 5}, BoxPlotOptions{})
 	if box == nil {
 		t.Fatal("expected box plot")
 	}
@@ -403,13 +404,13 @@ func TestAxesBoxPlot_AdvancedStatOptions(t *testing.T) {
 	edgeWidth := 1.75
 
 	box := ax.BoxPlot([]float64{1, 2, 3, 4, 100}, BoxPlotOptions{
-		Notch:              &notch,
-		ConfidenceInterval: &ci,
-		CustomMedian:       &median,
-		WhiskerPercentiles: &whis,
-		FlierMarker:        &marker,
-		FlierEdgeColor:     &edge,
-		FlierEdgeWidth:     &edgeWidth,
+		Notch:              optional.Of(notch),
+		ConfidenceInterval: optional.Of(ci),
+		CustomMedian:       optional.Of(median),
+		WhiskerPercentiles: optional.Of(whis),
+		FlierMarker:        optional.Of(marker),
+		FlierEdgeColor:     optional.Of(edge),
+		FlierEdgeWidth:     optional.Of(edgeWidth),
 	})
 	if box == nil {
 		t.Fatal("expected box plot")
@@ -431,7 +432,7 @@ func TestAxesBoxPlot_PercentileWhiskersUseNearestInlier(t *testing.T) {
 	whis := [2]float64{5, 95}
 
 	box := ax.BoxPlot([]float64{1.1, 1.8, 2.2, 2.6, 2.9, 3.1, 3.7, 6.8}, BoxPlotOptions{
-		WhiskerPercentiles: &whis,
+		WhiskerPercentiles: optional.Of(whis),
 	})
 	if box == nil {
 		t.Fatal("expected box plot")
@@ -448,7 +449,7 @@ func TestAxesBoxPlot_PercentileWhiskersUseNearestInlier(t *testing.T) {
 func TestAxesECDF_ComputesSortedStepData(t *testing.T) {
 	ax := NewFigure(640, 360).AddAxes(geom.Rect{})
 
-	line := ax.ECDF([]float64{3, 1, 2, 2})
+	line := ax.ECDF([]float64{3, 1, 2, 2}, ECDFOptions{})
 	if line == nil {
 		t.Fatal("expected ECDF line")
 	}

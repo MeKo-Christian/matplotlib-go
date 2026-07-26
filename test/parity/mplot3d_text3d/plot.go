@@ -47,7 +47,7 @@ func Plot() *core.Figure {
 		{9, 9, 2, "zeta"},
 	}
 	for _, l := range labels {
-		ax.Text3D(l.x, l.y, l.z, l.s)
+		ax.Text3D(l.x, l.y, l.z, l.s, core.TextOptions{})
 	}
 
 	ax.SetXLabel("X")

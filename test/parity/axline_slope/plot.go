@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -31,7 +32,7 @@ func Plot() *core.Figure {
 	ax.AxLineSlope(
 		geom.Pt{X: 2, Y: 3},
 		0.75,
-		core.ReferenceLineOptions{Color: &color, LineWidth: &lineWidth},
+		core.ReferenceLineOptions{Color: optional.Of(color), LineWidth: optional.Of(lineWidth)},
 	)
 	return fig
 }

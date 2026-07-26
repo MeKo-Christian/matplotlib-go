@@ -2,7 +2,7 @@ package core
 
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -13,7 +13,7 @@ type AnchoredDrawingAreaOptions struct {
 	Locator  AnchoredBoxLocator
 	Padding  float64
 	Inset    float64
-	FrameOn  *bool
+	FrameOn  optional.Value[bool]
 	Clip     bool
 
 	BackgroundColor render.Color
@@ -47,19 +47,22 @@ type anchoredDrawingAreaPath struct {
 }
 
 // AddAnchoredDrawingArea appends a fixed-size drawing area inside an axes.
-func (a *Axes) AddAnchoredDrawingArea(width, height float64, opts ...AnchoredDrawingAreaOptions) *AnchoredDrawingArea {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) AddAnchoredDrawingArea(width, height float64, opt AnchoredDrawingAreaOptions) *AnchoredDrawingArea {
 	rc := style.CurrentDefaults()
 	if a != nil {
 		rc = a.resolvedRC()
 	}
-	area := newAnchoredDrawingArea(width, height, rc, opts...)
+	area := newAnchoredDrawingArea(width, height, rc, opt)
 	if a != nil {
 		a.Add(area)
 	}
 	return area
 }
 
-func newAnchoredDrawingArea(width, height float64, rc style.RC, opts ...AnchoredDrawingAreaOptions) *AnchoredDrawingArea {
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func newAnchoredDrawingArea(width, height float64, rc style.RC, opt AnchoredDrawingAreaOptions) *AnchoredDrawingArea {
 	cfg := AnchoredDrawingAreaOptions{
 		Location:        LegendUpperRight,
 		Padding:         -1,
@@ -69,29 +72,27 @@ func newAnchoredDrawingArea(width, height float64, rc style.RC, opts ...Anchored
 		BorderWidth:     1,
 	}
 	frameOn := true
-	cfg.FrameOn = &frameOn
-	if opt, ok := optarg.Optional("anchored drawing area", opts); ok {
-		cfg.Location = opt.Location
-		cfg.Locator = opt.Locator
-		if opt.Padding >= 0 {
-			cfg.Padding = opt.Padding
-		}
-		if opt.Inset >= 0 {
-			cfg.Inset = opt.Inset
-		}
-		if opt.FrameOn != nil {
-			cfg.FrameOn = cloneBool(opt.FrameOn)
-		}
-		cfg.Clip = opt.Clip
-		if opt.BackgroundColor != (render.Color{}) {
-			cfg.BackgroundColor = opt.BackgroundColor
-		}
-		if opt.BorderColor != (render.Color{}) {
-			cfg.BorderColor = opt.BorderColor
-		}
-		if opt.BorderWidth > 0 {
-			cfg.BorderWidth = opt.BorderWidth
-		}
+	cfg.FrameOn = optional.Of(frameOn)
+	cfg.Location = opt.Location
+	cfg.Locator = opt.Locator
+	if opt.Padding >= 0 {
+		cfg.Padding = opt.Padding
+	}
+	if opt.Inset >= 0 {
+		cfg.Inset = opt.Inset
+	}
+	if opt.FrameOn.IsSet() {
+		cfg.FrameOn = opt.FrameOn
+	}
+	cfg.Clip = opt.Clip
+	if opt.BackgroundColor != (render.Color{}) {
+		cfg.BackgroundColor = opt.BackgroundColor
+	}
+	if opt.BorderColor != (render.Color{}) {
+		cfg.BorderColor = opt.BorderColor
+	}
+	if opt.BorderWidth > 0 {
+		cfg.BorderWidth = opt.BorderWidth
 	}
 	return &AnchoredDrawingArea{
 		Width:           width,
@@ -100,7 +101,7 @@ func newAnchoredDrawingArea(width, height float64, rc style.RC, opts ...Anchored
 		Locator:         cfg.Locator,
 		Padding:         cfg.Padding,
 		Inset:           cfg.Inset,
-		FrameOn:         cfg.FrameOn == nil || *cfg.FrameOn,
+		FrameOn:         !cfg.FrameOn.IsSet() || cfg.FrameOn.OrZero(),
 		Clip:            cfg.Clip,
 		BackgroundColor: cfg.BackgroundColor,
 		BorderColor:     cfg.BorderColor,

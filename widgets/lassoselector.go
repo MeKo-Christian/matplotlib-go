@@ -3,7 +3,6 @@ package widgets
 import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -29,7 +28,9 @@ type LassoSelector struct {
 }
 
 // NewLassoSelector creates a lasso selector bound to the axes.
-func NewLassoSelector(a *core.Axes, opts ...LassoSelectorOptions) *LassoSelector {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func NewLassoSelector(a *core.Axes, opt LassoSelectorOptions) *LassoSelector {
 	if a == nil {
 		return nil
 	}
@@ -37,9 +38,7 @@ func NewLassoSelector(a *core.Axes, opts ...LassoSelectorOptions) *LassoSelector
 		LineColor: render.Color{R: 0.16, G: 0.42, B: 0.76, A: 1},
 		LineWidth: 1.2,
 	}
-	if opt, ok := optarg.Optional("lassoselector", opts); ok {
-		config = mergeLassoSelectorOptions(config, opt)
-	}
+	config = mergeLassoSelectorOptions(config, opt)
 	sel := &LassoSelector{
 		LineColor: config.LineColor,
 		LineWidth: config.LineWidth,

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -98,13 +99,13 @@ func TestDrawFigureSortsTextBBoxesAboveSpinesLikeMatplotlib(t *testing.T) {
 	ax.Text(0.92, 0.5, "bbox", TextOptions{
 		HAlign: TextAlignLeft,
 		VAlign: TextVAlignMiddle,
-		BBox: &TextBBoxOptions{
+		BBox: optional.Of(TextBBoxOptions{
 			FaceColor:    boxFace,
 			EdgeColor:    render.Color{A: 1},
 			LineWidth:    1,
 			Padding:      4,
 			CornerRadius: 2,
-		},
+		}),
 	})
 
 	var r textRecordingRenderer

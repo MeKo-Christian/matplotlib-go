@@ -233,13 +233,13 @@ func TestAnnotationDrawsTextBBox(t *testing.T) {
 	ax.Annotate("boxed", 0.5, 0.5, AnnotationOptions{
 		OffsetX: optional.Of(10.0),
 		OffsetY: optional.Of(-8.0),
-		BBox: &TextBBoxOptions{
+		BBox: optional.Of(TextBBoxOptions{
 			FaceColor:    face,
 			EdgeColor:    edge,
 			LineWidth:    2,
 			Padding:      3,
 			CornerRadius: 4,
-		},
+		}),
 	})
 
 	r := &textRecordingRenderer{}
@@ -599,9 +599,9 @@ func TestAnnotationBboxDrawsTextFrameAndArrow(t *testing.T) {
 	if got := ax.AnnotationBbox("box", 0.25, 0.75, AnnotationBboxOptions{
 		XYCoords:      Coords(CoordData),
 		BoxCoords:     Coords(CoordAxes),
-		BoxPosition:   &boxPos,
-		BoxAlignment:  &align,
-		FrameOn:       &frameOn,
+		BoxPosition:   optional.Of(boxPos),
+		BoxAlignment:  optional.Of(align),
+		FrameOn:       optional.Of(frameOn),
 		Padding:       4,
 		FaceColor:     frameFill,
 		EdgeColor:     frameEdge,
@@ -723,8 +723,8 @@ func TestAnnotationBboxDrawsImageContent(t *testing.T) {
 	align := geom.Pt{X: 0, Y: 1}
 	ax.AnnotationBbox("", 0.1, 0.2, AnnotationBboxOptions{
 		BoxCoords:    Coords(CoordAxes),
-		BoxPosition:  &boxPos,
-		BoxAlignment: &align,
+		BoxPosition:  optional.Of(boxPos),
+		BoxAlignment: optional.Of(align),
 		Image:        img,
 		ImageZoom:    2,
 		Padding:      3,
@@ -756,7 +756,7 @@ func TestAnnotationBboxImageDefaultsToMatplotlibAntialiasedInterpolation(t *test
 	boxPos := geom.Pt{X: 0.4, Y: 0.6}
 	ax.AnnotationBbox("", 0.1, 0.2, AnnotationBboxOptions{
 		BoxCoords:   Coords(CoordAxes),
-		BoxPosition: &boxPos,
+		BoxPosition: optional.Of(boxPos),
 		Image:       img,
 	})
 
@@ -779,7 +779,7 @@ func TestAnnotationBboxImagePreservesExplicitInterpolation(t *testing.T) {
 	boxPos := geom.Pt{X: 0.4, Y: 0.6}
 	ax.AnnotationBbox("", 0.1, 0.2, AnnotationBboxOptions{
 		BoxCoords:   Coords(CoordAxes),
-		BoxPosition: &boxPos,
+		BoxPosition: optional.Of(boxPos),
 		Image:       img,
 	})
 
@@ -803,8 +803,8 @@ func TestAnnotationBboxImageZoomScalesByDPI(t *testing.T) {
 	align := geom.Pt{X: 0, Y: 1}
 	ax.AnnotationBbox("", 0.1, 0.2, AnnotationBboxOptions{
 		BoxCoords:    Coords(CoordAxes),
-		BoxPosition:  &boxPos,
-		BoxAlignment: &align,
+		BoxPosition:  optional.Of(boxPos),
+		BoxAlignment: optional.Of(align),
 		Image:        img,
 		ImageZoom:    2,
 		Padding:      0,

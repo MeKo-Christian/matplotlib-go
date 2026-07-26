@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
@@ -15,17 +14,17 @@ import (
 
 // MatShowOptions configures Axes.MatShow.
 type MatShowOptions struct {
-	Colormap     *string
+	Colormap     optional.Value[string]
 	Norm         ScalarNormalizer
-	VMin         *float64
-	VMax         *float64
-	Alpha        *float64
-	Aspect       string
-	IntegerTicks *bool
+	VMin         optional.Value[float64]
+	VMax         optional.Value[float64]
+	Alpha        optional.Value[float64]
+	Aspect       ImageAspect
+	IntegerTicks optional.Value[bool]
 	Label        string
 	// Interpolation selects the image resampling filter. Empty defers to the
 	// renderer default.
-	Interpolation *string
+	Interpolation optional.Value[string]
 }
 
 // ImShowOptions configures Axes.ImShow.
@@ -47,7 +46,7 @@ type ImShowOptions struct {
 	// Aspect sets the axes aspect ("equal", "auto", or a numeric ratio).
 	// Unset uses the image.aspect rc default; an explicit "" leaves the
 	// current axes aspect alone.
-	Aspect optional.Value[string]
+	Aspect optional.Value[ImageAspect]
 	// Origin places the [0,0] index at the upper or lower corner. Unset uses
 	// the image.origin rc default.
 	Origin optional.Value[ImageOrigin]
@@ -65,12 +64,12 @@ type ImShowOptions struct {
 // SpyOptions configures Axes.Spy.
 type SpyOptions struct {
 	Precision  float64
-	UseImage   *bool
-	Marker     *MarkerType
+	UseImage   optional.Value[bool]
+	Marker     optional.Value[MarkerType]
 	MarkerSize float64
-	Color      *render.Color
-	Alpha      *float64
-	Aspect     string
+	Color      optional.Value[render.Color]
+	Alpha      optional.Value[float64]
+	Aspect     ImageAspect
 	Label      string
 }
 
@@ -81,7 +80,7 @@ type AnnotatedHeatmapOptions struct {
 	FontSize      float64
 	TextColor     render.Color
 	TextColorHigh render.Color
-	Threshold     *float64
+	Threshold     optional.Value[float64]
 	SkipNaN       bool
 	NaNText       string
 }
@@ -100,7 +99,9 @@ type AnnotatedHeatmapResult struct {
 }
 
 // MatShow renders a matrix with centered integer ticks and an equal aspect.
-func (a *Axes) MatShow(data [][]float64, opts ...MatShowOptions) *Image2D {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) MatShow(data [][]float64, opt MatShowOptions) *Image2D {
 	rows, cols, ok := finiteMatrixSize(data)
 	if !ok {
 		return nil
@@ -109,33 +110,31 @@ func (a *Axes) MatShow(data [][]float64, opts ...MatShowOptions) *Image2D {
 	cfg := MatShowOptions{
 		Aspect: "equal",
 	}
-	if opt, ok := optarg.Optional("matshow", opts); ok {
-		if opt.Colormap != nil {
-			cfg.Colormap = opt.Colormap
-		}
-		if opt.Norm != nil {
-			cfg.Norm = opt.Norm
-		}
-		if opt.VMin != nil {
-			cfg.VMin = opt.VMin
-		}
-		if opt.VMax != nil {
-			cfg.VMax = opt.VMax
-		}
-		if opt.Alpha != nil {
-			cfg.Alpha = opt.Alpha
-		}
-		if opt.Aspect != "" {
-			cfg.Aspect = opt.Aspect
-		}
-		if opt.IntegerTicks != nil {
-			cfg.IntegerTicks = opt.IntegerTicks
-		}
-		if opt.Label != "" {
-			cfg.Label = opt.Label
-		}
-		cfg.Interpolation = opt.Interpolation
+	if opt.Colormap.IsSet() {
+		cfg.Colormap = opt.Colormap
 	}
+	if opt.Norm != nil {
+		cfg.Norm = opt.Norm
+	}
+	if opt.VMin.IsSet() {
+		cfg.VMin = opt.VMin
+	}
+	if opt.VMax.IsSet() {
+		cfg.VMax = opt.VMax
+	}
+	if opt.Alpha.IsSet() {
+		cfg.Alpha = opt.Alpha
+	}
+	if opt.Aspect != "" {
+		cfg.Aspect = opt.Aspect
+	}
+	if opt.IntegerTicks.IsSet() {
+		cfg.IntegerTicks = opt.IntegerTicks
+	}
+	if opt.Label != "" {
+		cfg.Label = opt.Label
+	}
+	cfg.Interpolation = opt.Interpolation
 
 	xMin := -0.5
 	xMax := float64(cols) - 0.5
@@ -147,10 +146,10 @@ func (a *Axes) MatShow(data [][]float64, opts ...MatShowOptions) *Image2D {
 		VMin:          cfg.VMin,
 		VMax:          cfg.VMax,
 		Alpha:         cfg.Alpha,
-		XMin:          &xMin,
-		XMax:          &xMax,
-		YMin:          &yMin,
-		YMax:          &yMax,
+		XMin:          optional.Of(xMin),
+		XMax:          optional.Of(xMax),
+		YMin:          optional.Of(yMin),
+		YMax:          optional.Of(yMax),
 		Origin:        ImageOriginUpper,
 		Label:         cfg.Label,
 		Interpolation: cfg.Interpolation,
@@ -160,7 +159,7 @@ func (a *Axes) MatShow(data [][]float64, opts ...MatShowOptions) *Image2D {
 	}
 
 	if cfg.Aspect != "" {
-		_ = a.SetAspect(cfg.Aspect)
+		_ = a.SetAspect(string(cfg.Aspect))
 	}
 	a.SetXLim(xMin, xMax)
 	a.SetYLim(yMin, yMax)
@@ -168,7 +167,7 @@ func (a *Axes) MatShow(data [][]float64, opts ...MatShowOptions) *Image2D {
 		a.InvertY()
 	}
 	applyMatrixAxisPresentation(a, true)
-	if boolValue(cfg.IntegerTicks, true) {
+	if boolValue(cfg.IntegerTicks.Ptr(), true) {
 		applyMatrixTicks(a, rows, cols)
 	}
 	return img
@@ -198,18 +197,18 @@ func (a *Axes) ImShow(data [][]float64, opt ImShowOptions) *Image2D {
 		xMin, xMax, yMin, yMax = extent[0], extent[1], extent[2], extent[3]
 	}
 	img := a.Image(data, ImageOptions{
-		Colormap:      opt.Colormap.Ptr(),
+		Colormap:      opt.Colormap,
 		Norm:          opt.Norm,
-		VMin:          opt.VMin.Ptr(),
-		VMax:          opt.VMax.Ptr(),
-		Alpha:         opt.Alpha.Ptr(),
-		XMin:          &xMin,
-		XMax:          &xMax,
-		YMin:          &yMin,
-		YMax:          &yMax,
+		VMin:          opt.VMin,
+		VMax:          opt.VMax,
+		Alpha:         opt.Alpha,
+		XMin:          optional.Of(xMin),
+		XMax:          optional.Of(xMax),
+		YMin:          optional.Of(yMin),
+		YMax:          optional.Of(yMax),
 		Origin:        origin,
 		Label:         opt.Label,
-		Interpolation: &interpolation,
+		Interpolation: optional.Of(interpolation),
 	})
 	if img == nil {
 		return nil
@@ -222,13 +221,13 @@ func (a *Axes) ImShow(data [][]float64, opt ImShowOptions) *Image2D {
 // finishImshow applies the aspect, axis limits, and origin-driven y-inversion
 // shared by ImShow, ImShowRGB, and ImShowImage. When extentGiven is true the
 // caller supplied an explicit extent, so the automatic origin y-flip is skipped.
-func (a *Axes) finishImshow(xMin, xMax, yMin, yMax float64, aspect string, origin ImageOrigin, extentGiven bool) {
+func (a *Axes) finishImshow(xMin, xMax, yMin, yMax float64, aspect ImageAspect, origin ImageOrigin, extentGiven bool) {
 	if aspect != "" {
 		// image.aspect (and the Aspect option) also admit a numeric ratio.
-		if ratio, err := strconv.ParseFloat(aspect, 64); err == nil {
+		if ratio, err := strconv.ParseFloat(string(aspect), 64); err == nil {
 			_ = a.SetAspect("ratio", ratio)
 		} else {
-			_ = a.SetAspect(aspect)
+			_ = a.SetAspect(string(aspect))
 		}
 	}
 	a.SetXLim(xMin, xMax)
@@ -251,37 +250,36 @@ func (a *Axes) finishImshow(xMin, xMax, yMin, yMax float64, aspect string, origi
 // images (third_party/matplotlib/lib/matplotlib/image.py).
 type ImShowRGBOptions struct {
 	// Alpha multiplies the image's per-pixel alpha in [0,1].
-	Alpha *float64
+	Alpha optional.Value[float64]
 	// Aspect sets the axes aspect ("equal", "auto", or a numeric ratio).
 	// Empty uses the image.aspect rc default.
-	Aspect string
+	Aspect ImageAspect
 	// Origin places the [0,0] index at the upper or lower corner.
 	// ImageOriginUpper is the zero value and doubles as "unset": the
 	// image.origin rc default applies (see ImShowOptions.Origin).
 	Origin ImageOrigin
 	// Extent overrides the centered-pixel default with explicit
 	// (left, right, bottom, top) data coordinates.
-	Extent *[4]float64
+	Extent optional.Value[[4]float64]
 	// Interpolation selects the resampling filter. Nil uses Matplotlib's rc
 	// default "antialiased"; a pointer to "" defers to the renderer default.
-	Interpolation *string
+	Interpolation optional.Value[string]
 	Label         string
 }
 
 // resolveImShowRGBOptions merges a caller's options over the rc-derived
 // defaults. supplied distinguishes an omitted option set from a zero one.
-func (a *Axes) resolveImShowRGBOptions(opt ImShowRGBOptions, supplied bool) ImShowRGBOptions {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) resolveImShowRGBOptions(opt ImShowRGBOptions) ImShowRGBOptions {
 	rc := a.resolvedRC()
 	defaultInterpolation := "antialiased"
 	cfg := ImShowRGBOptions{
 		Aspect:        imshowAspectDefault(&rc),
 		Origin:        imageOriginFromRC(&rc),
-		Interpolation: &defaultInterpolation,
+		Interpolation: optional.Of(defaultInterpolation),
 	}
-	if !supplied {
-		return cfg
-	}
-	if opt.Alpha != nil {
+	if opt.Alpha.IsSet() {
 		cfg.Alpha = opt.Alpha
 	}
 	if opt.Aspect != "" {
@@ -291,7 +289,7 @@ func (a *Axes) resolveImShowRGBOptions(opt ImShowRGBOptions, supplied bool) ImSh
 		cfg.Origin = opt.Origin
 	}
 	cfg.Extent = opt.Extent
-	if opt.Interpolation != nil {
+	if opt.Interpolation.IsSet() {
 		cfg.Interpolation = opt.Interpolation
 	}
 	if opt.Label != "" {
@@ -307,15 +305,13 @@ func (a *Axes) resolveImShowRGBOptions(opt ImShowRGBOptions, supplied bool) ImSh
 // ImShow colormap path.
 //
 // Rejected input leaves the axes unchanged.
-func (a *Axes) ImShowRGB(data [][][]float64, opts ...ImShowRGBOptions) (*Image2D, error) {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) ImShowRGB(data [][][]float64, opt ImShowRGBOptions) (*Image2D, error) {
 	if a == nil {
 		return nil, fmt.Errorf("imshow rgb axes cannot be nil")
 	}
-	opt, err := optarg.Only("imshow rgb", opts)
-	if err != nil {
-		return nil, err
-	}
-	cfg := a.resolveImShowRGBOptions(opt, len(opts) == 1)
+	cfg := a.resolveImShowRGBOptions(opt)
 
 	rgba, kind, err := normalizeRGBArray(data)
 	if err != nil {
@@ -325,11 +321,11 @@ func (a *Axes) ImShowRGB(data [][][]float64, opts ...ImShowRGBOptions) (*Image2D
 		// cfg already carries the rc-resolved values, so each one is passed as
 		// an explicit request rather than left for ImShow to resolve again.
 		img := a.ImShow(squeezeScalarArray(data), ImShowOptions{
-			Alpha:         optional.FromPtr(cfg.Alpha),
+			Alpha:         cfg.Alpha,
 			Aspect:        optional.Of(cfg.Aspect),
 			Origin:        optional.Of(cfg.Origin),
-			Extent:        optional.FromPtr(cfg.Extent),
-			Interpolation: optional.FromPtr(cfg.Interpolation),
+			Extent:        cfg.Extent,
+			Interpolation: cfg.Interpolation,
 			Label:         cfg.Label,
 		})
 		if img == nil {
@@ -343,7 +339,9 @@ func (a *Axes) ImShowRGB(data [][][]float64, opts ...ImShowRGBOptions) (*Image2D
 // ImShowImage renders a native Go image (e.g. the output of core.ImRead) as a
 // true-color image, bypassing the colormap+norm path. The image's row 0 is
 // placed at the top for the default ImageOriginUpper.
-func (a *Axes) ImShowImage(img image.Image, opts ...ImShowRGBOptions) *Image2D {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) ImShowImage(img image.Image, opt ImShowRGBOptions) *Image2D {
 	if a == nil || img == nil {
 		return nil
 	}
@@ -351,8 +349,7 @@ func (a *Axes) ImShowImage(img image.Image, opts ...ImShowRGBOptions) *Image2D {
 	if rgba == nil || rgba.Bounds().Dx() == 0 || rgba.Bounds().Dy() == 0 {
 		return nil
 	}
-	opt, supplied := optarg.Optional("imshow image", opts)
-	return a.imshowRGBA(rgba, a.resolveImShowRGBOptions(opt, supplied))
+	return a.imshowRGBA(rgba, a.resolveImShowRGBOptions(opt))
 }
 
 // imshowRGBA is the shared tail for ImShowRGB/ImShowImage: it sets the extent,
@@ -369,19 +366,19 @@ func (a *Axes) imshowRGBA(rgba *image.RGBA, cfg ImShowRGBOptions) *Image2D {
 	xMax := float64(cols) - 0.5
 	yMin := -0.5
 	yMax := float64(rows) - 0.5
-	if cfg.Extent != nil {
-		xMin = cfg.Extent[0]
-		xMax = cfg.Extent[1]
-		yMin = cfg.Extent[2]
-		yMax = cfg.Extent[3]
+	if extent, ok := cfg.Extent.Get(); ok {
+		xMin = extent[0]
+		xMax = extent[1]
+		yMin = extent[2]
+		yMax = extent[3]
 	}
 
 	img := a.imageRGBA(rgba, ImageOptions{
 		Alpha:         cfg.Alpha,
-		XMin:          &xMin,
-		XMax:          &xMax,
-		YMin:          &yMin,
-		YMax:          &yMax,
+		XMin:          optional.Of(xMin),
+		XMax:          optional.Of(xMax),
+		YMin:          optional.Of(yMin),
+		YMax:          optional.Of(yMax),
 		Origin:        cfg.Origin,
 		Label:         cfg.Label,
 		Interpolation: cfg.Interpolation,
@@ -389,7 +386,7 @@ func (a *Axes) imshowRGBA(rgba *image.RGBA, cfg ImShowRGBOptions) *Image2D {
 	if img == nil {
 		return nil
 	}
-	a.finishImshow(xMin, xMax, yMin, yMax, cfg.Aspect, cfg.Origin, cfg.Extent != nil)
+	a.finishImshow(xMin, xMax, yMin, yMax, cfg.Aspect, cfg.Origin, cfg.Extent.IsSet())
 	return img
 }
 
@@ -409,7 +406,9 @@ func squeezeScalarArray(data [][][]float64) [][]float64 {
 }
 
 // Spy visualizes the sparsity pattern of a matrix.
-func (a *Axes) Spy(data [][]float64, opts ...SpyOptions) *SpyResult {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) Spy(data [][]float64, opt SpyOptions) *SpyResult {
 	rows, cols, ok := finiteMatrixSize(data)
 	if !ok {
 		return nil
@@ -418,25 +417,23 @@ func (a *Axes) Spy(data [][]float64, opts ...SpyOptions) *SpyResult {
 	cfg := SpyOptions{
 		Aspect: "equal",
 	}
-	if opt, ok := optarg.Optional("spy", opts); ok {
-		cfg.Precision = opt.Precision
-		cfg.UseImage = opt.UseImage
-		cfg.Marker = opt.Marker
-		if opt.MarkerSize > 0 {
-			cfg.MarkerSize = opt.MarkerSize
-		}
-		if opt.Color != nil {
-			cfg.Color = opt.Color
-		}
-		if opt.Alpha != nil {
-			cfg.Alpha = opt.Alpha
-		}
-		if opt.Aspect != "" {
-			cfg.Aspect = opt.Aspect
-		}
-		if opt.Label != "" {
-			cfg.Label = opt.Label
-		}
+	cfg.Precision = opt.Precision
+	cfg.UseImage = opt.UseImage
+	cfg.Marker = opt.Marker
+	if opt.MarkerSize > 0 {
+		cfg.MarkerSize = opt.MarkerSize
+	}
+	if opt.Color.IsSet() {
+		cfg.Color = opt.Color
+	}
+	if opt.Alpha.IsSet() {
+		cfg.Alpha = opt.Alpha
+	}
+	if opt.Aspect != "" {
+		cfg.Aspect = opt.Aspect
+	}
+	if opt.Label != "" {
+		cfg.Label = opt.Label
 	}
 	indices := make([]geom.Pt, 0)
 	mask := make([][]float64, rows)
@@ -453,8 +450,8 @@ func (a *Axes) Spy(data [][]float64, opts ...SpyOptions) *SpyResult {
 	}
 
 	result := &SpyResult{Indices: indices}
-	useImage := cfg.UseImage == nil || boolValue(cfg.UseImage, true)
-	if cfg.Marker != nil || cfg.MarkerSize > 0 {
+	useImage := cfg.UseImage.Or(true)
+	if cfg.Marker.IsSet() || cfg.MarkerSize > 0 {
 		useImage = false
 	}
 	if useImage {
@@ -463,12 +460,12 @@ func (a *Axes) Spy(data [][]float64, opts ...SpyOptions) *SpyResult {
 		vMin := 0.0
 		vMax := 1.0
 		result.Image = a.MatShow(mask, MatShowOptions{
-			Colormap:     &cmap,
-			VMin:         &vMin,
-			VMax:         &vMax,
+			Colormap:     optional.Of(cmap),
+			VMin:         optional.Of(vMin),
+			VMax:         optional.Of(vMax),
 			Alpha:        cfg.Alpha,
 			Aspect:       cfg.Aspect,
-			IntegerTicks: boolPtr(true),
+			IntegerTicks: optional.Of(true),
 			Label:        cfg.Label,
 		})
 		result.Image.Interpolation = nearest
@@ -478,14 +475,14 @@ func (a *Axes) Spy(data [][]float64, opts ...SpyOptions) *SpyResult {
 	if cfg.MarkerSize <= 0 {
 		cfg.MarkerSize = 10
 	}
-	marker := markerValue(cfg.Marker, MarkerSquare)
+	marker := markerValue(cfg.Marker.Ptr(), MarkerSquare)
 	color := render.Color{A: 1}
-	if cfg.Color != nil {
-		color = *cfg.Color
+	if v, ok := cfg.Color.Get(); ok {
+		color = v
 	}
 	alpha := 1.0
-	if cfg.Alpha != nil {
-		alpha = clampOneToOne(*cfg.Alpha)
+	if cfg.Alpha.IsSet() {
+		alpha = clampOneToOne(cfg.Alpha.OrZero())
 	}
 	path := (&Scatter2D{Marker: marker}).markerPrototypePath()
 	lineOnly := markerLineOnly(NewMarkerStyle(marker))
@@ -514,7 +511,7 @@ func (a *Axes) Spy(data [][]float64, opts ...SpyOptions) *SpyResult {
 	yMin := -0.5
 	yMax := float64(rows) - 0.5
 	if cfg.Aspect != "" {
-		_ = a.SetAspect(cfg.Aspect)
+		_ = a.SetAspect(string(cfg.Aspect))
 	}
 	a.SetXLim(xMin, xMax)
 	a.SetYLim(yMin, yMax)
@@ -536,39 +533,29 @@ func matrixMarkerDPI(a *Axes) float64 {
 }
 
 // AnnotatedHeatmap renders a matrix display plus a centered value label in each cell.
-func (a *Axes) AnnotatedHeatmap(data [][]float64, opts ...AnnotatedHeatmapOptions) *AnnotatedHeatmapResult {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) AnnotatedHeatmap(data [][]float64, opt AnnotatedHeatmapOptions) *AnnotatedHeatmapResult {
 	rows, cols, ok := finiteMatrixSize(data)
 	if !ok {
 		return nil
 	}
 
-	cfg := AnnotatedHeatmapOptions{
-		MatShowOptions: MatShowOptions{
-			Aspect:       "equal",
-			IntegerTicks: boolPtr(true),
-		},
-		Format:        "%.3g",
-		FontSize:      11,
-		TextColor:     render.Color{R: 0.1, G: 0.1, B: 0.1, A: 1},
-		TextColorHigh: render.Color{R: 1, G: 1, B: 1, A: 1},
+	cfg := opt
+	if cfg.Aspect == "" {
+		cfg.Aspect = "equal"
 	}
-	if supplied, ok := optarg.Optional("annotated heatmap", opts); ok {
-		cfg = supplied
-		if cfg.Aspect == "" {
-			cfg.Aspect = "equal"
-		}
-		if cfg.Format == "" {
-			cfg.Format = "%.3g"
-		}
-		if cfg.FontSize <= 0 {
-			cfg.FontSize = 11
-		}
-		if cfg.TextColor.A == 0 {
-			cfg.TextColor = render.Color{R: 0.1, G: 0.1, B: 0.1, A: 1}
-		}
-		if cfg.TextColorHigh.A == 0 {
-			cfg.TextColorHigh = render.Color{R: 1, G: 1, B: 1, A: 1}
-		}
+	if cfg.Format == "" {
+		cfg.Format = "%.3g"
+	}
+	if cfg.FontSize <= 0 {
+		cfg.FontSize = 11
+	}
+	if cfg.TextColor.A == 0 {
+		cfg.TextColor = render.Color{R: 0.1, G: 0.1, B: 0.1, A: 1}
+	}
+	if cfg.TextColorHigh.A == 0 {
+		cfg.TextColorHigh = render.Color{R: 1, G: 1, B: 1, A: 1}
 	}
 
 	img := a.MatShow(data, cfg.MatShowOptions)
@@ -578,8 +565,8 @@ func (a *Axes) AnnotatedHeatmap(data [][]float64, opts ...AnnotatedHeatmapOption
 
 	mapping := img.ScalarMap().Resolved()
 	threshold := mapping.VMin + 0.5*(mapping.VMax-mapping.VMin)
-	if cfg.Threshold != nil {
-		threshold = *cfg.Threshold
+	if v, ok := cfg.Threshold.Get(); ok {
+		threshold = v
 	}
 
 	labels := make([]*Text, 0, rows*cols)

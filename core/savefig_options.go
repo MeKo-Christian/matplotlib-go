@@ -7,6 +7,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -125,11 +126,11 @@ func prepareSaveFigure(fig *Figure, r render.Renderer, figOpts *render.FigureOpt
 		clearer.Clear(effBg)
 	} else if resolved.hasFacecolor && !resolved.transparent {
 		bg := effBg
-		drawOpts.FigureBackground = &bg
+		drawOpts.FigureBackground = optional.Of(bg)
 	}
 	if resolved.hasEdgecolor && resolved.edgecolor.A > 0 {
 		ec := resolved.edgecolor
-		drawOpts.FigureEdge = &ec
+		drawOpts.FigureEdge = optional.Of(ec)
 		drawOpts.FigureEdgeWidth = pointsToPixels(eff.RC, 1.0)
 	}
 

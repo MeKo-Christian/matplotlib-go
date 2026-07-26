@@ -300,7 +300,7 @@ func TestAxes3DDrawsYAxisEndpointTickLabels(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AddAxes3D: %v", err)
 	}
-	ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1})
+	ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1}, PlotOptions{})
 	mins, maxs := ax.projectionLimits()
 	ctx := newAxesDrawContext(ax.Axes, fig, fig.DisplayRect(), ax.adjustedLayout(fig))
 	r := &axes3DTextRecorder{}
@@ -384,6 +384,7 @@ func TestAxes3DFrameTextDrawsBeforeDataCollectionsLikeMatplotlib(t *testing.T) {
 		[]float64{0, 1},
 		[]float64{0, 1},
 		[][]float64{{0, 1}, {1, 2}},
+		PlotOptions{},
 	)
 
 	r := &axes3DDrawOrderRecorder{}
@@ -422,6 +423,7 @@ func TestAxes3DFrameUsesRCLineWidthsLikeMatplotlib(t *testing.T) {
 		[]float64{0, 1},
 		[]float64{0, 1},
 		[][]float64{{0, 1}, {1, 2}},
+		PlotOptions{},
 	)
 
 	r := &axes3DLineWidthRecorder{}
@@ -451,6 +453,7 @@ func TestAxes3DFrameUsesRCColorsLikeMatplotlib(t *testing.T) {
 		[]float64{0, 1},
 		[]float64{0, 1},
 		[][]float64{{0, 1}, {1, 2}},
+		PlotOptions{},
 	)
 
 	r := &axes3DLineWidthRecorder{}
@@ -476,6 +479,7 @@ func TestAxes3DFrameUsesRCGridDashesLikeMatplotlib(t *testing.T) {
 		[]float64{0, 1},
 		[]float64{0, 1},
 		[][]float64{{0, 1}, {1, 2}},
+		PlotOptions{},
 	)
 
 	r := &axes3DLineWidthRecorder{}
@@ -500,11 +504,11 @@ func TestAxes3DTickLabelsUseMatplotlibDataSpaceOffset(t *testing.T) {
 	ax.SetXLabel("x")
 	ax.SetYLabel("y")
 	ax.SetView(30, -60)
-	ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1})
-	ax.Scatter3D([]float64{0.5, 0.7}, []float64{0.2, 0.9}, []float64{0.1, 0.3})
+	ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1}, PlotOptions{})
+	ax.Scatter3D([]float64{0.5, 0.7}, []float64{0.2, 0.9}, []float64{0.1, 0.3}, ScatterOptions{})
 	z := [][]float64{{0, 1}, {1, 2}}
-	ax.Wireframe([]float64{0, 1}, []float64{0, 1}, z)
-	ax.Surface([]float64{0, 1}, []float64{0, 1}, z)
+	ax.Wireframe([]float64{0, 1}, []float64{0, 1}, z, PlotOptions{})
+	ax.Surface([]float64{0, 1}, []float64{0, 1}, z, PlotOptions{})
 
 	mins, maxs := ax.projectionLimits()
 	frameMins, frameMaxs := mins, maxs
@@ -540,14 +544,14 @@ func TestAxes3DTickLabelAnchorsMatchMatplotlibBasicFixture(t *testing.T) {
 		t.Fatalf("AddAxes3D: %v", err)
 	}
 	ax.SetView(30, -60)
-	ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1})
-	ax.Scatter3D([]float64{0.5, 0.7}, []float64{0.2, 0.9}, []float64{0.1, 0.3})
+	ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1}, PlotOptions{})
+	ax.Scatter3D([]float64{0.5, 0.7}, []float64{0.2, 0.9}, []float64{0.1, 0.3}, ScatterOptions{})
 	z := [][]float64{{0, 1}, {1, 2}}
-	ax.Wireframe([]float64{0, 1}, []float64{0, 1}, z)
-	ax.Surface([]float64{0, 1}, []float64{0, 1}, z)
-	ax.Contour([]float64{0, 1}, []float64{0, 1}, z)
-	ax.Bar3D([]float64{0.2}, []float64{0.3}, []float64{0.4}, []float64{0.2}, []float64{0.2}, []float64{0.3})
-	ax.Text3D(0.2, 0.8, 0.6, "demo point")
+	ax.Wireframe([]float64{0, 1}, []float64{0, 1}, z, PlotOptions{})
+	ax.Surface([]float64{0, 1}, []float64{0, 1}, z, PlotOptions{})
+	ax.Contour([]float64{0, 1}, []float64{0, 1}, z, PlotOptions{})
+	ax.Bar3D([]float64{0.2}, []float64{0.3}, []float64{0.4}, []float64{0.2}, []float64{0.2}, []float64{0.3}, Bar3DOptions{})
+	ax.Text3D(0.2, 0.8, 0.6, "demo point", TextOptions{})
 
 	mins, maxs := ax.projectionLimits()
 	frameMins, frameMaxs := mins, maxs
@@ -601,7 +605,7 @@ func TestAxes3DText3DProjectsInput(t *testing.T) {
 
 	ax.SetDistance(0)
 	ax.SetView(0, 0)
-	text := ax.Text3D(1, 2, 3, "hello")
+	text := ax.Text3D(1, 2, 3, "hello", TextOptions{})
 	if text == nil || text.Content != "hello" {
 		t.Fatalf("Text3D returned unexpected value: %#v", text)
 	}

@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -28,38 +29,38 @@ func Plot() *core.Figure {
 	filled := core.MarkerCircle
 	edgeAuto := core.AutoMarkerColor()
 	_, _ = ax.Plot([]float64{0.7, 2.0, 3.3}, []float64{5.35, 5.65, 5.35}, core.PlotOptions{
-		Color:           colorPtr(render.Color{R: 0.12, G: 0.47, B: 0.71, A: 1}),
-		LineWidth:       floatPtr(1.5),
-		LineCap:         &buttCap,
-		Marker:          &filled,
-		MarkerSize:      floatPtr(9),
-		MarkerFaceColor: colorPtr(render.Color{R: 1.00, G: 0.50, B: 0.05, A: 0.55}),
-		MarkerEdgeSpec:  &edgeAuto,
-		MarkerEdgeWidth: floatPtr(1.2),
+		Color:           optional.Of(render.Color{R: 0.12, G: 0.47, B: 0.71, A: 1}),
+		LineWidth:       optional.Of(1.5),
+		LineCap:         optional.Of(buttCap),
+		Marker:          optional.Of(filled),
+		MarkerSize:      optional.Of(9.0),
+		MarkerFaceColor: optional.Of(render.Color{R: 1.00, G: 0.50, B: 0.05, A: 0.55}),
+		MarkerEdgeSpec:  optional.Of(edgeAuto),
+		MarkerEdgeWidth: optional.Of(1.2),
 		Label:           "filled auto edge",
 	})
 
 	unfilled := core.MarkerSquare
 	faceNone := core.NoMarkerColor()
 	_, _ = ax.Plot([]float64{4.2, 5.5, 6.8}, []float64{5.35, 5.65, 5.35}, core.PlotOptions{
-		Color:           colorPtr(render.Color{R: 0.17, G: 0.63, B: 0.17, A: 1}),
-		LineWidth:       floatPtr(1.5),
-		LineCap:         &buttCap,
-		Marker:          &unfilled,
-		MarkerSize:      floatPtr(9),
-		MarkerFaceSpec:  &faceNone,
-		MarkerEdgeColor: colorPtr(render.Color{R: 0.08, G: 0.28, B: 0.08, A: 1}),
-		MarkerEdgeWidth: floatPtr(1.4),
+		Color:           optional.Of(render.Color{R: 0.17, G: 0.63, B: 0.17, A: 1}),
+		LineWidth:       optional.Of(1.5),
+		LineCap:         optional.Of(buttCap),
+		Marker:          optional.Of(unfilled),
+		MarkerSize:      optional.Of(9.0),
+		MarkerFaceSpec:  optional.Of(faceNone),
+		MarkerEdgeColor: optional.Of(render.Color{R: 0.08, G: 0.28, B: 0.08, A: 1}),
+		MarkerEdgeWidth: optional.Of(1.4),
 		Label:           "face none",
 	})
 
 	lineOnly := core.MarkerPlus
 	_, _ = ax.Plot([]float64{7.6, 8.7, 9.8}, []float64{5.35, 5.65, 5.35}, core.PlotOptions{
-		Color:      colorPtr(render.Color{R: 0.84, G: 0.15, B: 0.16, A: 1}),
-		LineWidth:  floatPtr(1.5),
-		LineCap:    &buttCap,
-		Marker:     &lineOnly,
-		MarkerSize: floatPtr(11),
+		Color:      optional.Of(render.Color{R: 0.84, G: 0.15, B: 0.16, A: 1}),
+		LineWidth:  optional.Of(1.5),
+		LineCap:    optional.Of(buttCap),
+		Marker:     optional.Of(lineOnly),
+		MarkerSize: optional.Of(11.0),
 		Label:      "line-only",
 	})
 
@@ -69,37 +70,37 @@ func Plot() *core.Figure {
 	custom.LineTo(geom.Pt{X: -0.48, Y: 0.36})
 	custom.Close()
 	_, _ = ax.Plot([]float64{0.8, 2.1, 3.4}, []float64{3.85, 4.2, 3.85}, core.PlotOptions{
-		Color:           colorPtr(render.Color{R: 0.58, G: 0.40, B: 0.74, A: 1}),
-		LineWidth:       floatPtr(1.4),
-		LineCap:         &buttCap,
-		MarkerPath:      &custom,
-		MarkerSize:      floatPtr(10),
-		MarkerFaceColor: colorPtr(render.Color{R: 0.58, G: 0.40, B: 0.74, A: 0.55}),
-		MarkerEdgeColor: colorPtr(render.Color{R: 0.25, G: 0.12, B: 0.40, A: 1}),
+		Color:           optional.Of(render.Color{R: 0.58, G: 0.40, B: 0.74, A: 1}),
+		LineWidth:       optional.Of(1.4),
+		LineCap:         optional.Of(buttCap),
+		MarkerPath:      optional.Of(custom),
+		MarkerSize:      optional.Of(10.0),
+		MarkerFaceColor: optional.Of(render.Color{R: 0.58, G: 0.40, B: 0.74, A: 0.55}),
+		MarkerEdgeColor: optional.Of(render.Color{R: 0.25, G: 0.12, B: 0.40, A: 1}),
 		Label:           "custom path",
 	})
 
 	tuple := core.NewTupleMarkerStyle(5, core.MarkerTupleStar, 18)
 	_, _ = ax.Plot([]float64{4.3, 5.5, 6.7}, []float64{3.85, 4.2, 3.85}, core.PlotOptions{
-		Color:           colorPtr(render.Color{R: 0.55, G: 0.34, B: 0.29, A: 1}),
-		LineWidth:       floatPtr(1.4),
-		LineCap:         &buttCap,
-		MarkerStyle:     &tuple,
-		MarkerSize:      floatPtr(11),
-		MarkerFaceColor: colorPtr(render.Color{R: 0.55, G: 0.34, B: 0.29, A: 0.65}),
-		MarkerEdgeColor: colorPtr(render.Color{R: 0.25, G: 0.12, B: 0.08, A: 1}),
+		Color:           optional.Of(render.Color{R: 0.55, G: 0.34, B: 0.29, A: 1}),
+		LineWidth:       optional.Of(1.4),
+		LineCap:         optional.Of(buttCap),
+		MarkerStyle:     optional.Of(tuple),
+		MarkerSize:      optional.Of(11.0),
+		MarkerFaceColor: optional.Of(render.Color{R: 0.55, G: 0.34, B: 0.29, A: 0.65}),
+		MarkerEdgeColor: optional.Of(render.Color{R: 0.25, G: 0.12, B: 0.08, A: 1}),
 		Label:           "tuple star",
 	})
 
 	mathMarker := core.NewMathTextMarkerStyle("$f$")
 	_, _ = ax.Plot([]float64{7.4, 8.6, 9.8}, []float64{3.85, 4.2, 3.85}, core.PlotOptions{
-		Color:           colorPtr(render.Color{R: 0.50, G: 0.50, B: 0.50, A: 1}),
-		LineWidth:       floatPtr(1.4),
-		LineCap:         &buttCap,
-		MarkerStyle:     &mathMarker,
-		MarkerSize:      floatPtr(12),
-		MarkerFaceColor: colorPtr(render.Color{R: 0.89, G: 0.47, B: 0.76, A: 0.65}),
-		MarkerEdgeColor: colorPtr(render.Color{R: 0.35, G: 0.18, B: 0.32, A: 1}),
+		Color:           optional.Of(render.Color{R: 0.50, G: 0.50, B: 0.50, A: 1}),
+		LineWidth:       optional.Of(1.4),
+		LineCap:         optional.Of(buttCap),
+		MarkerStyle:     optional.Of(mathMarker),
+		MarkerSize:      optional.Of(12.0),
+		MarkerFaceColor: optional.Of(render.Color{R: 0.89, G: 0.47, B: 0.76, A: 0.65}),
+		MarkerEdgeColor: optional.Of(render.Color{R: 0.35, G: 0.18, B: 0.32, A: 1}),
 		Label:           "mathtext",
 	})
 
@@ -118,14 +119,14 @@ func Plot() *core.Figure {
 		style := core.NewMarkerStyle(core.MarkerCircle)
 		style.FillStyle = spec.fill
 		_, _ = ax.Plot([]float64{spec.x - 0.4, spec.x, spec.x + 0.4}, []float64{2.0, 2.32, 2.0}, core.PlotOptions{
-			Color:           colorPtr(render.Color{R: 0.09, G: 0.75, B: 0.81, A: 1}),
-			LineWidth:       floatPtr(1.2),
-			LineCap:         &buttCap,
-			MarkerStyle:     &style,
-			MarkerSize:      floatPtr(12),
-			MarkerFaceColor: colorPtr(render.Color{R: 0.09, G: 0.75, B: 0.81, A: 1}),
-			MarkerFaceAlt:   &altFace,
-			MarkerEdgeColor: colorPtr(render.Color{R: 0.05, G: 0.25, B: 0.28, A: 1}),
+			Color:           optional.Of(render.Color{R: 0.09, G: 0.75, B: 0.81, A: 1}),
+			LineWidth:       optional.Of(1.2),
+			LineCap:         optional.Of(buttCap),
+			MarkerStyle:     optional.Of(style),
+			MarkerSize:      optional.Of(12.0),
+			MarkerFaceColor: optional.Of(render.Color{R: 0.09, G: 0.75, B: 0.81, A: 1}),
+			MarkerFaceAlt:   altFace,
+			MarkerEdgeColor: optional.Of(render.Color{R: 0.05, G: 0.25, B: 0.28, A: 1}),
 			Label:           "half " + spec.label,
 		})
 	}

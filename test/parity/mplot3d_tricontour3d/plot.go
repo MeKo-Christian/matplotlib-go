@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/plot3d"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -74,7 +75,7 @@ func Plot() *core.Figure {
 	tri, z := tricontourMesh()
 	cmap := "CMRmap"
 	ax.TriContour(tri, z, core.PlotOptions{
-		Colormap: &cmap,
+		Colormap: optional.Of(cmap),
 	})
 	ax.SetView(45, -60)
 	return fig

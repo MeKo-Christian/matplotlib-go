@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/diag"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 	"github.com/cwbudde/matplotlib-go/transform"
@@ -24,6 +25,8 @@ type (
 	Normalize            = core.Normalize
 	PathCollection       = core.PathCollection
 	PlotOptions          = core.PlotOptions
+	ColorbarOptions      = core.ColorbarOptions
+	TextOptions          = core.TextOptions
 	PolyCollection       = core.PolyCollection
 	Pt                   = geom.Pt
 	ScalarMapInfo        = core.ScalarMapInfo
@@ -155,8 +158,8 @@ func alignedSingleLineOrigin(anchor geom.Pt, layout singleLineTextLayout, hAlign
 func resolveScalarMapValues(values []float64, cmap string, vmin, vmax *float64) core.ScalarMapInfo {
 	mapping, err := core.ResolveScalarMapValues(values, core.ScalarMapConfig{
 		Colormap: cmap,
-		VMin:     vmin,
-		VMax:     vmax,
+		VMin:     optional.FromPtr(vmin),
+		VMax:     optional.FromPtr(vmax),
 	})
 	if err != nil {
 		return core.ScalarMapInfo{Colormap: cmap}.Resolved()

@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/plot3d"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -64,10 +65,10 @@ func Plot() *core.Figure {
 	vmin := -50.0
 	vmax := 75.0
 	ax.Contour(x, y, z, core.PlotOptions{
-		Colormap: &cmap,
+		Colormap: optional.Of(cmap),
 		Levels:   []float64{-50, -25, 0, 25, 50, 75},
-		VMin:     &vmin,
-		VMax:     &vmax,
+		VMin:     optional.Of(vmin),
+		VMax:     optional.Of(vmax),
 	})
 	return fig
 }

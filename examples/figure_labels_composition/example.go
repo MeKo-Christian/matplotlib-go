@@ -8,6 +8,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -26,7 +27,7 @@ func Plot() *core.Figure {
 	fig.SetSupXLabel("time [s]")
 	fig.SetSupYLabel("amplitude")
 
-	textBox := &core.TextBBoxOptions{
+	textBox := core.TextBBoxOptions{
 		FaceColor: render.Color{R: 1, G: 1, B: 1, A: 1},
 		EdgeColor: render.Color{R: 0.5, G: 0.5, B: 0.5, A: 1},
 	}
@@ -41,7 +42,7 @@ func Plot() *core.Figure {
 				y[i] = math.Sin(xv+float64(row)*0.5) * (1 + float64(col)*0.2)
 			}
 			_, _ = ax.Plot(x, y, core.PlotOptions{
-				LineWidth: common.FloatPtr(1.5),
+				LineWidth: optional.Of(1.5),
 				Label:     fmt.Sprintf("series %d", row*2+col+1),
 			})
 			ax.SetTitle(fmt.Sprintf("Panel %d", row*2+col+1))
@@ -56,18 +57,18 @@ func Plot() *core.Figure {
 	grid[0][0].Text(0.02, 0.92, "upper-left\nnote", core.TextOptions{
 		Coords: core.Coords(core.CoordAxes),
 		VAlign: core.TextVAlignTop,
-		BBox:   textBox,
+		BBox:   optional.Of(textBox),
 	})
 	grid[1][1].Text(0.98, 0.08, "lower-right", core.TextOptions{
 		Coords: core.Coords(core.CoordAxes),
 		HAlign: core.TextAlignRight,
 		VAlign: core.TextVAlignBottom,
-		BBox:   textBox,
+		BBox:   optional.Of(textBox),
 	})
 	fig.Text(0.985, 0.94, "Figure note", core.TextOptions{
 		HAlign: core.TextAlignRight,
 		VAlign: core.TextVAlignTop,
-		BBox:   textBox,
+		BBox:   optional.Of(textBox),
 	})
 	legend := fig.AddLegend()
 	legend.SetLocator(core.BBoxToAnchorLocator{

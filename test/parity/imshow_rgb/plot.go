@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 )
 
 // rgbGradient builds an (ny,nx,3) image whose red ramps left→right and green
@@ -46,20 +47,19 @@ func Plot() *core.Figure {
 	fig := core.NewFigure(640, 360)
 
 	nearest := "nearest"
-	auto := "auto"
 
 	axRGB := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.07, Y: 0.12}, Max: geom.Pt{X: 0.47, Y: 0.90}})
 	axRGB.SetTitle("RGB")
 	_, _ = axRGB.ImShowRGB(rgbGradient(8, 8), core.ImShowRGBOptions{
-		Interpolation: &nearest,
-		Aspect:        auto,
+		Interpolation: optional.Of(nearest),
+		Aspect:        core.AspectAuto,
 	})
 
 	axRGBA := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.55, Y: 0.12}, Max: geom.Pt{X: 0.95, Y: 0.90}})
 	axRGBA.SetTitle("RGBA")
 	_, _ = axRGBA.ImShowRGB(rgbaBlocks(8, 8), core.ImShowRGBOptions{
-		Interpolation: &nearest,
-		Aspect:        auto,
+		Interpolation: optional.Of(nearest),
+		Aspect:        core.AspectAuto,
 	})
 
 	return fig

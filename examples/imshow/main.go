@@ -30,7 +30,7 @@ func main() {
 	ax.SetTitle("ImShow with Extent + Bilinear Interpolation")
 	ax.ImShow(data, core.ImShowOptions{
 		Colormap:      optional.Of(cmap),
-		Aspect:        optional.Of("equal"),
+		Aspect:        optional.Of(core.AspectEqual),
 		Extent:        optional.Of([4]float64{-2, 2, -1, 1}),
 		Interpolation: optional.Of("bilinear"),
 	})

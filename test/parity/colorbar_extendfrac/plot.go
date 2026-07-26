@@ -6,6 +6,7 @@ import (
 	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -23,9 +24,9 @@ func Render() image.Image {
 	}, core.MeshOptions{
 		XEdges:   []float64{0, 1, 2, 3},
 		YEdges:   []float64{0, 1, 2},
-		Colormap: &cmapName,
-		VMin:     &vmin,
-		VMax:     &vmax,
+		Colormap: optional.Of(cmapName),
+		VMin:     optional.Of(vmin),
+		VMax:     optional.Of(vmax),
 	})
 	if mesh != nil {
 		fig.AddColorbar(ax, mesh, core.ColorbarOptions{

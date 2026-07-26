@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -36,8 +37,8 @@ func Plot() *core.Figure {
 				core.ScatterAreaFromRadius(16, 100),
 				core.ScatterAreaFromRadius(19, 100),
 			},
-			EdgeColor: &edgeColor,
-			EdgeWidth: &edgeWidth,
+			EdgeColor: optional.Of(edgeColor),
+			EdgeWidth: optional.Of(edgeWidth),
 		},
 	)
 
@@ -56,18 +57,18 @@ func Plot() *core.Figure {
 			{R: 1.00, G: 0.50, B: 0.05, A: 1},
 			{R: 0.17, G: 0.63, B: 0.17, A: 1},
 		},
-		EdgeColor: &barEdge,
-		EdgeWidth: &barEdgeWidth,
-		Align:     &align,
+		EdgeColor: optional.Of(barEdge),
+		EdgeWidth: optional.Of(barEdgeWidth),
+		Align:     optional.Of(align),
 	})
 	barAx.BarLabel(base, nil, core.BarLabelOptions{Format: "%.1f", Padding: 2, FontSize: 8})
 	top, _ := barAx.Bar([]float64{0.6, 1.7, 2.9}, []float64{1.3, 1.0, 1.8}, core.BarOptions{
 		Widths:    widths,
 		Baselines: []float64{2.0, 3.1, 1.6},
-		Color:     colorPtr(render.Color{R: 0.58, G: 0.40, B: 0.74, A: 1}),
-		EdgeColor: &barEdge,
-		EdgeWidth: &barEdgeWidth,
-		Align:     &align,
+		Color:     optional.Of(render.Color{R: 0.58, G: 0.40, B: 0.74, A: 1}),
+		EdgeColor: optional.Of(barEdge),
+		EdgeWidth: optional.Of(barEdgeWidth),
+		Align:     optional.Of(align),
 	})
 	barAx.BarLabel(top, nil, core.BarLabelOptions{Format: "%.1f", Padding: 2, FontSize: 8})
 
@@ -85,10 +86,10 @@ func Plot() *core.Figure {
 			Where:       []bool{false, true, true, false, true, true},
 			Interpolate: true,
 			Step:        step,
-			Color:       colorPtr(render.Color{R: 0.84, G: 0.15, B: 0.16, A: 1}),
-			Alpha:       &fillAlpha,
-			EdgeColor:   colorPtr(render.Color{R: 0.50, G: 0.05, B: 0.06, A: 1}),
-			EdgeWidth:   floatPtr(1.0),
+			Color:       optional.Of(render.Color{R: 0.84, G: 0.15, B: 0.16, A: 1}),
+			Alpha:       optional.Of(fillAlpha),
+			EdgeColor:   optional.Of(render.Color{R: 0.50, G: 0.05, B: 0.06, A: 1}),
+			EdgeWidth:   optional.Of(1.0),
 		},
 	)
 
@@ -106,10 +107,10 @@ func Plot() *core.Figure {
 		[]float64{0.18, 0.24, 0.20, 0.30, 0.22, 0.26},
 		[]float64{0.35, 0.42, 0.25, 0.50, 0.38, 0.45},
 		core.ErrorBarOptions{
-			Color:           &errorColor,
-			CapSize:         &capSize,
-			Marker:          &marker,
-			MarkerSize:      &markerSize,
+			Color:           optional.Of(errorColor),
+			CapSize:         optional.Of(capSize),
+			Marker:          optional.Of(marker),
+			MarkerSize:      optional.Of(markerSize),
 			ErrorEvery:      2,
 			ErrorEveryStart: 1,
 		},

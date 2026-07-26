@@ -138,11 +138,11 @@ func addScatterFrame(ax *core.Axes, frame int) *core.Scatter2D {
 	scatter, err := ax.Scatter(x, y, core.ScatterOptions{
 		ScalarValues: scalars,
 		Colormap:     cmap,
-		VMin:         &vmin,
-		VMax:         &vmax,
+		VMin:         optional.Of(vmin),
+		VMax:         optional.Of(vmax),
 		Sizes:        sizes,
-		EdgeColor:    &scatterEdge,
-		EdgeWidth:    &edgeWidth,
+		EdgeColor:    optional.Of(scatterEdge),
+		EdgeWidth:    optional.Of(edgeWidth),
 	})
 	if err != nil {
 		return nil
@@ -160,7 +160,7 @@ func addImshowFrame(ax *core.Axes, frame int) *core.Image2D {
 		VMax:     optional.Of(1.0),
 		Origin:   optional.Of(core.ImageOriginLower),
 		Extent:   optional.Of(extent),
-		Aspect:   optional.Of("auto"),
+		Aspect:   optional.Of(core.AspectAuto),
 	})
 	ax.SetXLim(0, float64(imCols))
 	ax.SetYLim(0, float64(imRows))

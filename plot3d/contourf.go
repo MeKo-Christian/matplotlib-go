@@ -5,22 +5,21 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
 // Contourf projects a structured z grid and emits filled contour bands.
-func (a *Axes3D) Contourf(x, y []float64, z [][]float64, opts ...core.PlotOptions) *core.PolyCollection {
-	opt := optarg.One("contourf3d", opts)
-	colorOverride := opt.Color != nil
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes3D) Contourf(x, y []float64, z [][]float64, opt core.PlotOptions) *core.PolyCollection {
+	colorOverride := opt.Color.IsSet()
 	// matplotlib Axes3D.contourf forwards kwargs to Axes.contourf unchanged:
 	// filled bands are opaque unless the caller passes alpha.
 	alpha := 1.0
-	label := ""
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		alpha = *opt.Alpha
+	if v, ok := opt.Alpha.Get(); ok && v >= 0 && v <= 1 {
+		alpha = v
 	}
-	label = opt.Label
+	label := opt.Label
 	limitsChanged := a.observe3DContourf(x, y, z, opt)
 
 	paths, colors, scalarValues, zorder, mapping := a.projectedContourFillData(x, y, z, alpha, opt)
@@ -92,7 +91,7 @@ func (a *Axes3D) Contourf(x, y []float64, z [][]float64, opts ...core.PlotOption
 // TriContourf projects filled contour bands over an explicit triangulated 3D mesh.
 //
 //nolint:gocritic // Triangulation is a public value type; keep the pre-v1 method signature value-semantic.
-func (a *Axes3D) TriContourf(tri core.Triangulation, z []float64, opts ...core.PlotOptions) *core.PolyCollection {
+func (a *Axes3D) TriContourf(tri core.Triangulation, z []float64, opt core.PlotOptions) *core.PolyCollection {
 	if a == nil || len(tri.X) == 0 {
 		return nil
 	}
@@ -105,13 +104,12 @@ func (a *Axes3D) TriContourf(tri core.Triangulation, z []float64, opts ...core.P
 		return nil
 	}
 
-	opt := optarg.One("tricontourf3d", opts)
-	colorOverride := opt.Color != nil
+	colorOverride := opt.Color.IsSet()
 	// matplotlib Axes3D.tricontourf forwards kwargs to Axes.tricontourf
 	// unchanged: filled bands are opaque unless the caller passes alpha.
 	alpha := 1.0
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		alpha = *opt.Alpha
+	if v, ok := opt.Alpha.Get(); ok && v >= 0 && v <= 1 {
+		alpha = v
 	}
 	limitsChanged := a.observe3DTriContourf(tri, z, opt)
 
@@ -184,7 +182,7 @@ func (a *Axes3D) TriContourf(tri core.Triangulation, z []float64, opts ...core.P
 //nolint:gocritic // PlotOptions is an immutable snapshot retained by redraw closures.
 func contourScalarMap(values, levels []float64, opt core.PlotOptions) core.ScalarMapInfo {
 	mapping := resolvePlotScalarMap(values, opt)
-	if len(levels) >= 2 && opt.VMin == nil && opt.VMax == nil {
+	if len(levels) >= 2 && !opt.VMin.IsSet() && !opt.VMax.IsSet() {
 		mapping.VMin = levels[0]
 		mapping.VMax = levels[len(levels)-1]
 		if mapping.Norm == nil {
@@ -287,9 +285,8 @@ func (a *Axes3D) projectedContourFillData(x, y []float64, z [][]float64, alpha f
 		}
 
 		color := mapping.Color(bandLevel, alpha)
-		if opt.Color != nil {
-			color = *opt.Color
-			color = color.WithAlphaMultiplier(alpha)
+		if explicit, ok := opt.Color.Get(); ok {
+			color = explicit.WithAlphaMultiplier(alpha)
 		}
 		paths = append(paths, path)
 		colors = append(colors, color)
@@ -361,9 +358,8 @@ func (a *Axes3D) projectedTriContourFillData(tri core.Triangulation, z []float64
 		}
 
 		color := mapping.Color(bandLevel, alpha)
-		if opt.Color != nil {
-			color = *opt.Color
-			color = color.WithAlphaMultiplier(alpha)
+		if explicit, ok := opt.Color.Get(); ok {
+			color = explicit.WithAlphaMultiplier(alpha)
 		}
 		paths = append(paths, path)
 		colors = append(colors, color)

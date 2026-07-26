@@ -51,7 +51,7 @@ func Plot() *core.Figure {
 			}
 		}
 	}
-	ax.Quiver(x, y, z, u, v, w)
+	ax.Quiver(x, y, z, u, v, w, plot3d.Quiver3DOptions{})
 	return fig
 }
 

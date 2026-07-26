@@ -7,6 +7,7 @@ import (
 	_ "github.com/cwbudde/matplotlib-go/backends/all"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -27,7 +28,7 @@ func main() {
 	x, y := wave(400, 0, 10)
 	lineColor := render.Color{R: 0.12, G: 0.36, B: 0.72, A: 1}
 	lineWidth := 2.0
-	_, _ = ax.Plot(x, y, core.PlotOptions{Color: &lineColor, LineWidth: &lineWidth})
+	_, _ = ax.Plot(x, y, core.PlotOptions{Color: optional.Of(lineColor), LineWidth: optional.Of(lineWidth)})
 	ax.AddGrid(core.AxisBottom)
 	ax.AddGrid(core.AxisLeft)
 
@@ -40,7 +41,7 @@ func main() {
 		[2]float64{-0.2, 1.05},
 	)
 	inset.SetTitle("detail")
-	_, _ = inset.Plot(x, y, core.PlotOptions{Color: &lineColor, LineWidth: &lineWidth})
+	_, _ = inset.Plot(x, y, core.PlotOptions{Color: optional.Of(lineColor), LineWidth: optional.Of(lineWidth)})
 	inset.AddGrid(core.AxisBottom)
 	inset.AddGrid(core.AxisLeft)
 

@@ -31,13 +31,13 @@ func TestAnnotationCurvedArrowMatchesMatplotlibGalleryPath(t *testing.T) {
 		ConnectionStyle: arc,
 		ArrowColor:      blue,
 		ArrowWidth:      optional.Of(pointsToPixels(fig.RC.DPI, 1.2)),
-		BBox: &core.TextBBoxOptions{
+		BBox: optional.Of(core.TextBBoxOptions{
 			Padding:      pointsToPixels(fig.RC.DPI, 0.28*10),
 			FaceColor:    render.Color{R: 0.92, G: 0.97, B: 1, A: 0.9},
 			EdgeColor:    blue,
 			LineWidth:    pointsToPixels(fig.RC.DPI, 0.9),
 			CornerRadius: 5,
-		},
+		}),
 	})
 
 	r, err := agg.New(1040, 720, render.Color{R: 1, G: 1, B: 1, A: 1})

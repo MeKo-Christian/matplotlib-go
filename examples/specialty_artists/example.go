@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -52,7 +53,7 @@ func Plot() *core.Figure {
 		[]float64{0.14, 0.19, 0.24, 0.31, 0.46, 0.52, 0.61, 0.44, 0.73, 0.81, 0.68, 0.86, 0.58},
 		core.HexbinOptions{
 			GridSizeX: 7,
-			Extent:    &hexExtent,
+			Extent:    optional.Of(hexExtent),
 			C:         []float64{1, 2, 1.5, 2.3, 2.8, 3.1, 3.6, 2.1, 4.5, 4.9, 3.8, 5.2, 4.1},
 			Reduce:    "mean",
 			MinCount:  1,
@@ -68,7 +69,7 @@ func Plot() *core.Figure {
 		StartAngle:    90,
 		LabelDistance: 1.08,
 		Explode:       []float64{0, 0.04, 0, 0.02},
-		EdgeColor:     &wedgeEdge,
+		EdgeColor:     optional.Of(wedgeEdge),
 		LineWidth:     1.0,
 		Colors: []render.Color{
 			{R: 0.12, G: 0.47, B: 0.71, A: 1},
@@ -103,14 +104,14 @@ func Plot() *core.Figure {
 		{2.4, 2.5, 2.7, 2.9, 3.1, 3.4, 3.7, 4.1, 4.6},
 	}, core.ViolinOptions{
 		Colors:      []render.Color{violinBlue, violinBlue, violinBlue},
-		EdgeColor:   &violinEdge,
-		LineColor:   &violinBlue,
+		EdgeColor:   optional.Of(violinEdge),
+		LineColor:   optional.Of(violinBlue),
 		Alpha:       0.45,
 		Points:      violinPoints,
 		Widths:      violinWidths,
-		ShowMeans:   &violinShowMeans,
-		ShowMedians: &violinShowMedians,
-		ShowExtrema: &violinShowExtrema,
+		ShowMeans:   optional.Of(violinShowMeans),
+		ShowMedians: optional.Of(violinShowMedians),
+		ShowExtrema: optional.Of(violinShowExtrema),
 	})
 
 	tableAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.39, Y: 0.08}, Max: geom.Pt{X: 0.66, Y: 0.45}})

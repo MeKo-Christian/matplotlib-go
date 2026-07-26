@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 	"github.com/cwbudde/matplotlib-go/transform"
@@ -61,9 +62,9 @@ func TestScatterUsesIndependentShapeColorCycle(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
 	palette := fig.RC.Palette()
 
-	firstLine, _ := ax.Plot([]float64{0, 1}, []float64{0, 1})
-	scatter, _ := ax.Scatter([]float64{0.5}, []float64{0.5})
-	secondLine, _ := ax.Plot([]float64{0, 1}, []float64{1, 0})
+	firstLine, _ := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{})
+	scatter, _ := ax.Scatter([]float64{0.5}, []float64{0.5}, ScatterOptions{})
+	secondLine, _ := ax.Plot([]float64{0, 1}, []float64{1, 0}, PlotOptions{})
 
 	if got, want := firstLine.Col, palette[0]; got != want {
 		t.Fatalf("first line color = %+v, want %+v", got, want)
@@ -80,7 +81,7 @@ func TestScatterDefaultsUseMatplotlibFaceEdges(t *testing.T) {
 	fig := NewFigure(640, 480)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
 
-	scatter, _ := ax.Scatter([]float64{0.5}, []float64{0.5})
+	scatter, _ := ax.Scatter([]float64{0.5}, []float64{0.5}, ScatterOptions{})
 	if scatter == nil {
 		t.Fatal("Scatter returned nil")
 	}
@@ -630,7 +631,7 @@ func TestScatterAutoScaleIgnoresMarkerSize(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 	size := 500.0
-	ax.Scatter([]float64{0, 2}, []float64{1, 3}, ScatterOptions{Size: &size})
+	ax.Scatter([]float64{0, 2}, []float64{1, 3}, ScatterOptions{Size: optional.Of(size)})
 
 	ax.AutoScale(0.05)
 	xMin, xMax := ax.XScale.Domain()
@@ -648,7 +649,7 @@ func TestAxesScatterRejectsMismatchedXYLikeMatplotlib(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
 
-	if got, err := ax.Scatter([]float64{0, 1}, []float64{0}); err == nil || got != nil {
+	if got, err := ax.Scatter([]float64{0, 1}, []float64{0}, ScatterOptions{}); err == nil || got != nil {
 		t.Fatalf("Scatter with mismatched x/y lengths returned (%#v, %v), want nil and error", got, err)
 	}
 	if got := len(ax.Artists); got != 0 {
@@ -891,7 +892,7 @@ func TestScatter2D_LargeDataset(t *testing.T) {
 func TestScatterMasksNonfinitePositionByDefault(t *testing.T) {
 	fig := NewFigure(400, 300)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
-	s, _ := ax.Scatter([]float64{0, math.NaN(), 2}, []float64{0, 1, 2})
+	s, _ := ax.Scatter([]float64{0, math.NaN(), 2}, []float64{0, 1, 2}, ScatterOptions{})
 	if s == nil {
 		t.Fatal("Scatter returned nil")
 	}

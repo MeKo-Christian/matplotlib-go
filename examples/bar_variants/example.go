@@ -12,6 +12,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -48,7 +49,7 @@ func addVerticalLabeledPanel(ax *core.Axes) {
 	_, _ = ax.Bar(
 		[]float64{1, 2, 3, 4, 5},
 		[]float64{3, 7, 2, 8, 5},
-		core.BarOptions{Color: &color, Width: &width},
+		core.BarOptions{Color: optional.Of(color), Width: optional.Of(width)},
 	)
 }
 
@@ -63,7 +64,7 @@ func addHorizontalPanel(ax *core.Axes) {
 	_, _ = ax.Bar(
 		[]float64{1, 2, 3, 4, 5},
 		[]float64{3, 7, 2, 8, 5},
-		core.BarOptions{Width: &height, Color: &color, Orientation: &orientation},
+		core.BarOptions{Width: optional.Of(height), Color: optional.Of(color), Orientation: optional.Of(orientation)},
 	)
 }
 
@@ -106,11 +107,11 @@ func addStackedLabeledPanel(ax *core.Axes) {
 	seriesB := []float64{2.1, 1.6, 2.4, 1.7}
 	bottom, _ := ax.Bar(x, seriesA, core.BarOptions{
 		Baselines: base,
-		Color:     &render.Color{R: 0.16, G: 0.59, B: 0.49, A: 1},
+		Color:     optional.Of(render.Color{R: 0.16, G: 0.59, B: 0.49, A: 1}),
 	})
 	top, _ := ax.Bar(x, seriesB, core.BarOptions{
 		Baselines: seriesA,
-		Color:     &render.Color{R: 0.88, G: 0.47, B: 0.16, A: 1},
+		Color:     optional.Of(render.Color{R: 0.88, G: 0.47, B: 0.16, A: 1}),
 	})
 	ax.BarLabel(bottom, []string{"A1", "A2", "A3", "A4"}, core.BarLabelOptions{
 		Position: "center",

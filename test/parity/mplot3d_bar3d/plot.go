@@ -37,7 +37,7 @@ func Plot() *core.Figure {
 		dx[i], dy[i] = 0.5, 0.5
 	}
 
-	ax.Bar3D(x, y, z, dx, dy, dz)
+	ax.Bar3D(x, y, z, dx, dy, dz, plot3d.Bar3DOptions{})
 	return fig
 }
 

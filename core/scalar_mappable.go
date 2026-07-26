@@ -5,6 +5,7 @@ import (
 	"math"
 
 	matcolor "github.com/cwbudde/matplotlib-go/color"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -34,8 +35,8 @@ func scalarMapConfigured(m ScalarMapInfo) bool {
 type ScalarMapConfig struct {
 	Colormap string
 	Norm     ScalarNormalizer
-	VMin     *float64
-	VMax     *float64
+	VMin     optional.Value[float64]
+	VMax     optional.Value[float64]
 }
 
 // Resolved returns a copy with sane defaults for downstream consumers.
@@ -103,7 +104,7 @@ func ResolveScalarMapGrid(data [][]float64, cfg ScalarMapConfig) (ScalarMapInfo,
 }
 
 func resolveScalarMapRange(minValue, maxValue float64, cfg ScalarMapConfig) (ScalarMapInfo, error) {
-	if cfg.Norm != nil && (cfg.VMin != nil || cfg.VMax != nil) {
+	if cfg.Norm != nil && (cfg.VMin.IsSet() || cfg.VMax.IsSet()) {
 		return ScalarMapInfo{}, fmt.Errorf("cannot pass vmin/vmax with an explicit norm")
 	}
 
@@ -111,11 +112,11 @@ func resolveScalarMapRange(minValue, maxValue float64, cfg ScalarMapConfig) (Sca
 	if norm == nil {
 		vmin := math.NaN()
 		vmax := math.NaN()
-		if cfg.VMin != nil && isFinite(*cfg.VMin) {
-			vmin = *cfg.VMin
+		if cfg.VMin.IsSet() && isFinite(cfg.VMin.OrZero()) {
+			vmin = cfg.VMin.OrZero()
 		}
-		if cfg.VMax != nil && isFinite(*cfg.VMax) {
-			vmax = *cfg.VMax
+		if cfg.VMax.IsSet() && isFinite(cfg.VMax.OrZero()) {
+			vmax = cfg.VMax.OrZero()
 		}
 		norm = Normalize{VMin: vmin, VMax: vmax}
 	}

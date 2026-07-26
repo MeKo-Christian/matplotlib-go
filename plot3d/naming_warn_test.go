@@ -19,8 +19,8 @@ func TestPlotSurfaceWarnsAndPointsToSurface(t *testing.T) {
 	}
 
 	x := []float64{0, 1, 2, 3}
-	ax.PlotSurface(x, x, x)
-	ax.PlotSurface(x, x, x)
+	ax.PlotSurface(x, x, x, PlotOptions{})
+	ax.PlotSurface(x, x, x, PlotOptions{})
 
 	if len(*got) != 1 {
 		t.Fatalf("PlotSurface should warn exactly once per axes, got %d: %v", len(*got), *got)
@@ -44,8 +44,8 @@ func TestVoxelWarnsAndPointsToVoxels(t *testing.T) {
 	}
 
 	one := []float64{0, 1}
-	ax.Voxel(one, one, one, one, one, one)
-	ax.Voxel(one, one, one, one, one, one)
+	ax.Voxel(one, one, one, one, one, one, PlotOptions{})
+	ax.Voxel(one, one, one, one, one, one, PlotOptions{})
 
 	if len(*got) != 1 {
 		t.Fatalf("Voxel should warn exactly once per axes, got %d: %v", len(*got), *got)

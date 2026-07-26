@@ -3,7 +3,7 @@ package widgets
 import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -11,8 +11,8 @@ import (
 type MultiCursorOptions struct {
 	Color      render.Color
 	LineWidth  float64
-	HorizOn    *bool
-	VerticalOn *bool
+	HorizOn    optional.Value[bool]
+	VerticalOn optional.Value[bool]
 }
 
 // MultiCursor draws shared cross-lines across multiple axes.
@@ -37,15 +37,15 @@ func NewMultiCursor(a *core.Axes, axes ...*core.Axes) *MultiCursor {
 	config := MultiCursorOptions{
 		Color:      render.Color{R: 0.24, G: 0.24, B: 0.24, A: 1},
 		LineWidth:  0.9,
-		HorizOn:    boolPtr(true),
-		VerticalOn: boolPtr(true),
+		HorizOn:    optional.Of(true),
+		VerticalOn: optional.Of(true),
 	}
 	selector := &MultiCursor{
 		Axes:       dedupeAxes(append([]*core.Axes{a}, axes...)),
 		Color:      config.Color,
 		LineWidth:  config.LineWidth,
-		Horizontal: boolValue(config.HorizOn, true),
-		Vertical:   boolValue(config.VerticalOn, true),
+		Horizontal: boolValue(config.HorizOn.Ptr(), true),
+		Vertical:   boolValue(config.VerticalOn.Ptr(), true),
 		z:          1200,
 	}
 	a.Add(selector)
@@ -53,25 +53,25 @@ func NewMultiCursor(a *core.Axes, axes ...*core.Axes) *MultiCursor {
 }
 
 // NewMultiCursorWithOptions creates a synchronized cursor with explicit options.
-func NewMultiCursorWithOptions(a *core.Axes, opts []MultiCursorOptions, axes ...*core.Axes) *MultiCursor {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func NewMultiCursorWithOptions(a *core.Axes, opt MultiCursorOptions, axes ...*core.Axes) *MultiCursor {
 	if a == nil {
 		return nil
 	}
 	config := MultiCursorOptions{
 		Color:      render.Color{R: 0.24, G: 0.24, B: 0.24, A: 1},
 		LineWidth:  0.9,
-		HorizOn:    boolPtr(true),
-		VerticalOn: boolPtr(true),
+		HorizOn:    optional.Of(true),
+		VerticalOn: optional.Of(true),
 	}
-	if opt, ok := optarg.Optional("multicursor", opts); ok {
-		config = mergeMultiCursorOptions(config, opt)
-	}
+	config = mergeMultiCursorOptions(config, opt)
 	mc := &MultiCursor{
 		Axes:       dedupeAxes(append([]*core.Axes{a}, axes...)),
 		Color:      config.Color,
 		LineWidth:  config.LineWidth,
-		Horizontal: boolValue(config.HorizOn, true),
-		Vertical:   boolValue(config.VerticalOn, true),
+		Horizontal: boolValue(config.HorizOn.Ptr(), true),
+		Vertical:   boolValue(config.VerticalOn.Ptr(), true),
 		z:          1200,
 	}
 	a.Add(mc)
@@ -155,10 +155,10 @@ func mergeMultiCursorOptions(base, override MultiCursorOptions) MultiCursorOptio
 	if override.LineWidth > 0 {
 		base.LineWidth = override.LineWidth
 	}
-	if override.HorizOn != nil {
+	if override.HorizOn.IsSet() {
 		base.HorizOn = override.HorizOn
 	}
-	if override.VerticalOn != nil {
+	if override.VerticalOn.IsSet() {
 		base.VerticalOn = override.VerticalOn
 	}
 	return base

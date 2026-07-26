@@ -9,6 +9,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 	"github.com/cwbudde/matplotlib-go/widgets"
@@ -47,12 +48,12 @@ func Plot() *core.Figure {
 	orange := render.Color{R: 0.84, G: 0.35, B: 0.18, A: 1}
 	lwSignal := 2.2
 	lwMod := 1.7
-	_, _ = mainAx.Plot(x, signal, core.PlotOptions{Color: &blue, LineWidth: &lwSignal, Label: "signal"})
-	_, _ = mainAx.Plot(x, modulation, core.PlotOptions{Color: &orange, LineWidth: &lwMod, Label: "modulation"})
+	_, _ = mainAx.Plot(x, signal, core.PlotOptions{Color: optional.Of(blue), LineWidth: optional.Of(lwSignal), Label: "signal"})
+	_, _ = mainAx.Plot(x, modulation, core.PlotOptions{Color: optional.Of(orange), LineWidth: optional.Of(lwMod), Label: "modulation"})
 	mainAx.AddLegend()
 
 	spanAlpha := 0.18
-	mainAx.AxVSpan(0.7, 1.35, core.VSpanOptions{Color: &blue, Alpha: &spanAlpha})
+	mainAx.AxVSpan(0.7, 1.35, core.VSpanOptions{Color: optional.Of(blue), Alpha: optional.Of(spanAlpha)})
 	mainAx.AddPatch(&core.Rectangle{
 		Patch: core.Patch{FaceColor: colorWithAlpha(blue, 0.20), EdgeColor: colorWithAlpha(blue, 0.20), EdgeWidth: 1},
 		XY:    geom.Pt{X: 2.25, Y: -0.95}, Width: 0.8, Height: 0.7,
@@ -82,8 +83,8 @@ func Plot() *core.Figure {
 	refColor := render.Color{R: 0.2, G: 0.2, B: 0.2, A: 1}
 	refAlpha := 0.75
 	refWidth := 1.0
-	mainAx.AxVLine(2.8, core.VLineOptions{Color: &refColor, LineWidth: &refWidth, Alpha: &refAlpha})
-	mainAx.AxHLine(0.35, core.HLineOptions{Color: &refColor, LineWidth: &refWidth, Alpha: &refAlpha})
+	mainAx.AxVLine(2.8, core.VLineOptions{Color: optional.Of(refColor), LineWidth: optional.Of(refWidth), Alpha: optional.Of(refAlpha)})
+	mainAx.AxHLine(0.35, core.HLineOptions{Color: optional.Of(refColor), LineWidth: optional.Of(refWidth), Alpha: optional.Of(refAlpha)})
 
 	auxAx := fig.AddAxes(axesRect(0.76, 0.36, 0.18, 0.56))
 	auxAx.XAxis = mainAx.XAxis
@@ -93,16 +94,16 @@ func Plot() *core.Figure {
 	auxGrid := auxAx.AddYGrid()
 	auxGrid.Color = gridColor
 	auxGrid.LineWidth = gridWidth
-	_, _ = auxAx.Plot(x, modulation, core.PlotOptions{Color: &orange, LineWidth: &lwMod})
-	auxAx.AxVLine(4.45, core.VLineOptions{Color: &refColor, LineWidth: &refWidth, Alpha: &refAlpha})
-	auxAx.AxHLine(0.0, core.HLineOptions{Color: &refColor, LineWidth: &refWidth, Alpha: &refAlpha})
+	_, _ = auxAx.Plot(x, modulation, core.PlotOptions{Color: optional.Of(orange), LineWidth: optional.Of(lwMod)})
+	auxAx.AxVLine(4.45, core.VLineOptions{Color: optional.Of(refColor), LineWidth: optional.Of(refWidth), Alpha: optional.Of(refAlpha)})
+	auxAx.AxHLine(0.0, core.HLineOptions{Color: optional.Of(refColor), LineWidth: optional.Of(refWidth), Alpha: optional.Of(refAlpha)})
 
-	widgets.NewButton(widgets.NewAxes(fig, axesRect(0.06, 0.23, 0.16, 0.07)), "Apply")
-	widgets.NewSlider(widgets.NewAxes(fig, axesRect(0.28, 0.23, 0.26, 0.07)), "gain", 0, 1, 0.68)
-	widgets.NewRangeSlider(widgets.NewAxes(fig, axesRect(0.59, 0.23, 0.23, 0.07)), "window", 0, 1, 0.22, 0.78)
-	widgets.NewTextBox(widgets.NewAxes(fig, axesRect(0.86, 0.23, 0.10, 0.07)), "label", "phase scan")
-	widgets.NewCheckButtons(widgets.NewAxes(fig, axesRect(0.06, 0.07, 0.36, 0.12)), []string{"signal", "modulation", "grid"}, []bool{true, true, false})
-	widgets.NewRadioButtons(widgets.NewAxes(fig, axesRect(0.55, 0.07, 0.28, 0.12)), []string{"blue", "amber", "mono"}, 1)
+	widgets.NewButton(widgets.NewAxes(fig, axesRect(0.06, 0.23, 0.16, 0.07)), "Apply", widgets.ButtonOptions{})
+	widgets.NewSlider(widgets.NewAxes(fig, axesRect(0.28, 0.23, 0.26, 0.07)), "gain", 0, 1, 0.68, widgets.SliderOptions{})
+	widgets.NewRangeSlider(widgets.NewAxes(fig, axesRect(0.59, 0.23, 0.23, 0.07)), "window", 0, 1, 0.22, 0.78, widgets.RangeSliderOptions{})
+	widgets.NewTextBox(widgets.NewAxes(fig, axesRect(0.86, 0.23, 0.10, 0.07)), "label", "phase scan", widgets.TextBoxOptions{})
+	widgets.NewCheckButtons(widgets.NewAxes(fig, axesRect(0.06, 0.07, 0.36, 0.12)), []string{"signal", "modulation", "grid"}, []bool{true, true, false}, widgets.CheckButtonsOptions{})
+	widgets.NewRadioButtons(widgets.NewAxes(fig, axesRect(0.55, 0.07, 0.28, 0.12)), []string{"blue", "amber", "mono"}, 1, widgets.RadioButtonsOptions{})
 
 	return fig
 }

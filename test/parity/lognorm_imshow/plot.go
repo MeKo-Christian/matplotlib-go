@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 )
 
 func Render() image.Image {
@@ -13,12 +14,12 @@ func Render() image.Image {
 	xmin, xmax := 0.0, 6.0
 	ymin, ymax := 0.0, 5.0
 	img := ax.Image(common.LogNormFixtureData(5, 6), core.ImageOptions{
-		Colormap: &cmap,
+		Colormap: optional.Of(cmap),
 		Norm:     core.LogNorm{VMin: 1, VMax: 1000},
-		XMin:     &xmin,
-		XMax:     &xmax,
-		YMin:     &ymin,
-		YMax:     &ymax,
+		XMin:     optional.Of(xmin),
+		XMax:     optional.Of(xmax),
+		YMin:     optional.Of(ymin),
+		YMax:     optional.Of(ymax),
 		Origin:   core.ImageOriginLower,
 	})
 	if img != nil {

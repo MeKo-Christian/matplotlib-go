@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -32,9 +33,9 @@ func Plot() *core.Figure {
 	color := render.Color{R: 0.8, G: 0.4, B: 0.2, A: 1}
 	orientation := core.BarHorizontal
 	_, _ = ax.Bar(y, widths, core.BarOptions{
-		Width:       &height,
-		Color:       &color,
-		Orientation: &orientation,
+		Width:       optional.Of(height),
+		Color:       optional.Of(color),
+		Orientation: optional.Of(orientation),
 	})
 	return fig
 }

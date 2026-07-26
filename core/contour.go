@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -13,19 +14,19 @@ func (a *Axes) resolveContourLineDefaults(opt *ContourOptions) {
 		return
 	}
 	rc := a.resolvedRC()
-	if opt.LineWidth == nil {
+	if !opt.LineWidth.IsSet() {
 		width := rc.LineWidth
 		if rc.Contour.LineWidthSet {
 			width = rc.Contour.LineWidth
 		}
-		opt.LineWidth = &width
+		opt.LineWidth = optional.Of(width)
 	}
-	if opt.NegativeLineStyles == nil {
+	if !opt.NegativeLineStyles.IsSet() {
 		style := rc.Contour.NegativeLineStyle
 		if style == "" {
 			style = "dashed"
 		}
-		opt.NegativeLineStyles = &style
+		opt.NegativeLineStyles = optional.Of(style)
 	}
 }
 
@@ -45,22 +46,21 @@ func (a *Axes) resolveStructuredContourOptions(opt *ContourOptions) (string, boo
 	}
 
 	cornerMask := false
-	if opt.CornerMask != nil {
-		cornerMask = *opt.CornerMask
+	if explicit, ok := opt.CornerMask.Get(); ok {
+		cornerMask = explicit
 		if algorithm == "mpl2005" && cornerMask {
 			return "", false, false
 		}
 	} else if algorithm != "mpl2005" {
 		cornerMask = rc.Contour.CornerMask
 	}
-	opt.CornerMask = &cornerMask
+	opt.CornerMask = optional.Of(cornerMask)
 	a.resolveContourLineDefaults(opt)
 	return algorithm, cornerMask, true
 }
 
 func contourLineColor(level float64, levels []float64, opt ContourOptions, mapping ScalarMapInfo, alpha float64, fallback render.Color) render.Color {
-	if opt.Color != nil {
-		color := *opt.Color
+	if color, ok := opt.Color.Get(); ok {
 		return color.WithAlphaMultiplier(alpha)
 	}
 	if len(opt.Colors) > 0 {
@@ -68,7 +68,7 @@ func contourLineColor(level float64, levels []float64, opt ContourOptions, mappi
 		color := opt.Colors[idx%len(opt.Colors)]
 		return color.WithAlphaMultiplier(alpha)
 	}
-	if opt.Colormap != nil {
+	if opt.Colormap.IsSet() {
 		return mapping.Color(level, alpha)
 	}
 	return fallback.WithAlphaMultiplier(alpha)

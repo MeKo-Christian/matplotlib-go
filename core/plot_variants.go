@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -21,82 +21,82 @@ const (
 
 // StepOptions configures Axes.Step.
 type StepOptions struct {
-	Color     *render.Color
-	LineWidth *float64
+	Color     optional.Value[render.Color]
+	LineWidth optional.Value[float64]
 	Dashes    []float64
-	Where     *StepWhere
+	Where     StepWhere // zero value steps before each sample
 	Label     string
-	Alpha     *float64
+	Alpha     optional.Value[float64]
 }
 
 // StairsOptions configures Axes.Stairs.
 type StairsOptions struct {
-	Color     *render.Color
-	EdgeColor *render.Color
-	LineWidth *float64
-	Alpha     *float64
-	Baseline  *float64
-	Fill      *bool
+	Color     optional.Value[render.Color]
+	EdgeColor optional.Value[render.Color]
+	LineWidth optional.Value[float64]
+	Alpha     optional.Value[float64]
+	Baseline  float64 // steps are filled down to this value
+	Fill      bool
 	Label     string
 }
 
 // ReferenceLineOptions configures reference lines such as axhline/axvline/axline.
 type ReferenceLineOptions struct {
-	Color     *render.Color
-	LineWidth *float64
+	Color     optional.Value[render.Color]
+	LineWidth optional.Value[float64]
 	Dashes    []float64
-	Alpha     *float64
+	Alpha     optional.Value[float64]
 }
 
 // HLineOptions configures AxHLine.
 type HLineOptions struct {
-	Color     *render.Color
-	LineWidth *float64
+	Color     optional.Value[render.Color]
+	LineWidth optional.Value[float64]
 	Dashes    []float64
-	Alpha     *float64
-	XMin      *float64
-	XMax      *float64
+	Alpha     optional.Value[float64]
+	XMin      optional.Value[float64] // axes fraction; unset spans the full width
+	XMax      optional.Value[float64]
 }
 
 // VLineOptions configures AxVLine.
 type VLineOptions struct {
-	Color     *render.Color
-	LineWidth *float64
+	Color     optional.Value[render.Color]
+	LineWidth optional.Value[float64]
 	Dashes    []float64
-	Alpha     *float64
-	YMin      *float64
-	YMax      *float64
+	Alpha     optional.Value[float64]
+	YMin      optional.Value[float64] // axes fraction; unset spans the full height
+	YMax      optional.Value[float64]
 }
 
 // SpanOptions configures span helpers such as axhspan and axvspan.
 type SpanOptions struct {
-	Color       *render.Color
-	EdgeColor   *render.Color
-	EdgeWidth   *float64
-	Alpha       *float64
-	Antialiased *bool
+	Color       optional.Value[render.Color]
+	EdgeColor   optional.Value[render.Color]
+	EdgeWidth   optional.Value[float64]
+	Alpha       optional.Value[float64]
+	Antialiased optional.Value[bool]
 }
 
 // HSpanOptions configures AxHSpan.
 type HSpanOptions struct {
-	Color       *render.Color
-	EdgeColor   *render.Color
-	EdgeWidth   *float64
-	Alpha       *float64
-	Antialiased *bool
-	XMin        *float64
-	XMax        *float64
+	Color       optional.Value[render.Color]
+	EdgeColor   optional.Value[render.Color]
+	EdgeWidth   optional.Value[float64]
+	Alpha       optional.Value[float64]
+	Antialiased optional.Value[bool]
+	XMin        optional.Value[float64] // axes fraction; unset spans the full width
+	XMax        optional.Value[float64]
 }
 
 // VSpanOptions configures AxVSpan.
 type VSpanOptions struct {
-	Color       *render.Color
-	EdgeColor   *render.Color
-	EdgeWidth   *float64
-	Alpha       *float64
-	Antialiased *bool
-	YMin        *float64
-	YMax        *float64
+	Color       optional.Value[render.Color]
+	EdgeColor   optional.Value[render.Color]
+	EdgeWidth   optional.Value[float64]
+	Alpha       optional.Value[float64]
+	Antialiased optional.Value[bool]
+	YMin        optional.Value[float64] // axes fraction; unset spans the full height
+	YMax        optional.Value[float64]
 }
 
 // BarLabelOptions configures bar-label placement.
@@ -156,71 +156,40 @@ type InfiniteLine2D struct {
 }
 
 // Step draws a step-connected line through the provided samples.
-func (a *Axes) Step(x, y []float64, opts ...StepOptions) *Line2D {
-	opt := optarg.One("step", opts)
-
-	where := StepWherePre
-	if opt.Where != nil {
-		where = *opt.Where
-	}
-	drawStyle := lineDrawStyleFromStepWhere(where)
-
+//
+//nolint:gocritic // StepOptions is forwarded unchanged to the line builder.
+func (a *Axes) Step(x, y []float64, opt StepOptions) *Line2D {
 	return a.plot(x, y, PlotOptions{
 		Color:     opt.Color,
 		LineWidth: opt.LineWidth,
 		Dashes:    opt.Dashes,
-		DrawStyle: &drawStyle,
+		DrawStyle: lineDrawStyleFromStepWhere(opt.Where),
 		Label:     opt.Label,
 		Alpha:     opt.Alpha,
 	})
 }
 
 // Stairs draws pre-binned histogram-style steps from explicit bin edges.
-func (a *Axes) Stairs(values, edges []float64, opts ...StairsOptions) *Stairs2D {
+//
+//nolint:gocritic // StairsOptions is an immutable snapshot of the caller's options.
+func (a *Axes) Stairs(values, edges []float64, opt StairsOptions) *Stairs2D {
 	if len(values) == 0 || len(edges) < 2 {
 		return nil
 	}
 
-	opt := optarg.One("stairs", opts)
-
-	lineWidth := 1.5
-	if opt.LineWidth != nil {
-		lineWidth = *opt.LineWidth
-	}
-
 	alpha := 1.0
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		alpha = *opt.Alpha
-	}
-
-	baseline := 0.0
-	if opt.Baseline != nil {
-		baseline = *opt.Baseline
-	}
-
-	fill := false
-	if opt.Fill != nil {
-		fill = *opt.Fill
-	}
-
-	color := a.NextColor()
-	if opt.Color != nil {
-		color = *opt.Color
-	}
-
-	edgeColor := render.Color{}
-	if opt.EdgeColor != nil {
-		edgeColor = *opt.EdgeColor
+	if v, ok := opt.Alpha.Get(); ok && v >= 0 && v <= 1 {
+		alpha = v
 	}
 
 	stairs := &Stairs2D{
 		Edges:     append([]float64(nil), edges...),
 		Values:    append([]float64(nil), values...),
-		Baseline:  baseline,
-		Fill:      fill,
-		Color:     color,
-		EdgeColor: edgeColor,
-		LineWidth: lineWidth,
+		Baseline:  opt.Baseline,
+		Fill:      opt.Fill,
+		Color:     opt.Color.Or(a.NextColor()),
+		EdgeColor: opt.EdgeColor.OrZero(),
+		LineWidth: opt.LineWidth.Or(1.5),
 		Alpha:     alpha,
 		Label:     opt.Label,
 	}
@@ -229,16 +198,11 @@ func (a *Axes) Stairs(values, edges []float64, opts ...StairsOptions) *Stairs2D 
 }
 
 // AxHLine draws a horizontal reference line using axes-fraction x coordinates and a data-space y value.
-func (a *Axes) AxHLine(y float64, opts ...HLineOptions) *Segment2D {
-	opt := optarg.One("axhline", opts)
-	xMin := 0.0
-	xMax := 1.0
-	if opt.XMin != nil {
-		xMin = *opt.XMin
-	}
-	if opt.XMax != nil {
-		xMax = *opt.XMax
-	}
+//
+//nolint:gocritic // HLineOptions is an immutable snapshot of the caller's options.
+func (a *Axes) AxHLine(y float64, opt HLineOptions) *Segment2D {
+	xMin := opt.XMin.Or(0)
+	xMax := opt.XMax.Or(1)
 	line := a.newSegment(
 		geom.Pt{X: xMin, Y: y},
 		geom.Pt{X: xMax, Y: y},
@@ -250,16 +214,11 @@ func (a *Axes) AxHLine(y float64, opts ...HLineOptions) *Segment2D {
 }
 
 // AxVLine draws a vertical reference line using a data-space x value and axes-fraction y coordinates.
-func (a *Axes) AxVLine(x float64, opts ...VLineOptions) *Segment2D {
-	opt := optarg.One("axvline", opts)
-	yMin := 0.0
-	yMax := 1.0
-	if opt.YMin != nil {
-		yMin = *opt.YMin
-	}
-	if opt.YMax != nil {
-		yMax = *opt.YMax
-	}
+//
+//nolint:gocritic // VLineOptions is an immutable snapshot of the caller's options.
+func (a *Axes) AxVLine(x float64, opt VLineOptions) *Segment2D {
+	yMin := opt.YMin.Or(0)
+	yMax := opt.YMax.Or(1)
 	line := a.newSegment(
 		geom.Pt{X: x, Y: yMin},
 		geom.Pt{X: x, Y: yMax},
@@ -271,8 +230,9 @@ func (a *Axes) AxVLine(x float64, opts ...VLineOptions) *Segment2D {
 }
 
 // AxLine draws an infinite data-space line through two points, clipped to the current axes view.
-func (a *Axes) AxLine(p1, p2 geom.Pt, opts ...ReferenceLineOptions) *InfiniteLine2D {
-	opt := optarg.One("axline", opts)
+//
+//nolint:gocritic // ReferenceLineOptions is forwarded unchanged to the line builder.
+func (a *Axes) AxLine(p1, p2 geom.Pt, opt ReferenceLineOptions) *InfiniteLine2D {
 	dir := geom.Pt{X: p2.X - p1.X, Y: p2.Y - p1.Y}
 	line := a.newInfiniteLine(p1, dir, opt)
 	a.Add(line)
@@ -280,24 +240,20 @@ func (a *Axes) AxLine(p1, p2 geom.Pt, opts ...ReferenceLineOptions) *InfiniteLin
 }
 
 // AxLineSlope draws an infinite data-space line through a point with the provided slope.
-func (a *Axes) AxLineSlope(point geom.Pt, slope float64, opts ...ReferenceLineOptions) *InfiniteLine2D {
-	opt := optarg.One("axline slope", opts)
+//
+//nolint:gocritic // ReferenceLineOptions is forwarded unchanged to the line builder.
+func (a *Axes) AxLineSlope(point geom.Pt, slope float64, opt ReferenceLineOptions) *InfiniteLine2D {
 	line := a.newInfiniteLine(point, geom.Pt{X: 1, Y: slope}, opt)
 	a.Add(line)
 	return line
 }
 
 // AxHSpan draws a horizontal span using axes-fraction x coordinates and data-space y values.
-func (a *Axes) AxHSpan(yMin, yMax float64, opts ...HSpanOptions) *Span2D {
-	opt := optarg.One("axhspan", opts)
-	xMin := 0.0
-	xMax := 1.0
-	if opt.XMin != nil {
-		xMin = *opt.XMin
-	}
-	if opt.XMax != nil {
-		xMax = *opt.XMax
-	}
+//
+//nolint:gocritic // HSpanOptions is an immutable snapshot of the caller's options.
+func (a *Axes) AxHSpan(yMin, yMax float64, opt HSpanOptions) *Span2D {
+	xMin := opt.XMin.Or(0)
+	xMax := opt.XMax.Or(1)
 	span := a.newSpan(
 		geom.Pt{X: xMin, Y: yMin},
 		geom.Pt{X: xMax, Y: yMax},
@@ -309,16 +265,11 @@ func (a *Axes) AxHSpan(yMin, yMax float64, opts ...HSpanOptions) *Span2D {
 }
 
 // AxVSpan draws a vertical span using data-space x values and axes-fraction y coordinates.
-func (a *Axes) AxVSpan(xMin, xMax float64, opts ...VSpanOptions) *Span2D {
-	opt := optarg.One("axvspan", opts)
-	yMin := 0.0
-	yMax := 1.0
-	if opt.YMin != nil {
-		yMin = *opt.YMin
-	}
-	if opt.YMax != nil {
-		yMax = *opt.YMax
-	}
+//
+//nolint:gocritic // VSpanOptions is an immutable snapshot of the caller's options.
+func (a *Axes) AxVSpan(xMin, xMax float64, opt VSpanOptions) *Span2D {
+	yMin := opt.YMin.Or(0)
+	yMax := opt.YMax.Or(1)
 	span := a.newSpan(
 		geom.Pt{X: xMin, Y: yMin},
 		geom.Pt{X: xMax, Y: yMax},
@@ -330,7 +281,9 @@ func (a *Axes) AxVSpan(xMin, xMax float64, opts ...VSpanOptions) *Span2D {
 }
 
 // BrokenBarH draws one or more horizontal rectangles sharing a common y-range.
-func (a *Axes) BrokenBarH(xRanges [][2]float64, yRange [2]float64, opts ...BarOptions) *Bar2D {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) BrokenBarH(xRanges [][2]float64, yRange [2]float64, opt BarOptions) *Bar2D {
 	if len(xRanges) == 0 {
 		return nil
 	}
@@ -345,22 +298,21 @@ func (a *Axes) BrokenBarH(xRanges [][2]float64, yRange [2]float64, opts ...BarOp
 		widths[i] = xr[1]
 	}
 
-	opt := optarg.One("broken barh", opts)
 	orientation := BarHorizontal
-	opt.Orientation = &orientation
-	opt.Width = float64Ptr(yRange[1])
+	opt.Orientation = optional.Of(orientation)
+	opt.Width = optional.Of(yRange[1])
 	opt.Baselines = baselines
 
 	return a.bar(centers, widths, opt)
 }
 
 // BarLabel adds text labels to bars, either centered inside the bar or at the bar edge.
-func (a *Axes) BarLabel(bar *Bar2D, labels []string, opts ...BarLabelOptions) []*Text {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) BarLabel(bar *Bar2D, labels []string, opt BarLabelOptions) []*Text {
 	if a == nil || bar == nil {
 		return nil
 	}
-
-	opt := optarg.One("bar label", opts)
 
 	position := strings.ToLower(strings.TrimSpace(opt.Position))
 	if position == "" {
@@ -735,32 +687,27 @@ func (a *Axes) newInfiniteLine(point, direction geom.Pt, opt ReferenceLineOption
 
 func (a *Axes) newSpan(start, end geom.Pt, coords CoordinateSpec, opt SpanOptions) *Span2D {
 	rc := a.resolvedRC()
-	color := rc.DefaultPatchFaceColor()
-	if opt.Color != nil {
-		color = *opt.Color
-	}
+	explicitColor, colorSet := opt.Color.Get()
+	color := opt.Color.Or(rc.DefaultPatchFaceColor())
 	alpha := 1.0
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		alpha = *opt.Alpha
+	explicitAlpha, alphaInRange := opt.Alpha.Get()
+	alphaInRange = alphaInRange && explicitAlpha >= 0 && explicitAlpha <= 1
+	if alphaInRange {
+		alpha = explicitAlpha
 	}
 	color = color.WithAlphaMultiplier(alpha)
 	edgeColor := render.Color{}
-	if opt.Color != nil {
+	if colorSet {
 		// Matplotlib's Patch color= alias sets both facecolor and edgecolor.
-		edgeColor = *opt.Color
-		edgeColor = edgeColor.WithAlphaMultiplier(alpha)
+		edgeColor = explicitColor.WithAlphaMultiplier(alpha)
 	} else if rc.Patch.ForceEdgeColor {
 		edgeColor = rc.Patch.EdgeColor
 	}
-	if opt.EdgeColor != nil {
-		edgeColor = *opt.EdgeColor
-		if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-			edgeColor = edgeColor.WithAlphaMultiplier(*opt.Alpha)
+	if explicitEdge, ok := opt.EdgeColor.Get(); ok {
+		edgeColor = explicitEdge
+		if alphaInRange {
+			edgeColor = edgeColor.WithAlphaMultiplier(explicitAlpha)
 		}
-	}
-	edgeWidth := rc.Patch.LineWidth // points; converted at the Span2D Paint sink
-	if opt.EdgeWidth != nil {
-		edgeWidth = *opt.EdgeWidth
 	}
 
 	return &Span2D{
@@ -769,7 +716,8 @@ func (a *Axes) newSpan(start, end geom.Pt, coords CoordinateSpec, opt SpanOption
 		Coords:    coords,
 		Color:     color,
 		EdgeColor: edgeColor,
-		EdgeWidth: edgeWidth,
+		// points; converted at the Span2D Paint sink
+		EdgeWidth: opt.EdgeWidth.Or(rc.Patch.LineWidth),
 		Antialias: patchAntialiasMode(&rc.Patch, opt.Antialiased),
 		z:         defaultPatchZ,
 	}
@@ -777,24 +725,18 @@ func (a *Axes) newSpan(start, end geom.Pt, coords CoordinateSpec, opt SpanOption
 
 func (a *Axes) referenceLineStyle(opt ReferenceLineOptions) (render.Color, float64) {
 	rc := a.resolvedRC()
-	color := rc.AxesEdgeColor
-	if opt.Color != nil {
-		color = *opt.Color
-	}
+	color := opt.Color.Or(rc.AxesEdgeColor)
 	if color.A == 0 {
 		color.A = 1
 	}
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		color = color.WithAlphaMultiplier(*opt.Alpha)
+	if alpha, ok := opt.Alpha.Get(); ok && alpha >= 0 && alpha <= 1 {
+		color = color.WithAlphaMultiplier(alpha)
 	}
 	width := rc.AxisLineWidth
 	if width <= 0 {
 		width = 1
 	}
-	if opt.LineWidth != nil {
-		width = *opt.LineWidth
-	}
-	return color, width
+	return color, opt.LineWidth.Or(width)
 }
 
 func barLabelText(index int, labels []string, value float64, format string) string {

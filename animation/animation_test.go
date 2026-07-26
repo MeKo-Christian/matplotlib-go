@@ -218,7 +218,7 @@ func TestFuncAnimationDoesNotStealWidgetPickLayer(t *testing.T) {
 	cnv := newFakeCanvas()
 	cnv.fig = core.NewFigure(120, 80)
 	ax := cnv.fig.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
-	button := widgets.NewButton(ax, "Run")
+	button := widgets.NewButton(ax, "Run", widgets.ButtonOptions{})
 	art := &pickableFakeArtist{fakeArtist: fakeArtist{zOrder: 10000}}
 	ax.Add(art)
 

@@ -161,8 +161,10 @@ func (s *categoryAxisState) axisInfo() AxisInfo {
 
 // PlotDate plots date-time x-values against numeric y-values and configures the
 // x-axis with date locators/formatters.
-func (a *Axes) PlotDate(xVals []time.Time, yVals []float64, opts ...PlotOptions) (*Line2D, error) {
-	return a.Plot(xVals, yVals, opts...)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) PlotDate(xVals []time.Time, yVals []float64, opt PlotOptions) (*Line2D, error) {
+	return a.Plot(xVals, yVals, opt)
 }
 
 type unitAxisSnapshot struct {

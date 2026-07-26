@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -200,7 +201,7 @@ func TestTextBBoxDrawsBehindAxesAndFigureText(t *testing.T) {
 	ax.YAxis.ShowLabels = false
 	ax.ShowFrame = false
 
-	box := &TextBBoxOptions{
+	box := TextBBoxOptions{
 		FaceColor: render.Color{R: 1, G: 1, B: 1, A: 1},
 		EdgeColor: render.Color{R: 0.7, G: 0.7, B: 0.7, A: 1},
 	}
@@ -208,12 +209,12 @@ func TestTextBBoxDrawsBehindAxesAndFigureText(t *testing.T) {
 		Coords: Coords(CoordAxes),
 		HAlign: TextAlignLeft,
 		VAlign: TextVAlignTop,
-		BBox:   box,
+		BBox:   optional.Of(box),
 	})
 	fig.Text(0.98, 0.02, "figure note", TextOptions{
 		HAlign: TextAlignRight,
 		VAlign: TextVAlignBottom,
-		BBox:   box,
+		BBox:   optional.Of(box),
 	})
 
 	var r textRecordingRenderer

@@ -9,6 +9,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -43,8 +44,8 @@ func Plot() *core.Figure {
 	meshColor := render.Color{R: 0.18, G: 0.24, B: 0.34, A: 1}
 	meshWidth := 1.35
 	meshAx.TriPlot(tri, core.TriPlotOptions{
-		Color:     &meshColor,
-		LineWidth: &meshWidth,
+		Color:     optional.Of(meshColor),
+		LineWidth: optional.Of(meshWidth),
 		Label:     "triplot",
 	})
 	meshAx.Text(0.98, 0.02, "explicit triangular mesh", core.TextOptions{
@@ -52,12 +53,12 @@ func Plot() *core.Figure {
 		HAlign:   core.TextAlignRight,
 		VAlign:   core.TextVAlignBottom,
 		FontSize: 10,
-		BBox: &core.TextBBoxOptions{
+		BBox: optional.Of(core.TextBBoxOptions{
 			FaceColor:    bboxFace,
 			EdgeColor:    bboxBorder,
 			Padding:      axTextPadPx,
 			CornerRadius: axTextPadPx,
-		},
+		}),
 	})
 
 	colorAx := fig.AddAxes(geom.Rect{
@@ -69,19 +70,19 @@ func Plot() *core.Figure {
 	edgeColor := render.Color{R: 1, G: 1, B: 1, A: 1}
 	edgeWidth := 0.6
 	colorAx.TriColor(tri, values, core.TriColorOptions{
-		Colormap:  &cmap,
-		EdgeColor: &edgeColor,
-		EdgeWidth: &edgeWidth,
+		Colormap:  optional.Of(cmap),
+		EdgeColor: optional.Of(edgeColor),
+		EdgeWidth: optional.Of(edgeWidth),
 		Label:     "tripcolor",
 	})
 	contourColor := render.Color{R: 0.08, G: 0.12, B: 0.18, A: 0.95}
 	contourWidth := 1.15
 	colorAx.TriContour(tri, values, core.ContourOptions{
-		Color:      &contourColor,
-		LineWidth:  &contourWidth,
+		Color:      optional.Of(contourColor),
+		LineWidth:  optional.Of(contourWidth),
 		LevelCount: 6,
 		LabelLines: true,
-		LabelColor: &contourColor,
+		LabelColor: optional.Of(contourColor),
 	})
 
 	fillAx := fig.AddAxes(geom.Rect{
@@ -91,15 +92,15 @@ func Plot() *core.Figure {
 	configureAxes(fillAx, "Filled Tricontour")
 	fillMap := "plasma"
 	fillAx.TriContourf(tri, values, core.ContourOptions{
-		Colormap:   &fillMap,
+		Colormap:   optional.Of(fillMap),
 		LevelCount: 7,
 		Label:      "tricontourf",
 	})
 	highlight := render.Color{R: 1, G: 1, B: 1, A: 0.88}
 	highlightWidth := 0.95
 	fillAx.TriContour(tri, values, core.ContourOptions{
-		Color:      &highlight,
-		LineWidth:  &highlightWidth,
+		Color:      optional.Of(highlight),
+		LineWidth:  optional.Of(highlightWidth),
 		LevelCount: 7,
 	})
 
@@ -107,12 +108,12 @@ func Plot() *core.Figure {
 		HAlign:   core.TextAlignRight,
 		VAlign:   core.TextVAlignTop,
 		FontSize: 11,
-		BBox: &core.TextBBoxOptions{
+		BBox: optional.Of(core.TextBBoxOptions{
 			FaceColor:    bboxFace,
 			EdgeColor:    bboxBorder,
 			Padding:      figTextPadPx,
 			CornerRadius: figTextPadPx,
-		},
+		}),
 	})
 
 	return fig

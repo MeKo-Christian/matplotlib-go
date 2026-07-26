@@ -3,7 +3,7 @@ package widgets
 import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -17,7 +17,7 @@ type RadioButtonsOptions struct {
 	TextColor render.Color
 	DotColor  render.Color
 	FontSize  float64
-	Disabled  *bool
+	Disabled  optional.Value[bool]
 }
 
 // RadioButtons draws a static radio-button control.
@@ -38,7 +38,9 @@ type RadioButtons struct {
 }
 
 // NewRadioButtons adds a radio-button widget artist to the axes.
-func NewRadioButtons(a *core.Axes, labels []string, active int, opts ...RadioButtonsOptions) *RadioButtons {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func NewRadioButtons(a *core.Axes, labels []string, active int, opt RadioButtonsOptions) *RadioButtons {
 	if a == nil || len(labels) == 0 {
 		return nil
 	}
@@ -49,13 +51,11 @@ func NewRadioButtons(a *core.Axes, labels []string, active int, opts ...RadioBut
 		TextColor: defaults.Text,
 		DotColor:  defaults.RadioDot,
 	}
-	if opt, ok := optarg.Optional("radiobuttons", opts); ok {
-		mergeRadioButtonsOptions(&cfg, &opt)
-	}
+	mergeRadioButtonsOptions(&cfg, &opt)
 	prepareWidgetAxes(a)
 	enabled := true
-	if cfg.Disabled != nil {
-		enabled = !*cfg.Disabled
+	if cfg.Disabled.IsSet() {
+		enabled = !cfg.Disabled.OrZero()
 	}
 	w := &RadioButtons{
 		Labels:    append([]string(nil), labels...),
@@ -228,7 +228,7 @@ func mergeRadioButtonsOptions(base, override *RadioButtonsOptions) {
 	if override.FontSize > 0 {
 		base.FontSize = override.FontSize
 	}
-	if override.Disabled != nil {
+	if override.Disabled.IsSet() {
 		base.Disabled = override.Disabled
 	}
 }

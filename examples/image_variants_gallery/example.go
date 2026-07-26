@@ -56,7 +56,7 @@ func drawInterpolationPanel(fig *core.Figure, index int, mode string) {
 		VMax:          optional.Of(vmax),
 		Origin:        optional.Of(core.ImageOriginLower),
 		Extent:        optional.Of(extent),
-		Aspect:        optional.Of("auto"),
+		Aspect:        optional.Of(core.AspectAuto),
 		Interpolation: optional.Of(mode),
 	})
 }
@@ -70,15 +70,15 @@ func drawAlphaPanel(fig *core.Figure) {
 	overlayCmap := "magma"
 	alpha := 0.58
 	extent := [4]float64{0, 18, 0, 18}
-	ax.ImShow(checkerData(18), core.ImShowOptions{Colormap: optional.Of(baseCmap), Origin: optional.Of(core.ImageOriginLower), Extent: optional.Of(extent), Aspect: optional.Of("auto")})
-	ax.ImShow(radialData(18), core.ImShowOptions{Colormap: optional.Of(overlayCmap), Alpha: optional.Of(alpha), Origin: optional.Of(core.ImageOriginLower), Extent: optional.Of(extent), Aspect: optional.Of("auto")})
+	ax.ImShow(checkerData(18), core.ImShowOptions{Colormap: optional.Of(baseCmap), Origin: optional.Of(core.ImageOriginLower), Extent: optional.Of(extent), Aspect: optional.Of(core.AspectAuto)})
+	ax.ImShow(radialData(18), core.ImShowOptions{Colormap: optional.Of(overlayCmap), Alpha: optional.Of(alpha), Origin: optional.Of(core.ImageOriginLower), Extent: optional.Of(extent), Aspect: optional.Of(core.AspectAuto)})
 }
 
 func drawMatshowPanel(fig *core.Figure) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.39, Y: 0.12}, Max: geom.Pt{X: 0.61, Y: 0.43}})
 	ax.SetTitle("matshow")
 	cmap := "plasma"
-	ax.MatShow(matshowData(), core.MatShowOptions{Colormap: &cmap})
+	ax.MatShow(matshowData(), core.MatShowOptions{Colormap: optional.Of(cmap)})
 }
 
 func drawSpyPanels(fig *core.Figure) {
@@ -86,12 +86,12 @@ func drawSpyPanels(fig *core.Figure) {
 	markerAx.SetTitle("spy markers")
 	marker := core.MarkerSquare
 	color := render.Color{R: 0.12, G: 0.38, B: 0.70, A: 1}
-	markerAx.Spy(sparseData(18), core.SpyOptions{Precision: 0.1, Marker: &marker, MarkerSize: 7, Color: &color})
+	markerAx.Spy(sparseData(18), core.SpyOptions{Precision: 0.1, Marker: optional.Of(marker), MarkerSize: 7, Color: optional.Of(color)})
 
 	imageAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.84, Y: 0.12}, Max: geom.Pt{X: 0.96, Y: 0.43}})
 	imageAx.SetTitle("spy image")
 	useImage := true
-	imageAx.Spy(sparseData(18), core.SpyOptions{Precision: 0.1, UseImage: &useImage})
+	imageAx.Spy(sparseData(18), core.SpyOptions{Precision: 0.1, UseImage: optional.Of(useImage)})
 }
 
 func imageData(n int) [][]float64 {

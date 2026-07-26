@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -55,7 +56,7 @@ func configureAxes(ax *core.Axes, title string) {
 	_, _ = ax.Plot(
 		[]float64{-2, -1, 0, 1, 2},
 		[]float64{-1.4, -0.4, 0.1, 0.9, 1.6},
-		core.PlotOptions{Color: &color, LineWidth: &width},
+		core.PlotOptions{Color: optional.Of(color), LineWidth: optional.Of(width)},
 	)
 }
 

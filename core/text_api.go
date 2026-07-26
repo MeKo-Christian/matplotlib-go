@@ -2,7 +2,6 @@ package core
 
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -57,18 +56,21 @@ type TextOptions struct {
 	// WrapWidth is not set.
 	Wrap bool
 	// MultiAlignment controls per-line alignment within multiline or wrapped
-	// text. Nil follows HAlign, matching Matplotlib's multialignment=None.
-	MultiAlignment *TextAlign
+	// text. Unset follows HAlign, matching Matplotlib's multialignment=None.
+	MultiAlignment optional.Value[TextAlign]
 	// Linespacing controls multiline baseline advance as a multiple of the font
 	// size in display pixels. Zero uses Matplotlib's normal 1.2 spacing.
 	Linespacing float64
-	ClipOn      *bool
-	BBox        *TextBBoxOptions
-	FontKey     string
+	// ClipOn clips the text to the axes. Unset keeps each entry point's own
+	// default: Axes.Text does not clip, Figure.Text does.
+	ClipOn optional.Value[bool]
+	// BBox draws a styled background box behind the text. Unset draws none.
+	BBox    optional.Value[TextBBoxOptions]
+	FontKey string
 	// FontProperties is a structured alternative to FontKey. FontKey wins when
 	// both are set.
-	FontProperties *render.FontProperties
-	ParseMath      *bool
+	FontProperties optional.Value[render.FontProperties]
+	ParseMath      optional.Value[bool]
 	PathEffects    []render.PathEffect
 }
 
@@ -147,11 +149,11 @@ type AnnotationOptions struct {
 	VAlign          TextVerticalAlign
 	Angle           float64
 	FontKey         string
-	BBox            *TextBBoxOptions
+	BBox            optional.Value[TextBBoxOptions]
 	Linespacing     float64
 	// FontProperties is a structured alternative to FontKey. FontKey wins when
 	// both are set.
-	FontProperties *render.FontProperties
+	FontProperties optional.Value[render.FontProperties]
 	// ParseMath enables mathtext parsing. Unset follows the rc default.
 	ParseMath optional.Value[bool]
 	// AnnotationClip clips the annotation to the axes. Unset follows
@@ -234,19 +236,11 @@ type Annotation struct {
 }
 
 // Text adds arbitrary text positioned in data coordinates.
-func (a *Axes) Text(x, y float64, text string, opts ...TextOptions) *Text {
-	opt := TextOptions{
-		HAlign: TextAlignLeft,
-		VAlign: TextVAlignBaseline,
-	}
-	if supplied, ok := optarg.Optional("text", opts); ok {
-		opt = supplied
-	}
-	clipOn := false
-	if opt.ClipOn != nil {
-		clipOn = *opt.ClipOn
-	}
-
+//
+//nolint:gocritic // TextOptions is an immutable snapshot of the caller's options.
+func (a *Axes) Text(x, y float64, text string, opt TextOptions) *Text {
+	// TextAlignLeft and TextVAlignBaseline are the zero values, so the zero
+	// TextOptions already carries Matplotlib's default alignment.
 	artist := &Text{
 		Position:       geom.Pt{X: x, Y: y},
 		Content:        text,
@@ -261,13 +255,13 @@ func (a *Axes) Text(x, y float64, text string, opts ...TextOptions) *Text {
 		OffsetY:        opt.OffsetY,
 		WrapWidth:      opt.WrapWidth,
 		Wrap:           opt.Wrap,
-		MultiAlignment: cloneTextAlign(opt.MultiAlignment),
+		MultiAlignment: opt.MultiAlignment.Ptr(),
 		Linespacing:    opt.Linespacing,
-		ClipOn:         clipOn,
-		BBox:           cloneTextBBoxOptions(opt.BBox),
+		ClipOn:         opt.ClipOn.Or(false),
+		BBox:           opt.BBox.Ptr(),
 		FontKey:        opt.FontKey,
-		FontProperties: cloneFontProperties(opt.FontProperties),
-		ParseMath:      cloneBool(opt.ParseMath),
+		FontProperties: cloneFontProperties(opt.FontProperties.Ptr()),
+		ParseMath:      opt.ParseMath.Ptr(),
 		PathEffects:    cloneRenderPathEffects(opt.PathEffects),
 		z:              500,
 	}
@@ -276,23 +270,14 @@ func (a *Axes) Text(x, y float64, text string, opts ...TextOptions) *Text {
 }
 
 // Text adds arbitrary text positioned in figure-fraction coordinates.
-func (f *Figure) Text(x, y float64, text string, opts ...TextOptions) *Text {
+//
+//nolint:gocritic // TextOptions is an immutable snapshot of the caller's options.
+func (f *Figure) Text(x, y float64, text string, opt TextOptions) *Text {
 	if f == nil {
 		return nil
 	}
-	opt := TextOptions{
-		HAlign: TextAlignLeft,
-		VAlign: TextVAlignBaseline,
-		Coords: Coords(CoordFigure),
-	}
-	if supplied, ok := optarg.Optional("figure text", opts); ok {
-		opt = supplied
-		opt.Coords = Coords(CoordFigure)
-	}
-	clipOn := true
-	if opt.ClipOn != nil {
-		clipOn = *opt.ClipOn
-	}
+	// Figure text is always positioned in figure-fraction coordinates.
+	opt.Coords = Coords(CoordFigure)
 
 	artist := &Text{
 		Position:       geom.Pt{X: x, Y: y},
@@ -308,13 +293,13 @@ func (f *Figure) Text(x, y float64, text string, opts ...TextOptions) *Text {
 		OffsetY:        opt.OffsetY,
 		WrapWidth:      opt.WrapWidth,
 		Wrap:           opt.Wrap,
-		MultiAlignment: cloneTextAlign(opt.MultiAlignment),
+		MultiAlignment: opt.MultiAlignment.Ptr(),
 		Linespacing:    opt.Linespacing,
-		ClipOn:         clipOn,
-		BBox:           cloneTextBBoxOptions(opt.BBox),
+		ClipOn:         opt.ClipOn.Or(true),
+		BBox:           opt.BBox.Ptr(),
 		FontKey:        opt.FontKey,
-		FontProperties: cloneFontProperties(opt.FontProperties),
-		ParseMath:      cloneBool(opt.ParseMath),
+		FontProperties: cloneFontProperties(opt.FontProperties.Ptr()),
+		ParseMath:      opt.ParseMath.Ptr(),
 		PathEffects:    cloneRenderPathEffects(opt.PathEffects),
 		z:              500,
 	}
@@ -357,9 +342,9 @@ func (a *Axes) Annotate(text string, x, y float64, opt AnnotationOptions) *Annot
 		Angle:           opt.Angle,
 		Coords:          opt.Coords,
 		FontKey:         opt.FontKey,
-		BBox:            cloneTextBBoxOptions(opt.BBox),
+		BBox:            opt.BBox.Ptr(),
 		Linespacing:     opt.Linespacing,
-		FontProperties:  cloneFontProperties(opt.FontProperties),
+		FontProperties:  cloneFontPropertiesValue(opt.FontProperties).Ptr(),
 		ParseMath:       opt.ParseMath.Ptr(),
 		AnnotationClip:  opt.AnnotationClip.Ptr(),
 		z:               900,

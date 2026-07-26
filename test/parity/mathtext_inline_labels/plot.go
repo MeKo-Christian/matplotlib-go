@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -36,8 +37,8 @@ func Plot() *core.Figure {
 	lineWidth := 2.0
 	blue := render.Color{R: 31.0 / 255.0, G: 119.0 / 255.0, B: 180.0 / 255.0, A: 1}
 	orange := render.Color{R: 1, G: 127.0 / 255.0, B: 14.0 / 255.0, A: 1}
-	_, _ = ax.Plot(x, y1, core.PlotOptions{Color: &blue, LineWidth: &lineWidth, Label: `state $x_i(t)$`})
-	_, _ = ax.Plot(x, y2, core.PlotOptions{Color: &orange, LineWidth: &lineWidth, Label: `state $y_i(t)$`})
+	_, _ = ax.Plot(x, y1, core.PlotOptions{Color: optional.Of(blue), LineWidth: optional.Of(lineWidth), Label: `state $x_i(t)$`})
+	_, _ = ax.Plot(x, y2, core.PlotOptions{Color: optional.Of(orange), LineWidth: optional.Of(lineWidth), Label: `state $y_i(t)$`})
 	ax.SetTitle(`Inline labels: $\omega_n$ response`)
 	ax.SetXLabel(`time $t$`)
 	ax.SetYLabel(`state $x_i(t)$`)

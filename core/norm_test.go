@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	matcolor "github.com/cwbudde/matplotlib-go/color"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -300,7 +301,7 @@ func TestResolveScalarMapRejectsNormWithVMinVMax(t *testing.T) {
 	vmin := 0.0
 	_, err := ResolveScalarMapValues([]float64{1, 2, 3}, ScalarMapConfig{
 		Norm: Normalize{VMin: 1, VMax: 3},
-		VMin: &vmin,
+		VMin: optional.Of(vmin),
 	})
 	if err == nil {
 		t.Fatal("expected norm/vmin conflict validation error")
@@ -312,15 +313,17 @@ func TestPlotOptionsScalarMapConfig(t *testing.T) {
 	vmin, vmax := -2.0, 5.0
 	norm := PowerNorm{Gamma: 2, VMin: vmin, VMax: vmax}
 	options := PlotOptions{
-		Colormap: &name,
+		Colormap: optional.Of(name),
 		Norm:     norm,
-		VMin:     &vmin,
-		VMax:     &vmax,
+		VMin:     optional.Of(vmin),
+		VMax:     optional.Of(vmax),
 	}
 
+	// The limits are carried by value, so ScalarMapConfig hands out pointers to
+	// fresh copies rather than aliasing the caller's variables.
 	got := options.ScalarMapConfig()
-	if got.Colormap != name || got.VMin != &vmin || got.VMax != &vmax {
-		t.Fatalf("ScalarMapConfig() = %+v, want colormap and limit pointers from PlotOptions", got)
+	if got.Colormap != name || !got.VMin.IsSet() || got.VMin.OrZero() != vmin || !got.VMax.IsSet() || got.VMax.OrZero() != vmax {
+		t.Fatalf("ScalarMapConfig() = %+v, want colormap and limits from PlotOptions", got)
 	}
 	if gotNorm, ok := got.Norm.(PowerNorm); !ok || gotNorm != norm {
 		t.Fatalf("ScalarMapConfig().Norm = %#v, want %#v", got.Norm, norm)

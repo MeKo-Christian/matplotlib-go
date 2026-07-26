@@ -8,6 +8,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/plot3d"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -60,8 +61,8 @@ func Plot() *core.Figure {
 	cmap := "Blues"
 	vmin := 2 * common.MinInSlice(z)
 	ax.Trisurf(core.Triangulation{X: x, Y: y}, z, core.PlotOptions{
-		Colormap: &cmap,
-		VMin:     &vmin,
+		Colormap: optional.Of(cmap),
+		VMin:     optional.Of(vmin),
 	})
 	return fig
 }

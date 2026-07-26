@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -34,9 +35,9 @@ func Plot() *core.Figure {
 	_, _ = ax.Hist(data, core.HistOptions{
 		Bins:      bins,
 		Norm:      core.HistNormDensity,
-		Color:     &green,
-		EdgeColor: &black,
-		EdgeWidth: &ew,
+		Color:     optional.Of(green),
+		EdgeColor: optional.Of(black),
+		EdgeWidth: optional.Of(ew),
 	})
 	ax.AutoScale(0.05)
 	_, yMax := ax.YScale.Domain()

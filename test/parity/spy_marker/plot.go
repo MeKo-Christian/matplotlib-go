@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -17,9 +18,9 @@ func Render() image.Image {
 	marker := core.MarkerSquare
 	ax.Spy(common.SparseFixtureData(14, 14), core.SpyOptions{
 		Precision:  0.1,
-		Marker:     &marker,
+		Marker:     optional.Of(marker),
 		MarkerSize: 8,
-		Color:      &color,
+		Color:      optional.Of(color),
 	})
 
 	return common.RenderImageFixture(fig, 640, 360)

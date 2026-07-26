@@ -10,6 +10,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/plot3d"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -97,7 +98,7 @@ func drawLine3D(ax *plot3d.Axes3D) {
 		z[i] = math.Cos(6 * math.Pi * t)
 	}
 	width := 1.6
-	ax.Plot3D(x, y, z, core.PlotOptions{LineWidth: &width})
+	ax.Plot3D(x, y, z, core.PlotOptions{LineWidth: optional.Of(width)})
 }
 
 func drawScatter3D(ax *plot3d.Axes3D) {
@@ -111,7 +112,7 @@ func drawScatter3D(ax *plot3d.Axes3D) {
 		y[i] = rng.Float64() * 100
 		z[i] = -50 + rng.Float64()*25
 	}
-	ax.Scatter3D(x, y, z)
+	ax.Scatter3D(x, y, z, core.ScatterOptions{})
 }
 
 func drawSurface(ax *plot3d.Axes3D) {
@@ -120,9 +121,9 @@ func drawSurface(ax *plot3d.Axes3D) {
 	vmin := 2 * common.MinInGrid(z)
 	zero := 0.0
 	ax.Surface(x, y, z, core.PlotOptions{
-		Colormap:  &cmap,
-		VMin:      &vmin,
-		LineWidth: &zero,
+		Colormap:  optional.Of(cmap),
+		VMin:      optional.Of(vmin),
+		LineWidth: optional.Of(zero),
 	})
 }
 
@@ -130,14 +131,14 @@ func drawWireframe(ax *plot3d.Axes3D) {
 	x, y, z := common.Get3DWireframeTestData(0.12)
 	rStride := 4
 	cStride := 4
-	ax.Wireframe(x, y, z, core.PlotOptions{RStride: &rStride, CStride: &cStride})
+	ax.Wireframe(x, y, z, core.PlotOptions{RStride: optional.Of(rStride), CStride: optional.Of(cStride)})
 }
 
 func drawTrisurf(ax *plot3d.Axes3D) {
 	tri, z := fanMesh(7, 20)
 	cmap := "viridis"
 	vmin := 2 * common.MinInSlice(z)
-	ax.Trisurf(tri, z, core.PlotOptions{Colormap: &cmap, VMin: &vmin})
+	ax.Trisurf(tri, z, core.PlotOptions{Colormap: optional.Of(cmap), VMin: optional.Of(vmin)})
 }
 
 func drawBar3D(ax *plot3d.Axes3D) {
@@ -147,7 +148,7 @@ func drawBar3D(ax *plot3d.Axes3D) {
 	dx := []float64{0.5, 0.5, 0.5, 0.5}
 	dy := []float64{0.5, 0.5, 0.5, 0.5}
 	dz := []float64{2, 3, 1, 4}
-	ax.Bar3D(x, y, z, dx, dy, dz)
+	ax.Bar3D(x, y, z, dx, dy, dz, plot3d.Bar3DOptions{})
 }
 
 func drawVoxels(ax *plot3d.Axes3D) {
@@ -163,7 +164,7 @@ func drawVoxels(ax *plot3d.Axes3D) {
 		}
 	}
 	edgeColor := render.Color{R: 0, G: 0, B: 0, A: 1}
-	ax.Voxels(filled, plot3d.VoxelOptions{EdgeColor: &edgeColor})
+	ax.Voxels(filled, plot3d.VoxelOptions{EdgeColor: optional.Of(edgeColor)})
 }
 
 func drawQuiver3D(ax *plot3d.Axes3D) {
@@ -190,7 +191,7 @@ func drawQuiver3D(ax *plot3d.Axes3D) {
 			}
 		}
 	}
-	ax.Quiver(x, y, z, u, v, w)
+	ax.Quiver(x, y, z, u, v, w, plot3d.Quiver3DOptions{})
 }
 
 func drawStem3D(ax *plot3d.Axes3D) {
@@ -204,7 +205,7 @@ func drawStem3D(ax *plot3d.Axes3D) {
 		y[i] = math.Cos(t)
 		z[i] = float64(i) / float64(n-1)
 	}
-	ax.Stem(x, y, z)
+	ax.Stem(x, y, z, plot3d.Stem3DOptions{})
 }
 
 func drawFillBetween3D(ax *plot3d.Axes3D) {
@@ -226,10 +227,10 @@ func drawFillBetween3D(ax *plot3d.Axes3D) {
 	}
 	width := 1.4
 	blue := mplcolor.Tab10[0]
-	ax.Plot3D(x1, y1, z1, core.PlotOptions{LineWidth: &width, Color: &blue})
-	ax.Plot3D(x2, y2, z2, core.PlotOptions{LineWidth: &width, Color: &blue})
+	ax.Plot3D(x1, y1, z1, core.PlotOptions{LineWidth: optional.Of(width), Color: optional.Of(blue)})
+	ax.Plot3D(x2, y2, z2, core.PlotOptions{LineWidth: optional.Of(width), Color: optional.Of(blue)})
 	alpha := 0.5
-	ax.FillBetween(x1, y1, z1, x2, y2, z2, plot3d.FillBetween3DOptions{Alpha: &alpha})
+	ax.FillBetween(x1, y1, z1, x2, y2, z2, plot3d.FillBetween3DOptions{Alpha: optional.Of(alpha)})
 }
 
 func radialSurface(count int, minVal, maxVal float64) ([]float64, []float64, [][]float64) {

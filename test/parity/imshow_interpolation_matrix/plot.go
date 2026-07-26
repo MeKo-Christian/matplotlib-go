@@ -63,7 +63,7 @@ func Plot() *core.Figure {
 			VMax:          optional.Of(vmax),
 			Origin:        optional.Of(core.ImageOriginLower),
 			Extent:        optional.Of(extent),
-			Aspect:        optional.Of("auto"),
+			Aspect:        optional.Of(core.AspectAuto),
 			Interpolation: optional.Of(mode),
 		})
 	}

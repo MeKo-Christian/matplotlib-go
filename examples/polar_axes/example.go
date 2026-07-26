@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -49,12 +50,12 @@ func Plot() *core.Figure {
 	lineWidth := 2.2
 
 	_, _ = ax.Plot(theta, radius, core.PlotOptions{
-		Color:     &lineColor,
-		LineWidth: &lineWidth,
+		Color:     optional.Of(lineColor),
+		LineWidth: optional.Of(lineWidth),
 		Label:     "r = 0.55 + 0.35 cos(5theta)",
 	})
 	ax.FillToBaseline(theta, radius, core.FillOptions{
-		Color: &fillColor,
+		Color: optional.Of(fillColor),
 	})
 	return fig
 }

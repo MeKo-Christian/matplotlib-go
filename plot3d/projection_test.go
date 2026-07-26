@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -72,16 +73,16 @@ func TestAxes3DProjectPointMatchesMatplotlibBasicDataLimits(t *testing.T) {
 		t.Fatalf("AddAxes3D: %v", err)
 	}
 	ax.SetView(30, -60)
-	ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1})
-	ax.Scatter3D([]float64{0.5, 0.7}, []float64{0.2, 0.9}, []float64{0.1, 0.3})
+	ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1}, PlotOptions{})
+	ax.Scatter3D([]float64{0.5, 0.7}, []float64{0.2, 0.9}, []float64{0.1, 0.3}, ScatterOptions{})
 	x := []float64{0, 1}
 	y := []float64{0, 1}
 	z := [][]float64{{0, 1}, {1, 2}}
-	ax.Wireframe(x, y, z)
-	ax.Surface(x, y, z)
-	ax.Contour(x, y, z)
-	ax.Bar3D([]float64{0.2}, []float64{0.3}, []float64{0.4}, []float64{0.2}, []float64{0.2}, []float64{0.3})
-	ax.Text3D(0.2, 0.8, 0.6, "demo point")
+	ax.Wireframe(x, y, z, PlotOptions{})
+	ax.Surface(x, y, z, PlotOptions{})
+	ax.Contour(x, y, z, PlotOptions{})
+	ax.Bar3D([]float64{0.2}, []float64{0.3}, []float64{0.4}, []float64{0.2}, []float64{0.2}, []float64{0.3}, Bar3DOptions{})
+	ax.Text3D(0.2, 0.8, 0.6, "demo point", TextOptions{})
 
 	got := ax.ProjectPoint(1, 1, 2)
 	if !approx(got.X, 0.0711768607286225, 1e-12) ||
@@ -97,7 +98,7 @@ func TestAxes3DProjectionLimitsUseMatplotlibZMargin(t *testing.T) {
 		t.Fatalf("AddAxes3D: %v", err)
 	}
 
-	ax.Plot3D([]float64{0, 1}, []float64{-1, 1}, []float64{-2, 2})
+	ax.Plot3D([]float64{0, 1}, []float64{-1, 1}, []float64{-2, 2}, PlotOptions{})
 	mins, maxs := ax.projectionLimits()
 	if !approx(mins[0], -0.07291666666666667, 1e-12) || !approx(maxs[0], 1.0729166666666667, 1e-12) {
 		t.Fatalf("x projection limits = (%v, %v), want Matplotlib data margin plus 3D view margin", mins[0], maxs[0])
@@ -117,7 +118,7 @@ func TestAxes3DScatterProjectionLimitsUseMatplotlibZMargin(t *testing.T) {
 		t.Fatalf("AddAxes3D: %v", err)
 	}
 
-	ax.Scatter3D([]float64{0, 1}, []float64{-1, 1}, []float64{-2, 2})
+	ax.Scatter3D([]float64{0, 1}, []float64{-1, 1}, []float64{-2, 2}, ScatterOptions{})
 	mins, maxs := ax.projectionLimits()
 	if !approx(mins[2], -2.291666666666667, 1e-12) || !approx(maxs[2], 2.291666666666667, 1e-12) {
 		t.Fatalf("scatter z projection limits = (%v, %v), want Matplotlib scatter z margin plus 3D view margin", mins[2], maxs[2])
@@ -148,7 +149,7 @@ func TestAxes3DText3DDoesNotExpandDataLimitsLikeMatplotlib(t *testing.T) {
 		t.Fatalf("AddAxes3D: %v", err)
 	}
 
-	text := ax.Text3D(9, 8, 7, "label")
+	text := ax.Text3D(9, 8, 7, "label", TextOptions{})
 	if text == nil {
 		t.Fatal("Text3D returned nil")
 	}
@@ -163,7 +164,7 @@ func TestAxes3DText3DDoesNotExpandDataLimitsLikeMatplotlib(t *testing.T) {
 		t.Fatal("Text3D marked the axes as having data; Matplotlib text does not update 3D data limits")
 	}
 
-	ax.Scatter3D([]float64{1, 9}, []float64{1, 9}, []float64{1, 9})
+	ax.Scatter3D([]float64{1, 9}, []float64{1, 9}, []float64{1, 9}, ScatterOptions{})
 	mins, maxs = ax.projectionLimits()
 	wantMins := vec3{0.41666666666666663, 0.41666666666666663, 0.41666666666666663}
 	wantMaxs := vec3{9.583333333333334, 9.583333333333334, 9.583333333333334}
@@ -269,7 +270,7 @@ func TestAxes3DPlot3DUsesProjectedCoordinates(t *testing.T) {
 
 	ax.SetDistance(0)
 	ax.SetView(0, 0)
-	line := ax.Plot3D([]float64{0, 1}, []float64{0, 0}, []float64{0, 1})
+	line := ax.Plot3D([]float64{0, 1}, []float64{0, 0}, []float64{0, 1}, PlotOptions{})
 	if line == nil {
 		t.Fatal("Plot3D returned nil")
 	}
@@ -291,7 +292,7 @@ func TestAxes3DPlot3DPropagatesColorAndAlphaLikeLine2D(t *testing.T) {
 		[]float64{0, 1},
 		[]float64{0, 1},
 		[]float64{0, 1},
-		PlotOptions{Color: &color, Alpha: &alpha},
+		PlotOptions{Color: optional.Of(color), Alpha: optional.Of(alpha)},
 	)
 	if line == nil {
 		t.Fatal("Plot3D returned nil")
@@ -345,7 +346,7 @@ func TestAxes3DReprojectsExistingArtistsWhenDataLimitsExpand(t *testing.T) {
 		t.Fatalf("AddAxes3D: %v", err)
 	}
 
-	line := ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1})
+	line := ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1}, PlotOptions{})
 	if line == nil {
 		t.Fatal("Plot3D returned nil")
 	}
@@ -357,6 +358,7 @@ func TestAxes3DReprojectsExistingArtistsWhenDataLimitsExpand(t *testing.T) {
 			{0, 2},
 			{0, 2},
 		},
+		PlotOptions{},
 	)
 
 	got := line.XY[1]
@@ -373,7 +375,7 @@ func TestAxes3DSetViewReprojectsExistingArtistsLikeMatplotlib(t *testing.T) {
 		t.Fatalf("AddAxes3D: %v", err)
 	}
 
-	line := ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1})
+	line := ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1}, PlotOptions{})
 	if line == nil || len(line.XY) == 0 {
 		t.Fatal("Plot3D returned no line points")
 	}
@@ -398,11 +400,13 @@ func TestAxes3DSetViewResortsReprojectedArtists(t *testing.T) {
 		[]float64{0.39189601719238726, -1.908212056724124, 0.19907234935342766},
 		[]float64{0.2639219137021458, -2.7281573716616, -1.0175265380463943},
 		[]float64{-0.3983193607443909, -0.3863074357062186, 0.045714226799383334},
+		PlotOptions{},
 	)
 	scatter := ax.Scatter3D(
 		[]float64{-0.12342427959032432, -0.8461028562161538, -0.3297070194526802},
 		[]float64{-0.20409987823742703, -0.3647173958208699, 0.42341190997306155},
 		[]float64{0.3650874803042903, -0.11731873114148794, 0.2924595905237891},
+		ScatterOptions{},
 	)
 	surface := ax.Surface(
 		[]float64{-0.3919689221384559, -1.4448104140971734, -1.1327180161636174},
@@ -412,6 +416,7 @@ func TestAxes3DSetViewResortsReprojectedArtists(t *testing.T) {
 			{0.8622284518717414, 0.05819260888944283, 0.5210971150122212},
 			{0.322145795095663, -0.49739907363322877, -0.34695595800546974},
 		},
+		PlotOptions{},
 	)
 	if line == nil || scatter == nil || surface == nil {
 		t.Fatalf("expected mixed 3D artists, got line=%v scatter=%v surface=%v", line, scatter, surface)
@@ -449,7 +454,7 @@ func TestAxes3DSetViewInitAppliesRollAndVerticalAxis(t *testing.T) {
 		t.Fatalf("AddAxes3D: %v", err)
 	}
 
-	ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1})
+	ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1}, PlotOptions{})
 	before := ax.ProjectPoint(1, 1, 0)
 	if err := ax.SetViewInit(30, -60, 17, "x"); err != nil {
 		t.Fatalf("SetViewInit: %v", err)
@@ -470,7 +475,7 @@ func TestAxes3DSetBoxAspect3DReprojectsAndValidatesZoom(t *testing.T) {
 		t.Fatalf("AddAxes3D: %v", err)
 	}
 
-	ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1})
+	ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1}, PlotOptions{})
 	before := ax.ProjectPoint(0.8, 0.2, 0.6)
 	if err := ax.SetBoxAspect3D([3]float64{2, 1, 3}, 1.25); err != nil {
 		t.Fatalf("SetBoxAspect3D: %v", err)
@@ -579,7 +584,7 @@ func TestAxes3DProjectionLimitsUseMatplotlibXYAutoscaleMargins(t *testing.T) {
 		t.Fatalf("AddAxes3D: %v", err)
 	}
 
-	ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 2})
+	ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 2}, PlotOptions{})
 	mins, maxs := ax.projectionLimits()
 	if !approx(mins[0], -0.07291666666666667, 1e-12) || !approx(maxs[0], 1.0729166666666667, 1e-12) ||
 		!approx(mins[1], -0.07291666666666667, 1e-12) || !approx(maxs[1], 1.0729166666666667, 1e-12) ||

@@ -40,7 +40,7 @@ func Plot() *core.Figure {
 	x := uniform(23, 32, n)
 	y := uniform(0, 100, n)
 	z := uniform(-50, -25, n)
-	ax.Scatter3D(x, y, z)
+	ax.Scatter3D(x, y, z, core.ScatterOptions{})
 	return fig
 }
 

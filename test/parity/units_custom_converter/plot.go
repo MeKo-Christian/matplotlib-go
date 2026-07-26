@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -31,10 +32,10 @@ func Plot() *core.Figure {
 	edge := render.Color{R: 0.09, G: 0.36, B: 0.09, A: 1}
 	lineWidth := 1.4
 	markerSize := core.ScatterAreaFromRadius(8.0, 100.0)
-	if _, err := ax.Plot(distances, pace, core.PlotOptions{Color: &brown, LineWidth: &lineWidth}); err != nil {
+	if _, err := ax.Plot(distances, pace, core.PlotOptions{Color: optional.Of(brown), LineWidth: optional.Of(lineWidth)}); err != nil {
 		panic(err)
 	}
-	if _, err := ax.Scatter(distances, pace, core.ScatterOptions{Color: &green, EdgeColor: &edge, Size: &markerSize}); err != nil {
+	if _, err := ax.Scatter(distances, pace, core.ScatterOptions{Color: optional.Of(green), EdgeColor: optional.Of(edge), Size: optional.Of(markerSize)}); err != nil {
 		panic(err)
 	}
 	ax.AutoScale(0.08)

@@ -5,12 +5,13 @@ import (
 	"sort"
 
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
 // Streamplot adds a streamline set over a rectilinear vector grid.
-func (a *Axes) Streamplot(x, y []float64, u, v [][]float64, opts ...StreamplotOptions) *StreamplotSet {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) Streamplot(x, y []float64, u, v [][]float64, opt StreamplotOptions) *StreamplotSet {
 	if a == nil {
 		return nil
 	}
@@ -21,13 +22,6 @@ func (a *Axes) Streamplot(x, y []float64, u, v [][]float64, opts ...StreamplotOp
 		return nil
 	}
 
-	opt := StreamplotOptions{
-		Density:              1,
-		IntegrationDirection: streamDirectionBoth,
-	}
-	if supplied, ok := optarg.Optional("streamplot", opts); ok {
-		opt = supplied
-	}
 	densityX, densityY := resolvedStreamDensity(opt)
 	if densityX <= 0 || densityY <= 0 {
 		return nil
@@ -47,7 +41,7 @@ func (a *Axes) Streamplot(x, y []float64, u, v [][]float64, opts ...StreamplotOp
 		}
 		var err error
 		mapping, err = ResolveScalarMapGrid(opt.CGrid, ScalarMapConfig{
-			Colormap: scalarColormap(opt.Colormap),
+			Colormap: scalarColormap(opt.Colormap.Ptr()),
 			Norm:     opt.Norm,
 			VMin:     opt.VMin,
 			VMax:     opt.VMax,
@@ -62,11 +56,11 @@ func (a *Axes) Streamplot(x, y []float64, u, v [][]float64, opts ...StreamplotOp
 	}
 
 	color := a.NextColor()
-	if opt.Color != nil {
-		color = *opt.Color
+	if v, ok := opt.Color.Get(); ok {
+		color = v
 	}
-	lineWidth := optionFloat(opt.LineWidth, 1.5)
-	z := optionFloat(opt.ZOrder, 1)
+	lineWidth := optionFloat(opt.LineWidth.Ptr(), 1.5)
+	z := optionFloat(opt.ZOrder.Ptr(), 1)
 
 	lines := &LineCollection{
 		Collection: Collection{
@@ -96,11 +90,11 @@ func (a *Axes) Streamplot(x, y []float64, u, v [][]float64, opts ...StreamplotOp
 	}
 
 	arrowColor := color
-	if opt.ArrowColor != nil {
-		arrowColor = *opt.ArrowColor
+	if v, ok := opt.ArrowColor.Get(); ok {
+		arrowColor = v
 	}
-	arrowSize := optionFloat(opt.ArrowSize, 1)
-	arrowCount := optionInt(opt.ArrowCount, 1)
+	arrowSize := optionFloat(opt.ArrowSize.Ptr(), 1)
+	arrowCount := optionInt(opt.ArrowCount.Ptr(), 1)
 	if arrowCount < 0 {
 		return nil
 	}
@@ -210,14 +204,15 @@ func (s *StreamplotSet) legendEntry() (legendEntry, bool) {
 	return legendEntryFromLine(s.Label, s.Lines.Color, s.Lines.LineWidth, nil), true
 }
 
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
 func computeStreamTrajectories(grid streamplotGrid, opt StreamplotOptions, densityX, densityY float64) []streamTrajectory {
 	mask := newStreamplotMask(grid.x[0], grid.x[len(grid.x)-1], grid.y[0], grid.y[len(grid.y)-1], densityX, densityY)
-	minLength := optionFloat(opt.MinLength, 0.1)
-	maxLength := optionFloat(opt.MaxLength, 4.0)
+	minLength := optionFloat(opt.MinLength.Ptr(), 0.1)
+	maxLength := optionFloat(opt.MaxLength.Ptr(), 4.0)
 	if minLength <= 0 || maxLength <= 0 {
 		return nil
 	}
-	broken := optionBool(opt.BrokenStreamlines, true)
+	broken := optionBool(opt.BrokenStreamlines.Ptr(), true)
 	direction := normalizeStreamDirection(opt.IntegrationDirection)
 	ctx := newStreamGridContext(&grid, mask.nx, mask.ny)
 	if !ctx.valid() {

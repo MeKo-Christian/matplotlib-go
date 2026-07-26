@@ -13,7 +13,7 @@ import (
 // under/over bands are generated. The public levels are left untouched; the
 // colormap norm still spans the real first/last level, so the sentinel band
 // midpoints map to the colormap's under/over colors.
-func contourExtendedLevels(levels []float64, extend string) []float64 {
+func contourExtendedLevels(levels []float64, extend ColorbarExtend) []float64 {
 	extendMin := extend == "min" || extend == "both"
 	extendMax := extend == "max" || extend == "both"
 	if !extendMin && !extendMax {
@@ -113,7 +113,7 @@ func contourGridBandPolygonsBands(x, y []float64, data [][]float64, levels []flo
 					},
 					low,
 					high,
-					opt.CornerMask != nil && *opt.CornerMask,
+					opt.CornerMask.OrZero(),
 				)
 				for _, polygon := range cellPolygons {
 					if len(polygon) < 3 {
@@ -443,8 +443,7 @@ func contourBandColor(low, high float64, idx int, opt ContourOptions, mapping Sc
 		color := opt.Colors[idx%len(opt.Colors)]
 		return color.WithAlphaMultiplier(alpha)
 	}
-	if opt.Color != nil {
-		color := *opt.Color
+	if color, ok := opt.Color.Get(); ok {
 		return color.WithAlphaMultiplier(alpha)
 	}
 	return mapping.Color((low+high)*0.5, alpha)

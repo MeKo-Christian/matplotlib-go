@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/plot3d"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -51,10 +52,10 @@ func Plot() *core.Figure {
 		zc := z
 		c := colors[i]
 		ax.Bar(xs, heights[i], plot3d.Bar3DPlaneOptions{
-			Color: &c,
-			Z:     &zc,
+			Color: optional.Of(c),
+			Z:     optional.Of(zc),
 			ZDir:  "y",
-			Alpha: &alpha,
+			Alpha: optional.Of(alpha),
 		})
 	}
 

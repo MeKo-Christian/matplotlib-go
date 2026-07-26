@@ -21,7 +21,7 @@ func TestScatterLengthMismatchReturnsError(t *testing.T) {
 	defer restore()
 
 	ax := newAlphaTestAxes()
-	if s, err := ax.Scatter([]float64{0, 1, 2}, []float64{0, 1}); err == nil || s != nil {
+	if s, err := ax.Scatter([]float64{0, 1, 2}, []float64{0, 1}, ScatterOptions{}); err == nil || s != nil {
 		t.Fatalf("Scatter() = (%v, %v), want nil artist and length error", s, err)
 	}
 	if len(*got) != 0 {
@@ -34,7 +34,7 @@ func TestScatterValidInputDoesNotWarn(t *testing.T) {
 	defer restore()
 
 	ax := newAlphaTestAxes()
-	if s, err := ax.Scatter([]float64{0, 1, 2}, []float64{0, 1, 2}); err != nil || s == nil {
+	if s, err := ax.Scatter([]float64{0, 1, 2}, []float64{0, 1, 2}, ScatterOptions{}); err != nil || s == nil {
 		t.Fatalf("Scatter() = (%v, %v), want non-nil artist and nil error", s, err)
 	}
 	if len(*got) != 0 {
@@ -60,7 +60,7 @@ func TestRejectedPlotInputReturnsErrorWithoutWarning(t *testing.T) {
 		{
 			name: "hist empty data",
 			call: func(ax *Axes) (bool, error) {
-				h, err := ax.Hist(nil)
+				h, err := ax.Hist(nil, HistOptions{})
 				return h != nil, err
 			},
 		},
@@ -75,14 +75,14 @@ func TestRejectedPlotInputReturnsErrorWithoutWarning(t *testing.T) {
 		{
 			name: "fill between x mismatched lengths",
 			call: func(ax *Axes) (bool, error) {
-				f, err := ax.FillBetweenX([]float64{0, 1, 2}, []float64{0, 0}, []float64{1, 1, 1})
+				f, err := ax.FillBetweenX([]float64{0, 1, 2}, []float64{0, 0}, []float64{1, 1, 1}, FillOptions{})
 				return f != nil, err
 			},
 		},
 		{
 			name: "errorbar negative errors",
 			call: func(ax *Axes) (bool, error) {
-				b, err := ax.ErrorBar([]float64{0, 1}, []float64{0, 1}, []float64{-1}, nil)
+				b, err := ax.ErrorBar([]float64{0, 1}, []float64{0, 1}, []float64{-1}, nil, ErrorBarOptions{})
 				return b != nil, err
 			},
 		},
@@ -100,7 +100,7 @@ func TestRejectedPlotInputReturnsErrorWithoutWarning(t *testing.T) {
 				img, err := ax.ImShowRGB([][][]float64{
 					{{0, 0, 0}, {1, 1, 1}},
 					{{0, 0, 0}},
-				})
+				}, ImShowRGBOptions{})
 				return img != nil, err
 			},
 		},

@@ -25,7 +25,7 @@ func outputTestFigure() *core.Figure {
 		Min: geom.Pt{X: 0.1, Y: 0.1},
 		Max: geom.Pt{X: 0.9, Y: 0.9},
 	})
-	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1})
+	_, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, core.PlotOptions{})
 	return fig
 }
 

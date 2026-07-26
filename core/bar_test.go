@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -122,7 +123,7 @@ func TestBarAutoScaleUsesStickyBaseline(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
-	ax.Bar([]float64{0, 1, 2, 3}, []float64{3, 8, 6, 4})
+	ax.Bar([]float64{0, 1, 2, 3}, []float64{3, 8, 6, 4}, BarOptions{})
 	ax.AutoScale(0.05)
 
 	_, xMax := ax.XScale.Domain()
@@ -143,7 +144,7 @@ func TestAxesBarAutoScalesOnAddLikeMatplotlib(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 	width := 0.72
 
-	ax.Bar([]float64{0, 1, 2}, []float64{0.35, 0.75, 0.55}, BarOptions{Width: &width})
+	ax.Bar([]float64{0, 1, 2}, []float64{0.35, 0.75, 0.55}, BarOptions{Width: optional.Of(width)})
 
 	xMin, xMax := ax.XScale.Domain()
 	yMin, yMax := ax.YScale.Domain()
@@ -160,7 +161,7 @@ func TestHorizontalBarAutoScaleUsesStickyBaseline(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 	orientation := BarHorizontal
 
-	ax.Bar([]float64{0, 1, 2}, []float64{4, 7, 5}, BarOptions{Orientation: &orientation})
+	ax.Bar([]float64{0, 1, 2}, []float64{4, 7, 5}, BarOptions{Orientation: optional.Of(orientation)})
 	ax.AutoScale(0.05)
 
 	xMin, xMax := ax.XScale.Domain()
@@ -182,7 +183,7 @@ func TestAxesBarHForcesHorizontalOrientation(t *testing.T) {
 	vertical := BarVertical
 
 	bar, _ := ax.BarH([]float64{0, 1}, []float64{4, 7}, BarOptions{
-		Orientation: &vertical,
+		Orientation: optional.Of(vertical),
 		Label:       "horizontal",
 	})
 	if bar == nil {
@@ -203,8 +204,8 @@ func TestAxesBarEdgeAlignConvertsPositionsToCenters(t *testing.T) {
 	width := 0.5
 
 	bar, _ := ax.Bar([]float64{1, 2}, []float64{3, 4}, BarOptions{
-		Align: &align,
-		Width: &width,
+		Align: optional.Of(align),
+		Width: optional.Of(width),
 	})
 
 	if bar == nil {
@@ -327,7 +328,7 @@ func TestAxesBarPreservesEdgeWidthPixelsForMatplotlibRefHelpers(t *testing.T) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
 	edgeWidth := 1.0
 
-	bar, _ := ax.Bar([]float64{1}, []float64{3}, BarOptions{EdgeWidth: &edgeWidth})
+	bar, _ := ax.Bar([]float64{1}, []float64{3}, BarOptions{EdgeWidth: optional.Of(edgeWidth)})
 	if bar == nil {
 		t.Fatal("Bar returned nil")
 	}
@@ -517,7 +518,7 @@ func TestBarErrorKwColorIsPreserved(t *testing.T) {
 	red := render.Color{R: 1, G: 0, B: 0, A: 1}
 	bar, _ := ax.Bar([]float64{0, 1, 2}, []float64{3, 8, 6}, BarOptions{
 		YErr:    []float64{0.5, 1, 0.75},
-		ErrorKw: &ErrorBarOptions{Color: &red},
+		ErrorKw: optional.Of(ErrorBarOptions{Color: optional.Of(red)}),
 	})
 	if bar.errorbar == nil {
 		t.Fatal("expected an attached error bar")
@@ -530,8 +531,8 @@ func TestBarErrorKwColorIsPreserved(t *testing.T) {
 	blue := render.Color{R: 0, G: 0, B: 1, A: 1}
 	bar2, _ := ax.Bar([]float64{0, 1}, []float64{3, 8}, BarOptions{
 		YErr:    []float64{0.5, 1},
-		ECol:    &blue,
-		ErrorKw: &ErrorBarOptions{Color: &red},
+		ECol:    optional.Of(blue),
+		ErrorKw: optional.Of(ErrorBarOptions{Color: optional.Of(red)}),
 	})
 	if bar2.errorbar.Color != blue {
 		t.Fatalf("error color = %+v, want ECol blue %+v (ECol beats ErrorKw)", bar2.errorbar.Color, blue)
@@ -549,7 +550,7 @@ func TestBarErrorBarsDoNotAdvanceColorCycle(t *testing.T) {
 
 	noErr := NewFigure(800, 600)
 	axN := noErr.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
-	axN.Bar([]float64{0, 1, 2}, []float64{3, 8, 6})
+	axN.Bar([]float64{0, 1, 2}, []float64{3, 8, 6}, BarOptions{})
 	afterNoErr := axN.NextColor()
 
 	if afterErr != afterNoErr {
@@ -560,7 +561,7 @@ func TestBarErrorBarsDoNotAdvanceColorCycle(t *testing.T) {
 func TestBarWithoutErrorDataHasNoErrorBar(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
-	bar, _ := ax.Bar([]float64{0, 1, 2}, []float64{3, 8, 6})
+	bar, _ := ax.Bar([]float64{0, 1, 2}, []float64{3, 8, 6}, BarOptions{})
 	if bar.errorbar != nil {
 		t.Fatal("bar without error data should not create an error bar")
 	}

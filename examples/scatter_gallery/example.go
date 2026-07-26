@@ -14,6 +14,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -58,8 +59,8 @@ func addColormappedPanel(ax *core.Axes) {
 			ScalarValues: []float64{-1.0, -0.2, 0.35, 0.8, 1.2},
 			Colormap:     "viridis",
 			Sizes:        radii(7, 10, 13, 16, 19),
-			EdgeColor:    &edge,
-			EdgeWidth:    &edgeWidth,
+			EdgeColor:    optional.Of(edge),
+			EdgeWidth:    optional.Of(edgeWidth),
 		},
 	)
 }
@@ -76,10 +77,10 @@ func addVariableSizePanel(ax *core.Axes) {
 		[]float64{1.5, 3.0, 4.5, 6.0, 7.5, 9.0},
 		[]float64{5.0, 3.0, 6.0, 4.0, 7.0, 5.0},
 		core.ScatterOptions{
-			Color:     &col,
+			Color:     optional.Of(col),
 			Sizes:     radii(5, 9, 13, 17, 21, 25),
-			EdgeColor: &edge,
-			EdgeWidth: &edgeWidth,
+			EdgeColor: optional.Of(edge),
+			EdgeWidth: optional.Of(edgeWidth),
 		},
 	)
 }
@@ -97,13 +98,13 @@ func addAlphaPanel(ax *core.Axes) {
 	ax.Scatter(
 		[]float64{2.5, 3.5, 3.0, 3.0},
 		[]float64{4.0, 4.0, 4.8, 3.2},
-		core.ScatterOptions{Color: &red, Size: &size, Alpha: &alpha, EdgeWidth: &edgeWidth},
+		core.ScatterOptions{Color: optional.Of(red), Size: optional.Of(size), Alpha: optional.Of(alpha), EdgeWidth: optional.Of(edgeWidth)},
 	)
 	blue := render.Color{R: 0.20, G: 0.30, B: 0.85, A: 1}
 	ax.Scatter(
 		[]float64{4.5, 5.5, 5.0, 5.0},
 		[]float64{4.0, 4.0, 4.8, 3.2},
-		core.ScatterOptions{Color: &blue, Size: &size, Alpha: &alpha, EdgeWidth: &edgeWidth},
+		core.ScatterOptions{Color: optional.Of(blue), Size: optional.Of(size), Alpha: optional.Of(alpha), EdgeWidth: optional.Of(edgeWidth)},
 	)
 }
 
@@ -130,11 +131,11 @@ func addMarkerFamiliesPanel(ax *core.Axes) {
 			[]float64{x},
 			[]float64{y},
 			core.ScatterOptions{
-				Color:     &col,
-				Size:      &size,
-				Marker:    &marker,
-				EdgeColor: &edge,
-				EdgeWidth: &edgeWidth,
+				Color:     optional.Of(col),
+				Size:      optional.Of(size),
+				Marker:    optional.Of(marker),
+				EdgeColor: optional.Of(edge),
+				EdgeWidth: optional.Of(edgeWidth),
 			},
 		)
 	}

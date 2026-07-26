@@ -81,7 +81,7 @@ func TestPyplotWrappersShareCoreAxesPath(t *testing.T) {
 	// The artist returned by the pyplot wrapper must be identical to the one the
 	// current axes appended -- i.e. the wrapper added nothing of its own and
 	// delegated straight to Axes.Plot.
-	wrapperLine, err := Plot(x, y)
+	wrapperLine, err := Plot(x, y, core.PlotOptions{})
 	if err != nil {
 		t.Fatalf("Plot() returned error: %v", err)
 	}
@@ -96,7 +96,7 @@ func TestPyplotWrappersShareCoreAxesPath(t *testing.T) {
 	// Calling the object-oriented API on the same current axes must use the same
 	// path and append an equivalent *core.Line2D, increasing the artist count by
 	// exactly one.
-	directLine, _ := ax.Plot(x, y)
+	directLine, _ := ax.Plot(x, y, core.PlotOptions{})
 	if directLine == nil {
 		t.Fatal("GCA().Plot() returned nil")
 	}
@@ -133,7 +133,7 @@ func TestPlotAcceptsUnitCapableValues(t *testing.T) {
 		time.Date(2024, time.January, 2, 0, 0, 0, 0, time.UTC),
 	}
 
-	line, err := Plot(x, []float64{1, 2})
+	line, err := Plot(x, []float64{1, 2}, core.PlotOptions{})
 	if err != nil {
 		t.Fatalf("Plot() returned error: %v", err)
 	}
@@ -148,7 +148,7 @@ func TestPlotAcceptsUnitCapableValues(t *testing.T) {
 func TestScatterAcceptsUnitCapableValuesAndPropagatesErrors(t *testing.T) {
 	resetForTests()
 
-	scatter, err := Scatter([]string{"draft", "review"}, []float64{0.3, 0.8})
+	scatter, err := Scatter([]string{"draft", "review"}, []float64{0.3, 0.8}, core.ScatterOptions{})
 	if err != nil {
 		t.Fatalf("Scatter() returned error: %v", err)
 	}
@@ -159,7 +159,7 @@ func TestScatterAcceptsUnitCapableValuesAndPropagatesErrors(t *testing.T) {
 		t.Fatalf("x-axis locator = %T, want ticker.FixedLocator", GCA().XAxis.Locator)
 	}
 
-	if rejected, err := Scatter([]float64{0, 1}, []float64{1}); err == nil || rejected != nil {
+	if rejected, err := Scatter([]float64{0, 1}, []float64{1}, core.ScatterOptions{}); err == nil || rejected != nil {
 		t.Fatalf("mismatched Scatter() = (%v, %v), want nil artist and error", rejected, err)
 	}
 }
@@ -167,7 +167,7 @@ func TestScatterAcceptsUnitCapableValuesAndPropagatesErrors(t *testing.T) {
 func TestBarAcceptsUnitCapableValuesAndPropagatesErrors(t *testing.T) {
 	resetForTests()
 
-	bar, err := Bar([]string{"draft", "review"}, []float64{1, 2})
+	bar, err := Bar([]string{"draft", "review"}, []float64{1, 2}, core.BarOptions{})
 	if err != nil {
 		t.Fatalf("Bar() returned error: %v", err)
 	}
@@ -178,7 +178,7 @@ func TestBarAcceptsUnitCapableValuesAndPropagatesErrors(t *testing.T) {
 		t.Fatalf("x-axis locator = %T, want ticker.FixedLocator", GCA().XAxis.Locator)
 	}
 
-	if rejected, err := BarH([]string{"north", "south"}, []float64{4}); err == nil || rejected != nil {
+	if rejected, err := BarH([]string{"north", "south"}, []float64{4}, core.BarOptions{}); err == nil || rejected != nil {
 		t.Fatalf("mismatched BarH() = (%v, %v), want nil artist and error", rejected, err)
 	}
 }
@@ -190,7 +190,7 @@ func TestFillBetweenAcceptsUnitCapableValuesAndPropagatesErrors(t *testing.T) {
 		time.Date(2024, time.February, 1, 0, 0, 0, 0, time.UTC),
 		time.Date(2024, time.February, 5, 0, 0, 0, 0, time.UTC),
 	}
-	fill, err := FillBetween(timestamps, []float64{6, 7}, []float64{10, 15})
+	fill, err := FillBetween(timestamps, []float64{6, 7}, []float64{10, 15}, core.FillOptions{})
 	if err != nil {
 		t.Fatalf("FillBetween() returned error: %v", err)
 	}
@@ -201,7 +201,7 @@ func TestFillBetweenAcceptsUnitCapableValuesAndPropagatesErrors(t *testing.T) {
 		t.Fatalf("x-axis locator = %T, want dates.DateLocator", GCA().XAxis.Locator)
 	}
 
-	if rejected, err := FillBetween([]float64{0, 1}, []float64{1, 2}, []float64{3}); err == nil || rejected != nil {
+	if rejected, err := FillBetween([]float64{0, 1}, []float64{1, 2}, []float64{3}, core.FillOptions{}); err == nil || rejected != nil {
 		t.Fatalf("mismatched FillBetween() = (%v, %v), want nil artist and error", rejected, err)
 	}
 }
@@ -214,7 +214,7 @@ func TestStatWrappersPropagateRejectedInput(t *testing.T) {
 		call func() (bool, error)
 	}{
 		{"FillBetweenX", func() (bool, error) {
-			f, err := FillBetweenX([]float64{0, 1, 2}, []float64{0, 1}, []float64{1, 2, 3})
+			f, err := FillBetweenX([]float64{0, 1, 2}, []float64{0, 1}, []float64{1, 2, 3}, core.FillOptions{})
 			return f != nil, err
 		}},
 		{"Hist", func() (bool, error) {
@@ -222,7 +222,7 @@ func TestStatWrappersPropagateRejectedInput(t *testing.T) {
 			return h != nil, err
 		}},
 		{"ErrorBar", func() (bool, error) {
-			b, err := ErrorBar([]float64{0, 1}, []float64{0, 1}, []float64{-1}, nil)
+			b, err := ErrorBar([]float64{0, 1}, []float64{0, 1}, []float64{-1}, nil, core.ErrorBarOptions{})
 			return b != nil, err
 		}},
 	}
@@ -271,12 +271,12 @@ func TestTextAndAnnotateDelegateToCurrentAxes(t *testing.T) {
 func TestReferenceLineAndSpanHelpersDelegateToCurrentAxes(t *testing.T) {
 	resetForTests()
 
-	hLine := AxHLine(0.25)
-	vLine := AxVLine(0.75)
-	line := AxLine(geom.Pt{X: 0, Y: 0}, geom.Pt{X: 1, Y: 1})
-	slopeLine := AxLineSlope(geom.Pt{X: 0.5, Y: 0.5}, 2)
-	hSpan := AxHSpan(0.1, 0.2)
-	vSpan := AxVSpan(0.3, 0.4)
+	hLine := AxHLine(0.25, core.HLineOptions{})
+	vLine := AxVLine(0.75, core.VLineOptions{})
+	line := AxLine(geom.Pt{X: 0, Y: 0}, geom.Pt{X: 1, Y: 1}, core.ReferenceLineOptions{})
+	slopeLine := AxLineSlope(geom.Pt{X: 0.5, Y: 0.5}, 2, core.ReferenceLineOptions{})
+	hSpan := AxHSpan(0.1, 0.2, core.HSpanOptions{})
+	vSpan := AxVSpan(0.3, 0.4, core.VSpanOptions{})
 
 	if hLine == nil || vLine == nil || line == nil || slopeLine == nil || hSpan == nil || vSpan == nil {
 		t.Fatalf("reference helpers returned nil: h=%v v=%v line=%v slope=%v hspan=%v vspan=%v", hLine, vLine, line, slopeLine, hSpan, vSpan)
@@ -553,7 +553,7 @@ func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 		time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC),
 		time.Date(2024, time.January, 2, 0, 0, 0, 0, time.UTC),
 	}
-	if line, err := PlotDate(dateValues, []float64{1, 2}); err != nil || line == nil {
+	if line, err := PlotDate(dateValues, []float64{1, 2}, core.PlotOptions{}); err != nil || line == nil {
 		t.Fatal("PlotDate() returned nil")
 	}
 	if _, ok := GCA().XAxis.Locator.(dates.DateLocator); !ok {
@@ -561,7 +561,7 @@ func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 	}
 
 	resetForTests()
-	if line := SemilogX([]float64{1, 10}, []float64{1, 2}); line == nil {
+	if line := SemilogX([]float64{1, 10}, []float64{1, 2}, core.PlotOptions{}); line == nil {
 		t.Fatal("SemilogX() returned nil")
 	}
 	if _, ok := GCA().XScale.(transform.Log); !ok {
@@ -569,7 +569,7 @@ func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 	}
 
 	resetForTests()
-	if line := SemilogY([]float64{1, 2}, []float64{1, 10}); line == nil {
+	if line := SemilogY([]float64{1, 2}, []float64{1, 10}, core.PlotOptions{}); line == nil {
 		t.Fatal("SemilogY() returned nil")
 	}
 	if _, ok := GCA().YScale.(transform.Log); !ok {
@@ -577,7 +577,7 @@ func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 	}
 
 	resetForTests()
-	if line := LogLog([]float64{1, 10}, []float64{1, 10}); line == nil {
+	if line := LogLog([]float64{1, 10}, []float64{1, 10}, core.PlotOptions{}); line == nil {
 		t.Fatal("LogLog() returned nil")
 	}
 	if _, ok := GCA().XScale.(transform.Log); !ok {
@@ -588,16 +588,16 @@ func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 	}
 
 	resetForTests()
-	if bar, err := BarH([]float64{0, 1}, []float64{3, 4}); err != nil || bar == nil || bar.Orientation != core.BarHorizontal {
+	if bar, err := BarH([]float64{0, 1}, []float64{3, 4}, core.BarOptions{}); err != nil || bar == nil || bar.Orientation != core.BarHorizontal {
 		t.Fatalf("BarH() = (%#v, %v), want horizontal bar", bar, err)
 	}
-	if fill := Fill([]float64{0, 1, 0}, []float64{0, 0, 1}); fill == nil {
+	if fill := Fill([]float64{0, 1, 0}, []float64{0, 0, 1}, core.FillOptions{}); fill == nil {
 		t.Fatal("Fill() returned nil")
 	}
-	if fill, err := FillBetweenX([]float64{0, 1, 2}, []float64{0, 1, 0}, []float64{1, 2, 1}); err != nil || fill == nil || fill.Orientation != core.FillHorizontal {
+	if fill, err := FillBetweenX([]float64{0, 1, 2}, []float64{0, 1, 0}, []float64{1, 2, 1}, core.FillOptions{}); err != nil || fill == nil || fill.Orientation != core.FillHorizontal {
 		t.Fatalf("FillBetweenX() = (%#v, %v), want horizontal fill", fill, err)
 	}
-	arrow := Arrow(0.2, 0.3, 1.5, -0.5)
+	arrow := Arrow(0.2, 0.3, 1.5, -0.5, core.Arrow{})
 	if arrow == nil {
 		t.Fatal("Arrow() returned nil")
 	}
@@ -624,36 +624,36 @@ func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 	if vLinesBroadcast := VLines([]float64{3, 4}, []float64{-2}, []float64{2}, core.LineCollectionOptions{}); vLinesBroadcast == nil || len(vLinesBroadcast.Segments) != 2 {
 		t.Fatalf("VLines broadcast = %#v, want two segments", vLinesBroadcast)
 	}
-	if step := Step([]float64{0, 1, 2}, []float64{1, 3, 2}); step == nil {
+	if step := Step([]float64{0, 1, 2}, []float64{1, 3, 2}, core.StepOptions{}); step == nil {
 		t.Fatal("Step() returned nil")
 	}
-	if stairs := Stairs([]float64{1, 2}, []float64{0, 1, 2}); stairs == nil {
+	if stairs := Stairs([]float64{1, 2}, []float64{0, 1, 2}, core.StairsOptions{}); stairs == nil {
 		t.Fatal("Stairs() returned nil")
 	}
-	broken := BrokenBarH([][2]float64{{1, 2}, {4, 1}}, [2]float64{0.5, 0.25})
+	broken := BrokenBarH([][2]float64{{1, 2}, {4, 1}}, [2]float64{0.5, 0.25}, core.BarOptions{})
 	if broken == nil {
 		t.Fatal("BrokenBarH() returned nil")
 	}
-	if labels := BarLabel(broken, []string{"one", "two"}); len(labels) != 2 {
+	if labels := BarLabel(broken, []string{"one", "two"}, core.BarLabelOptions{}); len(labels) != 2 {
 		t.Fatalf("BarLabel() returned %d labels, want 2", len(labels))
 	}
-	if box := BoxPlot([]float64{1, 2, 3, 4}); box == nil {
+	if box := BoxPlot([]float64{1, 2, 3, 4}, core.BoxPlotOptions{}); box == nil {
 		t.Fatal("BoxPlot() returned nil")
 	}
-	if bxp := Bxp([]core.BxpStat{{Med: 2, Q1: 1, Q3: 3, Whislo: 0, Whishi: 4}}); bxp == nil || len(bxp.Medians) != 1 {
+	if bxp := Bxp([]core.BxpStat{{Med: 2, Q1: 1, Q3: 3, Whislo: 0, Whishi: 4}}, core.BxpOptions{}); bxp == nil || len(bxp.Medians) != 1 {
 		t.Fatalf("Bxp() = %#v, want one median", bxp)
 	}
-	if fills := StackPlot([]float64{0, 1}, [][]float64{{1, 2}, {2, 1}}); len(fills) != 2 {
+	if fills := StackPlot([]float64{0, 1}, [][]float64{{1, 2}, {2, 1}}, core.StackPlotOptions{}); len(fills) != 2 {
 		t.Fatalf("StackPlot() returned %d fills, want 2", len(fills))
 	}
-	if ecdf := ECDF([]float64{3, 1, 2}); ecdf == nil {
+	if ecdf := ECDF([]float64{3, 1, 2}, core.ECDFOptions{}); ecdf == nil {
 		t.Fatal("ECDF() returned nil")
 	}
 	pie := Pie([]float64{1, 2}, core.PieOptions{Labels: []string{"A", "B"}})
 	if pie == nil {
 		t.Fatal("Pie() returned nil")
 	}
-	if labels := PieLabel(pie, []string{"one", "two"}); len(labels) != 2 {
+	if labels := PieLabel(pie, []string{"one", "two"}, core.PieLabelOptions{}); len(labels) != 2 {
 		t.Fatalf("PieLabel() returned %d labels, want 2", len(labels))
 	}
 	violin := Violin([]core.ViolinStat{{
@@ -663,7 +663,7 @@ func TestConveniencePlotHelpersDelegateToCurrentAxes(t *testing.T) {
 		Median: 2,
 		Min:    1,
 		Max:    3,
-	}})
+	}}, core.ViolinStatsOptions{})
 	if violin == nil || violin.Bodies == nil || len(violin.Bodies.Polygons) != 1 {
 		t.Fatalf("Violin() = %#v, want one body", violin)
 	}
@@ -740,7 +740,7 @@ func TestVectorFieldHelpersDelegateToCurrentAxes(t *testing.T) {
 	if q == nil {
 		t.Fatal("Quiver() returned nil")
 	}
-	key := QuiverKey(q, 0.8, 0.2, 1, "1 unit")
+	key := QuiverKey(q, 0.8, 0.2, 1, "1 unit", core.QuiverKeyOptions{})
 	if key == nil {
 		t.Fatal("QuiverKey() returned nil")
 	}
@@ -749,6 +749,7 @@ func TestVectorFieldHelpersDelegateToCurrentAxes(t *testing.T) {
 		[]float64{0.5},
 		[]float64{12},
 		[]float64{3},
+		core.BarbsOptions{},
 	)
 	if barbs == nil {
 		t.Fatal("Barbs() returned nil")
@@ -781,10 +782,10 @@ func TestMatrixAndSignalHelpersDelegateToCurrentAxes(t *testing.T) {
 	if img := ImShow(mat, core.ImShowOptions{Interpolation: optional.Of(bilinear)}); img == nil || img.Interpolation != "bilinear" {
 		t.Fatalf("ImShow() = %#v, want image with bilinear interpolation", img)
 	}
-	if img := MatShow(mat); img == nil {
+	if img := MatShow(mat, core.MatShowOptions{}); img == nil {
 		t.Fatal("MatShow() returned nil")
 	}
-	if spy := Spy(mat); spy == nil {
+	if spy := Spy(mat, core.SpyOptions{}); spy == nil {
 		t.Fatal("Spy() returned nil")
 	}
 	if mesh := PColor(mat, core.MeshOptions{Label: "pcolor"}); mesh == nil || mesh.Label != "pcolor" {
@@ -817,13 +818,13 @@ func TestMatrixAndSignalHelpersDelegateToCurrentAxes(t *testing.T) {
 	if cohere := Cohere([]float64{0, 1, 0, -1}, []float64{0, 1, 0, -1}, core.SignalSpectrumOptions{NFFT: 4}); cohere == nil {
 		t.Fatal("Cohere() returned nil")
 	}
-	if xcorr := XCorr([]float64{1, 2, 3}, []float64{1, 2, 3}); xcorr == nil {
+	if xcorr := XCorr([]float64{1, 2, 3}, []float64{1, 2, 3}, core.CorrelationOptions{}); xcorr == nil {
 		t.Fatal("XCorr() returned nil")
 	}
-	if acorr := ACorr([]float64{1, 2, 3}); acorr == nil {
+	if acorr := ACorr([]float64{1, 2, 3}, core.CorrelationOptions{}); acorr == nil {
 		t.Fatal("ACorr() returned nil")
 	}
-	if heatmap := AnnotatedHeatmap(mat); heatmap == nil {
+	if heatmap := AnnotatedHeatmap(mat, core.AnnotatedHeatmapOptions{}); heatmap == nil {
 		t.Fatal("AnnotatedHeatmap() returned nil")
 	}
 }
@@ -839,19 +840,19 @@ func TestThreeDHelpersDelegateToCurrent3DAxes(t *testing.T) {
 		t.Fatal("AddAxes3D() returned nil")
 	}
 
-	if line := Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1}); line == nil {
+	if line := Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1}, core.PlotOptions{}); line == nil {
 		t.Fatal("Plot3D() returned nil")
 	}
-	if scatter := Scatter3D([]float64{0, 1}, []float64{0, 1}, []float64{1, 2}); scatter == nil {
+	if scatter := Scatter3D([]float64{0, 1}, []float64{0, 1}, []float64{1, 2}, core.ScatterOptions{}); scatter == nil {
 		t.Fatal("Scatter3D() returned nil")
 	}
-	if wire := Wireframe([]float64{0, 1}, []float64{0, 1}, [][]float64{{0, 1}, {1, 2}}); wire == nil {
+	if wire := Wireframe([]float64{0, 1}, []float64{0, 1}, [][]float64{{0, 1}, {1, 2}}, core.PlotOptions{}); wire == nil {
 		t.Fatal("Wireframe() returned nil")
 	}
-	if surf := Surface([]float64{0, 1}, []float64{0, 1}, [][]float64{{0, 1}, {1, 2}}); surf == nil {
+	if surf := Surface([]float64{0, 1}, []float64{0, 1}, [][]float64{{0, 1}, {1, 2}}, core.PlotOptions{}); surf == nil {
 		t.Fatal("Surface() returned nil")
 	}
-	if voxel := Voxel([]float64{0, 1}, []float64{0, 1}, []float64{0, 1}, []float64{1, 1}, []float64{1, 1}, []float64{1, 1}); voxel == nil {
+	if voxel := Voxel([]float64{0, 1}, []float64{0, 1}, []float64{0, 1}, []float64{1, 1}, []float64{1, 1}, []float64{1, 1}, core.PlotOptions{}); voxel == nil {
 		t.Fatal("Voxel() returned nil")
 	}
 	tri := core.Triangulation{
@@ -859,16 +860,16 @@ func TestThreeDHelpersDelegateToCurrent3DAxes(t *testing.T) {
 		Y:         []float64{0, 0, 1, 1},
 		Triangles: [][3]int{{0, 1, 2}, {0, 2, 3}},
 	}
-	if tris := Trisurf(tri, []float64{0, 1, 2, 3}); tris == nil {
+	if tris := Trisurf(tri, []float64{0, 1, 2, 3}, core.PlotOptions{}); tris == nil {
 		t.Fatal("Trisurf() returned nil")
 	}
-	if contour := Contour3D([]float64{0, 1}, []float64{0, 1}, [][]float64{{0, 1}, {1, 2}}); contour == nil {
+	if contour := Contour3D([]float64{0, 1}, []float64{0, 1}, [][]float64{{0, 1}, {1, 2}}, core.PlotOptions{}); contour == nil {
 		t.Fatal("Contour3D() returned nil")
 	}
-	if contourf := Contourf3D([]float64{0, 1}, []float64{0, 1}, [][]float64{{0, 1}, {1, 2}}); contourf == nil {
+	if contourf := Contourf3D([]float64{0, 1}, []float64{0, 1}, [][]float64{{0, 1}, {1, 2}}, core.PlotOptions{}); contourf == nil {
 		t.Fatal("Contourf3D() returned nil")
 	}
-	if text := Text3D(0.2, 0.5, 0.9, "pt"); text == nil {
+	if text := Text3D(0.2, 0.5, 0.9, "pt", core.TextOptions{}); text == nil {
 		t.Fatal("Text3D() returned nil")
 	}
 }

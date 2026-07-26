@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -31,7 +32,7 @@ func Plot() *core.Figure {
 	axes[0].SetTitle("MaxNLocator Degenerate View")
 	axes[0].SetXLabel("expanded around 2")
 	axes[0].SetYLabel("value")
-	axes[0].Plot([]float64{2, 2}, []float64{0.2, 0.9}, core.PlotOptions{Color: &color, LineWidth: &width})
+	axes[0].Plot([]float64{2, 2}, []float64{0.2, 0.9}, core.PlotOptions{Color: optional.Of(color), LineWidth: optional.Of(width)})
 	axes[0].SetXLim(2, 2)
 	axes[0].SetYLim(0, 1)
 	axes[0].XAxis.Locator = ticker.MaxNLocator{N: 2, Steps: []float64{1, 2, 2.5, 5, 10}}
@@ -39,7 +40,7 @@ func Plot() *core.Figure {
 	axes[1].SetTitle("MaxNLocator Prune Both")
 	axes[1].SetXLabel("pruned range")
 	axes[1].SetYLabel("value")
-	axes[1].Plot([]float64{-3, -1, 1, 3, 5, 7}, []float64{0.16, 0.28, 0.44, 0.62, 0.78, 0.90}, core.PlotOptions{Color: &color, LineWidth: &width})
+	axes[1].Plot([]float64{-3, -1, 1, 3, 5, 7}, []float64{0.16, 0.28, 0.44, 0.62, 0.78, 0.90}, core.PlotOptions{Color: optional.Of(color), LineWidth: optional.Of(width)})
 	axes[1].SetXLim(-3, 7)
 	axes[1].SetYLim(0, 1)
 	axes[1].XAxis.Locator = ticker.MaxNLocator{N: 5, Prune: "both"}
@@ -50,7 +51,7 @@ func Plot() *core.Figure {
 	axes[2].Plot(
 		[]float64{1_000_000, 1_000_001, 1_000_002, 1_000_003, 1_000_004},
 		[]float64{0.14, 0.30, 0.50, 0.72, 0.88},
-		core.PlotOptions{Color: &color, LineWidth: &width},
+		core.PlotOptions{Color: optional.Of(color), LineWidth: optional.Of(width)},
 	)
 	axes[2].SetXLim(1_000_000, 1_000_004)
 	axes[2].SetYLim(0, 1)

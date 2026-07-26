@@ -3,7 +3,7 @@ package widgets
 import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -11,8 +11,8 @@ import (
 type CursorOptions struct {
 	Color      render.Color
 	LineWidth  float64
-	HorizOn    *bool
-	VerticalOn *bool
+	HorizOn    optional.Value[bool]
+	VerticalOn optional.Value[bool]
 }
 
 // Cursor draws cursor cross-lines and is updated by hover events.
@@ -30,25 +30,25 @@ type Cursor struct {
 }
 
 // NewCursor creates a hover cursor for this axis.
-func NewCursor(a *core.Axes, opts ...CursorOptions) *Cursor {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func NewCursor(a *core.Axes, opt CursorOptions) *Cursor {
 	if a == nil {
 		return nil
 	}
 	config := CursorOptions{
 		Color:      render.Color{R: 0.24, G: 0.24, B: 0.24, A: 1},
 		LineWidth:  0.9,
-		HorizOn:    boolPtr(true),
-		VerticalOn: boolPtr(true),
+		HorizOn:    optional.Of(true),
+		VerticalOn: optional.Of(true),
 	}
-	if opt, ok := optarg.Optional("cursor", opts); ok {
-		config = mergeCursorOptions(config, opt)
-	}
+	config = mergeCursorOptions(config, opt)
 	c := &Cursor{
 		axis:       a,
 		Color:      config.Color,
 		LineWidth:  config.LineWidth,
-		Horizontal: boolValue(config.HorizOn, true),
-		Vertical:   boolValue(config.VerticalOn, true),
+		Horizontal: boolValue(config.HorizOn.Ptr(), true),
+		Vertical:   boolValue(config.VerticalOn.Ptr(), true),
 		z:          1200,
 	}
 	a.Add(c)
@@ -116,10 +116,10 @@ func mergeCursorOptions(base, override CursorOptions) CursorOptions {
 	if override.LineWidth > 0 {
 		base.LineWidth = override.LineWidth
 	}
-	if override.HorizOn != nil {
+	if override.HorizOn.IsSet() {
 		base.HorizOn = override.HorizOn
 	}
-	if override.VerticalOn != nil {
+	if override.VerticalOn.IsSet() {
 		base.VerticalOn = override.VerticalOn
 	}
 	return base

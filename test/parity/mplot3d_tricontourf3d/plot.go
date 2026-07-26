@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/plot3d"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -66,10 +67,10 @@ func Plot() *core.Figure {
 	vmin := -0.6
 	vmax := 0.6
 	ax.TriContourf(core.Triangulation{X: x, Y: y}, z, core.PlotOptions{
-		Colormap: &cmap,
+		Colormap: optional.Of(cmap),
 		Levels:   []float64{-0.6, -0.45, -0.3, -0.15, 0, 0.15, 0.3, 0.45, 0.6},
-		VMin:     &vmin,
-		VMax:     &vmax,
+		VMin:     optional.Of(vmin),
+		VMax:     optional.Of(vmax),
 	})
 	return fig
 }

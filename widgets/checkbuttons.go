@@ -5,7 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -20,7 +20,7 @@ type CheckButtonsOptions struct {
 	TextColor  render.Color
 	CheckColor render.Color
 	FontSize   float64
-	Disabled   *bool
+	Disabled   optional.Value[bool]
 }
 
 // CheckButtons draws a static checklist-style control.
@@ -41,7 +41,9 @@ type CheckButtons struct {
 }
 
 // NewCheckButtons adds a check-button widget artist to the axes.
-func NewCheckButtons(a *core.Axes, labels []string, active []bool, opts ...CheckButtonsOptions) *CheckButtons {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func NewCheckButtons(a *core.Axes, labels []string, active []bool, opt CheckButtonsOptions) *CheckButtons {
 	if a == nil || len(labels) == 0 {
 		return nil
 	}
@@ -52,13 +54,11 @@ func NewCheckButtons(a *core.Axes, labels []string, active []bool, opts ...Check
 		TextColor:  defaults.Text,
 		CheckColor: defaults.Check,
 	}
-	if opt, ok := optarg.Optional("checkbuttons", opts); ok {
-		mergeCheckButtonsOptions(&cfg, &opt)
-	}
+	mergeCheckButtonsOptions(&cfg, &opt)
 	prepareWidgetAxes(a)
 	enabled := true
-	if cfg.Disabled != nil {
-		enabled = !*cfg.Disabled
+	if cfg.Disabled.IsSet() {
+		enabled = !cfg.Disabled.OrZero()
 	}
 	values := make([]bool, len(labels))
 	copy(values, active)
@@ -242,7 +242,7 @@ func mergeCheckButtonsOptions(base, override *CheckButtonsOptions) {
 	if override.FontSize > 0 {
 		base.FontSize = override.FontSize
 	}
-	if override.Disabled != nil {
+	if override.Disabled.IsSet() {
 		base.Disabled = override.Disabled
 	}
 }

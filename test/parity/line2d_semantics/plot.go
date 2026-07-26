@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -29,8 +30,8 @@ func Plot() *core.Figure {
 		[]float64{0.6, 2.2, 3.8},
 		[]float64{4.65, 4.65, 4.65},
 		core.PlotOptions{
-			Color:     colorPtr(render.Color{R: 0.10, G: 0.26, B: 0.78, A: 1}),
-			LineWidth: floatPtr(3),
+			Color:     optional.Of(render.Color{R: 0.10, G: 0.26, B: 0.78, A: 1}),
+			LineWidth: optional.Of(3.0),
 			Label:     "set_data",
 		},
 	)
@@ -71,20 +72,20 @@ func Plot() *core.Figure {
 	y1 := []float64{1.1, 1.45, 1.2, 1.65, 1.35, 1.75, 1.45, 1.85, 1.55, 1.95, 1.65, 2.05}
 	markerA := core.MarkerCircle
 	lineA, _ := ax.Plot(x, y1, core.PlotOptions{
-		Color:      colorPtr(render.Color{R: 0.58, G: 0.40, B: 0.74, A: 1}),
-		LineWidth:  floatPtr(1.5),
-		Marker:     &markerA,
-		MarkerSize: floatPtr(8),
+		Color:      optional.Of(render.Color{R: 0.58, G: 0.40, B: 0.74, A: 1}),
+		LineWidth:  optional.Of(1.5),
+		Marker:     optional.Of(markerA),
+		MarkerSize: optional.Of(8.0),
 	})
 	lineA.SetMarkEvery(core.StartStepMarkers(1, 3))
 
 	y2 := []float64{0.55, 0.85, 0.65, 0.95, 0.75, 1.05, 0.85, 1.15, 0.95, 1.25, 1.05, 1.35}
 	markerB := core.MarkerSquare
 	lineB, _ := ax.Plot(x, y2, core.PlotOptions{
-		Color:      colorPtr(render.Color{R: 0.55, G: 0.34, B: 0.29, A: 1}),
-		LineWidth:  floatPtr(1.5),
-		Marker:     &markerB,
-		MarkerSize: floatPtr(7),
+		Color:      optional.Of(render.Color{R: 0.55, G: 0.34, B: 0.29, A: 1}),
+		LineWidth:  optional.Of(1.5),
+		Marker:     optional.Of(markerB),
+		MarkerSize: optional.Of(7.0),
 	})
 	lineB.SetMarkEvery(core.IndexedMarkers(0, 4, 8, 11))
 

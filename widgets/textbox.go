@@ -6,7 +6,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -23,7 +23,7 @@ type TextBoxOptions struct {
 	TextColor   render.Color
 	Placeholder string
 	FontSize    float64
-	Active      *bool
+	Active      optional.Value[bool]
 }
 
 // TextBox draws a static text-entry control.
@@ -47,7 +47,9 @@ type TextBox struct {
 }
 
 // NewTextBox adds a text-box widget artist to the axes.
-func NewTextBox(a *core.Axes, label, value string, opts ...TextBoxOptions) *TextBox {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func NewTextBox(a *core.Axes, label, value string, opt TextBoxOptions) *TextBox {
 	if a == nil {
 		return nil
 	}
@@ -57,9 +59,7 @@ func NewTextBox(a *core.Axes, label, value string, opts ...TextBoxOptions) *Text
 		EdgeColor: defaults.TextBoxEdge,
 		TextColor: defaults.Text,
 	}
-	if opt, ok := optarg.Optional("textbox", opts); ok {
-		mergeTextBoxOptions(&cfg, &opt)
-	}
+	mergeTextBoxOptions(&cfg, &opt)
 	prepareWidgetAxes(a)
 	w := &TextBox{
 		Label:       label,
@@ -70,7 +70,7 @@ func NewTextBox(a *core.Axes, label, value string, opts ...TextBoxOptions) *Text
 		TextColor:   cfg.TextColor,
 		FontSize:    cfg.FontSize,
 		selection:   [2]int{0, 0},
-		Active:      boolValue(cfg.Active, false),
+		Active:      boolValue(cfg.Active.Ptr(), false),
 		z:           1200,
 	}
 	if value != "" {
@@ -577,7 +577,7 @@ func mergeTextBoxOptions(base, override *TextBoxOptions) {
 	if override.FontSize > 0 {
 		base.FontSize = override.FontSize
 	}
-	if override.Active != nil {
+	if override.Active.IsSet() {
 		base.Active = override.Active
 	}
 }

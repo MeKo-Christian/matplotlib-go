@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -54,8 +55,8 @@ func Plot() *core.Figure {
 	tempColor := render.Color{R: 0.78, G: 0.13, B: 0.16, A: 1}
 	dewColor := render.Color{R: 0.05, G: 0.48, B: 0.28, A: 1}
 	width := 2.4
-	_, _ = ax.Plot(temperature, pressure, core.PlotOptions{Color: &tempColor, LineWidth: &width, Label: "temperature"})
-	_, _ = ax.Plot(dewpoint, pressure, core.PlotOptions{Color: &dewColor, LineWidth: &width, Label: "dewpoint"})
+	_, _ = ax.Plot(temperature, pressure, core.PlotOptions{Color: optional.Of(tempColor), LineWidth: optional.Of(width), Label: "temperature"})
+	_, _ = ax.Plot(dewpoint, pressure, core.PlotOptions{Color: optional.Of(dewColor), LineWidth: optional.Of(width), Label: "dewpoint"})
 	ax.AddLegend()
 	return fig
 }

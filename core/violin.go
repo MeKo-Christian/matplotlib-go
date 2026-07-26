@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -16,19 +16,19 @@ type ViolinOptions struct {
 	Positions       []float64
 	Widths          []float64
 	Colors          []render.Color
-	EdgeColor       *render.Color
+	EdgeColor       optional.Value[render.Color]
 	EdgeWidth       float64
 	Alpha           float64
 	Bandwidth       float64
 	BandwidthMethod string
 	Points          int
-	Orientation     string
-	Side            string
+	Orientation     PlotOrientation
+	Side            ViolinSide
 	Quantiles       [][]float64
-	LineColor       *render.Color
-	ShowMeans       *bool
-	ShowMedians     *bool
-	ShowExtrema     *bool
+	LineColor       optional.Value[render.Color]
+	ShowMeans       optional.Value[bool]
+	ShowMedians     optional.Value[bool]
+	ShowExtrema     optional.Value[bool]
 	Label           string
 }
 
@@ -48,15 +48,15 @@ type ViolinStatsOptions struct {
 	Positions   []float64
 	Widths      []float64
 	Colors      []render.Color
-	EdgeColor   *render.Color
+	EdgeColor   optional.Value[render.Color]
 	EdgeWidth   float64
 	Alpha       float64
-	Orientation string
-	Side        string
-	LineColor   *render.Color
-	ShowMeans   *bool
-	ShowMedians *bool
-	ShowExtrema *bool
+	Orientation PlotOrientation
+	Side        ViolinSide
+	LineColor   optional.Value[render.Color]
+	ShowMeans   optional.Value[bool]
+	ShowMedians optional.Value[bool]
+	ShowExtrema optional.Value[bool]
 	Label       string
 }
 
@@ -77,26 +77,21 @@ type specialtyViolinSummary struct {
 }
 
 // Violinplot draws one violin body per dataset and optional summary lines.
-func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContainer {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) Violinplot(data [][]float64, opt ViolinOptions) *ViolinContainer {
 	if a == nil || len(data) == 0 {
 		return nil
 	}
-	cfg := ViolinOptions{
-		EdgeWidth: 1,
-		Alpha:     0.3,
-		Points:    100,
+	cfg := opt
+	if cfg.EdgeWidth <= 0 {
+		cfg.EdgeWidth = 1
 	}
-	if supplied, ok := optarg.Optional("violinplot", opts); ok {
-		cfg = supplied
-		if cfg.EdgeWidth <= 0 {
-			cfg.EdgeWidth = 1
-		}
-		if cfg.Alpha <= 0 {
-			cfg.Alpha = 0.3
-		}
-		if cfg.Points < 8 {
-			cfg.Points = 100
-		}
+	if cfg.Alpha <= 0 {
+		cfg.Alpha = 0.3
+	}
+	if cfg.Points < 8 {
+		cfg.Points = 100
 	}
 
 	stats := make([]ViolinStat, 0, len(data))
@@ -141,11 +136,13 @@ func (a *Axes) Violinplot(data [][]float64, opts ...ViolinOptions) *ViolinContai
 }
 
 // Violin draws one violin body per precomputed statistics entry.
-func (a *Axes) Violin(stats []ViolinStat, opts ...ViolinStatsOptions) *ViolinContainer {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) Violin(stats []ViolinStat, opt ViolinStatsOptions) *ViolinContainer {
 	if a == nil || len(stats) == 0 {
 		return nil
 	}
-	cfg := optarg.One("violin", opts)
+	cfg := opt
 	if cfg.EdgeWidth <= 0 {
 		cfg.EdgeWidth = 1
 	}
@@ -241,15 +238,15 @@ func (a *Axes) renderViolin(stats []ViolinStat, cfg ViolinStatsOptions, defaultS
 	}
 
 	edgeColor := render.Color{}
-	if cfg.EdgeColor != nil {
-		edgeColor = *cfg.EdgeColor
+	if cfg.EdgeColor.IsSet() {
+		edgeColor = cfg.EdgeColor.OrZero()
 		if cfg.Alpha > 0 && cfg.Alpha <= 1 {
 			edgeColor.A = 1
 		}
 	}
 	lineColor := defaultLineColor
-	if cfg.LineColor != nil {
-		lineColor = *cfg.LineColor
+	if v, ok := cfg.LineColor.Get(); ok {
+		lineColor = v
 	}
 
 	container := &ViolinContainer{
@@ -418,8 +415,8 @@ func specialtyKDE(values []float64, points int, bandwidth float64, methods ...st
 	return grid, density
 }
 
-func normalizeViolinOrientation(value string) string {
-	switch strings.ToLower(strings.TrimSpace(value)) {
+func normalizeViolinOrientation(value PlotOrientation) PlotOrientation {
+	switch strings.ToLower(strings.TrimSpace(string(value))) {
 	case "horizontal", "h", "x":
 		return "horizontal"
 	default:
@@ -427,8 +424,8 @@ func normalizeViolinOrientation(value string) string {
 	}
 }
 
-func normalizeViolinSide(value string) string {
-	switch strings.ToLower(strings.TrimSpace(value)) {
+func normalizeViolinSide(value ViolinSide) ViolinSide {
+	switch strings.ToLower(strings.TrimSpace(string(value))) {
 	case "low", "left", "bottom":
 		return "low"
 	case "high", "right", "top":
@@ -438,14 +435,14 @@ func normalizeViolinSide(value string) string {
 	}
 }
 
-func violinPoint(posAxis, valueAxis float64, orientation string) geom.Pt {
+func violinPoint(posAxis, valueAxis float64, orientation PlotOrientation) geom.Pt {
 	if orientation == "horizontal" {
 		return geom.Pt{X: valueAxis, Y: posAxis}
 	}
 	return geom.Pt{X: posAxis, Y: valueAxis}
 }
 
-func violinPerpSegment(position, width, value float64, orientation, side string) []geom.Pt {
+func violinPerpSegment(position, width, value float64, orientation PlotOrientation, side ViolinSide) []geom.Pt {
 	low := position - width*0.25
 	high := position + width*0.25
 	switch side {
@@ -457,7 +454,7 @@ func violinPerpSegment(position, width, value float64, orientation, side string)
 	return []geom.Pt{violinPoint(low, value, orientation), violinPoint(high, value, orientation)}
 }
 
-func violinSummaryLineCap(side string) render.LineCap {
+func violinSummaryLineCap(side ViolinSide) render.LineCap {
 	if side == "low" || side == "high" {
 		// Matplotlib switches one-sided violins to capstyle='projecting'
 		// for the hlines/vlines summary artists in axes/_axes.py.
@@ -466,7 +463,7 @@ func violinSummaryLineCap(side string) render.LineCap {
 	return render.CapButt
 }
 
-func violinParallelSegment(position, minValue, maxValue float64, orientation string) []geom.Pt {
+func violinParallelSegment(position, minValue, maxValue float64, orientation PlotOrientation) []geom.Pt {
 	return []geom.Pt{violinPoint(position, minValue, orientation), violinPoint(position, maxValue, orientation)}
 }
 

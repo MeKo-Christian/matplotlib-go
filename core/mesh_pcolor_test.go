@@ -7,6 +7,7 @@ import (
 
 	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
@@ -25,7 +26,7 @@ func TestAxesPColorMeshAndColorbar(t *testing.T) {
 	}, MeshOptions{
 		XEdges:    []float64{2, 4, 8},
 		YEdges:    []float64{-1, 1, 5},
-		EdgeWidth: &edgeWidth,
+		EdgeWidth: optional.Of(edgeWidth),
 		Label:     "mesh",
 	})
 	if mesh == nil {
@@ -94,8 +95,8 @@ func TestAxesPColorUsesUnsnappedMeshEdgesLikeMatplotlib(t *testing.T) {
 	mesh := ax.PColor([][]float64{{0, 1}}, MeshOptions{
 		XEdges:    []float64{0, 1, 2},
 		YEdges:    []float64{0, 1},
-		EdgeColor: &edge,
-		EdgeWidth: &width,
+		EdgeColor: optional.Of(edge),
+		EdgeWidth: optional.Of(width),
 	})
 	if mesh == nil {
 		t.Fatal("expected pcolor mesh")
@@ -126,8 +127,8 @@ func TestAxesPColorMeshDisablesAntialiasingLikeMatplotlib(t *testing.T) {
 	mesh := ax.PColorMesh([][]float64{{0, 1}}, MeshOptions{
 		XEdges:    []float64{0, 1, 2},
 		YEdges:    []float64{0, 1},
-		EdgeColor: &edge,
-		EdgeWidth: &width,
+		EdgeColor: optional.Of(edge),
+		EdgeWidth: optional.Of(width),
 	})
 	if mesh == nil {
 		t.Fatal("expected pcolormesh mesh")
@@ -159,9 +160,9 @@ func TestAxesPColorMeshSupportsExplicitAntialiasing(t *testing.T) {
 	mesh := ax.PColorMesh([][]float64{{0, 1}}, MeshOptions{
 		XEdges:    []float64{0, 1, 2},
 		YEdges:    []float64{0, 1},
-		EdgeColor: &edge,
-		EdgeWidth: &width,
-		Antialias: &antialias,
+		EdgeColor: optional.Of(edge),
+		EdgeWidth: optional.Of(width),
+		Antialias: optional.Of(antialias),
 	})
 	if mesh == nil {
 		t.Fatal("expected pcolormesh mesh")
@@ -265,7 +266,7 @@ func TestPColorMeshGouraudDrawsNativeTriangles(t *testing.T) {
 		XEdges:   []float64{0, 2},
 		YEdges:   []float64{0, 3},
 		Shading:  MeshShadingGouraud,
-		Colormap: &cmap,
+		Colormap: optional.Of(cmap),
 	})
 	if mesh == nil {
 		t.Fatal("expected gouraud mesh")
@@ -309,7 +310,7 @@ func TestPColorMeshBadCellsAreTransparent(t *testing.T) {
 	mesh := ax.PColorMesh([][]float64{
 		{0, math.NaN()},
 		{math.Inf(1), 3},
-	})
+	}, MeshOptions{})
 	if mesh == nil {
 		t.Fatal("expected quad mesh")
 	}
@@ -339,9 +340,9 @@ func TestPColorMeshUsesBadUnderAndOverColormapColors(t *testing.T) {
 		{math.NaN(), -0.25},
 		{0.5, 1.25},
 	}, MeshOptions{
-		Colormap: &cmapName,
-		VMin:     &vmin,
-		VMax:     &vmax,
+		Colormap: optional.Of(cmapName),
+		VMin:     optional.Of(vmin),
+		VMax:     optional.Of(vmax),
 	})
 	if mesh == nil {
 		t.Fatal("expected quad mesh")
@@ -364,7 +365,7 @@ func TestPColorMeshUsesConfiguredNorm(t *testing.T) {
 	mesh := ax.PColorMesh([][]float64{
 		{1, 10, 100},
 	}, MeshOptions{
-		Colormap: &cmap,
+		Colormap: optional.Of(cmap),
 		Norm:     LogNorm{VMin: 1, VMax: 100},
 	})
 	if mesh == nil {
@@ -392,7 +393,7 @@ func TestPColorMeshMaskUsesBadColorAndExcludesScalarRange(t *testing.T) {
 		{100, 2},
 		{3, 4},
 	}, MeshOptions{
-		Colormap: &cmapName,
+		Colormap: optional.Of(cmapName),
 		Mask: [][]bool{
 			{true, false},
 			{false, false},

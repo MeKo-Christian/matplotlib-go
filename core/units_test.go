@@ -8,6 +8,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/dates"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/style"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -22,7 +23,7 @@ func TestAxesPlot_ConfiguresDateAxis(t *testing.T) {
 		time.Date(2024, time.January, 4, 0, 0, 0, 0, time.UTC),
 	}
 
-	line, err := ax.Plot(timestamps, []float64{2, 3, 5})
+	line, err := ax.Plot(timestamps, []float64{2, 3, 5}, PlotOptions{})
 	if err != nil {
 		t.Fatalf("Plot returned error: %v", err)
 	}
@@ -57,7 +58,7 @@ func TestAxesPlot_RejectedInputIsTransactional(t *testing.T) {
 		time.Date(2024, time.January, 2, 0, 0, 0, 0, time.UTC),
 	}
 
-	if line, err := ax.Plot(timestamps, []struct{ value int }{{1}, {2}}); err == nil || line != nil {
+	if line, err := ax.Plot(timestamps, []struct{ value int }{{1}, {2}}, PlotOptions{}); err == nil || line != nil {
 		t.Fatalf("Plot() = (%v, %v), want nil artist and conversion error", line, err)
 	}
 	if ax.xUnits != nil || ax.yUnits != nil {
@@ -73,18 +74,11 @@ func TestAxesPlot_RejectedInputIsTransactional(t *testing.T) {
 		t.Fatal("rejected Plot replaced or advanced the property cycle")
 	}
 
-	if line, err := ax.Plot([]float64{0, 1}, []float64{1}); err == nil || line != nil {
+	if line, err := ax.Plot([]float64{0, 1}, []float64{1}, PlotOptions{}); err == nil || line != nil {
 		t.Fatalf("mismatched Plot() = (%v, %v), want nil artist and length error", line, err)
 	}
 	if len(ax.Artists) != 0 || ax.ColorCycle != originalCycle || ax.ColorCycle.Index() != originalCycleIndex {
 		t.Fatal("mismatched Plot changed artists or property cycle")
-	}
-
-	if line, err := ax.Plot([]float64{0, 1}, []float64{1, 2}, PlotOptions{}, PlotOptions{}); err == nil || line != nil {
-		t.Fatalf("multi-option Plot() = (%v, %v), want nil artist and option-count error", line, err)
-	}
-	if len(ax.Artists) != 0 || ax.ColorCycle != originalCycle || ax.ColorCycle.Index() != originalCycleIndex {
-		t.Fatal("multi-option Plot changed artists or property cycle")
 	}
 }
 
@@ -92,7 +86,7 @@ func TestAxesScatter_ConfiguresCategoricalAxis(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
-	scatter, err := ax.Scatter([]string{"draft", "review", "ship"}, []float64{0.3, 0.8, 0.5})
+	scatter, err := ax.Scatter([]string{"draft", "review", "ship"}, []float64{0.3, 0.8, 0.5}, ScatterOptions{})
 	if err != nil {
 		t.Fatalf("Scatter returned error: %v", err)
 	}
@@ -147,22 +141,12 @@ func TestAxesScatter_RejectedInputIsTransactional(t *testing.T) {
 		ScatterOptions{
 			ScalarValues: []float64{0.3, 0.8},
 			Norm:         Normalize{VMin: 0, VMax: 1},
-			VMin:         &vmin,
+			VMin:         optional.Of(vmin),
 		},
 	); err == nil || scatter != nil {
 		t.Fatalf("scalar-map-invalid Scatter() = (%v, %v), want nil artist and error", scatter, err)
 	}
 	assertUnchanged("scalar-map-invalid Scatter")
-
-	if scatter, err := ax.Scatter(
-		[]float64{0, 1},
-		[]float64{1, 2},
-		ScatterOptions{},
-		ScatterOptions{},
-	); err == nil || scatter != nil {
-		t.Fatalf("multi-option Scatter() = (%v, %v), want nil artist and error", scatter, err)
-	}
-	assertUnchanged("multi-option Scatter")
 }
 
 func TestAxesPlotDate_ConfiguresDateAxis(t *testing.T) {
@@ -173,7 +157,7 @@ func TestAxesPlotDate_ConfiguresDateAxis(t *testing.T) {
 		time.Date(2024, time.March, 2, 0, 0, 0, 0, time.UTC),
 	}
 
-	line, err := ax.PlotDate(timestamps, []float64{1, 4})
+	line, err := ax.PlotDate(timestamps, []float64{1, 4}, PlotOptions{})
 	if err != nil {
 		t.Fatalf("PlotDate() returned error: %v", err)
 	}
@@ -196,7 +180,7 @@ func TestAxesDateUnitsPreserveExplicitAxisInfoAfterAutoscale(t *testing.T) {
 		time.Date(2024, time.February, 10, 0, 0, 0, 0, time.UTC),
 		time.Date(2024, time.February, 20, 0, 0, 0, 0, time.UTC),
 	}
-	if _, err := ax.Plot(timestamps, []float64{1, 3, 2}); err != nil {
+	if _, err := ax.Plot(timestamps, []float64{1, 3, 2}, PlotOptions{}); err != nil {
 		t.Fatalf("Plot returned error: %v", err)
 	}
 
@@ -234,7 +218,7 @@ func TestAxesBar_ConfiguresCategoricalXAxis(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
-	bar, err := ax.Bar([]string{"alpha", "beta", "gamma"}, []float64{1, 3, 2})
+	bar, err := ax.Bar([]string{"alpha", "beta", "gamma"}, []float64{1, 3, 2}, BarOptions{})
 	if err != nil {
 		t.Fatalf("Bar returned error: %v", err)
 	}
@@ -269,7 +253,7 @@ func TestAxesBar_ConfiguresCategoricalXAxis(t *testing.T) {
 func TestAxesBarH_ConfiguresCategoricalYAxis(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
-	bar, err := ax.BarH([]string{"north", "south"}, []float64{4, 7})
+	bar, err := ax.BarH([]string{"north", "south"}, []float64{4, 7}, BarOptions{})
 	if err != nil {
 		t.Fatalf("BarH returned error: %v", err)
 	}
@@ -330,6 +314,7 @@ func TestAxesBar_RejectedInputIsTransactional(t *testing.T) {
 				return ax.Bar(
 					[]string{"draft", "review"},
 					[]struct{ value int }{{1}, {2}},
+					BarOptions{},
 				)
 			},
 		},
@@ -339,13 +324,14 @@ func TestAxesBar_RejectedInputIsTransactional(t *testing.T) {
 				return ax.BarH(
 					[]string{"north", "south"},
 					[]struct{ value int }{{4}, {7}},
+					BarOptions{},
 				)
 			},
 		},
 		{
 			name: "mismatched shape",
 			call: func() (*Bar2D, error) {
-				return ax.Bar([]string{"draft", "review"}, []float64{1})
+				return ax.Bar([]string{"draft", "review"}, []float64{1}, BarOptions{})
 			},
 		},
 		{
@@ -375,18 +361,7 @@ func TestAxesBar_RejectedInputIsTransactional(t *testing.T) {
 				return ax.Bar(
 					[]string{"draft", "review"},
 					[]float64{1, 2},
-					BarOptions{Orientation: &orientation},
-				)
-			},
-		},
-		{
-			name: "multiple options",
-			call: func() (*Bar2D, error) {
-				return ax.Bar(
-					[]string{"draft", "review"},
-					[]float64{1, 2},
-					BarOptions{},
-					BarOptions{},
+					BarOptions{Orientation: optional.Of(orientation)},
 				)
 			},
 		},
@@ -410,7 +385,7 @@ func TestAxesFillBetween_ConfiguresDateAxis(t *testing.T) {
 		time.Date(2024, time.February, 9, 0, 0, 0, 0, time.UTC),
 	}
 
-	fill, err := ax.FillBetween(timestamps, []float64{6, 7, 5}, []float64{10, 15, 13})
+	fill, err := ax.FillBetween(timestamps, []float64{6, 7, 5}, []float64{10, 15, 13}, FillOptions{})
 	if err != nil {
 		t.Fatalf("FillBetween returned error: %v", err)
 	}
@@ -463,32 +438,32 @@ func TestAxesFillBetween_RejectedInputIsTransactional(t *testing.T) {
 		{
 			name: "x conversion",
 			call: func() (*Fill2D, error) {
-				return ax.FillBetween(unsupported, []float64{6, 7}, []float64{10, 15})
+				return ax.FillBetween(unsupported, []float64{6, 7}, []float64{10, 15}, FillOptions{})
 			},
 		},
 		{
 			name: "y1 conversion",
 			call: func() (*Fill2D, error) {
-				return ax.FillBetween(timestamps, unsupported, []float64{10, 15})
+				return ax.FillBetween(timestamps, unsupported, []float64{10, 15}, FillOptions{})
 			},
 		},
 		{
 			// The x-axis date units configured before y2 fails must roll back.
 			name: "y2 conversion",
 			call: func() (*Fill2D, error) {
-				return ax.FillBetween(timestamps, []float64{6, 7}, unsupported)
+				return ax.FillBetween(timestamps, []float64{6, 7}, unsupported, FillOptions{})
 			},
 		},
 		{
 			name: "empty input",
 			call: func() (*Fill2D, error) {
-				return ax.FillBetween([]float64{}, []float64{}, []float64{})
+				return ax.FillBetween([]float64{}, []float64{}, []float64{}, FillOptions{})
 			},
 		},
 		{
 			name: "mismatched shape",
 			call: func() (*Fill2D, error) {
-				return ax.FillBetween(timestamps, []float64{6, 7}, []float64{10})
+				return ax.FillBetween(timestamps, []float64{6, 7}, []float64{10}, FillOptions{})
 			},
 		},
 		{
@@ -500,12 +475,6 @@ func TestAxesFillBetween_RejectedInputIsTransactional(t *testing.T) {
 					[]float64{10, 15},
 					FillOptions{Where: []bool{true, false, true}},
 				)
-			},
-		},
-		{
-			name: "multiple options",
-			call: func() (*Fill2D, error) {
-				return ax.FillBetween(timestamps, []float64{6, 7}, []float64{10, 15}, FillOptions{}, FillOptions{})
 			},
 		},
 	}
@@ -521,13 +490,13 @@ func TestAxesFillBetween_RejectedInputIsTransactional(t *testing.T) {
 func TestAxesCategoryUnitsPreserveExplicitAxisInfoAfterRefresh(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
-	if _, err := ax.Bar([]string{"alpha", "beta"}, []float64{1, 2}); err != nil {
+	if _, err := ax.Bar([]string{"alpha", "beta"}, []float64{1, 2}, BarOptions{}); err != nil {
 		t.Fatalf("Bar returned error: %v", err)
 	}
 
 	ax.XAxis.Locator = ticker.FixedLocator{TicksList: []float64{10, 20}}
 	ax.XAxis.Formatter = ticker.FormatStrFormatter{Pattern: "manual %.0f"}
-	if _, err := ax.Bar([]string{"alpha", "beta", "gamma"}, []float64{1, 2, 3}); err != nil {
+	if _, err := ax.Bar([]string{"alpha", "beta", "gamma"}, []float64{1, 2, 3}, BarOptions{}); err != nil {
 		t.Fatalf("second Bar returned error: %v", err)
 	}
 
@@ -572,7 +541,7 @@ func TestAxesPlot_UsesRegisteredConverter(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
 
-	line, err := ax.Plot([]tripDistance{1.5, 2.5, 4}, []float64{2, 4, 8})
+	line, err := ax.Plot([]tripDistance{1.5, 2.5, 4}, []float64{2, 4, 8}, PlotOptions{})
 	if err != nil {
 		t.Fatalf("Plot returned error: %v", err)
 	}

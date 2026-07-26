@@ -28,8 +28,8 @@ func Plot() *core.Figure {
 		{Med: 2.2, Q1: 1.4, Q3: 3.1, Whislo: 0.8, Whishi: 4.1, Mean: &meanA, Fliers: []float64{5.0}, Label: "A"},
 		{Med: 3.4, Q1: 2.5, Q3: 4.2, Whislo: 1.5, Whishi: 5.0, Mean: &meanB, Label: "B"},
 	}, core.BxpOptions{
-		ShowMeans: boolPtr(true),
-		Color:     colorPtr(render.Color{R: 0.18, G: 0.36, B: 0.70, A: 1}),
+		ShowMeans: optional.Of(true),
+		Color:     optional.Of(render.Color{R: 0.18, G: 0.36, B: 0.70, A: 1}),
 	})
 
 	violinAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.38, Y: 0.58}, Max: geom.Pt{X: 0.61, Y: 0.92}})
@@ -40,8 +40,8 @@ func Plot() *core.Figure {
 		{Coords: []float64{1, 2, 3, 4, 5}, Vals: []float64{0.2, 0.7, 1.0, 0.5, 0.15}, Mean: 3.0, Median: 3.0, Min: 1, Max: 5, Quantiles: []float64{2, 4}},
 		{Coords: []float64{1, 2, 3, 4, 5}, Vals: []float64{0.15, 0.5, 1.0, 0.7, 0.2}, Mean: 3.2, Median: 3.3, Min: 1, Max: 5},
 	}, core.ViolinStatsOptions{
-		ShowMeans:   boolPtr(true),
-		ShowMedians: boolPtr(true),
+		ShowMeans:   optional.Of(true),
+		ShowMedians: optional.Of(true),
 	})
 
 	lineAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.69, Y: 0.58}, Max: geom.Pt{X: 0.96, Y: 0.92}})
@@ -72,14 +72,14 @@ func Plot() *core.Figure {
 		{3, 4, 5, 6},
 	}, core.ContourOptions{
 		Levels:    []float64{2, 3, 4},
-		Color:     colorPtr(render.Color{R: 0.13, G: 0.20, B: 0.35, A: 1}),
-		LineWidth: &contourLineWidth,
+		Color:     optional.Of(render.Color{R: 0.13, G: 0.20, B: 0.35, A: 1}),
+		LineWidth: optional.Of(contourLineWidth),
 	})
 	fontSize := 9.0
 	contourAx.Clabel(contours, core.ClabelOptions{
 		Levels:   []float64{3},
-		FontSize: &fontSize,
-		Color:    colorPtr(render.Color{R: 0.05, G: 0.05, B: 0.05, A: 1}),
+		FontSize: optional.Of(fontSize),
+		Color:    optional.Of(render.Color{R: 0.05, G: 0.05, B: 0.05, A: 1}),
 	})
 
 	return fig

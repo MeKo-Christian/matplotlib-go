@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -108,19 +109,19 @@ func TestPatchProducingMethodsHonorRCAndExplicitZeroWidth(t *testing.T) {
 	fig.RC.Patch.Antialiased = false
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
 
-	bar, err := ax.Bar([]float64{0}, []float64{1})
+	bar, err := ax.Bar([]float64{0}, []float64{1}, BarOptions{})
 	if err != nil {
 		t.Fatalf("Bar() returned error: %v", err)
 	}
-	fill, err := ax.FillBetween([]float64{0, 1}, []float64{0, 0}, []float64{1, 1})
+	fill, err := ax.FillBetween([]float64{0, 1}, []float64{0, 0}, []float64{1, 1}, FillOptions{})
 	if err != nil {
 		t.Fatalf("FillBetween() returned error: %v", err)
 	}
-	hist, err := ax.Hist([]float64{0, 1})
+	hist, err := ax.Hist([]float64{0, 1}, HistOptions{})
 	if err != nil {
 		t.Fatalf("Hist() returned error: %v", err)
 	}
-	span := ax.AxHSpan(0, 1)
+	span := ax.AxHSpan(0, 1, HSpanOptions{})
 	if bar.EdgeWidth != 3 || bar.EdgeColor != fig.RC.Patch.EdgeColor ||
 		bar.Antialias != render.AntialiasOff {
 		t.Fatalf("bar defaults = edge %+v width %v aa %v", bar.EdgeColor, bar.EdgeWidth, bar.Antialias)
@@ -140,22 +141,22 @@ func TestPatchProducingMethodsHonorRCAndExplicitZeroWidth(t *testing.T) {
 	}
 
 	zero := 0.0
-	bar, err = ax.Bar([]float64{0}, []float64{1}, BarOptions{EdgeWidth: &zero})
+	bar, err = ax.Bar([]float64{0}, []float64{1}, BarOptions{EdgeWidth: optional.Of(zero)})
 	if err != nil {
 		t.Fatalf("Bar() returned error: %v", err)
 	}
 	fill, err = ax.FillBetween(
 		[]float64{0, 1}, []float64{0, 0}, []float64{1, 1},
-		FillOptions{EdgeWidth: &zero},
+		FillOptions{EdgeWidth: optional.Of(zero)},
 	)
 	if err != nil {
 		t.Fatalf("FillBetween() returned error: %v", err)
 	}
-	hist, err = ax.Hist([]float64{0, 1}, HistOptions{EdgeWidth: &zero})
+	hist, err = ax.Hist([]float64{0, 1}, HistOptions{EdgeWidth: optional.Of(zero)})
 	if err != nil {
 		t.Fatalf("Hist() returned error: %v", err)
 	}
-	span = ax.AxHSpan(0, 1, HSpanOptions{EdgeWidth: &zero})
+	span = ax.AxHSpan(0, 1, HSpanOptions{EdgeWidth: optional.Of(zero)})
 	if bar.EdgeWidth != 0 || fill.EdgeWidth != 0 || hist.EdgeWidth != 0 || span.EdgeWidth != 0 {
 		t.Fatalf("explicit zero widths = bar %v fill %v hist %v span %v", bar.EdgeWidth, fill.EdgeWidth, hist.EdgeWidth, span.EdgeWidth)
 	}

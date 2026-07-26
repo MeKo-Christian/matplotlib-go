@@ -10,6 +10,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -40,8 +41,8 @@ func Plot() *core.Figure {
 
 	ax.BoxPlots(datasets, core.BoxPlotsOptions{
 		Positions:   positions,
-		Width:       &width,
-		ManageTicks: &manageTicks,
+		Width:       optional.Of(width),
+		ManageTicks: optional.Of(manageTicks),
 	})
 
 	ax.SetAxisBelow(true)

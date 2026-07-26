@@ -11,6 +11,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -54,10 +55,10 @@ func Plot() *core.Figure {
 	ax.Scatter(x, y, core.ScatterOptions{
 		ScalarValues:  c,
 		Colormap:      "viridis",
-		VMin:          &vmin,
-		VMax:          &vmax,
-		Size:          &size,
-		EdgeWidth:     &edgeWidth,
+		VMin:          optional.Of(vmin),
+		VMax:          optional.Of(vmax),
+		Size:          optional.Of(size),
+		EdgeWidth:     optional.Of(edgeWidth),
 		PlotNonfinite: true,
 	})
 	return fig

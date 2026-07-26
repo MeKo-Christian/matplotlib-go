@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -32,8 +33,8 @@ func Plot() *core.Figure {
 	}, core.MeshOptions{
 		XEdges:    []float64{0, 1, 2, 3, 4},
 		YEdges:    []float64{0, 1, 2, 3},
-		EdgeColor: &meshEdgeColor,
-		EdgeWidth: &meshEdgeWidth,
+		EdgeColor: optional.Of(meshEdgeColor),
+		EdgeWidth: optional.Of(meshEdgeWidth),
 	})
 
 	contourAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.57, Y: 0.57}, Max: geom.Pt{X: 0.96, Y: 0.93}})
@@ -58,8 +59,8 @@ func Plot() *core.Figure {
 	contourAx.Contour(contourData, core.ContourOptions{
 		Levels:     []float64{0.4, 0.8, 1.2, 1.6},
 		LabelLines: true,
-		Color:      &render.Color{R: 0.18, G: 0.18, B: 0.18, A: 1},
-		LineWidth:  &contourLineWidth,
+		Color:      optional.Of(render.Color{R: 0.18, G: 0.18, B: 0.18, A: 1}),
+		LineWidth:  optional.Of(contourLineWidth),
 	})
 
 	histAx := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.07, Y: 0.10}, Max: geom.Pt{X: 0.46, Y: 0.46}})
@@ -72,8 +73,8 @@ func Plot() *core.Figure {
 		core.Hist2DOptions{
 			XBinEdges: []float64{0, 1, 2, 3, 4},
 			YBinEdges: []float64{0, 1, 2, 3, 4},
-			EdgeColor: &meshEdgeColor,
-			EdgeWidth: &meshEdgeWidth,
+			EdgeColor: optional.Of(meshEdgeColor),
+			EdgeWidth: optional.Of(meshEdgeWidth),
 		},
 	)
 
@@ -86,16 +87,16 @@ func Plot() *core.Figure {
 		Y:         []float64{0.5, 0.4, 0.7, 2.2, 2.8, 2.1},
 		Triangles: [][3]int{{0, 1, 3}, {1, 4, 3}, {1, 2, 4}, {2, 5, 4}},
 	}
-	triAx.TriColor(tri, []float64{0.2, 0.8, 1.0, 1.5, 1.1, 0.6})
+	triAx.TriColor(tri, []float64{0.2, 0.8, 1.0, 1.5, 1.1, 0.6}, core.TriColorOptions{})
 	triLineWidth := 1.0
 	triAx.TriPlot(tri, core.TriPlotOptions{
-		Color:     &render.Color{R: 0.15, G: 0.15, B: 0.15, A: 1},
-		LineWidth: &triLineWidth,
+		Color:     optional.Of(render.Color{R: 0.15, G: 0.15, B: 0.15, A: 1}),
+		LineWidth: optional.Of(triLineWidth),
 	})
 	triAx.TriContour(tri, []float64{0.2, 0.8, 1.0, 1.5, 1.1, 0.6}, core.ContourOptions{
 		Levels:    []float64{0.7, 1.1},
-		Color:     &render.Color{R: 0.98, G: 0.98, B: 0.98, A: 1},
-		LineWidth: &contourLineWidth,
+		Color:     optional.Of(render.Color{R: 0.98, G: 0.98, B: 0.98, A: 1}),
+		LineWidth: optional.Of(contourLineWidth),
 	})
 	return fig
 }

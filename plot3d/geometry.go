@@ -7,7 +7,6 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -123,12 +122,12 @@ func (a *Axes3D) observeQuiver3DData(x, y, z, u, v, w []float64, opt Quiver3DOpt
 func quiver3DRawSegments(x, y, z, u, v, w []float64, opt Quiver3DOptions) [][]vec3 {
 	n := minLen(x, y, z, u, v, w)
 	length := 1.0
-	if opt.Length != nil {
-		length = *opt.Length
+	if v, ok := opt.Length.Get(); ok {
+		length = v
 	}
 	arrowRatio := 0.3
-	if opt.ArrowLengthRatio != nil {
-		arrowRatio = *opt.ArrowLengthRatio
+	if v, ok := opt.ArrowLengthRatio.Get(); ok {
+		arrowRatio = v
 	}
 	pivot := strings.ToLower(opt.Pivot)
 	if pivot != "middle" && pivot != "tip" {
@@ -352,8 +351,8 @@ func errorBar3DRawSegments(x, y, z, xErr, yErr, zErr []float64, opt ErrorBar3DOp
 	segments := make([][]vec3, 0, n*15)
 	caps := make([][]vec3, 0, n*12)
 	capHalf := 0.0
-	if opt.CapSize != nil && *opt.CapSize > 0 {
-		capHalf = *opt.CapSize * 0.5
+	if v, ok := opt.CapSize.Get(); ok && v > 0 {
+		capHalf = opt.CapSize.OrZero() * 0.5
 	}
 	appendAxis := func(center vec3, axis int, low, high float64) {
 		if low <= 0 && high <= 0 {
@@ -532,7 +531,8 @@ func (a *Axes3D) projectedData(x, y, z []float64, axlimClip ...bool) []geom.Pt {
 	return pts
 }
 
-func (a *Axes3D) projectWireframeSegments(x, y []float64, z [][]float64, opts ...core.PlotOptions) [][]geom.Pt {
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes3D) projectWireframeSegments(x, y []float64, z [][]float64, opt core.PlotOptions) [][]geom.Pt {
 	if a == nil || len(z) == 0 {
 		return nil
 	}
@@ -547,7 +547,6 @@ func (a *Axes3D) projectWireframeSegments(x, y []float64, z [][]float64, opts ..
 		}
 	}
 
-	opt := optarg.One("wireframe", opts)
 	rowIndices, colIndices := wireframeSampleIndices(rows, cols, opt)
 	segments := make([][]geom.Pt, 0, len(rowIndices)+len(colIndices))
 	for _, row := range rowIndices {
@@ -579,24 +578,11 @@ func (a *Axes3D) projectWireframeSegments(x, y []float64, z [][]float64, opts ..
 
 //nolint:gocritic // Sampling reads an immutable PlotOptions snapshot.
 func wireframeSampleIndices(rows, cols int, opt core.PlotOptions) ([]int, []int) {
-	hasStride := opt.RStride != nil || opt.CStride != nil
-	rstride, cstride := 1, 1
-	if opt.RStride != nil {
-		rstride = *opt.RStride
-	}
-	if opt.CStride != nil {
-		cstride = *opt.CStride
-	}
-	if !hasStride {
-		rcount, ccount := default3DSurfaceCount, default3DSurfaceCount
-		if opt.RCount != nil {
-			rcount = *opt.RCount
-		}
-		if opt.CCount != nil {
-			ccount = *opt.CCount
-		}
-		rstride = samplingStrideFromCount(rows, rcount)
-		cstride = samplingStrideFromCount(cols, ccount)
+	rstride := opt.RStride.Or(1)
+	cstride := opt.CStride.Or(1)
+	if !opt.RStride.IsSet() && !opt.CStride.IsSet() {
+		rstride = samplingStrideFromCount(rows, opt.RCount.Or(default3DSurfaceCount))
+		cstride = samplingStrideFromCount(cols, opt.CCount.Or(default3DSurfaceCount))
 	}
 	return steppedSampleIndices(rows, rstride), steppedSampleIndices(cols, cstride)
 }

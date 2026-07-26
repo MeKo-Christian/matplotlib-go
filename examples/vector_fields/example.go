@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -53,11 +54,11 @@ func Plot() *core.Figure {
 	scaleWidth := 10.0
 	widthDots := 2.2
 	quiver := quiverAx.Quiver(qx, qy, qu, qv, core.QuiverOptions{
-		Color:      &render.Color{R: 0.14, G: 0.42, B: 0.73, A: 1},
-		Scale:      &scaleWidth,
+		Color:      optional.Of(render.Color{R: 0.14, G: 0.42, B: 0.73, A: 1}),
+		Scale:      optional.Of(scaleWidth),
 		ScaleUnits: "width",
 		Units:      "dots",
-		Width:      &widthDots,
+		Width:      optional.Of(widthDots),
 	})
 	if quiver != nil {
 		quiverAx.QuiverKey(quiver, 0.78, 0.12, 0.5, "0.5", core.QuiverKeyOptions{
@@ -85,10 +86,10 @@ func Plot() *core.Figure {
 	barbLen := 6.0
 	barbLineWidth := 1.0
 	barbAx.Barbs(bx, by, bu, bv, core.BarbsOptions{
-		BarbColor: &render.Color{R: 0.47, G: 0.23, B: 0.12, A: 1},
-		FlagColor: &render.Color{R: 0.86, G: 0.52, B: 0.24, A: 1},
-		LineWidth: &barbLineWidth,
-		Length:    &barbLen,
+		BarbColor: optional.Of(render.Color{R: 0.47, G: 0.23, B: 0.12, A: 1}),
+		FlagColor: optional.Of(render.Color{R: 0.86, G: 0.52, B: 0.24, A: 1}),
+		LineWidth: optional.Of(barbLineWidth),
+		Length:    optional.Of(barbLen),
 	})
 
 	streamAx := axes["stream"]
@@ -113,11 +114,11 @@ func Plot() *core.Figure {
 	streamArrowSize := 1.0
 	streamAx.Streamplot(sx, sy, su, sv, core.StreamplotOptions{
 		StartPoints:          []geom.Pt{{X: 0.4, Y: 0.8}, {X: 0.4, Y: 2.2}, {X: 0.4, Y: 3.6}},
-		BrokenStreamlines:    &streamFalse,
+		BrokenStreamlines:    optional.Of(streamFalse),
 		IntegrationDirection: "forward",
-		ArrowSize:            &streamArrowSize,
-		LineWidth:            &streamLineWidth,
-		Color:                &render.Color{R: 0.13, G: 0.53, B: 0.39, A: 1},
+		ArrowSize:            optional.Of(streamArrowSize),
+		LineWidth:            optional.Of(streamLineWidth),
+		Color:                optional.Of(render.Color{R: 0.13, G: 0.53, B: 0.39, A: 1}),
 	})
 
 	xyAx := axes["xy"]
@@ -140,13 +141,13 @@ func Plot() *core.Figure {
 	xyScale := 9.0
 	xyWidth := 1.9
 	xyAx.QuiverGrid(xg, yg, ugu, ugv, core.QuiverOptions{
-		Color:      &render.Color{R: 0.74, G: 0.23, B: 0.27, A: 1},
+		Color:      optional.Of(render.Color{R: 0.74, G: 0.23, B: 0.27, A: 1}),
 		Pivot:      "middle",
 		Angles:     "xy",
-		Scale:      &xyScale,
+		Scale:      optional.Of(xyScale),
 		ScaleUnits: "width",
 		Units:      "dots",
-		Width:      &xyWidth,
+		Width:      optional.Of(xyWidth),
 	})
 	return fig
 }

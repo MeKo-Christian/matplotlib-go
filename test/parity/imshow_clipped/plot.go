@@ -23,7 +23,7 @@ func Plot() *core.Figure {
 		Colormap:      optional.Of(cmap),
 		Extent:        optional.Of(extent),
 		Origin:        optional.Of(core.ImageOriginLower),
-		Aspect:        optional.Of("auto"),
+		Aspect:        optional.Of(core.AspectAuto),
 		Interpolation: optional.Of(nearest),
 	})
 	ax.SetXLim(2, 6)

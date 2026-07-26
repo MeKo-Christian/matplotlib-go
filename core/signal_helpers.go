@@ -5,7 +5,7 @@ import (
 	"math/cmplx"
 
 	algofft "github.com/cwbudde/algo-fft"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
@@ -16,11 +16,11 @@ type SpecgramOptions struct {
 	NOverlap int
 	PadTo    int
 	Window   string
-	DB       *bool
-	Colormap *string
-	VMin     *float64
-	VMax     *float64
-	Alpha    *float64
+	DB       optional.Value[bool]
+	Colormap optional.Value[string]
+	VMin     optional.Value[float64]
+	VMax     optional.Value[float64]
+	Alpha    optional.Value[float64]
 	Label    string
 }
 
@@ -69,7 +69,7 @@ const (
 // CorrelationOptions configures Axes.XCorr and Axes.ACorr.
 type CorrelationOptions struct {
 	MaxLags   int
-	Normalize *bool
+	Normalize optional.Value[bool]
 	PlotOptions
 }
 
@@ -96,8 +96,10 @@ type CorrelationResult struct {
 }
 
 // Specgram computes a simple spectrogram and renders it as an image.
-func (a *Axes) Specgram(samples []float64, opts ...SpecgramOptions) *SpecgramResult {
-	cfg := optarg.One("specgram", opts)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) Specgram(samples []float64, opt SpecgramOptions) *SpecgramResult {
+	cfg := opt
 
 	samples = finiteSeries(samples)
 	fs, nfft, noverlap, padTo, ok := resolveSignalParams(len(samples), cfg.Fs, cfg.NFFT, cfg.NOverlap, cfg.PadTo)
@@ -116,8 +118,8 @@ func (a *Axes) Specgram(samples []float64, opts ...SpecgramOptions) *SpecgramRes
 	}
 
 	useDB := true
-	if cfg.DB != nil {
-		useDB = *cfg.DB
+	if v, ok := cfg.DB.Get(); ok {
+		useDB = v
 	}
 	if useDB {
 		spectrum = scaleSpectrumDB(spectrum)
@@ -130,10 +132,10 @@ func (a *Axes) Specgram(samples []float64, opts ...SpecgramOptions) *SpecgramRes
 		VMin:     cfg.VMin,
 		VMax:     cfg.VMax,
 		Alpha:    cfg.Alpha,
-		XMin:     &xMin,
-		XMax:     &xMax,
-		YMin:     &yMin,
-		YMax:     &yMax,
+		XMin:     optional.Of(xMin),
+		XMax:     optional.Of(xMax),
+		YMin:     optional.Of(yMin),
+		YMax:     optional.Of(yMax),
 		Origin:   ImageOriginLower,
 		Label:    cfg.Label,
 	})
@@ -151,8 +153,10 @@ func (a *Axes) Specgram(samples []float64, opts ...SpecgramOptions) *SpecgramRes
 }
 
 // PSD computes a Welch power spectral density estimate and plots it.
-func (a *Axes) PSD(samples []float64, opts ...SignalSpectrumOptions) *SpectrumResult {
-	cfg := optarg.One("psd", opts)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) PSD(samples []float64, opt SignalSpectrumOptions) *SpectrumResult {
+	cfg := opt
 	samples = finiteSeries(samples)
 	freqs, psd := computePSD(samples, cfg)
 	offsetFrequencies(freqs, cfg.Fc)
@@ -164,8 +168,10 @@ func (a *Axes) PSD(samples []float64, opts ...SignalSpectrumOptions) *SpectrumRe
 }
 
 // MagnitudeSpectrum computes a one-sided FFT magnitude spectrum and plots it.
-func (a *Axes) MagnitudeSpectrum(samples []float64, opts ...SignalSpectrumOptions) *SpectrumResult {
-	cfg := optarg.One("magnitude spectrum", opts)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) MagnitudeSpectrum(samples []float64, opt SignalSpectrumOptions) *SpectrumResult {
+	cfg := opt
 	samples = finiteSeries(samples)
 	freqs, values := computeMagnitudeSpectrum(samples, cfg)
 	a.SetXLabel("Frequency")
@@ -185,8 +191,10 @@ func (a *Axes) MagnitudeSpectrum(samples []float64, opts ...SignalSpectrumOption
 }
 
 // AngleSpectrum computes a one-sided FFT phase angle spectrum in radians.
-func (a *Axes) AngleSpectrum(samples []float64, opts ...SignalSpectrumOptions) *SpectrumResult {
-	cfg := optarg.One("angle spectrum", opts)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) AngleSpectrum(samples []float64, opt SignalSpectrumOptions) *SpectrumResult {
+	cfg := opt
 	samples = finiteSeries(samples)
 	freqs, values := computeAngleSpectrum(samples, cfg)
 	a.SetXLabel("Frequency")
@@ -195,8 +203,10 @@ func (a *Axes) AngleSpectrum(samples []float64, opts ...SignalSpectrumOptions) *
 }
 
 // PhaseSpectrum computes a one-sided unwrapped FFT phase spectrum in radians.
-func (a *Axes) PhaseSpectrum(samples []float64, opts ...SignalSpectrumOptions) *SpectrumResult {
-	cfg := optarg.One("phase spectrum", opts)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) PhaseSpectrum(samples []float64, opt SignalSpectrumOptions) *SpectrumResult {
+	cfg := opt
 	samples = finiteSeries(samples)
 	freqs, values := computePhaseSpectrum(samples, cfg)
 	a.SetXLabel("Frequency")
@@ -205,8 +215,10 @@ func (a *Axes) PhaseSpectrum(samples []float64, opts ...SignalSpectrumOptions) *
 }
 
 // CSD computes the magnitude of the cross spectral density estimate and plots it.
-func (a *Axes) CSD(x, y []float64, opts ...SignalSpectrumOptions) *SpectrumResult {
-	cfg := optarg.One("csd", opts)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) CSD(x, y []float64, opt SignalSpectrumOptions) *SpectrumResult {
+	cfg := opt
 	x, y = finitePairs(x, y)
 	freqs, values := computeCSDMagnitude(x, y, cfg)
 	offsetFrequencies(freqs, cfg.Fc)
@@ -218,8 +230,10 @@ func (a *Axes) CSD(x, y []float64, opts ...SignalSpectrumOptions) *SpectrumResul
 }
 
 // Cohere computes magnitude-squared coherence and plots it.
-func (a *Axes) Cohere(x, y []float64, opts ...SignalSpectrumOptions) *SpectrumResult {
-	cfg := optarg.One("cohere", opts)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) Cohere(x, y []float64, opt SignalSpectrumOptions) *SpectrumResult {
+	cfg := opt
 	x, y = finitePairs(x, y)
 	freqs, values := computeCoherence(x, y, cfg)
 	offsetFrequencies(freqs, cfg.Fc)
@@ -231,16 +245,20 @@ func (a *Axes) Cohere(x, y []float64, opts ...SignalSpectrumOptions) *SpectrumRe
 }
 
 // XCorr computes the cross-correlation sequence and plots it.
-func (a *Axes) XCorr(x, y []float64, opts ...CorrelationOptions) *CorrelationResult {
-	cfg := optarg.One("xcorr", opts)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) XCorr(x, y []float64, opt CorrelationOptions) *CorrelationResult {
+	cfg := opt
 	x, y = finitePairs(x, y)
 	lags, values := computeCorrelation(x, y, cfg)
 	return plotCorrelationResult(a, lags, values, cfg.PlotOptions)
 }
 
 // ACorr computes the auto-correlation sequence and plots it.
-func (a *Axes) ACorr(x []float64, opts ...CorrelationOptions) *CorrelationResult {
-	cfg := optarg.One("acorr", opts)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) ACorr(x []float64, opt CorrelationOptions) *CorrelationResult {
+	cfg := opt
 	x = finiteSeries(x)
 	lags, values := computeCorrelation(x, x, cfg)
 	return plotCorrelationResult(a, lags, values, cfg.PlotOptions)
@@ -594,8 +612,8 @@ func computeCorrelation(x, y []float64, opts CorrelationOptions) ([]float64, []f
 		maxLags = n - 1
 	}
 	normalize := true
-	if opts.Normalize != nil {
-		normalize = *opts.Normalize
+	if opts.Normalize.IsSet() {
+		normalize = opts.Normalize.OrZero()
 	}
 	lags := make([]float64, 0, 2*maxLags+1)
 	values := make([]float64, 0, 2*maxLags+1)

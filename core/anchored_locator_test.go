@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -220,7 +221,7 @@ func TestAnchoredDrawingAreaDrawsLocalPath(t *testing.T) {
 		Location:        LegendUpperLeft,
 		Padding:         0,
 		Inset:           5,
-		FrameOn:         boolPtr(true),
+		FrameOn:         optional.Of(true),
 		BackgroundColor: frameFill,
 		BorderColor:     frameEdge,
 		BorderWidth:     1,
@@ -264,7 +265,7 @@ func TestAnchoredDrawingAreaScalesLocalCoordinatesByDPI(t *testing.T) {
 		Location: LegendUpperLeft,
 		Padding:  0,
 		Inset:    0,
-		FrameOn:  boolPtr(false),
+		FrameOn:  optional.Of(false),
 	})
 	area.AddPath(geom.Path{
 		C: []geom.Cmd{geom.MoveTo, geom.LineTo},
@@ -296,7 +297,7 @@ func TestAnchoredDrawingAreaCanClipChildren(t *testing.T) {
 		Padding:  0,
 		Inset:    5,
 		Clip:     true,
-		FrameOn:  boolPtr(false),
+		FrameOn:  optional.Of(false),
 	})
 	area.AddPath(geom.Path{
 		C: []geom.Cmd{geom.MoveTo, geom.LineTo},
@@ -329,7 +330,7 @@ func TestAnchoredDrawingAreaFrameUsesMatplotlibSnapAuto(t *testing.T) {
 		Location:        LegendUpperLeft,
 		Padding:         1.25,
 		Inset:           5.4,
-		FrameOn:         boolPtr(true),
+		FrameOn:         optional.Of(true),
 		BackgroundColor: render.Color{A: 1},
 		BorderColor:     render.Color{A: 1},
 	})
@@ -365,7 +366,7 @@ func TestAnchoredPackerPacksDrawingAreaAndTextHorizontally(t *testing.T) {
 		Padding:   0,
 		Inset:     5,
 		Sep:       4,
-		FrameOn:   boolPtr(false),
+		FrameOn:   optional.Of(false),
 		Align:     PackAlignCenter,
 		FontSize:  10,
 		TextColor: textColor,
@@ -374,7 +375,7 @@ func TestAnchoredPackerPacksDrawingAreaAndTextHorizontally(t *testing.T) {
 		C: []geom.Cmd{geom.MoveTo, geom.LineTo},
 		V: []geom.Pt{{X: 0, Y: 0}, {X: 20, Y: 10}},
 	}, render.Paint{Stroke: stroke, LineWidth: 1})
-	packer.AddText("Go")
+	packer.AddText("Go", PackedTextOptions{})
 
 	ctx := createTestDrawContext()
 	scale := pointsToPixels(ctx.RC, 1)
@@ -437,7 +438,7 @@ func TestAnchoredPackerPacksChildrenVertically(t *testing.T) {
 		Padding:  0,
 		Inset:    5,
 		Sep:      3,
-		FrameOn:  boolPtr(false),
+		FrameOn:  optional.Of(false),
 		Align:    PackAlignEnd,
 	})
 	packer.AddDrawingArea(20, 10).AddPath(geom.Path{
@@ -477,7 +478,7 @@ func TestAnchoredPackerPacksImageChildren(t *testing.T) {
 		Padding:  0,
 		Inset:    5,
 		Sep:      2,
-		FrameOn:  boolPtr(false),
+		FrameOn:  optional.Of(false),
 		Align:    PackAlignStart,
 	})
 	packer.AddImage(img, 2)
@@ -516,7 +517,7 @@ func TestAnchoredPackerImageAndDrawingAreaScaleByDPI(t *testing.T) {
 		Padding:  0,
 		Inset:    0,
 		Sep:      0,
-		FrameOn:  boolPtr(false),
+		FrameOn:  optional.Of(false),
 		Align:    PackAlignStart,
 	})
 	packer.AddImage(img, 2)
@@ -553,7 +554,7 @@ func TestAnchoredPackerImageDefaultsToMatplotlibAntialiasedInterpolation(t *test
 		Location: LegendUpperLeft,
 		Padding:  0,
 		Inset:    0,
-		FrameOn:  boolPtr(false),
+		FrameOn:  optional.Of(false),
 	})
 	packer.AddImage(img, 1)
 
@@ -575,7 +576,7 @@ func TestAnchoredPackerImagePreservesExplicitInterpolation(t *testing.T) {
 		Location: LegendUpperLeft,
 		Padding:  0,
 		Inset:    0,
-		FrameOn:  boolPtr(false),
+		FrameOn:  optional.Of(false),
 	})
 	packer.AddImage(img, 1)
 

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -58,8 +59,8 @@ func TestAxesClabelDelegatesToContourSetAndFiltersLevels(t *testing.T) {
 	labels := ax.Clabel(contours, ClabelOptions{
 		Levels:    []float64{2},
 		Formatter: ticker.FuncFormatter(func(float64) string { return "L2" }),
-		FontSize:  &fontSize,
-		Color:     &color,
+		FontSize:  optional.Of(fontSize),
+		Color:     optional.Of(color),
 	})
 
 	if len(labels) != 1 {
@@ -99,7 +100,7 @@ func TestAxesClabelManualPositionsPlaceNearestContourLabels(t *testing.T) {
 	labels := ax.Clabel(contours, ClabelOptions{
 		Levels:          []float64{2},
 		ManualPositions: []geom.Pt{{X: 1, Y: 1}},
-		Inline:          &inline,
+		Inline:          optional.Of(inline),
 	})
 
 	if len(labels) != 1 {

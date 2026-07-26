@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -31,7 +32,7 @@ func Plot() *core.Figure {
 	_, _ = top.Plot(
 		[]float64{-6, -4, -2, 0, 2, 4, 6},
 		[]float64{0.18, 0.34, 0.47, 0.62, 0.74, 0.86, 0.92},
-		core.PlotOptions{Color: &color, LineWidth: &width},
+		core.PlotOptions{Color: optional.Of(color), LineWidth: optional.Of(width)},
 	)
 	top.SetXLim(-6, 6)
 	top.SetYLim(0, 1)
@@ -45,7 +46,7 @@ func Plot() *core.Figure {
 	_, _ = bottom.Plot(
 		[]float64{0, 1, 2, 3, 4, 5, 6, 7, 8},
 		[]float64{0.15, 0.28, 0.36, 0.51, 0.63, 0.70, 0.82, 0.88, 0.93},
-		core.PlotOptions{Color: &color, LineWidth: &width},
+		core.PlotOptions{Color: optional.Of(color), LineWidth: optional.Of(width)},
 	)
 	bottom.SetXLim(0, 8)
 	bottom.SetYLim(0, 1)

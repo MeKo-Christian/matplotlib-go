@@ -9,6 +9,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -48,20 +49,20 @@ func Plot() *core.Figure {
 	hostColor := render.Color{R: 0.14, G: 0.34, B: 0.72, A: 1}
 	hostWidth := 2.2
 	_, _ = host.Plot(x, sine, core.PlotOptions{
-		Color:     &hostColor,
-		LineWidth: &hostWidth,
+		Color:     optional.Of(hostColor),
+		LineWidth: optional.Of(hostWidth),
 		Label:     "sin(x)",
 	})
 	referenceColor := render.Color{R: 0.26, G: 0.26, B: 0.30, A: 1}
 	referenceWidth := 1.4
 	host.AxHLine(0, core.HLineOptions{
-		Color:     &referenceColor,
-		LineWidth: &referenceWidth,
+		Color:     optional.Of(referenceColor),
+		LineWidth: optional.Of(referenceWidth),
 		Dashes:    []float64{5 * 36.0 / DPI, 3 * 36.0 / DPI},
 	})
 	host.AxVLine(0, core.VLineOptions{
-		Color:     &referenceColor,
-		LineWidth: &referenceWidth,
+		Color:     optional.Of(referenceColor),
+		LineWidth: optional.Of(referenceWidth),
 		Dashes:    []float64{5 * 36.0 / DPI, 3 * 36.0 / DPI},
 	})
 	tickDirection := "inout"
@@ -78,8 +79,8 @@ func Plot() *core.Figure {
 		overlayColor := render.Color{R: 0.74, G: 0.28, B: 0.18, A: 1}
 		overlayWidth := 1.8
 		_, _ = overlay.Plot(x, cosScaled, core.PlotOptions{
-			Color:     &overlayColor,
-			LineWidth: &overlayWidth,
+			Color:     optional.Of(overlayColor),
+			LineWidth: optional.Of(overlayWidth),
 			Label:     "55 + 35 cos(0.8x)",
 		})
 	}
@@ -88,11 +89,11 @@ func Plot() *core.Figure {
 		Coords:   core.Coords(core.CoordAxes),
 		VAlign:   core.TextVAlignTop,
 		FontSize: 10,
-		BBox: &core.TextBBoxOptions{
+		BBox: optional.Of(core.TextBBoxOptions{
 			FaceColor: render.Color{R: 1, G: 1, B: 1, A: 1},
 			EdgeColor: render.Color{R: 0.75, G: 0.75, B: 0.75, A: 1},
 			Padding:   0.3,
-		},
+		}),
 	})
 	legend := host.AddLegend()
 	legend.Location = core.LegendUpperCenter

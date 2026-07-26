@@ -27,7 +27,7 @@ func TestWidgetInteractionAcrossVisualStyles(t *testing.T) {
 			// proven coordinates from the single-style interaction tests.
 			figB := core.NewFigure(120, 80, st.opt)
 			axB := figB.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
-			button := widgets.NewButton(axB, "Run")
+			button := widgets.NewButton(axB, "Run", widgets.ButtonOptions{})
 			clicks := 0
 			button.OnClicked(func(*widgets.Button) { clicks++ })
 
@@ -65,7 +65,7 @@ func TestWidgetInteractionAcrossVisualStyles(t *testing.T) {
 			// step) independent of the style's handle geometry.
 			figS := core.NewFigure(120, 80, st.opt)
 			axS := figS.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
-			slider := widgets.NewSlider(axS, "gain", 0, 10, 5)
+			slider := widgets.NewSlider(axS, "gain", 0, 10, 5, widgets.SliderOptions{})
 			var sliderChanges int
 			slider.OnChanged(func(*widgets.Slider, float64) { sliderChanges++ })
 
@@ -104,7 +104,7 @@ func TestWidgetInteractionAcrossVisualStyles(t *testing.T) {
 			axR := figR.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
 			axR.SetXLim(0, 100)
 			axR.SetYLim(0, 100)
-			rect := widgets.NewRectangleSelector(axR)
+			rect := widgets.NewRectangleSelector(axR, widgets.RectangleSelectorOptions{})
 
 			var dispatcherR Dispatcher
 			wiR := NewWidgetInteraction(figR, func() error { return nil })
@@ -157,7 +157,7 @@ func TestWidgetInteractionSliderDragUsesVisualStyleGeometry(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			fig := core.NewFigure(120, 80, tt.opt)
 			ax := fig.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
-			slider := widgets.NewSlider(ax, "gain", 0, 10, 5)
+			slider := widgets.NewSlider(ax, "gain", 0, 10, 5, widgets.SliderOptions{})
 
 			var dispatcher Dispatcher
 			wi := NewWidgetInteraction(fig, func() error { return nil })
@@ -200,7 +200,7 @@ func TestWidgetInteractionRangeSliderHandleSelectionUsesVisualStyleGeometry(t *t
 		t.Run(tt.name, func(t *testing.T) {
 			fig := core.NewFigure(120, 80, tt.opt)
 			ax := fig.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
-			slider := widgets.NewRangeSlider(ax, "window", 0, 10, 2, 8)
+			slider := widgets.NewRangeSlider(ax, "window", 0, 10, 2, 8, widgets.RangeSliderOptions{})
 
 			var dispatcher Dispatcher
 			wi := NewWidgetInteraction(fig, func() error { return nil })
@@ -220,7 +220,7 @@ func TestWidgetInteractionButtonClick(t *testing.T) {
 	fig := core.NewFigure(120, 80)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
 
-	button := widgets.NewButton(ax, "Run")
+	button := widgets.NewButton(ax, "Run", widgets.ButtonOptions{})
 	clicks := 0
 	button.OnClicked(func(*widgets.Button) {
 		clicks++
@@ -298,7 +298,7 @@ func TestWidgetInteractionButtonClick(t *testing.T) {
 func TestWidgetInteractionCanUseDrawIdleCallback(t *testing.T) {
 	fig := core.NewFigure(120, 80)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
-	button := widgets.NewButton(ax, "Run")
+	button := widgets.NewButton(ax, "Run", widgets.ButtonOptions{})
 
 	var drawIdleCalls int
 	wi := NewWidgetInteraction(fig, func() error {
@@ -329,7 +329,7 @@ func TestWidgetInteractionButtonKeyboardActivation(t *testing.T) {
 	fig := core.NewFigure(120, 80)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
 
-	button := widgets.NewButton(ax, "Run")
+	button := widgets.NewButton(ax, "Run", widgets.ButtonOptions{})
 	clicks := 0
 	button.OnClicked(func(*widgets.Button) {
 		clicks++
@@ -362,7 +362,7 @@ func TestWidgetInteractionSliderDragAndNudge(t *testing.T) {
 	fig := core.NewFigure(120, 80)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
 
-	slider := widgets.NewSlider(ax, "gain", 0, 10, 5)
+	slider := widgets.NewSlider(ax, "gain", 0, 10, 5, widgets.SliderOptions{})
 	var values []float64
 	slider.OnChanged(func(_ *widgets.Slider, value float64) {
 		values = append(values, value)
@@ -427,7 +427,7 @@ func TestWidgetInteractionRangeSliderDragAndNudge(t *testing.T) {
 	fig := core.NewFigure(120, 80)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
 
-	slider := widgets.NewRangeSlider(ax, "window", 0, 10, 2, 8)
+	slider := widgets.NewRangeSlider(ax, "window", 0, 10, 2, 8, widgets.RangeSliderOptions{})
 	var ranges [][2]float64
 	slider.OnChanged(func(_ *widgets.RangeSlider, low, high float64) {
 		ranges = append(ranges, [2]float64{low, high})
@@ -486,9 +486,9 @@ func TestWidgetInteractionDisabledSlidersIgnoreKeyboardNudges(t *testing.T) {
 	axSlider := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 0.45}})
 	axRange := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0.55}, Max: geom.Pt{X: 1, Y: 1}})
 
-	slider := widgets.NewSlider(axSlider, "gain", 0, 10, 5)
+	slider := widgets.NewSlider(axSlider, "gain", 0, 10, 5, widgets.SliderOptions{})
 	slider.Enabled = false
-	rangeSlider := widgets.NewRangeSlider(axRange, "window", 0, 10, 2, 8)
+	rangeSlider := widgets.NewRangeSlider(axRange, "window", 0, 10, 2, 8, widgets.RangeSliderOptions{})
 	rangeSlider.Enabled = false
 
 	var sliderEvents int

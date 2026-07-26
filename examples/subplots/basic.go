@@ -40,7 +40,7 @@ func main() {
 				y[i] = math.Sin(float64(col+1)*xv) * math.Exp(-0.05*v*float64(row+1))
 			}
 
-			_, _ = ax.Plot(x, y)
+			_, _ = ax.Plot(x, y, core.PlotOptions{})
 			ax.SetXLabel("x")
 			ax.SetYLabel("y")
 		}

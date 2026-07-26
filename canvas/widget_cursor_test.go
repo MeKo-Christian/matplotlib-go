@@ -12,7 +12,7 @@ func TestWidgetInteractionCursorHover(t *testing.T) {
 	fig := core.NewFigure(200, 100)
 	left := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 0.5, Y: 1}})
 	right := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.5, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
-	leftCursor := widgets.NewCursor(left)
+	leftCursor := widgets.NewCursor(left, widgets.CursorOptions{})
 	multiCursor := widgets.NewMultiCursor(left, right)
 
 	var dispatcher Dispatcher

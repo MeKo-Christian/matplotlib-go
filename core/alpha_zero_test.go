@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -34,7 +35,7 @@ func TestBarHonorsExplicitZeroAlpha(t *testing.T) {
 	zero := 0.0
 	transparent := &recordingRenderer{}
 	transparentBar, err := newAlphaTestAxes().
-		Bar([]float64{0, 1, 2}, []float64{1, 2, 3}, BarOptions{Color: &red, Alpha: &zero})
+		Bar([]float64{0, 1, 2}, []float64{1, 2, 3}, BarOptions{Color: optional.Of(red), Alpha: optional.Of(zero)})
 	if err != nil {
 		t.Fatalf("Bar() returned error: %v", err)
 	}
@@ -45,7 +46,7 @@ func TestBarHonorsExplicitZeroAlpha(t *testing.T) {
 
 	opaque := &recordingRenderer{}
 	opaqueBar, err := newAlphaTestAxes().
-		Bar([]float64{0, 1, 2}, []float64{1, 2, 3}, BarOptions{Color: &red})
+		Bar([]float64{0, 1, 2}, []float64{1, 2, 3}, BarOptions{Color: optional.Of(red)})
 	if err != nil {
 		t.Fatalf("Bar() returned error: %v", err)
 	}
@@ -59,7 +60,7 @@ func TestBarHalfAlphaApplied(t *testing.T) {
 	ax := newAlphaTestAxes()
 	half := 0.5
 	red := render.Color{R: 1, A: 1}
-	bar, err := ax.Bar([]float64{0}, []float64{1}, BarOptions{Color: &red, Alpha: &half})
+	bar, err := ax.Bar([]float64{0}, []float64{1}, BarOptions{Color: optional.Of(red), Alpha: optional.Of(half)})
 	if err != nil {
 		t.Fatalf("Bar() returned error: %v", err)
 	}
@@ -75,7 +76,7 @@ func TestBarHalfAlphaApplied(t *testing.T) {
 func TestBarNilAlphaPreservesColorAlpha(t *testing.T) {
 	ax := newAlphaTestAxes()
 	semi := render.Color{R: 1, A: 0.8}
-	bar, err := ax.Bar([]float64{0}, []float64{1}, BarOptions{Color: &semi})
+	bar, err := ax.Bar([]float64{0}, []float64{1}, BarOptions{Color: optional.Of(semi)})
 	if err != nil {
 		t.Fatalf("Bar() returned error: %v", err)
 	}
@@ -95,7 +96,7 @@ func TestFillBetweenHonorsExplicitZeroAlpha(t *testing.T) {
 	zero := 0.0
 	transparent := &recordingRenderer{}
 	transparentFill, err := newAlphaTestAxes().
-		FillBetween([]float64{0, 1, 2}, []float64{0, 0, 0}, []float64{1, 2, 1}, FillOptions{Color: &red, Alpha: &zero})
+		FillBetween([]float64{0, 1, 2}, []float64{0, 0, 0}, []float64{1, 2, 1}, FillOptions{Color: optional.Of(red), Alpha: optional.Of(zero)})
 	if err != nil {
 		t.Fatalf("FillBetween() returned error: %v", err)
 	}
@@ -106,7 +107,7 @@ func TestFillBetweenHonorsExplicitZeroAlpha(t *testing.T) {
 
 	opaque := &recordingRenderer{}
 	opaqueFill, err := newAlphaTestAxes().
-		FillBetween([]float64{0, 1, 2}, []float64{0, 0, 0}, []float64{1, 2, 1}, FillOptions{Color: &red})
+		FillBetween([]float64{0, 1, 2}, []float64{0, 0, 0}, []float64{1, 2, 1}, FillOptions{Color: optional.Of(red)})
 	if err != nil {
 		t.Fatalf("FillBetween() returned error: %v", err)
 	}

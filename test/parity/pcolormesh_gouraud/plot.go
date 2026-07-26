@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 )
 
 func Render() image.Image {
@@ -15,9 +16,9 @@ func Render() image.Image {
 		XEdges:   []float64{-2.5, -1.5, -0.4, 0.8, 1.7, 2.8},
 		YEdges:   []float64{-1.8, -0.8, 0.1, 1.1, 2.0},
 		Shading:  core.MeshShadingGouraud,
-		Colormap: &cmap,
-		VMin:     &vmin,
-		VMax:     &vmax,
+		Colormap: optional.Of(cmap),
+		VMin:     optional.Of(vmin),
+		VMax:     optional.Of(vmax),
 	})
 	if mesh != nil {
 		fig.AddColorbar(ax, mesh, core.ColorbarOptions{Label: "value"})

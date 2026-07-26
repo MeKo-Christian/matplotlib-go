@@ -3,7 +3,7 @@ package widgets
 import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -15,8 +15,8 @@ type ButtonOptions struct {
 	FaceColor render.Color
 	EdgeColor render.Color
 	TextColor render.Color
-	Pressed   *bool
-	Disabled  *bool
+	Pressed   optional.Value[bool]
+	Disabled  optional.Value[bool]
 	FontSize  float64
 }
 
@@ -37,7 +37,9 @@ type Button struct {
 }
 
 // NewButton adds a button widget artist to the axes.
-func NewButton(a *core.Axes, label string, opts ...ButtonOptions) *Button {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func NewButton(a *core.Axes, label string, opt ButtonOptions) *Button {
 	if a == nil {
 		return nil
 	}
@@ -47,20 +49,18 @@ func NewButton(a *core.Axes, label string, opts ...ButtonOptions) *Button {
 		EdgeColor: defaults.ButtonEdge,
 		TextColor: defaults.ButtonText,
 	}
-	if opt, ok := optarg.Optional("button", opts); ok {
-		mergeButtonOptions(&cfg, &opt)
-	}
+	mergeButtonOptions(&cfg, &opt)
 	prepareWidgetAxes(a)
 	enabled := true
-	if cfg.Disabled != nil {
-		enabled = !*cfg.Disabled
+	if cfg.Disabled.IsSet() {
+		enabled = !cfg.Disabled.OrZero()
 	}
 	w := &Button{
 		Label:     label,
 		FaceColor: cfg.FaceColor,
 		EdgeColor: cfg.EdgeColor,
 		TextColor: cfg.TextColor,
-		Pressed:   boolValue(cfg.Pressed, false),
+		Pressed:   boolValue(cfg.Pressed.Ptr(), false),
 		Enabled:   enabled,
 		FontSize:  cfg.FontSize,
 		z:         1200,
@@ -169,10 +169,10 @@ func mergeButtonOptions(base, override *ButtonOptions) {
 	if override.TextColor != (render.Color{}) {
 		base.TextColor = override.TextColor
 	}
-	if override.Pressed != nil {
+	if override.Pressed.IsSet() {
 		base.Pressed = override.Pressed
 	}
-	if override.Disabled != nil {
+	if override.Disabled.IsSet() {
 		base.Disabled = override.Disabled
 	}
 	if override.FontSize > 0 {

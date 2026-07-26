@@ -7,7 +7,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -21,8 +21,8 @@ type SliderOptions struct {
 	FillColor   render.Color
 	HandleColor render.Color
 	TextColor   render.Color
-	ValueStep   *float64
-	ValueFormat *string
+	ValueStep   optional.Value[float64]
+	ValueFormat optional.Value[string]
 	FontSize    float64
 }
 
@@ -50,7 +50,9 @@ type Slider struct {
 }
 
 // NewSlider adds a slider widget artist to the axes.
-func NewSlider(a *core.Axes, label string, minValue, maxValue, value float64, opts ...SliderOptions) *Slider {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func NewSlider(a *core.Axes, label string, minValue, maxValue, value float64, opt SliderOptions) *Slider {
 	if a == nil {
 		return nil
 	}
@@ -62,19 +64,17 @@ func NewSlider(a *core.Axes, label string, minValue, maxValue, value float64, op
 		HandleColor: defaults.Handle,
 		TextColor:   defaults.Text,
 	}
-	if opt, ok := optarg.Optional("slider", opts); ok {
-		mergeSliderOptions(&cfg, &opt)
-	}
+	mergeSliderOptions(&cfg, &opt)
 	step := (maxValue - minValue) / 100
-	if cfg.ValueStep != nil && *cfg.ValueStep > 0 {
-		step = *cfg.ValueStep
+	if v, ok := cfg.ValueStep.Get(); ok && v > 0 {
+		step = cfg.ValueStep.OrZero()
 	}
 	if step == 0 {
 		step = 1
 	}
 	valueFormat := "%.2f"
-	if cfg.ValueFormat != nil && strings.TrimSpace(*cfg.ValueFormat) != "" {
-		valueFormat = *cfg.ValueFormat
+	if cfg.ValueFormat.IsSet() && strings.TrimSpace(cfg.ValueFormat.OrZero()) != "" {
+		valueFormat = cfg.ValueFormat.OrZero()
 	}
 	prepareWidgetAxes(a)
 	w := &Slider{
@@ -294,10 +294,10 @@ func mergeSliderOptions(base, override *SliderOptions) {
 	if override.FontSize > 0 {
 		base.FontSize = override.FontSize
 	}
-	if override.ValueStep != nil {
+	if override.ValueStep.IsSet() {
 		base.ValueStep = override.ValueStep
 	}
-	if override.ValueFormat != nil {
+	if override.ValueFormat.IsSet() {
 		base.ValueFormat = override.ValueFormat
 	}
 }

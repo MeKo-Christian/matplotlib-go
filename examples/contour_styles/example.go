@@ -10,6 +10,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -62,13 +63,13 @@ func Plot() *core.Figure {
 		X:         xs,
 		Y:         ys,
 		Levels:    []float64{-0.3, -0.2, -0.1, 0.1, 0.2, 0.3},
-		Color:     &black,
-		LineWidth: &lineWidth,
+		Color:     optional.Of(black),
+		LineWidth: optional.Of(lineWidth),
 	})
 	noInline := false
 	lineAx.Clabel(cs, core.ClabelOptions{
 		FormatString: "%.2f",
-		Inline:       &noInline,
+		Inline:       optional.Of(noInline),
 		ManualPositions: []geom.Pt{
 			{X: -0.7, Y: 0.6},
 			{X: -0.7, Y: 1.21},

@@ -9,6 +9,7 @@ import (
 	"math"
 	"testing"
 
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -26,7 +27,7 @@ func TestAxes3DWireframeGeneratesLineCollection(t *testing.T) {
 		{0, 1},
 		{1, 2},
 	}
-	collection := ax.Wireframe(x, y, z)
+	collection := ax.Wireframe(x, y, z, PlotOptions{})
 	if collection == nil {
 		t.Fatal("Wireframe returned nil")
 	}
@@ -50,7 +51,7 @@ func TestAxes3DWireframeTreatsZRowsAsYAndColumnsAsX(t *testing.T) {
 		{0, 0, 0},
 		{0, 0, 0},
 	}
-	collection := ax.Wireframe(x, y, z)
+	collection := ax.Wireframe(x, y, z, PlotOptions{})
 	if collection == nil {
 		t.Fatal("Wireframe returned nil")
 	}
@@ -74,7 +75,7 @@ func TestAxes3DWireframeSupportsRowColumnStridesLikeMatplotlib(t *testing.T) {
 	x, y, z := testGrid3D(5, 5)
 	rstride := 2
 	cstride := 0
-	collection := ax.Wireframe(x, y, z, PlotOptions{RStride: &rstride, CStride: &cstride})
+	collection := ax.Wireframe(x, y, z, PlotOptions{RStride: optional.Of(rstride), CStride: optional.Of(cstride)})
 	if collection == nil {
 		t.Fatal("Wireframe returned nil")
 	}
@@ -99,7 +100,7 @@ func TestAxes3DWireframeSupportsRowColumnCountsLikeMatplotlib(t *testing.T) {
 	x, y, z := testGrid3D(9, 10)
 	rcount := 3
 	ccount := 4
-	collection := ax.Wireframe(x, y, z, PlotOptions{RCount: &rcount, CCount: &ccount})
+	collection := ax.Wireframe(x, y, z, PlotOptions{RCount: optional.Of(rcount), CCount: optional.Of(ccount)})
 	if collection == nil {
 		t.Fatal("Wireframe returned nil")
 	}
@@ -116,7 +117,7 @@ func TestAxes3DWireframeDefaultLineWidthMatchesMatplotlib(t *testing.T) {
 	}
 
 	x, y, z := testGrid3D(2, 2)
-	collection := ax.Wireframe(x, y, z)
+	collection := ax.Wireframe(x, y, z, PlotOptions{})
 	if collection == nil {
 		t.Fatal("Wireframe returned nil")
 	}
@@ -139,7 +140,7 @@ func TestAxes3DWireframeColorsApplyAlphaAndStayNonMappable(t *testing.T) {
 		[]float64{0, 1},
 		[]float64{0, 1},
 		[][]float64{{0, 1}, {1, 2}},
-		PlotOptions{Color: &color, Alpha: &alpha, LineWidth: &lineWidth},
+		PlotOptions{Color: optional.Of(color), Alpha: optional.Of(alpha), LineWidth: optional.Of(lineWidth)},
 	)
 	if collection == nil {
 		t.Fatal("Wireframe returned nil")
@@ -204,7 +205,7 @@ func TestAxes3DSurfaceCreatesProjectedPolygons(t *testing.T) {
 		{0, 1},
 		{1, 2},
 	}
-	collection := ax.Surface(x, y, z)
+	collection := ax.Surface(x, y, z, PlotOptions{})
 	if collection == nil {
 		t.Fatal("Surface returned nil")
 	}
@@ -239,7 +240,7 @@ func TestAxes3DSurfaceUsesMatplotlibDefaultSampleCounts(t *testing.T) {
 		}
 	}
 
-	collection := ax.Surface(x, y, z)
+	collection := ax.Surface(x, y, z, PlotOptions{})
 	if collection == nil {
 		t.Fatal("Surface returned nil")
 	}
@@ -258,7 +259,7 @@ func TestAxes3DSurfaceSupportsRowColumnStridesLikeMatplotlib(t *testing.T) {
 	x, y, z := testGrid3D(5, 5)
 	rstride := 2
 	cstride := 2
-	collection := ax.Surface(x, y, z, PlotOptions{RStride: &rstride, CStride: &cstride})
+	collection := ax.Surface(x, y, z, PlotOptions{RStride: optional.Of(rstride), CStride: optional.Of(cstride)})
 	if collection == nil {
 		t.Fatal("Surface returned nil")
 	}
@@ -277,7 +278,7 @@ func TestAxes3DSurfaceSupportsRowColumnCountsLikeMatplotlib(t *testing.T) {
 	x, y, z := testGrid3D(9, 10)
 	rcount := 3
 	ccount := 4
-	collection := ax.Surface(x, y, z, PlotOptions{RCount: &rcount, CCount: &ccount})
+	collection := ax.Surface(x, y, z, PlotOptions{RCount: optional.Of(rcount), CCount: optional.Of(ccount)})
 	if collection == nil {
 		t.Fatal("Surface returned nil")
 	}
@@ -298,7 +299,7 @@ func TestAxes3DPlotSurfaceGridHonorsSurfaceOptions(t *testing.T) {
 		[]float64{0, 1},
 		[]float64{0, 1},
 		[][]float64{{0, 1}, {2, 3}},
-		PlotOptions{Antialiased: &antialiased},
+		PlotOptions{Antialiased: optional.Of(antialiased)},
 	)
 	if collection == nil {
 		t.Fatal("PlotSurfaceGrid returned nil")
@@ -319,6 +320,7 @@ func TestAxes3DSurfaceDefaultHasNoEdgeColorsLikeMatplotlibCmapSurface(t *testing
 		[]float64{0, 1},
 		[]float64{0, 1},
 		[][]float64{{0, 1}, {1, 2}},
+		PlotOptions{},
 	)
 	if collection == nil {
 		t.Fatal("Surface returned nil")
@@ -348,7 +350,7 @@ func TestAxes3DSurfaceExposesScalarMapForColorbars(t *testing.T) {
 		[]float64{0, 1},
 		[]float64{0, 1},
 		[][]float64{{0, 2}, {4, 6}},
-		PlotOptions{Colormap: &cmap, VMin: &vmin, VMax: &vmax},
+		PlotOptions{Colormap: optional.Of(cmap), VMin: optional.Of(vmin), VMax: optional.Of(vmax)},
 	)
 	if surface == nil {
 		t.Fatal("Surface returned nil")
@@ -403,7 +405,7 @@ func TestAxes3DSurfaceHonorsAntialiasSetting(t *testing.T) {
 		[]float64{0, 1},
 		[]float64{0, 1},
 		[][]float64{{0, 2}, {4, 6}},
-		PlotOptions{Antialiased: &antialiased},
+		PlotOptions{Antialiased: optional.Of(antialiased)},
 	)
 	if surface == nil {
 		t.Fatal("Surface returned nil")
@@ -449,7 +451,7 @@ func TestAxes3DTrisurfExposesConfiguredNorm(t *testing.T) {
 	}
 	cmap := "inferno"
 	surface := ax.Trisurf(tri, []float64{1, 10, 100}, PlotOptions{
-		Colormap: &cmap,
+		Colormap: optional.Of(cmap),
 		Norm:     LogNorm{VMin: 1, VMax: 100},
 	})
 	if surface == nil {
@@ -481,7 +483,7 @@ func TestAxes3DTrisurfHonorsAntialiasSetting(t *testing.T) {
 		Y:         []float64{0, 0, 1},
 		Triangles: [][3]int{{0, 1, 2}},
 	}
-	surface := ax.Trisurf(tri, []float64{1, 10, 100}, PlotOptions{Antialiased: &antialiased})
+	surface := ax.Trisurf(tri, []float64{1, 10, 100}, PlotOptions{Antialiased: optional.Of(antialiased)})
 	if surface == nil {
 		t.Fatal("Trisurf returned nil")
 	}
@@ -504,7 +506,7 @@ func TestAxes3DStemProjectsBaselineStemsAndMarkers(t *testing.T) {
 		[]float64{0, 1},
 		[]float64{2, 3},
 		[]float64{4, 5},
-		Stem3DOptions{Bottom: &bottom},
+		Stem3DOptions{Bottom: optional.Of(bottom)},
 	)
 	if container == nil {
 		t.Fatal("Stem3D returned nil")
@@ -572,10 +574,10 @@ func TestAxes3DStemColorsApplyAlphaAndStayNonMappable(t *testing.T) {
 		[]float64{0, 1},
 		[]float64{1, 2},
 		Stem3DOptions{
-			Color:           &color,
-			BaselineColor:   &baseline,
-			MarkerEdgeColor: &markerEdge,
-			Alpha:           &alpha,
+			Color:           optional.Of(color),
+			BaselineColor:   optional.Of(baseline),
+			MarkerEdgeColor: optional.Of(markerEdge),
+			Alpha:           optional.Of(alpha),
 		},
 	)
 	if container == nil {
@@ -625,7 +627,7 @@ func TestAxes3DStemSupportsMatplotlibOrientationJuggling(t *testing.T) {
 		[]float64{1},
 		[]float64{2},
 		[]float64{3},
-		Stem3DOptions{Bottom: &bottom, Orientation: "x"},
+		Stem3DOptions{Bottom: optional.Of(bottom), Orientation: "x"},
 	)
 	if container == nil {
 		t.Fatal("Stem3D returned nil")
@@ -731,12 +733,12 @@ func TestAxes3DFillBetweenColorsApplyAlphaAndStayNonMappable(t *testing.T) {
 		[]float64{1, 1, 1},
 		[]float64{0, 0, 0},
 		FillBetween3DOptions{
-			Color:     &color,
-			EdgeColor: &edge,
-			EdgeWidth: &edgeWidth,
-			Alpha:     &alpha,
+			Color:     optional.Of(color),
+			EdgeColor: optional.Of(edge),
+			EdgeWidth: optional.Of(edgeWidth),
+			Alpha:     optional.Of(alpha),
 			Mode:      FillBetween3DModeQuad,
-			Shade:     &noShade,
+			Shade:     optional.Of(noShade),
 		},
 	)
 	if fill == nil {
@@ -775,7 +777,7 @@ func TestAxes3DFillBetweenColorsApplyAlphaAndStayNonMappable(t *testing.T) {
 		[]float64{0, 1, 2},
 		[]float64{1, 1, 1},
 		[]float64{0, 0, 0},
-		FillBetween3DOptions{Color: &color, Alpha: &alpha, Mode: FillBetween3DModePolygon},
+		FillBetween3DOptions{Color: optional.Of(color), Alpha: optional.Of(alpha), Mode: FillBetween3DModePolygon},
 	)
 	if polygonFill == nil {
 		t.Fatal("polygon FillBetween3D returned nil")
@@ -839,7 +841,7 @@ func TestAxes3DBarProjects2DBarsIntoSelectedZDirection(t *testing.T) {
 	bars := ax.Bar(
 		[]float64{1},
 		[]float64{3},
-		Bar3DPlaneOptions{Width: &width, Zs: zs, ZDir: "y"},
+		Bar3DPlaneOptions{Width: optional.Of(width), Zs: zs, ZDir: "y"},
 	)
 	if bars == nil {
 		t.Fatal("Axes3D.Bar returned nil")
@@ -875,7 +877,7 @@ func TestAxes3DQuiverUsesMatplotlibTailPivotGeometry(t *testing.T) {
 		[]float64{1},
 		[]float64{0},
 		[]float64{0},
-		Quiver3DOptions{Length: &length, Pivot: "tail"},
+		Quiver3DOptions{Length: optional.Of(length), Pivot: "tail"},
 	)
 	if q == nil {
 		t.Fatal("Quiver returned nil")
@@ -911,7 +913,7 @@ func TestAxes3DQuiverColorsApplyAlphaAndStayNonMappable(t *testing.T) {
 		[]float64{1},
 		[]float64{0},
 		[]float64{0},
-		Quiver3DOptions{Color: &color, Alpha: &alpha},
+		Quiver3DOptions{Color: optional.Of(color), Alpha: optional.Of(alpha)},
 	)
 	if q == nil {
 		t.Fatal("Quiver returned nil")
@@ -947,7 +949,7 @@ func TestAxes3DQuiverNormalizesVectorsAndSupportsMiddlePivot(t *testing.T) {
 		[]float64{2},
 		[]float64{0},
 		[]float64{0},
-		Quiver3DOptions{Length: &length, Normalize: true, Pivot: "middle"},
+		Quiver3DOptions{Length: optional.Of(length), Normalize: true, Pivot: "middle"},
 	)
 	if q == nil {
 		t.Fatal("Quiver returned nil")
@@ -977,7 +979,7 @@ func TestAxes3DQuiverAxLimClipDropsOutsideArrows(t *testing.T) {
 		[]float64{1, 1},
 		[]float64{0, 0},
 		[]float64{0, 0},
-		Quiver3DOptions{Length: &length, Pivot: "tail", AxLimClip: true},
+		Quiver3DOptions{Length: optional.Of(length), Pivot: "tail", AxLimClip: true},
 	)
 	if q == nil {
 		t.Fatal("Quiver returned nil")
@@ -1011,7 +1013,7 @@ func TestAxes3DErrorBarProjectsXYZRangesAndCaps(t *testing.T) {
 		[]float64{0.5},
 		[]float64{0.25},
 		[]float64{1},
-		ErrorBar3DOptions{CapSize: &capSize},
+		ErrorBar3DOptions{CapSize: optional.Of(capSize)},
 	)
 	if errs == nil {
 		t.Fatal("ErrorBar3D returned nil")
@@ -1051,7 +1053,7 @@ func TestAxes3DErrorBarColorsApplyAlphaAndStayNonMappable(t *testing.T) {
 		nil,
 		nil,
 		[]float64{0.1},
-		ErrorBar3DOptions{Color: &color, Alpha: &alpha},
+		ErrorBar3DOptions{Color: optional.Of(color), Alpha: optional.Of(alpha)},
 	)
 	if errs == nil {
 		t.Fatal("ErrorBar3D returned nil")
@@ -1077,8 +1079,8 @@ func TestAxes3DErrorBarUsesComputedDepthZOrder(t *testing.T) {
 		t.Fatalf("AddAxes3D: %v", err)
 	}
 
-	low := ax.ErrorBar3D([]float64{0}, []float64{0}, []float64{0}, nil, nil, []float64{0.1})
-	high := ax.ErrorBar3D([]float64{0}, []float64{0}, []float64{1}, nil, nil, []float64{0.1})
+	low := ax.ErrorBar3D([]float64{0}, []float64{0}, []float64{0}, nil, nil, []float64{0.1}, ErrorBar3DOptions{})
+	high := ax.ErrorBar3D([]float64{0}, []float64{0}, []float64{1}, nil, nil, []float64{0.1}, ErrorBar3DOptions{})
 	if low == nil || high == nil {
 		t.Fatalf("expected errorbar collections, got low=%v high=%v", low, high)
 	}
@@ -1146,7 +1148,7 @@ func TestAxes3DFillBetweenQuadModeShadesFacesLikeMatplotlib(t *testing.T) {
 		z2[i] = z1[i]
 	}
 	base := render.Color{R: 0.2, G: 0.4, B: 0.6, A: 1}
-	c := ax.FillBetween(x1, y1, z1, x2, y2, z2, FillBetween3DOptions{Color: &base})
+	c := ax.FillBetween(x1, y1, z1, x2, y2, z2, FillBetween3DOptions{Color: optional.Of(base)})
 	if c == nil {
 		t.Fatal("FillBetween returned nil")
 	}
@@ -1177,7 +1179,7 @@ func TestAxes3DFillBetweenQuadModeShadesFacesLikeMatplotlib(t *testing.T) {
 	xs := []float64{0, 1, 2, 3}
 	ones := []float64{1, 1, 1, 1}
 	zeros := []float64{0, 0, 0, 0}
-	flat := ax.FillBetween(xs, zeros, zeros, xs, ones, zeros, FillBetween3DOptions{Color: &base})
+	flat := ax.FillBetween(xs, zeros, zeros, xs, ones, zeros, FillBetween3DOptions{Color: optional.Of(base)})
 	if flat == nil {
 		t.Fatal("planar FillBetween returned nil")
 	}
@@ -1202,6 +1204,7 @@ func TestAxes3DBar3DCreatesSegments(t *testing.T) {
 		[]float64{1, 1},
 		[]float64{1, 1},
 		[]float64{1, 1},
+		Bar3DOptions{},
 	)
 	if collection == nil {
 		t.Fatal("Bar3D returned nil")
@@ -1250,7 +1253,7 @@ func TestAxes3DBar3DSingleColorAppliesAlphaShadingAndStaysNonMappable(t *testing
 		[]float64{1},
 		[]float64{1},
 		[]float64{1},
-		Bar3DOptions{Color: &color, Alpha: &alpha, LineWidth: &lineWidth},
+		Bar3DOptions{Color: optional.Of(color), Alpha: optional.Of(alpha), LineWidth: optional.Of(lineWidth)},
 	)
 	if edges == nil {
 		t.Fatal("Bar3D returned nil")
@@ -1422,7 +1425,7 @@ func TestAxes3DTrisurfCreatesSinglePolyCollection(t *testing.T) {
 		Y:         []float64{0, 0, 1, 1},
 		Triangles: [][3]int{{0, 1, 2}, {0, 2, 3}},
 	}
-	collection := ax.Trisurf(tri, []float64{0, 1, 2, 3})
+	collection := ax.Trisurf(tri, []float64{0, 1, 2, 3}, PlotOptions{})
 	if collection == nil {
 		t.Fatal("Trisurf returned nil")
 	}
@@ -1454,7 +1457,7 @@ func TestAxes3DTrisurfAutoTriangulatesWhenTrianglesAreOmitted(t *testing.T) {
 		X: []float64{0, 1, 1, 0},
 		Y: []float64{0, 0, 1, 1},
 	}
-	collection := ax.Trisurf(tri, []float64{0, 1, 2, 3})
+	collection := ax.Trisurf(tri, []float64{0, 1, 2, 3}, PlotOptions{})
 	if collection == nil {
 		t.Fatal("Trisurf returned nil")
 	}
@@ -1476,7 +1479,7 @@ func TestAxes3DTrisurfSkipsMaskedTriangles(t *testing.T) {
 		Triangles: [][3]int{{0, 1, 2}, {0, 2, 3}},
 		Mask:      []bool{false, true},
 	}
-	collection := ax.Trisurf(tri, []float64{0, 1, 2, 3})
+	collection := ax.Trisurf(tri, []float64{0, 1, 2, 3}, PlotOptions{})
 	if collection == nil {
 		t.Fatal("Trisurf returned nil")
 	}
@@ -1500,8 +1503,8 @@ func TestAxes3DTrisurfUsesConfiguredEdgeColor(t *testing.T) {
 		Triangles: [][3]int{{0, 1, 2}},
 	}
 	collection := ax.Trisurf(tri, []float64{0, 1, 2}, PlotOptions{
-		EdgeColor: &edge,
-		EdgeWidth: &width,
+		EdgeColor: optional.Of(edge),
+		EdgeWidth: optional.Of(width),
 	})
 	if collection == nil {
 		t.Fatal("Trisurf returned nil")
@@ -1527,7 +1530,7 @@ func TestAxes3DTrisurfShadesFaceColorsLikeMatplotlib(t *testing.T) {
 		Y:         []float64{0, 0, 1},
 		Triangles: [][3]int{{0, 1, 2}},
 	}
-	collection := ax.Trisurf(tri, []float64{0, 0, 1}, PlotOptions{Color: &base})
+	collection := ax.Trisurf(tri, []float64{0, 0, 1}, PlotOptions{Color: optional.Of(base)})
 	if collection == nil {
 		t.Fatal("Trisurf returned nil")
 	}
@@ -1549,7 +1552,7 @@ func TestAxes3DVoxelsCullInternalFacesLikeMatplotlib(t *testing.T) {
 	voxels := ax.Voxels([][][]bool{
 		{{true}},
 		{{true}},
-	})
+	}, VoxelOptions{})
 	if got, want := len(voxels), 2; got != want {
 		t.Fatalf("voxel collection count = %d, want %d filled voxels", got, want)
 	}
@@ -1580,12 +1583,12 @@ func TestAxes3DVoxelsApplyFaceEdgeAlphaAndStayNonMappable(t *testing.T) {
 		{{true}},
 		{{true}},
 	}, VoxelOptions{
-		FaceColor:  &defaultFace,
+		FaceColor:  optional.Of(defaultFace),
 		FaceColors: map[[3]int]render.Color{{1, 0, 0}: overrideFace},
-		EdgeColor:  &defaultEdge,
+		EdgeColor:  optional.Of(defaultEdge),
 		EdgeColors: map[[3]int]render.Color{{1, 0, 0}: overrideEdge},
-		Alpha:      &alpha,
-		Shade:      &shade,
+		Alpha:      optional.Of(alpha),
+		Shade:      optional.Of(shade),
 	})
 	if got, want := len(voxels), 2; got != want {
 		t.Fatalf("voxel collection count = %d, want %d", got, want)
@@ -1615,7 +1618,7 @@ func TestAxes3DVoxelsPerVoxelEdgeColorsEnableEdges(t *testing.T) {
 	shade := false
 	voxels := ax.Voxels([][][]bool{{{true}}}, VoxelOptions{
 		EdgeColors: map[[3]int]render.Color{{0, 0, 0}: edge},
-		Shade:      &shade,
+		Shade:      optional.Of(shade),
 	})
 	voxel := voxels[[3]int{0, 0, 0}]
 	if voxel == nil {
@@ -1637,7 +1640,7 @@ func TestAxes3DVoxelsShadeFaceColorsByDefault(t *testing.T) {
 	}
 
 	face := render.Color{R: 0.9, G: 0.7, B: 0.2, A: 1}
-	voxels := ax.Voxels([][][]bool{{{true}}}, VoxelOptions{FaceColor: &face})
+	voxels := ax.Voxels([][][]bool{{{true}}}, VoxelOptions{FaceColor: optional.Of(face)})
 	voxel := voxels[[3]int{0, 0, 0}]
 	if voxel == nil {
 		t.Fatal("missing voxel collection")
@@ -1717,7 +1720,7 @@ func TestAxes3DVoxelsResortFacesAfterViewChange(t *testing.T) {
 	}
 
 	filled := [][][]bool{{{true}}}
-	voxels := ax.Voxels(filled)
+	voxels := ax.Voxels(filled, VoxelOptions{})
 	voxel := voxels[[3]int{0, 0, 0}]
 	if voxel == nil {
 		t.Fatal("missing voxel collection")
@@ -1747,6 +1750,7 @@ func TestAxes3DVoxelCallsBarLikeSegments(t *testing.T) {
 		[]float64{1, 1},
 		[]float64{1, 1},
 		[]float64{1, 1},
+		PlotOptions{},
 	)
 	if collection == nil {
 		t.Fatal("Voxel returned nil")

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -20,7 +21,7 @@ func TestContourRCDefaultsAndExplicitOptionsPrecedence(t *testing.T) {
 
 	black := render.Color{A: 1}
 	data := [][]float64{{-2, -1, 0}, {-1, 0, 1}, {0, 1, 2}}
-	fromRC := ax.Contour(data, ContourOptions{Levels: []float64{-1, 1}, Color: &black})
+	fromRC := ax.Contour(data, ContourOptions{Levels: []float64{-1, 1}, Color: optional.Of(black)})
 	if fromRC == nil || fromRC.Lines == nil {
 		t.Fatal("expected contour lines")
 	}
@@ -37,11 +38,11 @@ func TestContourRCDefaultsAndExplicitOptionsPrecedence(t *testing.T) {
 	solid := "solid"
 	explicit := ax.Contour(data, ContourOptions{
 		Levels:             []float64{-1, 1},
-		Color:              &black,
+		Color:              optional.Of(black),
 		Algorithm:          "mpl2014",
-		CornerMask:         &cornerMask,
-		LineWidth:          &width,
-		NegativeLineStyles: &solid,
+		CornerMask:         optional.Of(cornerMask),
+		LineWidth:          optional.Of(width),
+		NegativeLineStyles: optional.Of(solid),
 	})
 	if explicit == nil || explicit.Lines == nil {
 		t.Fatal("expected explicit contour lines")
@@ -66,7 +67,7 @@ func TestTriContourUsesContourLineRCDefaults(t *testing.T) {
 	}
 	cs := ax.TriContour(tri, []float64{-2, 2, 0, 2}, ContourOptions{
 		Levels: []float64{-1, 1},
-		Color:  &black,
+		Color:  optional.Of(black),
 	})
 	if cs == nil || cs.Lines == nil {
 		t.Fatal("expected triangular contour lines")
@@ -122,7 +123,7 @@ func TestStructuredContourMPL2005CornerMaskRules(t *testing.T) {
 	if got := ax.Contour(data, ContourOptions{
 		Levels:     []float64{0.5},
 		Algorithm:  "mpl2005",
-		CornerMask: &cornerMask,
+		CornerMask: optional.Of(cornerMask),
 	}); got != nil {
 		t.Fatal("mpl2005 accepted unsupported explicit corner_mask=True")
 	}
@@ -155,7 +156,7 @@ func TestContourNamedDashesUseActiveLineRCAndDeviceScaling(t *testing.T) {
 	black := render.Color{A: 1}
 	cs := ax.Contour(
 		[][]float64{{-2, -1, 0}, {-1, 0, 1}, {0, 1, 2}},
-		ContourOptions{Levels: []float64{-1, 1}, Color: &black},
+		ContourOptions{Levels: []float64{-1, 1}, Color: optional.Of(black)},
 	)
 	if cs == nil || cs.Lines == nil {
 		t.Fatal("expected contour lines")

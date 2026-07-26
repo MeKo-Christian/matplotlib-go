@@ -2,7 +2,7 @@ package core
 
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -10,9 +10,9 @@ import (
 type AnnotationBboxOptions struct {
 	XYCoords     CoordinateSpec
 	BoxCoords    CoordinateSpec
-	BoxPosition  *geom.Pt
-	BoxAlignment *geom.Pt
-	FrameOn      *bool
+	BoxPosition  optional.Value[geom.Pt]
+	BoxAlignment optional.Value[geom.Pt]
+	FrameOn      optional.Value[bool]
 	Padding      float64
 
 	Image     render.Image
@@ -26,7 +26,7 @@ type AnnotationBboxOptions struct {
 	FontKey   string
 	// FontProperties is a structured alternative to FontKey. FontKey wins when
 	// both are set.
-	FontProperties *render.FontProperties
+	FontProperties optional.Value[render.FontProperties]
 
 	Arrow           bool
 	ArrowColor      render.Color
@@ -34,7 +34,7 @@ type AnnotationBboxOptions struct {
 	ArrowHeadSize   float64
 	ArrowStyle      ArrowStyle
 	ConnectionStyle ConnectionStyle
-	AnnotationClip  *bool
+	AnnotationClip  optional.Value[bool]
 }
 
 // AnnotationBbox renders a framed text box tied to an annotated point.
@@ -74,7 +74,9 @@ type AnnotationBbox struct {
 }
 
 // AnnotationBbox adds a framed text box tied to an annotated point.
-func (a *Axes) AnnotationBbox(text string, x, y float64, opts ...AnnotationBboxOptions) *AnnotationBbox {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) AnnotationBbox(text string, x, y float64, opt AnnotationBboxOptions) *AnnotationBbox {
 	if a == nil {
 		return nil
 	}
@@ -86,9 +88,9 @@ func (a *Axes) AnnotationBbox(text string, x, y float64, opts ...AnnotationBboxO
 		LineWidth: 1.0, // points; converted at the Paint sink
 	}
 	frameOn := true
-	cfg.FrameOn = &frameOn
+	cfg.FrameOn = optional.Of(frameOn)
 	align := geom.Pt{X: 0.5, Y: 0.5}
-	cfg.BoxAlignment = &align
+	cfg.BoxAlignment = optional.Of(align)
 
 	defaultArrowStyle, _ := ArrowStyleFromString("-|>")
 	defaultArrowStyle.HeadWidth = 0.36
@@ -98,60 +100,58 @@ func (a *Axes) AnnotationBbox(text string, x, y float64, opts ...AnnotationBboxO
 	cfg.ArrowWidth = 1.0 // points; converted at the arrow patch sink
 	cfg.ArrowHeadSize = 8
 
-	if opt, ok := optarg.Optional("annotation bbox", opts); ok {
-		cfg.XYCoords = opt.XYCoords
-		cfg.BoxCoords = opt.BoxCoords
-		cfg.BoxPosition = clonePoint(opt.BoxPosition)
-		if opt.BoxAlignment != nil {
-			cfg.BoxAlignment = clonePoint(opt.BoxAlignment)
-		}
-		if opt.FrameOn != nil {
-			cfg.FrameOn = cloneBool(opt.FrameOn)
-		}
-		cfg.Padding = opt.Padding
-		cfg.Image = opt.Image
-		cfg.ImageZoom = opt.ImageZoom
-		if opt.FaceColor != (render.Color{}) {
-			cfg.FaceColor = opt.FaceColor
-		}
-		if opt.EdgeColor != (render.Color{}) {
-			cfg.EdgeColor = opt.EdgeColor
-		}
-		if opt.LineWidth > 0 {
-			cfg.LineWidth = opt.LineWidth
-		}
-		cfg.TextColor = opt.TextColor
-		cfg.FontSize = opt.FontSize
-		cfg.FontKey = opt.FontKey
-		cfg.FontProperties = cloneFontProperties(opt.FontProperties)
-		cfg.Arrow = opt.Arrow
-		cfg.ArrowColor = opt.ArrowColor
-		if opt.ArrowWidth > 0 {
-			cfg.ArrowWidth = opt.ArrowWidth
-		}
-		if opt.ArrowHeadSize > 0 {
-			cfg.ArrowHeadSize = opt.ArrowHeadSize
-		}
-		if opt.ArrowStyle.Name != "" {
-			cfg.ArrowStyle = opt.ArrowStyle
-		}
-		if opt.ConnectionStyle.Name != "" {
-			cfg.ConnectionStyle = opt.ConnectionStyle
-		}
-		cfg.AnnotationClip = cloneBool(opt.AnnotationClip)
+	cfg.XYCoords = opt.XYCoords
+	cfg.BoxCoords = opt.BoxCoords
+	cfg.BoxPosition = opt.BoxPosition
+	if opt.BoxAlignment.IsSet() {
+		cfg.BoxAlignment = opt.BoxAlignment
 	}
+	if opt.FrameOn.IsSet() {
+		cfg.FrameOn = opt.FrameOn
+	}
+	cfg.Padding = opt.Padding
+	cfg.Image = opt.Image
+	cfg.ImageZoom = opt.ImageZoom
+	if opt.FaceColor != (render.Color{}) {
+		cfg.FaceColor = opt.FaceColor
+	}
+	if opt.EdgeColor != (render.Color{}) {
+		cfg.EdgeColor = opt.EdgeColor
+	}
+	if opt.LineWidth > 0 {
+		cfg.LineWidth = opt.LineWidth
+	}
+	cfg.TextColor = opt.TextColor
+	cfg.FontSize = opt.FontSize
+	cfg.FontKey = opt.FontKey
+	cfg.FontProperties = cloneFontPropertiesValue(opt.FontProperties)
+	cfg.Arrow = opt.Arrow
+	cfg.ArrowColor = opt.ArrowColor
+	if opt.ArrowWidth > 0 {
+		cfg.ArrowWidth = opt.ArrowWidth
+	}
+	if opt.ArrowHeadSize > 0 {
+		cfg.ArrowHeadSize = opt.ArrowHeadSize
+	}
+	if opt.ArrowStyle.Name != "" {
+		cfg.ArrowStyle = opt.ArrowStyle
+	}
+	if opt.ConnectionStyle.Name != "" {
+		cfg.ConnectionStyle = opt.ConnectionStyle
+	}
+	cfg.AnnotationClip = opt.AnnotationClip
 
-	if cfg.BoxAlignment == nil {
-		cfg.BoxAlignment = &align
+	if !cfg.BoxAlignment.IsSet() {
+		cfg.BoxAlignment = optional.Of(align)
 	}
 	artist := &AnnotationBbox{
 		Point:           geom.Pt{X: x, Y: y},
 		Content:         text,
 		XYCoords:        cfg.XYCoords,
 		BoxCoords:       cfg.BoxCoords,
-		BoxPosition:     clonePoint(cfg.BoxPosition),
-		BoxAlignment:    *cfg.BoxAlignment,
-		FrameOn:         cfg.FrameOn == nil || *cfg.FrameOn,
+		BoxPosition:     cfg.BoxPosition.Ptr(),
+		BoxAlignment:    cfg.BoxAlignment.OrZero(),
+		FrameOn:         !cfg.FrameOn.IsSet() || cfg.FrameOn.OrZero(),
 		Padding:         cfg.Padding,
 		Image:           cfg.Image,
 		ImageZoom:       cfg.ImageZoom,
@@ -161,14 +161,14 @@ func (a *Axes) AnnotationBbox(text string, x, y float64, opts ...AnnotationBboxO
 		TextColor:       cfg.TextColor,
 		FontSize:        cfg.FontSize,
 		FontKey:         cfg.FontKey,
-		FontProperties:  cloneFontProperties(cfg.FontProperties),
+		FontProperties:  cloneFontPropertiesValue(cfg.FontProperties).Ptr(),
 		Arrow:           cfg.Arrow,
 		ArrowColor:      cfg.ArrowColor,
 		ArrowWidth:      cfg.ArrowWidth,
 		ArrowHeadSize:   cfg.ArrowHeadSize,
 		ArrowStyle:      cfg.ArrowStyle,
 		ConnectionStyle: cfg.ConnectionStyle,
-		AnnotationClip:  cloneBool(cfg.AnnotationClip),
+		AnnotationClip:  cfg.AnnotationClip.Ptr(),
 		z:               900,
 	}
 	a.Add(artist)

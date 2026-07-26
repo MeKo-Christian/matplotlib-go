@@ -10,6 +10,7 @@ import (
 	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -33,8 +34,8 @@ func Plot() *core.Figure {
 	meshColor := render.Color{R: 0.18, G: 0.24, B: 0.34, A: 1}
 	meshWidth := 1.25
 	meshAx.TriPlot(tri, core.TriPlotOptions{
-		Color:     &meshColor,
-		LineWidth: &meshWidth,
+		Color:     optional.Of(meshColor),
+		LineWidth: optional.Of(meshWidth),
 		Label:     "triplot",
 	})
 
@@ -44,34 +45,34 @@ func Plot() *core.Figure {
 	edgeColor := render.Color{R: 1, G: 1, B: 1, A: 1}
 	edgeWidth := 0.55
 	colorAx.TriColor(tri, values, core.TriColorOptions{
-		Colormap:  &cmap,
-		EdgeColor: &edgeColor,
-		EdgeWidth: &edgeWidth,
+		Colormap:  optional.Of(cmap),
+		EdgeColor: optional.Of(edgeColor),
+		EdgeWidth: optional.Of(edgeWidth),
 		Label:     "tripcolor",
 	})
 	contourColor := render.Color{R: 0.07, G: 0.10, B: 0.16, A: 0.95}
 	contourWidth := 1.05
 	colorAx.TriContour(tri, values, core.ContourOptions{
-		Color:      &contourColor,
-		LineWidth:  &contourWidth,
+		Color:      optional.Of(contourColor),
+		LineWidth:  optional.Of(contourWidth),
 		LevelCount: 6,
 		LabelLines: true,
-		LabelColor: &contourColor,
+		LabelColor: optional.Of(contourColor),
 	})
 
 	fillAx := fig.AddAxes(panel(1, 0))
 	configureTriAxes(fillAx, "Tricontourf")
 	fillMap := "plasma"
 	fillAx.TriContourf(tri, values, core.ContourOptions{
-		Colormap:   &fillMap,
+		Colormap:   optional.Of(fillMap),
 		LevelCount: 7,
 		Label:      "tricontourf",
 	})
 	highlight := render.Color{R: 1, G: 1, B: 1, A: 0.88}
 	highlightWidth := 0.9
 	fillAx.TriContour(tri, values, core.ContourOptions{
-		Color:      &highlight,
-		LineWidth:  &highlightWidth,
+		Color:      optional.Of(highlight),
+		LineWidth:  optional.Of(highlightWidth),
 		LevelCount: 7,
 	})
 
@@ -81,9 +82,9 @@ func Plot() *core.Figure {
 		XEdges:    []float64{0, 1, 2, 3, 4, 5},
 		YEdges:    []float64{0, 1, 2, 3, 4},
 		Mask:      maskedMeshMask(),
-		Colormap:  ptr(maskedMeshCmap),
-		EdgeColor: &edgeColor,
-		EdgeWidth: &edgeWidth,
+		Colormap:  optional.Of(maskedMeshCmap),
+		EdgeColor: optional.Of(edgeColor),
+		EdgeWidth: optional.Of(edgeWidth),
 		Label:     "masked mesh",
 	})
 
@@ -91,12 +92,12 @@ func Plot() *core.Figure {
 		HAlign:   core.TextAlignRight,
 		VAlign:   core.TextVAlignTop,
 		FontSize: 11,
-		BBox: &core.TextBBoxOptions{
+		BBox: optional.Of(core.TextBBoxOptions{
 			FaceColor:    render.Color{R: 1, G: 1, B: 1, A: 1},
 			EdgeColor:    render.Color{R: 0.75, G: 0.75, B: 0.75, A: 1},
 			Padding:      0.35 * 11 * DPI / 72,
 			CornerRadius: 0.35 * 11 * DPI / 72,
-		},
+		}),
 	})
 
 	return fig

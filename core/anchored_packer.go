@@ -2,7 +2,7 @@ package core
 
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -39,7 +39,7 @@ type AnchoredPackerOptions struct {
 	Padding  float64
 	Inset    float64
 	Sep      float64
-	FrameOn  *bool
+	FrameOn  optional.Value[bool]
 	Align    PackAlignment
 
 	BackgroundColor render.Color
@@ -50,7 +50,7 @@ type AnchoredPackerOptions struct {
 	FontKey         string
 	// FontProperties is a structured alternative to FontKey. FontKey wins when
 	// both are set.
-	FontProperties *render.FontProperties
+	FontProperties optional.Value[render.FontProperties]
 }
 
 // PackedTextOptions configures a text child added to an AnchoredPacker.
@@ -60,7 +60,7 @@ type PackedTextOptions struct {
 	FontKey   string
 	// FontProperties is a structured alternative to FontKey. FontKey wins when
 	// both are set.
-	FontProperties *render.FontProperties
+	FontProperties optional.Value[render.FontProperties]
 }
 
 // AnchoredPacker is an anchored HPacker/VPacker-style container for fixed-size
@@ -97,19 +97,22 @@ type packedBoxChild interface {
 
 // AddAnchoredPacker appends an anchored horizontal or vertical packer inside
 // an axes.
-func (a *Axes) AddAnchoredPacker(orientation PackOrientation, opts ...AnchoredPackerOptions) *AnchoredPacker {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) AddAnchoredPacker(orientation PackOrientation, opt AnchoredPackerOptions) *AnchoredPacker {
 	rc := style.CurrentDefaults()
 	if a != nil {
 		rc = a.resolvedRC()
 	}
-	packer := newAnchoredPacker(orientation, rc, opts...)
+	packer := newAnchoredPacker(orientation, rc, opt)
 	if a != nil {
 		a.Add(packer)
 	}
 	return packer
 }
 
-func newAnchoredPacker(orientation PackOrientation, rc style.RC, opts ...AnchoredPackerOptions) *AnchoredPacker {
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func newAnchoredPacker(orientation PackOrientation, rc style.RC, opt AnchoredPackerOptions) *AnchoredPacker {
 	cfg := AnchoredPackerOptions{
 		Location:        LegendUpperRight,
 		Padding:         -1,
@@ -122,43 +125,41 @@ func newAnchoredPacker(orientation PackOrientation, rc style.RC, opts ...Anchore
 		BorderWidth:     1,
 	}
 	frameOn := true
-	cfg.FrameOn = &frameOn
-	if opt, ok := optarg.Optional("anchored packer", opts); ok {
-		cfg.Location = opt.Location
-		cfg.Locator = opt.Locator
-		if opt.Padding >= 0 {
-			cfg.Padding = opt.Padding
-		}
-		if opt.Inset >= 0 {
-			cfg.Inset = opt.Inset
-		}
-		if opt.Sep >= 0 {
-			cfg.Sep = opt.Sep
-		}
-		if opt.FrameOn != nil {
-			cfg.FrameOn = cloneBool(opt.FrameOn)
-		}
-		if opt.Align != PackAlignDefault {
-			cfg.Align = opt.Align
-		}
-		if opt.BackgroundColor != (render.Color{}) {
-			cfg.BackgroundColor = opt.BackgroundColor
-		}
-		if opt.BorderColor != (render.Color{}) {
-			cfg.BorderColor = opt.BorderColor
-		}
-		if opt.BorderWidth > 0 {
-			cfg.BorderWidth = opt.BorderWidth
-		}
-		if opt.TextColor != (render.Color{}) {
-			cfg.TextColor = opt.TextColor
-		}
-		if opt.FontSize > 0 {
-			cfg.FontSize = opt.FontSize
-		}
-		cfg.FontKey = opt.FontKey
-		cfg.FontProperties = cloneFontProperties(opt.FontProperties)
+	cfg.FrameOn = optional.Of(frameOn)
+	cfg.Location = opt.Location
+	cfg.Locator = opt.Locator
+	if opt.Padding >= 0 {
+		cfg.Padding = opt.Padding
 	}
+	if opt.Inset >= 0 {
+		cfg.Inset = opt.Inset
+	}
+	if opt.Sep >= 0 {
+		cfg.Sep = opt.Sep
+	}
+	if opt.FrameOn.IsSet() {
+		cfg.FrameOn = opt.FrameOn
+	}
+	if opt.Align != PackAlignDefault {
+		cfg.Align = opt.Align
+	}
+	if opt.BackgroundColor != (render.Color{}) {
+		cfg.BackgroundColor = opt.BackgroundColor
+	}
+	if opt.BorderColor != (render.Color{}) {
+		cfg.BorderColor = opt.BorderColor
+	}
+	if opt.BorderWidth > 0 {
+		cfg.BorderWidth = opt.BorderWidth
+	}
+	if opt.TextColor != (render.Color{}) {
+		cfg.TextColor = opt.TextColor
+	}
+	if opt.FontSize > 0 {
+		cfg.FontSize = opt.FontSize
+	}
+	cfg.FontKey = opt.FontKey
+	cfg.FontProperties = cloneFontPropertiesValue(opt.FontProperties)
 	return &AnchoredPacker{
 		Orientation:     orientation,
 		Location:        cfg.Location,
@@ -166,7 +167,7 @@ func newAnchoredPacker(orientation PackOrientation, rc style.RC, opts ...Anchore
 		Padding:         cfg.Padding,
 		Inset:           cfg.Inset,
 		Sep:             cfg.Sep,
-		FrameOn:         cfg.FrameOn == nil || *cfg.FrameOn,
+		FrameOn:         !cfg.FrameOn.IsSet() || cfg.FrameOn.OrZero(),
 		Align:           cfg.Align,
 		BackgroundColor: cfg.BackgroundColor,
 		BorderColor:     cfg.BorderColor,
@@ -174,7 +175,7 @@ func newAnchoredPacker(orientation PackOrientation, rc style.RC, opts ...Anchore
 		TextColor:       cfg.TextColor,
 		FontSize:        cfg.FontSize,
 		FontKey:         cfg.FontKey,
-		FontProperties:  cloneFontProperties(cfg.FontProperties),
+		FontProperties:  cloneFontPropertiesValue(cfg.FontProperties).Ptr(),
 		z:               950,
 	}
 }
@@ -191,17 +192,17 @@ func (a *AnchoredPacker) AddDrawingArea(width, height float64) *PackedDrawingAre
 }
 
 // AddText appends a text-area child.
-func (a *AnchoredPacker) AddText(text string, opts ...PackedTextOptions) *AnchoredPacker {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *AnchoredPacker) AddText(text string, opt PackedTextOptions) *AnchoredPacker {
 	if a == nil {
 		return nil
 	}
 	child := &packedText{Content: text}
-	if opt, ok := optarg.Optional("packed text", opts); ok {
-		child.TextColor = opt.TextColor
-		child.FontSize = opt.FontSize
-		child.FontKey = opt.FontKey
-		child.FontProperties = cloneFontProperties(opt.FontProperties)
-	}
+	child.TextColor = opt.TextColor
+	child.FontSize = opt.FontSize
+	child.FontKey = opt.FontKey
+	child.FontProperties = cloneFontPropertiesValue(opt.FontProperties).Ptr()
 	a.children = append(a.children, child)
 	return a
 }

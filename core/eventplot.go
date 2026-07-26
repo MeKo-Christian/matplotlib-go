@@ -4,7 +4,6 @@ import (
 	"math"
 
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -37,23 +36,18 @@ type EventCollection struct {
 }
 
 // Eventplot adds a collection of short event markers to the axes.
-func (a *Axes) Eventplot(positions [][]float64, opts ...EventPlotOptions) *EventCollection {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) Eventplot(positions [][]float64, opt EventPlotOptions) *EventCollection {
 	if a == nil || len(positions) == 0 {
 		return nil
 	}
-	cfg := EventPlotOptions{
-		Orientation: EventOrientationVertical,
-		LineWidth:   1.5,
-		Alpha:       1,
+	cfg := opt
+	if cfg.LineWidth <= 0 {
+		cfg.LineWidth = 1.5
 	}
-	if supplied, ok := optarg.Optional("eventplot", opts); ok {
-		cfg = supplied
-		if cfg.LineWidth <= 0 {
-			cfg.LineWidth = 1.5
-		}
-		if cfg.Alpha <= 0 {
-			cfg.Alpha = 1
-		}
+	if cfg.Alpha <= 0 {
+		cfg.Alpha = 1
 	}
 
 	offsets := cfg.LineOffsets

@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -41,11 +42,11 @@ func Plot() *core.Figure {
 	ax.PColorMesh(data, core.MeshOptions{
 		XEdges:    []float64{0, 1.1, 1.9, 3.0, 3.7, 4.9, 5.8, 6.7, 7.9, 9.0},
 		YEdges:    []float64{0, 0.8, 1.7, 2.9, 3.6, 4.8, 6.0},
-		Colormap:  &cmap,
-		VMin:      &vmin,
-		VMax:      &vmax,
-		EdgeColor: &edgeColor,
-		EdgeWidth: &edgeWidth,
+		Colormap:  optional.Of(cmap),
+		VMin:      optional.Of(vmin),
+		VMax:      optional.Of(vmax),
+		EdgeColor: optional.Of(edgeColor),
+		EdgeWidth: optional.Of(edgeWidth),
 		Label:     "quad mesh",
 	})
 	return fig

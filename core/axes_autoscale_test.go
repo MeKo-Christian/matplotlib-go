@@ -12,7 +12,7 @@ func TestAutoScaleSingleOriginPointMatchesMatplotlib(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(unitRect())
 
-	_, _ = ax.Plot([]float64{0}, []float64{0})
+	_, _ = ax.Plot([]float64{0}, []float64{0}, PlotOptions{})
 
 	assertScaleDomain(
 		t,
@@ -86,7 +86,7 @@ func TestAutoScaleLogMarginsMatchMatplotlib(t *testing.T) {
 				y[i] = float64(i)
 			}
 
-			_, _ = ax.Plot(test.x, y)
+			_, _ = ax.Plot(test.x, y, PlotOptions{})
 
 			assertScaleDomain(t, ax.XScale, test.wantMin, test.wantMax, test.name)
 		})
@@ -105,7 +105,7 @@ func TestAutoScaleSymLogMarginIsAppliedInTransformSpace(t *testing.T) {
 		t.Fatalf("SetXScale(symlog): %v", err)
 	}
 
-	_, _ = ax.Plot([]float64{-100, 10}, []float64{0, 1})
+	_, _ = ax.Plot([]float64{-100, 10}, []float64{0, 1}, PlotOptions{})
 
 	assertScaleDomain(
 		t,
@@ -120,7 +120,7 @@ func TestAutoScaleSingleNonzeroPointUsesLocatorNonsingularExpansion(t *testing.T
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(unitRect())
 
-	_, _ = ax.Plot([]float64{2}, []float64{2})
+	_, _ = ax.Plot([]float64{2}, []float64{2}, PlotOptions{})
 
 	assertScaleDomain(t, ax.XScale, 1.89, 2.1100000000000003, "single nonzero x")
 	assertScaleDomain(t, ax.YScale, 1.89, 2.1100000000000003, "single nonzero y")
@@ -130,7 +130,7 @@ func TestAutoScaleTinyPointUsesMatplotlibFloatNormalThreshold(t *testing.T) {
 	fig := NewFigure(800, 600)
 	ax := fig.AddAxes(unitRect())
 
-	_, _ = ax.Plot([]float64{1e-300}, []float64{1e-300})
+	_, _ = ax.Plot([]float64{1e-300}, []float64{1e-300}, PlotOptions{})
 
 	assertScaleDomain(t, ax.XScale, -0.05500000000000001, 0.05500000000000001, "tiny x")
 	assertScaleDomain(t, ax.YScale, -0.05500000000000001, 0.05500000000000001, "tiny y")

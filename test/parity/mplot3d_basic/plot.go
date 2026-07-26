@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/plot3d"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -35,13 +36,13 @@ func Plot() *core.Figure {
 	surfaceAlpha := 0.35
 	barColor := render.Color{R: 1.0, G: 0.4980392156862745, B: 0.054901960784313725, A: 1}
 	barAlpha := 0.7
-	ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1})
-	ax.Scatter3D([]float64{0.5, 0.7}, []float64{0.2, 0.9}, []float64{0.1, 0.3})
-	ax.Wireframe(x, y, zGrid, core.PlotOptions{Color: &gray})
-	ax.Surface(x, y, zGrid, core.PlotOptions{Alpha: &surfaceAlpha, Colormap: &cmap})
-	ax.Contour(x, y, zGrid)
-	ax.Bar3D([]float64{0.2}, []float64{0.3}, []float64{0.4}, []float64{0.2}, []float64{0.2}, []float64{0.3}, plot3d.Bar3DOptions{Color: &barColor, Alpha: &barAlpha})
-	ax.Text3D(0.2, 0.8, 0.6, "demo point")
+	ax.Plot3D([]float64{0, 1}, []float64{0, 1}, []float64{0, 1}, core.PlotOptions{})
+	ax.Scatter3D([]float64{0.5, 0.7}, []float64{0.2, 0.9}, []float64{0.1, 0.3}, core.ScatterOptions{})
+	ax.Wireframe(x, y, zGrid, core.PlotOptions{Color: optional.Of(gray)})
+	ax.Surface(x, y, zGrid, core.PlotOptions{Alpha: optional.Of(surfaceAlpha), Colormap: optional.Of(cmap)})
+	ax.Contour(x, y, zGrid, core.PlotOptions{})
+	ax.Bar3D([]float64{0.2}, []float64{0.3}, []float64{0.4}, []float64{0.2}, []float64{0.2}, []float64{0.3}, plot3d.Bar3DOptions{Color: optional.Of(barColor), Alpha: optional.Of(barAlpha)})
+	ax.Text3D(0.2, 0.8, 0.6, "demo point", core.TextOptions{})
 	return fig
 }
 

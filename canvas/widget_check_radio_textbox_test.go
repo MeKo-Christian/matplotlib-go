@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/style"
 	"github.com/cwbudde/matplotlib-go/widgets"
 )
@@ -46,7 +47,7 @@ func TestWidgetInteractionCheckRadioAndTextBoxAcrossVisualStyles(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			fig := core.NewFigure(120, 80, tt.opt)
 			axChecks := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
-			checks := widgets.NewCheckButtons(axChecks, []string{"A", "B", "C"}, []bool{false, false, false})
+			checks := widgets.NewCheckButtons(axChecks, []string{"A", "B", "C"}, []bool{false, false, false}, widgets.CheckButtonsOptions{})
 
 			var dispatcherChecks Dispatcher
 			wiChecks := NewWidgetInteraction(fig, func() error { return nil })
@@ -63,7 +64,7 @@ func TestWidgetInteractionCheckRadioAndTextBoxAcrossVisualStyles(t *testing.T) {
 
 			figRadio := core.NewFigure(120, 80, tt.opt)
 			axRadio := figRadio.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
-			radios := widgets.NewRadioButtons(axRadio, []string{"x", "y", "z"}, 0)
+			radios := widgets.NewRadioButtons(axRadio, []string{"x", "y", "z"}, 0, widgets.RadioButtonsOptions{})
 
 			var dispatcherRadio Dispatcher
 			wiRadio := NewWidgetInteraction(figRadio, func() error { return nil })
@@ -80,7 +81,7 @@ func TestWidgetInteractionCheckRadioAndTextBoxAcrossVisualStyles(t *testing.T) {
 
 			figText := core.NewFigure(120, 80, tt.opt)
 			axText := figText.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
-			text := widgets.NewTextBox(axText, "Query", "abcd")
+			text := widgets.NewTextBox(axText, "Query", "abcd", widgets.TextBoxOptions{})
 
 			var dispatcherText Dispatcher
 			wiText := NewWidgetInteraction(figText, func() error { return nil })
@@ -109,8 +110,8 @@ func TestWidgetInteractionCheckAndRadioKeyboardNavigation(t *testing.T) {
 	axChecks := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 0.45}})
 	axRadio := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0.55}, Max: geom.Pt{X: 1, Y: 1}})
 
-	checks := widgets.NewCheckButtons(axChecks, []string{"A", "B", "C"}, []bool{false, false, false})
-	radios := widgets.NewRadioButtons(axRadio, []string{"x", "y", "z"}, 0)
+	checks := widgets.NewCheckButtons(axChecks, []string{"A", "B", "C"}, []bool{false, false, false}, widgets.CheckButtonsOptions{})
+	radios := widgets.NewRadioButtons(axRadio, []string{"x", "y", "z"}, 0, widgets.RadioButtonsOptions{})
 	var checkEvents []string
 	var radioEvents []int
 
@@ -184,8 +185,8 @@ func TestWidgetInteractionDisabledCheckAndRadioIgnoreInput(t *testing.T) {
 	axRadio := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0.55}, Max: geom.Pt{X: 1, Y: 1}})
 
 	disabled := true
-	checks := widgets.NewCheckButtons(axChecks, []string{"A", "B"}, []bool{false, false}, widgets.CheckButtonsOptions{Disabled: &disabled})
-	radios := widgets.NewRadioButtons(axRadio, []string{"x", "y"}, 0, widgets.RadioButtonsOptions{Disabled: &disabled})
+	checks := widgets.NewCheckButtons(axChecks, []string{"A", "B"}, []bool{false, false}, widgets.CheckButtonsOptions{Disabled: optional.Of(disabled)})
+	radios := widgets.NewRadioButtons(axRadio, []string{"x", "y"}, 0, widgets.RadioButtonsOptions{Disabled: optional.Of(disabled)})
 
 	var checkEvents int
 	var radioEvents int
@@ -245,7 +246,7 @@ func TestWidgetInteractionTextBoxEditing(t *testing.T) {
 	setClipboard("")
 	fig := core.NewFigure(120, 80)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
-	tb := widgets.NewTextBox(ax, "Query", "hello")
+	tb := widgets.NewTextBox(ax, "Query", "hello", widgets.TextBoxOptions{})
 
 	var submitCalls []string
 	var cancelCalls []string
@@ -318,7 +319,7 @@ func TestWidgetInteractionTextBoxEditing(t *testing.T) {
 func TestWidgetInteractionNonWidgetEventsContinueToUsers(t *testing.T) {
 	fig := core.NewFigure(120, 80)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 0.5, Y: 1}})
-	_ = widgets.NewButton(ax, "Run")
+	_ = widgets.NewButton(ax, "Run", widgets.ButtonOptions{})
 
 	var received int
 	var dispatcher Dispatcher

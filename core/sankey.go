@@ -5,7 +5,7 @@ import (
 	"math"
 
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -27,8 +27,8 @@ type SankeyOptions struct {
 	Alpha       float64
 	TextColor   render.Color
 	FontSize    float64
-	EdgeColor   *render.Color
-	FaceColor   *render.Color
+	EdgeColor   optional.Value[render.Color]
+	FaceColor   optional.Value[render.Color]
 }
 
 // SankeyAddOptions configures one diagram added through the builder.
@@ -93,12 +93,14 @@ type sankeyPathStep struct {
 
 // Add supports the Matplotlib-style builder workflow: create one diagram and
 // append its artists to the axes immediately.
-func (s *Sankey) Add(flows []float64, opts ...SankeyAddOptions) *SankeyDiagram {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (s *Sankey) Add(flows []float64, opt SankeyAddOptions) *SankeyDiagram {
 	if s == nil || s.ax == nil || len(flows) == 0 {
 		return nil
 	}
 
-	cfg := optarg.One("sankey add", opts)
+	cfg := opt
 
 	scale := s.opts.Scale
 	if scale <= 0 {
@@ -109,12 +111,12 @@ func (s *Sankey) Add(flows []float64, opts ...SankeyAddOptions) *SankeyDiagram {
 		alpha = 1
 	}
 	edgeColor := render.Color{R: 0, G: 0, B: 0, A: 1}
-	if s.opts.EdgeColor != nil {
-		edgeColor = *s.opts.EdgeColor
+	if s.opts.EdgeColor.IsSet() {
+		edgeColor = s.opts.EdgeColor.OrZero()
 	}
 	defaultFace := s.ax.NextColor()
-	if s.opts.FaceColor != nil {
-		defaultFace = *s.opts.FaceColor
+	if s.opts.FaceColor.IsSet() {
+		defaultFace = s.opts.FaceColor.OrZero()
 	}
 
 	center := geom.Pt{X: s.cursor.X + cfg.OffsetX, Y: s.cursor.Y + cfg.OffsetY}
@@ -740,68 +742,51 @@ func (s *Sankey) Finish() []*SankeyDiagram {
 }
 
 // NewSankey creates a Matplotlib-style Sankey builder for one axes.
-func NewSankey(ax *Axes, opts ...SankeyOptions) *Sankey {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func NewSankey(ax *Axes, opt SankeyOptions) *Sankey {
 	if ax == nil {
 		return nil
 	}
-	cfg := SankeyOptions{
-		Center:      geom.Pt{},
-		Coords:      Coords(CoordData),
-		Scale:       1,
-		TrunkLength: 1,
-		PathLength:  0.25,
-		Gap:         0.25,
-		Radius:      0.1,
-		Shoulder:    0.03,
-		Offset:      0.15,
-		HeadAngle:   100,
-		Margin:      0.4,
-		Tolerance:   1e-6,
-		Alpha:       1,
-		TextColor:   ax.resolvedRC().DefaultTextColor(),
-		FontSize:    ax.resolvedRC().FontSize,
+	cfg := opt
+	if cfg.Scale <= 0 {
+		cfg.Scale = 1
 	}
-	if supplied, ok := optarg.Optional("sankey", opts); ok {
-		cfg = supplied
-		if cfg.Scale <= 0 {
-			cfg.Scale = 1
-		}
-		if cfg.TrunkLength <= 0 {
-			cfg.TrunkLength = 1
-		}
-		if cfg.PathLength <= 0 {
-			cfg.PathLength = 0.25
-		}
-		if cfg.Gap <= 0 {
-			cfg.Gap = 0.25
-		}
-		if cfg.Radius <= 0 {
-			cfg.Radius = 0.1
-		}
-		if cfg.Shoulder <= 0 {
-			cfg.Shoulder = 0.03
-		}
-		if cfg.Offset <= 0 {
-			cfg.Offset = 0.15
-		}
-		if cfg.HeadAngle <= 0 {
-			cfg.HeadAngle = 100
-		}
-		if cfg.Margin <= 0 {
-			cfg.Margin = 0.4
-		}
-		if cfg.Tolerance <= 0 {
-			cfg.Tolerance = 1e-6
-		}
-		if cfg.Alpha <= 0 {
-			cfg.Alpha = 1
-		}
-		if cfg.FontSize <= 0 {
-			cfg.FontSize = ax.resolvedRC().FontSize
-		}
-		if cfg.TextColor == (render.Color{}) {
-			cfg.TextColor = ax.resolvedRC().DefaultTextColor()
-		}
+	if cfg.TrunkLength <= 0 {
+		cfg.TrunkLength = 1
+	}
+	if cfg.PathLength <= 0 {
+		cfg.PathLength = 0.25
+	}
+	if cfg.Gap <= 0 {
+		cfg.Gap = 0.25
+	}
+	if cfg.Radius <= 0 {
+		cfg.Radius = 0.1
+	}
+	if cfg.Shoulder <= 0 {
+		cfg.Shoulder = 0.03
+	}
+	if cfg.Offset <= 0 {
+		cfg.Offset = 0.15
+	}
+	if cfg.HeadAngle <= 0 {
+		cfg.HeadAngle = 100
+	}
+	if cfg.Margin <= 0 {
+		cfg.Margin = 0.4
+	}
+	if cfg.Tolerance <= 0 {
+		cfg.Tolerance = 1e-6
+	}
+	if cfg.Alpha <= 0 {
+		cfg.Alpha = 1
+	}
+	if cfg.FontSize <= 0 {
+		cfg.FontSize = ax.resolvedRC().FontSize
+	}
+	if cfg.TextColor == (render.Color{}) {
+		cfg.TextColor = ax.resolvedRC().DefaultTextColor()
 	}
 	pitch := math.Tan(math.Pi * (1 - cfg.HeadAngle/180) / 2)
 	return &Sankey{

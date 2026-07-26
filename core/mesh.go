@@ -3,7 +3,7 @@ package core
 import (
 	"math"
 
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -23,14 +23,14 @@ type MeshOptions struct {
 	YEdges    []float64
 	Mask      [][]bool
 	Shading   MeshShading
-	Colormap  *string
+	Colormap  optional.Value[string]
 	Norm      ScalarNormalizer
-	VMin      *float64
-	VMax      *float64
-	Alpha     *float64
-	EdgeColor *render.Color
-	EdgeWidth *float64
-	Antialias *bool
+	VMin      optional.Value[float64]
+	VMax      optional.Value[float64]
+	Alpha     optional.Value[float64]
+	EdgeColor optional.Value[render.Color]
+	EdgeWidth optional.Value[float64]
+	Antialias optional.Value[bool]
 	Label     string
 }
 
@@ -43,12 +43,12 @@ type Hist2DOptions struct {
 	Weights   []float64
 	Norm      HistNorm
 	ColorNorm ScalarNormalizer
-	Colormap  *string
-	VMin      *float64
-	VMax      *float64
-	Alpha     *float64
-	EdgeColor *render.Color
-	EdgeWidth *float64
+	Colormap  optional.Value[string]
+	VMin      optional.Value[float64]
+	VMax      optional.Value[float64]
+	Alpha     optional.Value[float64]
+	EdgeColor optional.Value[render.Color]
+	EdgeWidth optional.Value[float64]
 	Label     string
 }
 
@@ -61,18 +61,24 @@ type Hist2DResult struct {
 }
 
 // PColor renders a scalar matrix as a rectilinear quad mesh.
-func (a *Axes) PColor(data [][]float64, opts ...MeshOptions) *QuadMesh {
-	return a.pcolorMesh(data, render.SnapOff, render.AntialiasDefault, optarg.One("pcolor", opts))
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) PColor(data [][]float64, opt MeshOptions) *QuadMesh {
+	return a.pcolorMesh(data, render.SnapOff, render.AntialiasDefault, opt)
 }
 
 // PColorFast renders a scalar matrix through the rectilinear quad mesh path.
-func (a *Axes) PColorFast(data [][]float64, opts ...MeshOptions) *QuadMesh {
-	return a.PColorMesh(data, opts...)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) PColorFast(data [][]float64, opt MeshOptions) *QuadMesh {
+	return a.PColorMesh(data, opt)
 }
 
 // PColorMesh renders a scalar matrix as a rectilinear quad mesh.
-func (a *Axes) PColorMesh(data [][]float64, opts ...MeshOptions) *QuadMesh {
-	return a.pcolorMesh(data, render.SnapOn, render.AntialiasOff, optarg.One("pcolormesh", opts))
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) PColorMesh(data [][]float64, opt MeshOptions) *QuadMesh {
+	return a.pcolorMesh(data, render.SnapOn, render.AntialiasOff, opt)
 }
 
 //nolint:gocritic // MeshOptions is an immutable snapshot of the caller's options.
@@ -88,8 +94,8 @@ func (a *Axes) pcolorMesh(data [][]float64, snap render.SnapMode, antialias rend
 	}
 
 	cmap := ""
-	if opt.Colormap != nil {
-		cmap = *opt.Colormap
+	if v, ok := opt.Colormap.Get(); ok {
+		cmap = v
 	}
 	scalarData := meshScalarData(data, opt.Mask)
 	mapping, err := ResolveScalarMapGrid(scalarData, ScalarMapConfig{
@@ -103,11 +109,11 @@ func (a *Axes) pcolorMesh(data [][]float64, snap render.SnapMode, antialias rend
 	}
 	alpha := meshAlpha(opt.Alpha)
 	edgeWidth := 0.0
-	if opt.EdgeWidth != nil {
-		edgeWidth = *opt.EdgeWidth
+	if v, ok := opt.EdgeWidth.Get(); ok {
+		edgeWidth = v
 	}
-	if opt.Antialias != nil {
-		if *opt.Antialias {
+	if opt.Antialias.IsSet() {
+		if opt.Antialias.OrZero() {
 			antialias = render.AntialiasDefault
 		} else {
 			antialias = render.AntialiasOff
@@ -115,8 +121,8 @@ func (a *Axes) pcolorMesh(data [][]float64, snap render.SnapMode, antialias rend
 	}
 
 	edgeColor := render.Color{}
-	if opt.EdgeColor != nil {
-		edgeColor = *opt.EdgeColor
+	if v, ok := opt.EdgeColor.Get(); ok {
+		edgeColor = v
 	}
 
 	cellCount := meshFaceColorCount(rows, cols, shading)
@@ -135,7 +141,7 @@ func (a *Axes) pcolorMesh(data [][]float64, snap render.SnapMode, antialias rend
 				edgeColors = append(edgeColors, edgeColor)
 			}
 		}
-		if opt.EdgeColor != nil || opt.EdgeWidth != nil {
+		if opt.EdgeColor.IsSet() || opt.EdgeWidth.IsSet() {
 			edgeWidth = 0
 		}
 	} else {
@@ -206,6 +212,7 @@ func meshMasked(mask [][]bool, yi, xi int) bool {
 	return yi < len(mask) && xi < len(mask[yi]) && mask[yi][xi]
 }
 
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
 func resolvedMeshGeometry(rows, cols int, opt MeshOptions) (xEdges, yEdges []float64, shading MeshShading, ok bool) {
 	shading = normalizeMeshShading(opt.Shading)
 	x := resolvedMeshCoords(opt.XEdges, cols, shading)
@@ -314,12 +321,12 @@ func meshValueColors(data [][]float64, mapping ScalarMapInfo, alpha float64) [][
 
 // Hist2D bins paired samples into a 2D count matrix and renders the result as
 // a QuadMesh.
-func (a *Axes) Hist2D(x, y []float64, opts ...Hist2DOptions) *Hist2DResult {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) Hist2D(x, y []float64, opt Hist2DOptions) *Hist2DResult {
 	if len(x) == 0 || len(y) == 0 {
 		return nil
 	}
-
-	opt := optarg.One("hist2d", opts)
 
 	n := len(x)
 	if len(y) < n {
@@ -445,11 +452,11 @@ func resolvedHistogramEdges(data []float64, bins int, explicit []float64) []floa
 	return computeBinEdges(data, bins, BinStrategyAuto)
 }
 
-func meshAlpha(alpha *float64) float64 {
-	if alpha == nil {
-		return 1
+func meshAlpha(alpha optional.Value[float64]) float64 {
+	if v, ok := alpha.Get(); ok {
+		return clampOneToOne(v)
 	}
-	return clampOneToOne(*alpha)
+	return 1
 }
 
 func meshValueAverage(values []float64) float64 {

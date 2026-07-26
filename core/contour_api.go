@@ -2,7 +2,7 @@ package core
 
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -15,26 +15,26 @@ type ContourOptions struct {
 	YEdges         []float64
 	Levels         []float64
 	LevelCount     int
-	Colormap       *string
+	Colormap       optional.Value[string]
 	Norm           ScalarNormalizer
 	Colors         []render.Color
-	Color          *render.Color
-	LineWidth      *float64
-	Alpha          *float64
+	Color          optional.Value[render.Color]
+	LineWidth      optional.Value[float64]
+	Alpha          optional.Value[float64]
 	LabelLines     bool
 	LabelFormatter ticker.Formatter
-	LabelFontSize  *float64
-	LabelColor     *render.Color
+	LabelFontSize  optional.Value[float64]
+	LabelColor     optional.Value[render.Color]
 	Label          string
 	// Algorithm selects the structured contour generator semantics:
 	// "mpl2005", "mpl2014", "serial", or "threaded". Empty uses
 	// rcParams["contour.algorithm"]. It does not apply to triangular contours.
 	Algorithm string
 	// CornerMask controls whether a structured cell with exactly one
-	// masked/non-finite corner retains its valid triangular portion. Nil uses
+	// masked/non-finite corner retains its valid triangular portion. Unset uses
 	// rcParams["contour.corner_mask"], except mpl2005 defaults it to false.
 	// It does not apply to triangular contours.
-	CornerMask *bool
+	CornerMask optional.Value[bool]
 
 	// LineStyles assigns per-level stroke styles for contour lines
 	// ("solid", "dashed", "--", "dashdot", "-.", "dotted", ":"). The list is
@@ -44,11 +44,11 @@ type ContourOptions struct {
 	// NegativeLineStyles overrides the style applied to negative levels of a
 	// monochrome contour when LineStyles is unset (default "dashed", matching
 	// rcParams["contour.negative_linestyle"]).
-	NegativeLineStyles *string
+	NegativeLineStyles optional.Value[string]
 	// Extend extends the filled (contourf) color mapping past the level range:
 	// "neither" (default), "min", "max", or "both". The extra bands use the
 	// colormap's under/over colors.
-	Extend string
+	Extend ColorbarExtend
 	// Hatches assigns hatch patterns to contourf bands, cycled per band
 	// (Matplotlib's contourf hatches). Empty disables hatching.
 	Hatches []string
@@ -67,10 +67,10 @@ type contourLabel struct {
 type ClabelOptions struct {
 	Levels          []float64
 	Formatter       ticker.Formatter
-	FontSize        *float64
-	Color           *render.Color
+	FontSize        optional.Value[float64]
+	Color           optional.Value[render.Color]
 	Colors          []render.Color
-	Inline          *bool
+	Inline          optional.Value[bool]
 	InlineSpacing   float64
 	ManualPositions []geom.Pt
 
@@ -82,7 +82,7 @@ type ClabelOptions struct {
 	FormatDict map[float64]string
 	// RightSideUp keeps inline labels upright by constraining their rotation to
 	// [-90°, 90°]. Defaults to true when nil.
-	RightSideUp *bool
+	RightSideUp optional.Value[bool]
 }
 
 // ContourLabel stores the public metadata for a placed contour label.
@@ -116,20 +116,23 @@ type ContourSet struct {
 
 // Clabel delegates contour labeling to the provided contour set, matching
 // Matplotlib's Axes.clabel call shape.
-func (a *Axes) Clabel(cs *ContourSet, opts ...ClabelOptions) []ContourLabel {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) Clabel(cs *ContourSet, opt ClabelOptions) []ContourLabel {
 	if cs == nil {
 		return nil
 	}
-	return cs.Clabel(opts...)
+	return cs.Clabel(opt)
 }
 
 // Clabel adds labels to a contour set and returns metadata for the labels that
 // were placed.
-func (c *ContourSet) Clabel(opts ...ClabelOptions) []ContourLabel {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (c *ContourSet) Clabel(opt ClabelOptions) []ContourLabel {
 	if c == nil || c.Lines == nil || len(c.Lines.Segments) == 0 {
 		return nil
 	}
-	opt := optarg.One("clabel", opts)
 	indices, ok := c.clabelLineIndices(opt.Levels)
 	if !ok || len(indices) == 0 {
 		return nil
@@ -137,13 +140,13 @@ func (c *ContourSet) Clabel(opts ...ClabelOptions) []ContourLabel {
 
 	c.LabelFormatter = newContourLabelFormatter(&opt, c.LabelFormatter)
 	c.rightSideUp = specialtyBool(opt.RightSideUp, true)
-	if opt.FontSize != nil && *opt.FontSize > 0 {
-		c.LabelFontSize = *opt.FontSize
+	if v, ok := opt.FontSize.Get(); ok && v > 0 {
+		c.LabelFontSize = opt.FontSize.OrZero()
 	} else if c.LabelFontSize <= 0 {
 		c.LabelFontSize = 10
 	}
-	if opt.Color != nil {
-		c.LabelColor = *opt.Color
+	if v, ok := opt.Color.Get(); ok {
+		c.LabelColor = v
 	} else if len(opt.Colors) > 0 {
 		c.LabelColor = opt.Colors[0]
 	}
@@ -160,8 +163,9 @@ func (c *ContourSet) Clabel(opts ...ClabelOptions) []ContourLabel {
 }
 
 // Contour draws isolines over a rectilinear scalar grid.
-func (a *Axes) Contour(data [][]float64, opts ...ContourOptions) *ContourSet {
-	opt := optarg.One("contour", opts)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) Contour(data [][]float64, opt ContourOptions) *ContourSet {
 	xCoords, yCoords, values, ok := contourGridCoordsValues(data, opt)
 	if !ok {
 		return nil
@@ -182,11 +186,11 @@ func (a *Axes) Contour(data [][]float64, opts ...ContourOptions) *ContourSet {
 	}
 
 	alpha := meshAlpha(opt.Alpha)
-	lineWidth := *opt.LineWidth
+	lineWidth := opt.LineWidth.OrZero()
 	colorFallback := a.NextColor()
 	cmapName := ""
-	if opt.Colormap != nil {
-		cmapName = *opt.Colormap
+	if name, ok := opt.Colormap.Get(); ok {
+		cmapName = name
 	}
 	mapping, err := ResolveScalarMapValues(values, ScalarMapConfig{
 		Colormap: cmapName,
@@ -201,12 +205,12 @@ func (a *Axes) Contour(data [][]float64, opts ...ContourOptions) *ContourSet {
 		Algorithm:      algorithm,
 		CornerMask:     cornerMask,
 		LabelFormatter: contourFormatter(opt.LabelFormatter),
-		LabelFontSize:  valueOrDefaultFloat(opt.LabelFontSize, 10),
+		LabelFontSize:  opt.LabelFontSize.Or(10),
 		rightSideUp:    true,
 		z:              defaultLineZ,
 	}
-	if opt.LabelColor != nil {
-		set.LabelColor = *opt.LabelColor
+	if color, ok := opt.LabelColor.Get(); ok {
+		set.LabelColor = color
 	}
 	colors := make([]render.Color, len(polylines))
 	for i, level := range polylineLevels {
@@ -238,8 +242,9 @@ func (a *Axes) Contour(data [][]float64, opts ...ContourOptions) *ContourSet {
 }
 
 // Contourf draws filled contour bands over a rectilinear scalar grid.
-func (a *Axes) Contourf(data [][]float64, opts ...ContourOptions) *ContourSet {
-	opt := optarg.One("contourf", opts)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) Contourf(data [][]float64, opt ContourOptions) *ContourSet {
 	xCoords, yCoords, values, ok := contourGridCoordsValues(data, opt)
 	if !ok {
 		return nil
@@ -255,8 +260,8 @@ func (a *Axes) Contourf(data [][]float64, opts ...ContourOptions) *ContourSet {
 
 	alpha := meshAlpha(opt.Alpha)
 	cmapName := ""
-	if opt.Colormap != nil {
-		cmapName = *opt.Colormap
+	if name, ok := opt.Colormap.Get(); ok {
+		cmapName = name
 	}
 	mapping, err := ResolveScalarMapValues(values, ScalarMapConfig{
 		Colormap: cmapName,
@@ -280,7 +285,7 @@ func (a *Axes) Contourf(data [][]float64, opts ...ContourOptions) *ContourSet {
 	cmap := ""
 	vmin := 0.0
 	vmax := 0.0
-	if opt.Color == nil && len(opt.Colors) == 0 {
+	if !opt.Color.IsSet() && len(opt.Colors) == 0 {
 		cmap = mapping.Colormap
 		vmin = mapping.VMin
 		vmax = mapping.VMax
@@ -294,10 +299,10 @@ func (a *Axes) Contourf(data [][]float64, opts ...ContourOptions) *ContourSet {
 		Algorithm:      algorithm,
 		CornerMask:     cornerMask,
 		LabelFormatter: contourFormatter(opt.LabelFormatter),
-		LabelFontSize:  valueOrDefaultFloat(opt.LabelFontSize, 10),
+		LabelFontSize:  opt.LabelFontSize.Or(10),
 	}
-	if opt.LabelColor != nil {
-		set.LabelColor = *opt.LabelColor
+	if color, ok := opt.LabelColor.Get(); ok {
+		set.LabelColor = color
 	}
 	set.Fills = &PolyCollection{
 		PatchCollection: PatchCollection{
@@ -326,19 +331,23 @@ func (a *Axes) Contourf(data [][]float64, opts ...ContourOptions) *ContourSet {
 }
 
 // TriContour draws isolines over an explicit triangulation.
-func (a *Axes) TriContour(tri Triangulation, values []float64, opts ...ContourOptions) *ContourSet {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) TriContour(tri Triangulation, values []float64, opt ContourOptions) *ContourSet {
 	if err := tri.Validate(); err != nil || len(values) != len(tri.X) {
 		return nil
 	}
-	return a.buildContourSet(tri, values, false, optarg.One("tricontour", opts))
+	return a.buildContourSet(tri, values, false, opt)
 }
 
 // TriContourf draws filled contour bands over an explicit triangulation.
-func (a *Axes) TriContourf(tri Triangulation, values []float64, opts ...ContourOptions) *ContourSet {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) TriContourf(tri Triangulation, values []float64, opt ContourOptions) *ContourSet {
 	if err := tri.Validate(); err != nil || len(values) != len(tri.X) {
 		return nil
 	}
-	return a.buildContourSet(tri, values, true, optarg.One("tricontourf", opts))
+	return a.buildContourSet(tri, values, true, opt)
 }
 
 // Draw renders the contour set's filled bands and/or line collection.
@@ -490,12 +499,12 @@ func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool,
 	}
 
 	alpha := meshAlpha(opt.Alpha)
-	lineWidth := *opt.LineWidth
+	lineWidth := opt.LineWidth.OrZero()
 
 	colorFallback := a.NextColor()
 	cmapName := ""
-	if opt.Colormap != nil {
-		cmapName = *opt.Colormap
+	if name, ok := opt.Colormap.Get(); ok {
+		cmapName = name
 	}
 	mapping, err := ResolveScalarMapValues(values, ScalarMapConfig{
 		Colormap: cmapName,
@@ -515,12 +524,12 @@ func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool,
 	set := &ContourSet{
 		Levels:         append([]float64(nil), levels...),
 		LabelFormatter: contourFormatter(opt.LabelFormatter),
-		LabelFontSize:  valueOrDefaultFloat(opt.LabelFontSize, 10),
+		LabelFontSize:  opt.LabelFontSize.Or(10),
 		rightSideUp:    true,
 		z:              0,
 	}
-	if opt.LabelColor != nil {
-		set.LabelColor = *opt.LabelColor
+	if color, ok := opt.LabelColor.Get(); ok {
+		set.LabelColor = color
 	}
 
 	if filled {
@@ -531,7 +540,7 @@ func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool,
 			cmap := ""
 			vmin := 0.0
 			vmax := 0.0
-			if opt.Color == nil && len(opt.Colors) == 0 {
+			if !opt.Color.IsSet() && len(opt.Colors) == 0 {
 				cmap = mapping.Colormap
 				vmin = mapping.VMin
 				vmax = mapping.VMax

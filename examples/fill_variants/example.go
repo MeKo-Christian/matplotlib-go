@@ -13,6 +13,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -76,9 +77,9 @@ func addFillBetweenXPanel(ax *core.Axes) {
 		[]float64{1.3, 2.1, 1.7, 2.8, 2.2, 3.1, 2.6},
 		[]float64{3.4, 4.1, 4.8, 5.1, 5.6, 6.0, 6.3},
 		core.FillOptions{
-			Color:     &render.Color{R: 0.24, G: 0.68, B: 0.54, A: 0.72},
-			EdgeColor: &render.Color{R: 0.12, G: 0.38, B: 0.28, A: 1},
-			EdgeWidth: &edgeWidth,
+			Color:     optional.Of(render.Color{R: 0.24, G: 0.68, B: 0.54, A: 0.72}),
+			EdgeColor: optional.Of(render.Color{R: 0.12, G: 0.38, B: 0.28, A: 1}),
+			EdgeWidth: optional.Of(edgeWidth),
 		},
 	)
 }

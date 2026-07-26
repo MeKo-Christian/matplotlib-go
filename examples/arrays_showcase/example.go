@@ -10,6 +10,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -32,7 +33,7 @@ func Plot() *core.Figure {
 		HAlign:   core.TextAlignRight,
 		VAlign:   core.TextVAlignTop,
 		FontSize: 11,
-		BBox:     textBox(11, 0.35),
+		BBox:     optional.Of(textBox(11, 0.35)),
 	})
 
 	return fig
@@ -57,9 +58,9 @@ func arange(n int) []float64 {
 	return values
 }
 
-func textBox(fontSize, pad float64) *core.TextBBoxOptions {
+func textBox(fontSize, pad float64) core.TextBBoxOptions {
 	padding := pad * fontSize * DPI / 72.0
-	return &core.TextBBoxOptions{
+	return core.TextBBoxOptions{
 		FaceColor:    render.Color{R: 1, G: 1, B: 1, A: 1},
 		EdgeColor:    render.Color{R: 0.75, G: 0.75, B: 0.75, A: 1},
 		LineWidth:    1,
@@ -140,11 +141,11 @@ func drawAnnotatedHeatmap(fig *core.Figure) {
 	ax.SetYLabel("row")
 
 	ax.Image(data, core.ImageOptions{
-		Colormap: ptr("viridis"),
-		XMin:     ptr(-0.5),
-		XMax:     ptr(float64(cols) - 0.5),
-		YMin:     ptr(-0.5),
-		YMax:     ptr(float64(rows) - 0.5),
+		Colormap: optional.Of("viridis"),
+		XMin:     optional.Of(-0.5),
+		XMax:     optional.Of(float64(cols) - 0.5),
+		YMin:     optional.Of(-0.5),
+		YMax:     optional.Of(float64(rows) - 0.5),
 		Origin:   core.ImageOriginUpper,
 	})
 	ax.SetXLim(-0.5, float64(cols)-0.5)
@@ -183,23 +184,23 @@ func drawMeshAndContour(fig *core.Figure) {
 	ax.PColorMesh(data, core.MeshOptions{
 		XEdges:    arange(cols + 1),
 		YEdges:    arange(rows + 1),
-		Colormap:  ptr("plasma"),
-		EdgeColor: ptr(render.Color{R: 1, G: 1, B: 1, A: 1}),
-		EdgeWidth: ptr(0.65),
+		Colormap:  optional.Of("plasma"),
+		EdgeColor: optional.Of(render.Color{R: 1, G: 1, B: 1, A: 1}),
+		EdgeWidth: optional.Of(0.65),
 		Label:     "pcolormesh",
 	})
 
-	contourColor := ptr(render.Color{R: 0.14, G: 0.10, B: 0.16, A: 0.95})
+	contourColor := render.Color{R: 0.14, G: 0.10, B: 0.16, A: 0.95}
 	ax.Contour(data, core.ContourOptions{
-		Color:          contourColor,
-		LineWidth:      ptr(1.1),
+		Color:          optional.Of(contourColor),
+		LineWidth:      optional.Of(1.1),
 		LevelCount:     6,
 		X:              arange(cols),
 		Y:              arange(rows),
 		LabelLines:     true,
 		LabelFormatter: ticker.FormatStrFormatter{Pattern: "%.3g"},
-		LabelColor:     contourColor,
-		LabelFontSize:  ptr(10.0),
+		LabelColor:     optional.Of(contourColor),
+		LabelFontSize:  optional.Of(10.0),
 	})
 	ax.SetXLim(0, float64(cols))
 	ax.SetYLim(0, float64(rows))
@@ -213,9 +214,9 @@ func drawSpyMatrix(fig *core.Figure) {
 
 	ax.Spy(sparsePattern(18, 18), core.SpyOptions{
 		Precision:  0.1,
-		Marker:     ptr(core.MarkerSquare),
+		Marker:     optional.Of(core.MarkerSquare),
 		MarkerSize: 10,
-		Color:      ptr(render.Color{R: 0.16, G: 0.38, B: 0.72, A: 1}),
+		Color:      optional.Of(render.Color{R: 0.16, G: 0.38, B: 0.72, A: 1}),
 		Label:      "spy",
 	})
 	ax.Text(0.98, 0.02, "sparse structure view", core.TextOptions{
@@ -223,7 +224,7 @@ func drawSpyMatrix(fig *core.Figure) {
 		HAlign:   core.TextAlignRight,
 		VAlign:   core.TextVAlignBottom,
 		FontSize: 10,
-		BBox:     textBox(10, 0.3),
+		BBox:     optional.Of(textBox(10, 0.3)),
 	})
 }
 

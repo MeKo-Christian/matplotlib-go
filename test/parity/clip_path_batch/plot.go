@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -44,13 +45,13 @@ func Render() image.Image {
 		XEdges:    xEdges,
 		YEdges:    yEdges,
 		Shading:   core.MeshShadingFlat,
-		Colormap:  &cmap,
-		VMin:      &vmin,
-		VMax:      &vmax,
-		Alpha:     &alpha,
-		EdgeColor: &edgeColor,
-		EdgeWidth: &edgeWidth,
-		Antialias: &antialias,
+		Colormap:  optional.Of(cmap),
+		VMin:      optional.Of(vmin),
+		VMax:      optional.Of(vmax),
+		Alpha:     optional.Of(alpha),
+		EdgeColor: optional.Of(edgeColor),
+		EdgeWidth: optional.Of(edgeWidth),
+		Antialias: optional.Of(antialias),
 	})
 	mesh.SetClipPathCoords(clipPath, core.Coords(core.CoordData))
 

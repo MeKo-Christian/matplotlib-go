@@ -5,36 +5,33 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
 // Contour computes contour lines for a structured z grid and projects them into
 // the current 3D view.
-func (a *Axes3D) Contour(x, y []float64, z [][]float64, opts ...core.PlotOptions) *core.LineCollection {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes3D) Contour(x, y []float64, z [][]float64, opt core.PlotOptions) *core.LineCollection {
 	limitsChanged := a.observe3DGrid(x, y, z)
-	opt := optarg.One("contour3d", opts)
 	segments, segmentLevels, levels, values, zorder := a.projectedContourLineData(x, y, z, opt)
 	if len(segments) == 0 {
 		return nil
 	}
 
-	color := a.NextColor()
-	lineWidth := 1.5 // points (matplotlib contour.linewidth/lines.linewidth default); converted at the collection Paint sink
+	colorOverride := opt.Color.IsSet()
+	// NextColor runs even when the caller supplied a color, so the property
+	// cycle advances once per contour either way.
+	color := opt.Color.Or(a.NextColor())
+	// points (matplotlib contour.linewidth/lines.linewidth default); converted
+	// at the collection Paint sink
+	lineWidth := opt.LineWidth.Or(1.5)
 	alpha := 1.0
-	label := ""
-	colorOverride := false
-	if opt.Color != nil {
-		color = *opt.Color
-		colorOverride = true
+	if v, ok := opt.Alpha.Get(); ok && v >= 0 && v <= 1 {
+		alpha = v
 	}
-	if opt.LineWidth != nil {
-		lineWidth = *opt.LineWidth
-	}
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		alpha = *opt.Alpha
-	}
-	label = opt.Label
+	label := opt.Label
 
 	mapping := core.ScalarMapInfo{}
 	colors := []render.Color(nil)
@@ -103,7 +100,7 @@ func (a *Axes3D) Contour(x, y []float64, z [][]float64, opts ...core.PlotOptions
 // TriContour projects contour lines over an explicit triangulated 3D mesh.
 //
 //nolint:gocritic // Triangulation is a public value type; keep the pre-v1 method signature value-semantic.
-func (a *Axes3D) TriContour(tri core.Triangulation, z []float64, opts ...core.PlotOptions) *core.LineCollection {
+func (a *Axes3D) TriContour(tri core.Triangulation, z []float64, opt core.PlotOptions) *core.LineCollection {
 	if a == nil || len(tri.X) == 0 {
 		return nil
 	}
@@ -116,26 +113,22 @@ func (a *Axes3D) TriContour(tri core.Triangulation, z []float64, opts ...core.Pl
 		return nil
 	}
 
-	opt := optarg.One("tricontour3d", opts)
 	limitsChanged := a.observe3DTriangulation(tri, z)
 	segments, segmentLevels, levels, values, zorder := a.projectedTriContourLineData(tri, z, opt)
 	if len(segments) == 0 {
 		return nil
 	}
 
-	color := a.NextColor()
-	lineWidth := 1.5 // points (matplotlib contour.linewidth/lines.linewidth default); converted at the collection Paint sink
+	colorOverride := opt.Color.IsSet()
+	// NextColor runs even when the caller supplied a color, so the property
+	// cycle advances once per contour either way.
+	color := opt.Color.Or(a.NextColor())
+	// points (matplotlib contour.linewidth/lines.linewidth default); converted
+	// at the collection Paint sink
+	lineWidth := opt.LineWidth.Or(1.5)
 	alpha := 1.0
-	colorOverride := false
-	if opt.Color != nil {
-		color = *opt.Color
-		colorOverride = true
-	}
-	if opt.LineWidth != nil {
-		lineWidth = *opt.LineWidth
-	}
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		alpha = *opt.Alpha
+	if v, ok := opt.Alpha.Get(); ok && v >= 0 && v <= 1 {
+		alpha = v
 	}
 
 	mapping := core.ScalarMapInfo{}
@@ -324,9 +317,9 @@ func (a *Axes3D) contourLines3D(x, y []float64, z [][]float64, opt core.PlotOpti
 	return lines, lineLevels, levels, rotatedValues, true
 }
 
-func contourPlaneLevel(level float64, offset *float64) float64 {
-	if offset != nil && isFinite(*offset) {
-		return *offset
+func contourPlaneLevel(level float64, offset optional.Value[float64]) float64 {
+	if v, ok := offset.Get(); ok && isFinite(v) {
+		return v
 	}
 	return level
 }

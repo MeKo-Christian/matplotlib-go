@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -54,26 +53,31 @@ type AnchoredTextBox struct {
 }
 
 // AddAnchoredText appends an anchored text box inside an axes.
-func (a *Axes) AddAnchoredText(text string, opts ...AnchoredTextOptions) *AnchoredTextBox {
-	box := newAnchoredTextBox(text, a.resolvedRC(), opts...)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) AddAnchoredText(text string, opt AnchoredTextOptions) *AnchoredTextBox {
+	box := newAnchoredTextBox(text, a.resolvedRC(), opt)
 	a.Add(box)
 	return box
 }
 
 // AddAnchoredText appends a figure-level anchored text box.
-func (f *Figure) AddAnchoredText(text string, opts ...AnchoredTextOptions) *AnchoredTextBox {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (f *Figure) AddAnchoredText(text string, opt AnchoredTextOptions) *AnchoredTextBox {
 	rc := style.CurrentDefaults()
 	if f != nil {
 		rc = f.RC
 	}
-	box := newAnchoredTextBox(text, rc, opts...)
+	box := newAnchoredTextBox(text, rc, opt)
 	if f != nil {
 		f.Add(box)
 	}
 	return box
 }
 
-func newAnchoredTextBox(text string, rc style.RC, opts ...AnchoredTextOptions) *AnchoredTextBox {
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func newAnchoredTextBox(text string, rc style.RC, opt AnchoredTextOptions) *AnchoredTextBox {
 	cfg := AnchoredTextOptions{
 		Location:        LegendUpperLeft,
 		Padding:         -1,
@@ -85,41 +89,39 @@ func newAnchoredTextBox(text string, rc style.RC, opts ...AnchoredTextOptions) *
 		TextColor:       rc.LegendTextColor,
 		BorderWidth:     1,
 	}
-	if opt, ok := optarg.Optional("anchored text", opts); ok {
-		cfg.Location = opt.Location
-		cfg.Locator = opt.Locator
-		if opt.Padding > 0 {
-			cfg.Padding = opt.Padding
-		}
-		if opt.Inset > 0 {
-			cfg.Inset = opt.Inset
-		}
-		if opt.RowGap > 0 {
-			cfg.RowGap = opt.RowGap
-		}
-		if opt.BoxPadding > 0 {
-			cfg.BoxPadding = opt.BoxPadding
-		}
-		if opt.CornerRadius > 0 {
-			cfg.CornerRadius = opt.CornerRadius
-		}
-		if opt.BackgroundColor != (render.Color{}) {
-			cfg.BackgroundColor = opt.BackgroundColor
-		}
-		if opt.BorderColor != (render.Color{}) {
-			cfg.BorderColor = opt.BorderColor
-		}
-		if opt.TextColor != (render.Color{}) {
-			cfg.TextColor = opt.TextColor
-		}
-		if opt.BorderWidth > 0 {
-			cfg.BorderWidth = opt.BorderWidth
-		}
-		if opt.FontSize > 0 {
-			cfg.FontSize = opt.FontSize
-		}
-		cfg.TextAlign = opt.TextAlign
+	cfg.Location = opt.Location
+	cfg.Locator = opt.Locator
+	if opt.Padding > 0 {
+		cfg.Padding = opt.Padding
 	}
+	if opt.Inset > 0 {
+		cfg.Inset = opt.Inset
+	}
+	if opt.RowGap > 0 {
+		cfg.RowGap = opt.RowGap
+	}
+	if opt.BoxPadding > 0 {
+		cfg.BoxPadding = opt.BoxPadding
+	}
+	if opt.CornerRadius > 0 {
+		cfg.CornerRadius = opt.CornerRadius
+	}
+	if opt.BackgroundColor != (render.Color{}) {
+		cfg.BackgroundColor = opt.BackgroundColor
+	}
+	if opt.BorderColor != (render.Color{}) {
+		cfg.BorderColor = opt.BorderColor
+	}
+	if opt.TextColor != (render.Color{}) {
+		cfg.TextColor = opt.TextColor
+	}
+	if opt.BorderWidth > 0 {
+		cfg.BorderWidth = opt.BorderWidth
+	}
+	if opt.FontSize > 0 {
+		cfg.FontSize = opt.FontSize
+	}
+	cfg.TextAlign = opt.TextAlign
 
 	return &AnchoredTextBox{
 		Content:         text,

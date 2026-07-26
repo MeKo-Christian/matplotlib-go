@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -14,7 +14,7 @@ import (
 type HexbinOptions struct {
 	GridSizeX int
 	GridSizeY int
-	Extent    *geom.Rect
+	Extent    optional.Value[geom.Rect]
 	C         []float64
 	Reduce    string
 	Bins      string
@@ -26,10 +26,10 @@ type HexbinOptions struct {
 	MinCount  int
 	Colormap  string
 	Norm      ScalarNormalizer
-	VMin      *float64
-	VMax      *float64
+	VMin      optional.Value[float64]
+	VMax      optional.Value[float64]
 	Alpha     float64
-	EdgeColor *render.Color
+	EdgeColor optional.Value[render.Color]
 	LineWidth float64
 	Label     string
 }
@@ -57,45 +57,37 @@ type hexbinBin struct {
 }
 
 // Hexbin bins points into a staggered hexagonal grid and colors occupied bins by aggregate value.
-func (a *Axes) Hexbin(x, y []float64, opts ...HexbinOptions) *HexbinCollection {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) Hexbin(x, y []float64, opt HexbinOptions) *HexbinCollection {
 	if a == nil || len(x) == 0 || len(y) == 0 {
 		return nil
 	}
 
 	n := min(len(x), len(y))
-	cfg := HexbinOptions{
-		GridSizeX: 18,
-		MinCount:  1,
-		Colormap:  "viridis",
-		Alpha:     1,
-		LineWidth: 1.0, // points; converted at the collection Paint sink
+	cfg := opt
+	if cfg.GridSizeX <= 0 {
+		cfg.GridSizeX = 18
 	}
-	if supplied, ok := optarg.Optional("hexbin", opts); ok {
-		cfg = supplied
-		if cfg.GridSizeX <= 0 {
-			cfg.GridSizeX = 18
-		}
-		if cfg.MinCount <= 0 {
-			cfg.MinCount = 1
-		}
-		if cfg.Colormap == "" {
-			cfg.Colormap = "viridis"
-		}
-		if cfg.Alpha <= 0 {
-			cfg.Alpha = 1
-		}
-		if cfg.LineWidth <= 0 {
-			cfg.LineWidth = 1.0 // points; converted at the collection Paint sink
-		}
+	if cfg.MinCount <= 0 {
+		cfg.MinCount = 1
+	}
+	if cfg.Colormap == "" {
+		cfg.Colormap = "viridis"
+	}
+	if cfg.Alpha <= 0 {
+		cfg.Alpha = 1
+	}
+	if cfg.LineWidth <= 0 {
+		cfg.LineWidth = 1.0 // points; converted at the collection Paint sink
 	}
 	xscale := normalizeHexScale(cfg.XScale)
 	yscale := normalizeHexScale(cfg.YScale)
 
-	extent := cfg.Extent
-	if extent == nil {
+	extent, ok := cfg.Extent.Get()
+	if !ok {
 		tx, ty := specialtyHexbinScaledPoints(x[:n], y[:n], xscale, yscale)
-		rect := finitePointRect(tx, ty)
-		extent = &rect
+		extent = finitePointRect(tx, ty)
 	}
 	if extent.W() == 0 {
 		extent.Max.X = extent.Min.X + 1
@@ -217,11 +209,11 @@ func (a *Axes) Hexbin(x, y []float64, opts ...HexbinOptions) *HexbinCollection {
 		faceColors[i] = mapping.Color(value, cfg.Alpha)
 	}
 	edgeColor := render.Color{R: 1, G: 1, B: 1, A: 0.9}
-	if cfg.EdgeColor != nil {
-		edgeColor = *cfg.EdgeColor
+	if v, ok := cfg.EdgeColor.Get(); ok {
+		edgeColor = v
 	}
 	edgeColors := faceColors
-	if cfg.EdgeColor != nil {
+	if cfg.EdgeColor.IsSet() {
 		edgeColors = nil
 	}
 	collection := &HexbinCollection{
@@ -421,10 +413,9 @@ func applyHexbinBins(values []float64, cfg HexbinOptions) []float64 {
 }
 
 func specialtyHexbinMarginals(x, y []float64, cfg HexbinOptions, xscale, yscale string, mapping ScalarMapInfo) (*PolyCollection, *PolyCollection) {
-	extent := cfg.Extent
 	xMin, xMax := finiteMarginalRange(x, xscale)
 	yMin, yMax := finiteMarginalRange(y, yscale)
-	if extent != nil {
+	if extent, ok := cfg.Extent.Get(); ok {
 		xMin, xMax = extent.Min.X, extent.Max.X
 		yMin, yMax = extent.Min.Y, extent.Max.Y
 		if xscale == "log" {

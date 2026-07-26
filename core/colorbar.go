@@ -2,7 +2,7 @@ package core
 
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -12,14 +12,14 @@ type ColorbarOptions struct {
 	Padding     float64
 	Aspect      float64
 	Shrink      float64
-	Anchor      *geom.Pt
+	Anchor      optional.Value[geom.Pt]
 	Label       string
-	Colormap    *string
-	VMin        *float64
-	VMax        *float64
-	Extend      string
-	Location    string
-	Orientation string
+	Colormap    optional.Value[string]
+	VMin        optional.Value[float64]
+	VMax        optional.Value[float64]
+	Extend      ColorbarExtend
+	Location    ColorbarLocation
+	Orientation PlotOrientation
 	Ticks       []float64
 	Boundaries  []float64
 	Values      []float64
@@ -42,8 +42,8 @@ type Colorbar struct {
 	Mapping       ScalarMapInfo
 	Mappable      ScalarMappable
 	Colormap      string
-	Extend        string
-	Orientation   string
+	Extend        ColorbarExtend
+	Orientation   PlotOrientation
 	Boundaries    []float64
 	Values        []float64
 	Spacing       string
@@ -59,29 +59,31 @@ type Colorbar struct {
 
 // AddColorbar creates a dedicated axes to the right of a plot and populates it
 // with a colorbar derived from a scalar-mappable artist.
-func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...ColorbarOptions) *Axes {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opt ColorbarOptions) *Axes {
 	if f == nil || parent == nil || mappable == nil {
 		return nil
 	}
 
-	cfg := optarg.One("colorbar", opts)
+	cfg := opt
 	cfg.Aspect = resolvedColorbarAspect(cfg.Aspect)
 	location := normalizeColorbarLocation(cfg.Location, cfg.Orientation)
 	extend := normalizeColorbarExtend(cfg.Extend)
 
 	mapping := mappable.ScalarMap().Resolved()
 	cmapOverride := ""
-	if cfg.Colormap != nil && *cfg.Colormap != "" {
-		cmapOverride = *cfg.Colormap
+	if v, ok := cfg.Colormap.Get(); ok && v != "" {
+		cmapOverride = cfg.Colormap.OrZero()
 		mapping.Colormap = cmapOverride
 	}
 	vmin := mapping.VMin
-	if cfg.VMin != nil {
-		vmin = *cfg.VMin
+	if v, ok := cfg.VMin.Get(); ok {
+		vmin = v
 	}
 	vmax := mapping.VMax
-	if cfg.VMax != nil {
-		vmax = *cfg.VMax
+	if v, ok := cfg.VMax.Get(); ok {
+		vmax = v
 	}
 	if vmin == vmax {
 		vmax = vmin + 1
@@ -90,10 +92,10 @@ func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...Colo
 	mapping.VMax = vmax
 	boundaries := colorbarOptionBoundaries(cfg.Values, cfg.Boundaries)
 	if len(boundaries) >= 2 {
-		if cfg.VMin == nil {
+		if !cfg.VMin.IsSet() {
 			mapping.VMin = boundaries[0]
 		}
-		if cfg.VMax == nil {
+		if !cfg.VMax.IsSet() {
 			mapping.VMax = boundaries[len(boundaries)-1]
 		}
 	}
@@ -127,7 +129,7 @@ func (f *Figure) AddColorbar(parent *Axes, mappable ScalarMappable, opts ...Colo
 	if rect.Min.Y >= rect.Max.Y {
 		return nil
 	}
-	rect = applyColorbarShrinkAnchor(rect, cfg.Shrink, cfg.Anchor, location)
+	rect = applyColorbarShrinkAnchor(rect, cfg.Shrink, cfg.Anchor.Ptr(), location)
 
 	ax := f.AddAxes(rect)
 	ax.colorbarParent = parent

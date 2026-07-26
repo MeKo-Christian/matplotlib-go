@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -21,7 +22,7 @@ func TestAxesContourNegativeDashedLines(t *testing.T) {
 		{0, 1, 2},
 	}, ContourOptions{
 		Levels: []float64{-1, 1},
-		Color:  &black,
+		Color:  optional.Of(black),
 	})
 	if cs == nil || cs.Lines == nil {
 		t.Fatal("expected contour lines")
@@ -161,7 +162,7 @@ func TestResolveContourLineStylesNegativeMonochrome(t *testing.T) {
 
 	// Custom negative style override.
 	dotted := "dotted"
-	styles = resolveContourLineStyles(levels, ContourOptions{NegativeLineStyles: &dotted}, true)
+	styles = resolveContourLineStyles(levels, ContourOptions{NegativeLineStyles: optional.Of(dotted)}, true)
 	if styles[0] != "dotted" || styles[1] != "dotted" {
 		t.Fatalf("override negative styles = %v, want leading dotted", styles)
 	}
@@ -169,7 +170,7 @@ func TestResolveContourLineStylesNegativeMonochrome(t *testing.T) {
 
 func TestContourMonochrome(t *testing.T) {
 	c := render.Color{A: 1}
-	if !contourMonochrome(ContourOptions{Color: &c}) {
+	if !contourMonochrome(ContourOptions{Color: optional.Of(c)}) {
 		t.Fatal("single Color should be monochrome")
 	}
 	if !contourMonochrome(ContourOptions{Colors: []render.Color{c}}) {

@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -33,9 +34,9 @@ func Plot() *core.Figure {
 
 	lineAx := panel(fig, 0.53, 0.55, 0.94, 0.93)
 	line, _ := lineAx.Plot(pathEffectLineX(), pathEffectLineY(), core.PlotOptions{
-		Color:     colorPtr(render.Color{R: 0.08, G: 0.34, B: 0.66, A: 1}),
-		LineWidth: floatPtr(3),
-		LineCap:   lineCapPtr(render.CapButt),
+		Color:     optional.Of(render.Color{R: 0.08, G: 0.34, B: 0.66, A: 1}),
+		LineWidth: optional.Of(3.0),
+		LineCap:   optional.Of(render.CapButt),
 	})
 	line.PathEffects = render.WithStrokePathEffects(render.Color{R: 1, G: 1, B: 1, A: 0.96}, 10, geom.Pt{})
 
@@ -45,10 +46,10 @@ func Plot() *core.Figure {
 		[]float64{0.22, 0.50, 0.78, 0.68},
 		[]float64{0.68, 0.34, 0.70, 0.30},
 		core.ScatterOptions{
-			Size:      &size,
-			Color:     colorPtr(render.Color{R: 0.89, G: 0.22, B: 0.24, A: 1}),
-			EdgeColor: colorPtr(render.Color{R: 0.04, G: 0.06, B: 0.08, A: 1}),
-			EdgeWidth: floatPtr(1.4),
+			Size:      optional.Of(size),
+			Color:     optional.Of(render.Color{R: 0.89, G: 0.22, B: 0.24, A: 1}),
+			EdgeColor: optional.Of(render.Color{R: 0.04, G: 0.06, B: 0.08, A: 1}),
+			EdgeWidth: optional.Of(1.4),
 		},
 	)
 	scatter.Colors = []render.Color{

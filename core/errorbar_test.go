@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -456,6 +457,7 @@ func TestAxes_ErrorBar(t *testing.T) {
 		[]float64{1.1, 2.2, 3.3},
 		[]float64{0.1},
 		nil,
+		ErrorBarOptions{},
 	)
 	if err != nil {
 		t.Fatalf("ErrorBar() returned error: %v", err)
@@ -474,6 +476,7 @@ func TestAxesErrorBarDefaultsMatchMatplotlib(t *testing.T) {
 		[]float64{3, 4},
 		nil,
 		[]float64{0.2},
+		ErrorBarOptions{},
 	)
 	if err != nil {
 		t.Fatalf("ErrorBar() returned error: %v", err)
@@ -503,10 +506,10 @@ func TestAxes_ErrorBar_Options(t *testing.T) {
 		nil,
 		[]float64{0.2},
 		ErrorBarOptions{
-			Color:      &col,
-			LineWidth:  &lineWidth,
-			CapSize:    &capSize,
-			Alpha:      &alpha,
+			Color:      optional.Of(col),
+			LineWidth:  optional.Of(lineWidth),
+			CapSize:    optional.Of(capSize),
+			Alpha:      optional.Of(alpha),
 			NoDataLine: true,
 			Label:      "test",
 		},
@@ -550,7 +553,7 @@ func TestAxesErrorBarCapSizeUsesMatplotlibMarkerLength(t *testing.T) {
 		[]float64{2},
 		nil,
 		[]float64{0.2},
-		ErrorBarOptions{CapSize: &capSize},
+		ErrorBarOptions{CapSize: optional.Of(capSize)},
 	)
 	if err != nil {
 		t.Fatalf("ErrorBar() returned error: %v", err)
@@ -594,7 +597,7 @@ func TestAxes_ErrorBar_AsymmetricLimitsAndValidation(t *testing.T) {
 		t.Fatalf("bounds = %+v, want x[10,13] y[4,5]", bounds)
 	}
 
-	if got, err := ax.ErrorBar([]float64{1, 2}, []float64{1, 2}, []float64{-1}, nil); got != nil || err == nil {
+	if got, err := ax.ErrorBar([]float64{1, 2}, []float64{1, 2}, []float64{-1}, nil, ErrorBarOptions{}); got != nil || err == nil {
 		t.Fatalf("negative symmetric errors = (%v, %v), want nil artist and an error", got, err)
 	}
 	if got, err := ax.ErrorBar([]float64{1, 2}, []float64{1, 2}, nil, nil, ErrorBarOptions{YErrUpper: []float64{1, 2, 3}}); got != nil || err == nil {
@@ -678,7 +681,7 @@ func TestErrorBarCapThickSetsField(t *testing.T) {
 	capThick := 3.0
 	capSize := 5.0
 	bar, err := ax.ErrorBar([]float64{1, 2}, []float64{1, 2}, nil, []float64{0.5, 0.5},
-		ErrorBarOptions{CapThick: &capThick, CapSize: &capSize})
+		ErrorBarOptions{CapThick: optional.Of(capThick), CapSize: optional.Of(capSize)})
 	if err != nil {
 		t.Fatalf("ErrorBar() returned error: %v", err)
 	}

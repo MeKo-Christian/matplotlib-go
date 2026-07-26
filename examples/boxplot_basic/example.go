@@ -8,6 +8,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -54,21 +55,21 @@ func Plot() *core.Figure {
 	patchArtist := true
 	ax.BoxPlots(datasets, core.BoxPlotsOptions{
 		Positions:    positions,
-		Width:        &boxWidth,
+		Width:        optional.Of(boxWidth),
 		Colors:       colors,
-		PatchArtist:  &patchArtist,
-		EdgeColor:    &black,
-		MedianColor:  &black,
-		WhiskerColor: &black,
-		CapColor:     &black,
-		FlierColor:   &black,
-		EdgeWidth:    &edgeWidth,
-		WhiskerWidth: &whiskerWidth,
-		MedianWidth:  &medianWidth,
-		FlierSize:    &flierSize,
-		Alpha:        &alpha,
-		ShowFliers:   &showFliers,
-		ManageTicks:  &manageTicks,
+		PatchArtist:  optional.Of(patchArtist),
+		EdgeColor:    optional.Of(black),
+		MedianColor:  optional.Of(black),
+		WhiskerColor: optional.Of(black),
+		CapColor:     optional.Of(black),
+		FlierColor:   optional.Of(black),
+		EdgeWidth:    optional.Of(edgeWidth),
+		WhiskerWidth: optional.Of(whiskerWidth),
+		MedianWidth:  optional.Of(medianWidth),
+		FlierSize:    optional.Of(flierSize),
+		Alpha:        optional.Of(alpha),
+		ShowFliers:   optional.Of(showFliers),
+		ManageTicks:  optional.Of(manageTicks),
 	})
 
 	grid := ax.AddYGrid()

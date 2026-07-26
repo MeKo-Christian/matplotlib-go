@@ -8,6 +8,7 @@ import (
 	_ "github.com/cwbudde/matplotlib-go/backends/all"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 )
 
 const (
@@ -37,9 +38,9 @@ func main() {
 		XEdges:   x,
 		YEdges:   y,
 		Shading:  core.MeshShadingGouraud,
-		Colormap: &cmap,
-		VMin:     &vmin,
-		VMax:     &vmax,
+		Colormap: optional.Of(cmap),
+		VMin:     optional.Of(vmin),
+		VMax:     optional.Of(vmax),
 		Label:    "gouraud mesh",
 	})
 	if mesh == nil {

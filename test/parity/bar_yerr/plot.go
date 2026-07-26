@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -38,12 +39,12 @@ func Plot() *core.Figure {
 	errWidth := 1.2
 
 	_, _ = ax.Bar(x, heights, core.BarOptions{
-		Width:   &width,
-		Color:   &barColor,
+		Width:   optional.Of(width),
+		Color:   optional.Of(barColor),
 		YErr:    yErr,
-		ECol:    &black,
-		CapSize: &capSize,
-		ErrorKw: &core.ErrorBarOptions{LineWidth: &errWidth},
+		ECol:    optional.Of(black),
+		CapSize: optional.Of(capSize),
+		ErrorKw: optional.Of(core.ErrorBarOptions{LineWidth: optional.Of(errWidth)}),
 	})
 	return fig
 }

@@ -14,7 +14,7 @@ const (
 	defaultColorbarAspect            = 20.0
 )
 
-func insetColorbarRectForExtensions(fig *Figure, rect geom.Rect, extend, location string, fracMin, fracMax float64) geom.Rect {
+func insetColorbarRectForExtensions(fig *Figure, rect geom.Rect, extend ColorbarExtend, location ColorbarLocation, fracMin, fracMax float64) geom.Rect {
 	extend = normalizeColorbarExtend(extend)
 	if extend == "neither" || rect.W() <= 0 || rect.H() <= 0 {
 		return rect
@@ -49,7 +49,7 @@ func insetColorbarRectForExtensions(fig *Figure, rect geom.Rect, extend, locatio
 	return rect
 }
 
-func colorbarExtensionShrink(extend string, fracMin, fracMax float64) float64 {
+func colorbarExtensionShrink(extend ColorbarExtend, fracMin, fracMax float64) float64 {
 	extend = normalizeColorbarExtend(extend)
 	hasMin := extend == "min" || extend == "both"
 	hasMax := extend == "max" || extend == "both"
@@ -108,13 +108,13 @@ func colorbarExtendLengths(frac []float64, auto bool, automin, automax float64) 
 	}
 }
 
-func normalizeColorbarLocation(location, orientation string) string {
-	loc := strings.ToLower(strings.TrimSpace(location))
+func normalizeColorbarLocation(location ColorbarLocation, orientation PlotOrientation) ColorbarLocation {
+	loc := ColorbarLocation(strings.ToLower(strings.TrimSpace(string(location))))
 	switch loc {
 	case "left", "right", "top", "bottom":
 		return loc
 	}
-	orient := strings.ToLower(strings.TrimSpace(orientation))
+	orient := strings.ToLower(strings.TrimSpace(string(orientation)))
 	switch orient {
 	case "horizontal":
 		return "bottom"
@@ -125,19 +125,19 @@ func normalizeColorbarLocation(location, orientation string) string {
 	}
 }
 
-func colorbarOrientation(location string) string {
+func colorbarOrientation(location ColorbarLocation) PlotOrientation {
 	if colorbarIsHorizontal(location) {
 		return "horizontal"
 	}
 	return "vertical"
 }
 
-func colorbarIsHorizontal(location string) bool {
-	location = strings.ToLower(strings.TrimSpace(location))
+func colorbarIsHorizontal(location ColorbarLocation) bool {
+	location = ColorbarLocation(strings.ToLower(strings.TrimSpace(string(location))))
 	return location == "bottom" || location == "top"
 }
 
-func resolvedColorbarPadding(base geom.Rect, padding float64, location ...string) float64 {
+func resolvedColorbarPadding(base geom.Rect, padding float64, location ...ColorbarLocation) float64 {
 	horizontal := len(location) > 0 && colorbarIsHorizontal(location[0])
 	if padding > 0 {
 		if horizontal {
@@ -151,7 +151,7 @@ func resolvedColorbarPadding(base geom.Rect, padding float64, location ...string
 	return base.W() * defaultColorbarPadding
 }
 
-func resolvedColorbarLayoutPadding(fig *Figure, base geom.Rect, padding float64, location ...string) float64 {
+func resolvedColorbarLayoutPadding(fig *Figure, base geom.Rect, padding float64, location ...ColorbarLocation) float64 {
 	resolved := resolvedColorbarPadding(base, padding, location...)
 	if padding > 0 || fig == nil || fig.layoutEngine != LayoutEngineConstrained || fig.SizePx.X <= 0 {
 		return resolved
@@ -176,7 +176,7 @@ func resolvedColorbarWidth(fig *Figure, base geom.Rect, width, aspect float64) f
 	return resolvedColorbarThickness(fig, base, width, aspect, "right")
 }
 
-func resolvedColorbarThickness(fig *Figure, base geom.Rect, width, aspect float64, location string) float64 {
+func resolvedColorbarThickness(fig *Figure, base geom.Rect, width, aspect float64, location ColorbarLocation) float64 {
 	if width > 0 {
 		return width
 	}
@@ -206,7 +206,7 @@ func resolvedColorbarSlotWidth(base geom.Rect, width float64) float64 {
 	return resolvedColorbarSlotThickness(base, width, "right")
 }
 
-func resolvedColorbarSlotThickness(base geom.Rect, width float64, location string) float64 {
+func resolvedColorbarSlotThickness(base geom.Rect, width float64, location ColorbarLocation) float64 {
 	if width > 0 {
 		return width
 	}
@@ -243,11 +243,11 @@ func colorbarSlotLeft(base geom.Rect, width float64, useResolvedSlot bool) float
 	return base.Max.X - width
 }
 
-func colorbarPlacementRect(fig *Figure, base geom.Rect, thickness, slotThickness, padding float64, location string, useResolvedSlot bool) (geom.Rect, geom.Rect) {
+func colorbarPlacementRect(fig *Figure, base geom.Rect, thickness, slotThickness, padding float64, location ColorbarLocation, useResolvedSlot bool) (geom.Rect, geom.Rect) {
 	return colorbarPlacementRectWithSlotOffset(fig, base, thickness, slotThickness, padding, location, useResolvedSlot, math.NaN())
 }
 
-func colorbarPlacementRectWithSlotOffset(fig *Figure, base geom.Rect, thickness, slotThickness, padding float64, location string, useResolvedSlot bool, slotOffset float64) (geom.Rect, geom.Rect) {
+func colorbarPlacementRectWithSlotOffset(fig *Figure, base geom.Rect, thickness, slotThickness, padding float64, location ColorbarLocation, useResolvedSlot bool, slotOffset float64) (geom.Rect, geom.Rect) {
 	parent := base
 	rect := base
 	if padding < 0 {
@@ -308,7 +308,7 @@ func colorbarPlacementRectWithSlotOffset(fig *Figure, base geom.Rect, thickness,
 	return parent, rect
 }
 
-func applyColorbarShrinkAnchor(rect geom.Rect, shrink float64, anchor *geom.Pt, location string) geom.Rect {
+func applyColorbarShrinkAnchor(rect geom.Rect, shrink float64, anchor *geom.Pt, location ColorbarLocation) geom.Rect {
 	if rect.W() <= 0 || rect.H() <= 0 {
 		return rect
 	}

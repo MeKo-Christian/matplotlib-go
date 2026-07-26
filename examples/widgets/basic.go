@@ -7,6 +7,7 @@ import (
 	_ "github.com/cwbudde/matplotlib-go/backends/all"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/widgets"
 )
@@ -39,8 +40,8 @@ func main() {
 	lineB := render.Color{R: 0.84, G: 0.34, B: 0.18, A: 1}
 	widthA := 2.2
 	widthB := 1.8
-	_, _ = plot.Plot(x, y1, core.PlotOptions{Color: &lineA, LineWidth: &widthA, Label: "signal"})
-	_, _ = plot.Plot(x, y2, core.PlotOptions{Color: &lineB, LineWidth: &widthB, Label: "modulation"})
+	_, _ = plot.Plot(x, y1, core.PlotOptions{Color: optional.Of(lineA), LineWidth: optional.Of(widthA), Label: "signal"})
+	_, _ = plot.Plot(x, y2, core.PlotOptions{Color: optional.Of(lineB), LineWidth: optional.Of(widthB), Label: "modulation"})
 	plot.AddLegend()
 	// AnchoredText stands in for Matplotlib text with a white bbox.
 	plot.AddAnchoredText("static widget showcase\nMatplotlib-style control strip", core.AnchoredTextOptions{
@@ -53,32 +54,32 @@ func main() {
 	})
 	pressed := true
 	// The widgets are rendered as static controls; they do not install event callbacks here.
-	widgets.NewButton(buttonAx, "Apply", widgets.ButtonOptions{Pressed: &pressed})
+	widgets.NewButton(buttonAx, "Apply", widgets.ButtonOptions{Pressed: optional.Of(pressed)})
 
 	sliderAx := fig.AddAxes(geom.Rect{
 		Min: geom.Pt{X: 0.26, Y: 0.28},
 		Max: geom.Pt{X: 0.62, Y: 0.38},
 	})
-	widgets.NewSlider(sliderAx, "gain", 0, 1, 0.68)
+	widgets.NewSlider(sliderAx, "gain", 0, 1, 0.68, widgets.SliderOptions{})
 
 	checkAx := fig.AddAxes(geom.Rect{
 		Min: geom.Pt{X: 0.66, Y: 0.18},
 		Max: geom.Pt{X: 0.80, Y: 0.38},
 	})
-	widgets.NewCheckButtons(checkAx, []string{"signal", "mod", "grid"}, []bool{true, true, false})
+	widgets.NewCheckButtons(checkAx, []string{"signal", "mod", "grid"}, []bool{true, true, false}, widgets.CheckButtonsOptions{})
 
 	radioAx := fig.AddAxes(geom.Rect{
 		Min: geom.Pt{X: 0.82, Y: 0.18},
 		Max: geom.Pt{X: 0.94, Y: 0.38},
 	})
-	widgets.NewRadioButtons(radioAx, []string{"blue", "amber", "mono"}, 1)
+	widgets.NewRadioButtons(radioAx, []string{"blue", "amber", "mono"}, 1, widgets.RadioButtonsOptions{})
 
 	textAx := fig.AddAxes(geom.Rect{
 		Min: geom.Pt{X: 0.08, Y: 0.14},
 		Max: geom.Pt{X: 0.62, Y: 0.24},
 	})
 	active := true
-	widgets.NewTextBox(textAx, "label", "phase scan", widgets.TextBoxOptions{Active: &active})
+	widgets.NewTextBox(textAx, "label", "phase scan", widgets.TextBoxOptions{Active: optional.Of(active)})
 
 	fig.AddAnchoredText("widgets: Button, Slider, CheckButtons, RadioButtons, TextBox", core.AnchoredTextOptions{
 		Location: core.LegendLowerRight,

@@ -13,6 +13,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -153,8 +154,8 @@ func addLegendPanel(ax *core.Axes) {
 	}
 	for _, s := range series {
 		_, _ = ax.Plot(x, s.y, core.PlotOptions{
-			Color:     &s.col,
-			LineWidth: &lineWidth,
+			Color:     optional.Of(s.col),
+			LineWidth: optional.Of(lineWidth),
 			Label:     s.label,
 		})
 	}

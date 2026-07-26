@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -33,9 +34,9 @@ func Plot() *core.Figure {
 		[]float64{2, 4, 6, 8, 3, 7},
 		[]float64{3, 6, 4, 7, 8, 2},
 		core.ScatterOptions{
-			Color:     &render.Color{R: 0.8, G: 0.2, B: 0.2, A: 1},
-			Size:      &size,
-			EdgeWidth: &edgeWidth,
+			Color:     optional.Of(render.Color{R: 0.8, G: 0.2, B: 0.2, A: 1}),
+			Size:      optional.Of(size),
+			EdgeWidth: optional.Of(edgeWidth),
 		},
 	)
 	return fig

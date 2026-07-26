@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	_ "github.com/cwbudde/matplotlib-go/backends/all" // register rendering backends
+	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/pyplot"
 )
 
@@ -16,6 +17,7 @@ func Example() {
 	if _, err := pyplot.Plot(
 		[]float64{0, 1, 2, 3, 4},
 		[]float64{0, 1, 4, 9, 16},
+		core.PlotOptions{},
 	); err != nil {
 		fmt.Println("plot failed:", err)
 		return

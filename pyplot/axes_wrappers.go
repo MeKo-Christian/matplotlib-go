@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/core"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/ticker"
 	"github.com/cwbudde/matplotlib-go/transform"
 )
@@ -76,24 +75,15 @@ func Axis(mode string) error {
 }
 
 // Grid shows or hides grid lines on the current axes, creating grid artists as needed.
-func Grid(visible bool, params ...core.TickParams) ([]*core.Grid, error) {
+//
+//nolint:gocritic // TickParams is an immutable snapshot of the caller's options.
+func Grid(visible bool, tickParams core.TickParams) ([]*core.Grid, error) {
 	ax := GCA()
-	tickParams := core.TickParams{
-		Axis:  "both",
-		Which: "major",
+	if tickParams.Axis == "" {
+		tickParams.Axis = "both"
 	}
-	supplied, err := optarg.Only("grid", params)
-	if err != nil {
-		return nil, err
-	}
-	if len(params) == 1 {
-		tickParams = supplied
-		if tickParams.Axis == "" {
-			tickParams.Axis = "both"
-		}
-		if tickParams.Which == "" {
-			tickParams.Which = "major"
-		}
+	if tickParams.Which == "" {
+		tickParams.Which = "major"
 	}
 	tickParams.GridVisible = &visible
 
@@ -177,8 +167,10 @@ func YLabel(label string) {
 }
 
 // FigText adds text in figure coordinates to the current figure.
-func FigText(x, y float64, text string, opts ...core.TextOptions) *core.Text {
-	return GCF().Text(x, y, text, opts...)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func FigText(x, y float64, text string, opt core.TextOptions) *core.Text {
+	return GCF().Text(x, y, text, opt)
 }
 
 // Suptitle sets the current figure-level title.
@@ -222,10 +214,11 @@ func FigLegend() *core.Legend {
 }
 
 // Colorbar adds a figure-level colorbar for the current axes.
-func Colorbar(mappable core.ScalarMappable, opts ...core.ColorbarOptions) *core.Axes {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func Colorbar(mappable core.ScalarMappable, opt core.ColorbarOptions) *core.Axes {
 	ax := GCA()
 	fig := GCF()
-	opt := optarg.One("colorbar", opts)
 	if cb := fig.AddColorbar(ax, mappable, opt); cb != nil {
 		return cb
 	}

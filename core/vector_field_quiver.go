@@ -5,33 +5,33 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
 // Quiver adds a vector-arrow artist to the axes.
-func (a *Axes) Quiver(x, y, u, v []float64, opts ...QuiverOptions) *Quiver {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) Quiver(x, y, u, v []float64, opt QuiverOptions) *Quiver {
 	if a == nil {
 		return nil
 	}
-	opt, supplied := optarg.Optional("quiver", opts)
-	anchors, uu, vv, scalars, ok := flattenVectorSamples(x, y, u, v, vectorScalarOptions(opt, supplied))
+	anchors, uu, vv, scalars, ok := flattenVectorSamples(x, y, u, v, vectorScalarOptions(opt))
 	if !ok || len(anchors) == 0 {
 		return nil
 	}
 
 	color := a.NextColor()
-	if opt.Color != nil {
-		color = *opt.Color
+	if v, ok := opt.Color.Get(); ok {
+		color = v
 	}
-	alpha := optionAlpha(opt.Alpha)
-	edgeWidth := optionFloat(opt.EdgeWidth, 0)
+	alpha := optionAlpha(opt.Alpha.Ptr())
+	edgeWidth := optionFloat(opt.EdgeWidth.Ptr(), 0)
 	edgeColor := render.Color{}
-	if opt.EdgeColor != nil {
-		edgeColor = *opt.EdgeColor
+	if v, ok := opt.EdgeColor.Get(); ok {
+		edgeColor = v
 	}
 	mapping, err := ResolveScalarMapValues(scalars, ScalarMapConfig{
-		Colormap: scalarColormap(opt.Colormap),
+		Colormap: scalarColormap(opt.Colormap.Ptr()),
 		Norm:     opt.Norm,
 		VMin:     opt.VMin,
 		VMax:     opt.VMax,
@@ -55,21 +55,21 @@ func (a *Axes) Quiver(x, y, u, v []float64, opts ...QuiverOptions) *Quiver {
 		AngleValues:    append([]float64(nil), opt.AngleValues...),
 		ScaleUnits:     normalizeVectorUnits(opt.ScaleUnits, "width"),
 		Units:          normalizeVectorUnits(opt.Units, "width"),
-		Width:          optionFloat(opt.Width, 0),
-		HeadWidth:      optionFloat(opt.HeadWidth, 3),
-		HeadLength:     optionFloat(opt.HeadLength, 5),
-		HeadAxisLength: optionFloat(opt.HeadAxisLength, 4.5),
-		MinShaft:       optionFloat(opt.MinShaft, 1),
-		MinLength:      optionFloat(opt.MinLength, 1),
+		Width:          optionFloat(opt.Width.Ptr(), 0),
+		HeadWidth:      optionFloat(opt.HeadWidth.Ptr(), 3),
+		HeadLength:     optionFloat(opt.HeadLength.Ptr(), 5),
+		HeadAxisLength: optionFloat(opt.HeadAxisLength.Ptr(), 4.5),
+		MinShaft:       optionFloat(opt.MinShaft.Ptr(), 1),
+		MinLength:      optionFloat(opt.MinLength.Ptr(), 1),
 		Label:          opt.Label,
 		Colormap:       mapping.Colormap,
 		Norm:           mapping.Norm,
 		VMin:           mapping.VMin,
 		VMax:           mapping.VMax,
-		z:              optionFloat(opt.ZOrder, 1),
+		z:              optionFloat(opt.ZOrder.Ptr(), 1),
 	}
-	if opt.Scale != nil && *opt.Scale > 0 {
-		q.Scale = *opt.Scale
+	if v, ok := opt.Scale.Get(); ok && v > 0 {
+		q.Scale = opt.Scale.OrZero()
 		q.ScaleSet = true
 	}
 	a.Add(q)
@@ -77,31 +77,29 @@ func (a *Axes) Quiver(x, y, u, v []float64, opts ...QuiverOptions) *Quiver {
 }
 
 // QuiverGrid expands rectilinear x/y coordinates with u/v grids.
-func (a *Axes) QuiverGrid(x, y []float64, u, v [][]float64, opts ...QuiverOptions) *Quiver {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) QuiverGrid(x, y []float64, u, v [][]float64, opt QuiverOptions) *Quiver {
 	if a == nil {
 		return nil
 	}
-	supplied, ok := optarg.Optional("quiver grid", opts)
-	anchors, uu, vv, scalars, valid := flattenVectorGrid(x, y, u, v, vectorScalarOptions(supplied, ok))
+	anchors, uu, vv, scalars, valid := flattenVectorGrid(x, y, u, v, vectorScalarOptions(opt))
 	if !valid {
 		return nil
 	}
-	var opt QuiverOptions
-	if ok {
-		opt = supplied
-		opt.C = scalars
-		opt.CGrid = nil
-	}
+	opt.C = scalars
+	opt.CGrid = nil
 	return a.quiverFromFlattened(anchors, uu, vv, scalars, opt)
 }
 
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
 func (a *Axes) quiverFromFlattened(anchors []geom.Pt, u, v, scalars []float64, opt QuiverOptions) *Quiver {
 	color := a.NextColor()
-	if opt.Color != nil {
-		color = *opt.Color
+	if v, ok := opt.Color.Get(); ok {
+		color = v
 	}
 	mapping, err := ResolveScalarMapValues(scalars, ScalarMapConfig{
-		Colormap: scalarColormap(opt.Colormap),
+		Colormap: scalarColormap(opt.Colormap.Ptr()),
 		Norm:     opt.Norm,
 		VMin:     opt.VMin,
 		VMax:     opt.VMax,
@@ -116,29 +114,29 @@ func (a *Axes) quiverFromFlattened(anchors []geom.Pt, u, v, scalars []float64, o
 		Colors:         append([]render.Color(nil), opt.Colors...),
 		Color:          color,
 		ScalarColors:   append([]float64(nil), scalars...),
-		EdgeColor:      derefColor(opt.EdgeColor),
-		EdgeWidth:      optionFloat(opt.EdgeWidth, 0),
-		Alpha:          optionAlpha(opt.Alpha),
+		EdgeColor:      derefColor(opt.EdgeColor.Ptr()),
+		EdgeWidth:      optionFloat(opt.EdgeWidth.Ptr(), 0),
+		Alpha:          optionAlpha(opt.Alpha.Ptr()),
 		Pivot:          normalizeVectorPivot(opt.Pivot, vectorPivotTail),
 		Angles:         normalizeQuiverAngles(opt.Angles),
 		AngleValues:    append([]float64(nil), opt.AngleValues...),
 		ScaleUnits:     normalizeVectorUnits(opt.ScaleUnits, "width"),
 		Units:          normalizeVectorUnits(opt.Units, "width"),
-		Width:          optionFloat(opt.Width, 0),
-		HeadWidth:      optionFloat(opt.HeadWidth, 3),
-		HeadLength:     optionFloat(opt.HeadLength, 5),
-		HeadAxisLength: optionFloat(opt.HeadAxisLength, 4.5),
-		MinShaft:       optionFloat(opt.MinShaft, 1),
-		MinLength:      optionFloat(opt.MinLength, 1),
+		Width:          optionFloat(opt.Width.Ptr(), 0),
+		HeadWidth:      optionFloat(opt.HeadWidth.Ptr(), 3),
+		HeadLength:     optionFloat(opt.HeadLength.Ptr(), 5),
+		HeadAxisLength: optionFloat(opt.HeadAxisLength.Ptr(), 4.5),
+		MinShaft:       optionFloat(opt.MinShaft.Ptr(), 1),
+		MinLength:      optionFloat(opt.MinLength.Ptr(), 1),
 		Label:          opt.Label,
 		Colormap:       mapping.Colormap,
 		Norm:           mapping.Norm,
 		VMin:           mapping.VMin,
 		VMax:           mapping.VMax,
-		z:              optionFloat(opt.ZOrder, 1),
+		z:              optionFloat(opt.ZOrder.Ptr(), 1),
 	}
-	if opt.Scale != nil && *opt.Scale > 0 {
-		q.Scale = *opt.Scale
+	if v, ok := opt.Scale.Get(); ok && v > 0 {
+		q.Scale = opt.Scale.OrZero()
 		q.ScaleSet = true
 	}
 	a.Add(q)
@@ -146,23 +144,17 @@ func (a *Axes) quiverFromFlattened(anchors []geom.Pt, u, v, scalars []float64, o
 }
 
 // QuiverKey adds a labeled reference arrow reusing the style of q.
-func (a *Axes) QuiverKey(q *Quiver, x, y, u float64, label string, opts ...QuiverKeyOptions) *QuiverKey {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) QuiverKey(q *Quiver, x, y, u float64, label string, opt QuiverKeyOptions) *QuiverKey {
 	if a == nil || q == nil {
 		return nil
 	}
-	opt := QuiverKeyOptions{
-		Coords:   Coords(CoordAxes),
-		LabelPos: "N",
-		LabelSep: 10,
+	if opt.LabelPos == "" {
+		opt.LabelPos = "N"
 	}
-	if supplied, ok := optarg.Optional("quiverkey", opts); ok {
-		opt = supplied
-		if opt.LabelPos == "" {
-			opt.LabelPos = "N"
-		}
-		if opt.LabelSep <= 0 {
-			opt.LabelSep = 10
-		}
+	if opt.LabelSep <= 0 {
+		opt.LabelSep = 10
 	}
 
 	key := &QuiverKey{
@@ -177,7 +169,7 @@ func (a *Axes) QuiverKey(q *Quiver, x, y, u float64, label string, opts ...Quive
 		Color:      opt.Color,
 		LabelColor: opt.LabelColor,
 		FontSize:   opt.FontSize,
-		z:          optionFloat(opt.ZOrder, q.Z()+0.1),
+		z:          optionFloat(opt.ZOrder.Ptr(), q.Z()+0.1),
 	}
 	a.Add(key)
 	return key
@@ -511,7 +503,7 @@ func dotsPerUnit(ctx *DrawContext, units string) float64 {
 	}
 }
 
-func quiverGlyphPath(lengthPx, widthPx, headWidthMul, headLengthMul, headAxisLengthMul, minShaft, minLength float64, pivot string) geom.Path {
+func quiverGlyphPath(lengthPx, widthPx, headWidthMul, headLengthMul, headAxisLengthMul, minShaft, minLength float64, pivot VectorPivot) geom.Path {
 	if lengthPx <= 0 || widthPx <= 0 {
 		return geom.Path{}
 	}
@@ -652,7 +644,7 @@ func (k *QuiverKey) displayVector(ctx *DrawContext, state vectorRenderState) geo
 	return geom.Pt{X: math.Cos(angle) * length, Y: math.Sin(angle) * length}
 }
 
-func quiverKeyPivot(labelPos string) string {
+func quiverKeyPivot(labelPos string) VectorPivot {
 	switch strings.ToUpper(labelPos) {
 	case "E":
 		return vectorPivotTip

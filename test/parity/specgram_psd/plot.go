@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -25,7 +26,7 @@ func Plot() *core.Figure {
 	vmin, vmax := -55.0, -5.0
 	ax.Specgram(signal(), core.SpecgramOptions{
 		Fs: 64, NFFT: 64, NOverlap: 48, PadTo: 128,
-		Window: "hann", Colormap: &cmap, VMin: &vmin, VMax: &vmax,
+		Window: "hann", Colormap: optional.Of(cmap), VMin: optional.Of(vmin), VMax: optional.Of(vmax),
 	})
 	return fig
 }

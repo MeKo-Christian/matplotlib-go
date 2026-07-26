@@ -353,16 +353,16 @@ func drawFigureBackground(r render.Renderer, vp geom.Rect, opts DrawOptions, fig
 		return
 	}
 	face := fig.RC.FigureBackground()
-	if opts.FigureBackground != nil {
-		face = *opts.FigureBackground
+	if opts.FigureBackground.IsSet() {
+		face = opts.FigureBackground.OrZero()
 	}
-	if opts.FigureBackground != nil && !opts.Transparent && face.A > 0 {
+	if opts.FigureBackground.IsSet() && !opts.Transparent && face.A > 0 {
 		r.Path(pixelRectPath(vp), &render.Paint{Fill: face, Antialias: render.AntialiasOff})
 	}
 	edge := fig.RC.Figure.EdgeColor
 	edgeWidth := 0.0
-	if opts.FigureEdge != nil {
-		edge = *opts.FigureEdge
+	if opts.FigureEdge.IsSet() {
+		edge = opts.FigureEdge.OrZero()
 		if opts.FigureEdgeWidth > 0 {
 			edgeWidth = opts.FigureEdgeWidth
 		}
@@ -394,8 +394,8 @@ func drawSketchedFigurePatch(r render.Renderer, vp geom.Rect, opts DrawOptions, 
 		return false
 	}
 	face := fig.RC.FigureBackground()
-	if opts.FigureBackground != nil {
-		face = *opts.FigureBackground
+	if opts.FigureBackground.IsSet() {
+		face = opts.FigureBackground.OrZero()
 	}
 	clearer.ClearTransparent()
 	// A fully transparent figure (savefig transparent=True) draws no patch.
@@ -407,8 +407,8 @@ func drawSketchedFigurePatch(r render.Renderer, vp geom.Rect, opts DrawOptions, 
 	}
 	edge := fig.RC.Figure.EdgeColor
 	edgeWidth := 0.0
-	if opts.FigureEdge != nil {
-		edge = *opts.FigureEdge
+	if opts.FigureEdge.IsSet() {
+		edge = opts.FigureEdge.OrZero()
 		if opts.FigureEdgeWidth > 0 {
 			edgeWidth = opts.FigureEdgeWidth
 		}

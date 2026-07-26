@@ -59,7 +59,7 @@ func Plot() *core.Figure {
 	interp := "bilinear"
 	img := pyplot.ImShow(heatmap(), core.ImShowOptions{Interpolation: optional.Of(interp)})
 	pyplot.Title("imshow")
-	pyplot.Colorbar(img)
+	pyplot.Colorbar(img, core.ColorbarOptions{})
 
 	return fig
 }

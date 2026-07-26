@@ -49,12 +49,12 @@ func Plot() *core.Figure {
 				HAlign:   core.TextAlignRight,
 				VAlign:   core.TextVAlignBottom,
 				FontSize: 9,
-				BBox: &core.TextBBoxOptions{
+				BBox: optional.Of(core.TextBBoxOptions{
 					FaceColor:    render.Color{R: 1, G: 1, B: 1, A: 1},
 					EdgeColor:    render.Color{R: 0.75, G: 0.75, B: 0.75, A: 1},
 					Padding:      labelPad,
 					CornerRadius: labelPad,
-				},
+				}),
 			})
 		}
 	}

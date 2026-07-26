@@ -129,8 +129,8 @@ func (c *ContourSet) nearestContourLabelPoint(indices []int, point geom.Pt) (int
 }
 
 func (c *ContourSet) clabelColor(segmentIndex int, level float64, labelIndex int, opt ClabelOptions) render.Color {
-	if opt.Color != nil {
-		return *opt.Color
+	if opt.Color.IsSet() {
+		return opt.Color.OrZero()
 	}
 	if len(opt.Colors) > 0 {
 		return opt.Colors[labelIndex%len(opt.Colors)]

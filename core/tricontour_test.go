@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 )
 
 func TestTriContourfSkipsMaskedTriangles(t *testing.T) {
@@ -73,7 +74,7 @@ func TestTriangulationArtists(t *testing.T) {
 	}
 
 	lineWidth := 2.0
-	plot := ax.TriPlot(tri, TriPlotOptions{LineWidth: &lineWidth, Label: "mesh"})
+	plot := ax.TriPlot(tri, TriPlotOptions{LineWidth: optional.Of(lineWidth), Label: "mesh"})
 	if plot == nil {
 		t.Fatal("expected triplot collection")
 	}

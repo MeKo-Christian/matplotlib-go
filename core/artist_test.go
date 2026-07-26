@@ -296,7 +296,7 @@ func TestDenseScatterAutoRasterizesWithFigureDPI(t *testing.T) {
 		x[i] = float64(i) / float64(len(x))
 		y[i] = float64(i%10) / 10
 	}
-	ax.Scatter(x, y)
+	ax.Scatter(x, y, ScatterOptions{})
 
 	ren := &rasterizationRecordingRenderer{}
 	DrawFigure(fig, ren)
@@ -312,7 +312,7 @@ func TestDenseScatterAutoRasterizesWithFigureDPI(t *testing.T) {
 func TestSmallScatterDoesNotAutoRasterize(t *testing.T) {
 	fig := NewFigure(100, 100)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
-	ax.Scatter([]float64{0, 1}, []float64{0, 1})
+	ax.Scatter([]float64{0, 1}, []float64{0, 1}, ScatterOptions{})
 
 	ren := &rasterizationRecordingRenderer{}
 	DrawFigure(fig, ren)
@@ -325,7 +325,7 @@ func TestSmallScatterDoesNotAutoRasterize(t *testing.T) {
 func TestUnsupportedFilterPathEffectAutoRasterizes(t *testing.T) {
 	fig := NewFigure(100, 100, style.WithDPI(96))
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
-	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{})
 	line.PathEffects = []render.PathEffect{
 		render.FilterPathEffect(
 			render.Color{R: 1, A: 1},
@@ -378,7 +378,7 @@ func TestDenseContourAutoRasterizesWithFigureDPI(t *testing.T) {
 func TestFilterCapableRendererKeepsFilterPathEffectVector(t *testing.T) {
 	fig := NewFigure(100, 100)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
-	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{})
 	line.PathEffects = []render.PathEffect{
 		render.FilterPathEffect(
 			render.Color{R: 1, A: 1},
@@ -404,7 +404,7 @@ func TestFilterCapableRendererKeepsFilterPathEffectVector(t *testing.T) {
 func TestUnsupportedNativeFilterPathEffectAutoRasterizes(t *testing.T) {
 	fig := NewFigure(100, 100, style.WithDPI(110))
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 1, Y: 1}})
-	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1})
+	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{})
 	line.PathEffects = []render.PathEffect{
 		render.FilterPathEffect(
 			render.Color{R: 1, A: 1},

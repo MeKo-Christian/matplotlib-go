@@ -7,20 +7,20 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/diag"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
 // Bar3DPlaneOptions configures Axes3D.Bar, the projected 2D bar variant.
 type Bar3DPlaneOptions struct {
-	Color     *render.Color
-	Width     *float64
-	EdgeColor *render.Color
-	EdgeWidth *float64
-	Alpha     *float64
-	Baseline  *float64
+	Color     optional.Value[render.Color]
+	Width     optional.Value[float64]
+	EdgeColor optional.Value[render.Color]
+	EdgeWidth optional.Value[float64]
+	Alpha     optional.Value[float64]
+	Baseline  optional.Value[float64]
 	Baselines []float64
-	Z         *float64
+	Z         optional.Value[float64]
 	Zs        []float64
 	ZDir      string
 	Label     string
@@ -28,7 +28,9 @@ type Bar3DPlaneOptions struct {
 
 // Bar projects 2D bars into the plane orthogonal to ZDir, matching mplot3d's
 // 2D bar compatibility path rather than the cuboid Bar3D helper.
-func (a *Axes3D) Bar(x, heights []float64, opts ...Bar3DPlaneOptions) *core.PolyCollection {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes3D) Bar(x, heights []float64, opt Bar3DPlaneOptions) *core.PolyCollection {
 	if a == nil || a.Axes == nil {
 		return nil
 	}
@@ -37,39 +39,38 @@ func (a *Axes3D) Bar(x, heights []float64, opts ...Bar3DPlaneOptions) *core.Poly
 		return nil
 	}
 
-	opt := optarg.One("bar3d plane", opts)
 	width := 0.8
-	if opt.Width != nil {
-		width = *opt.Width
+	if v, ok := opt.Width.Get(); ok {
+		width = v
 	}
 	baseline := 0.0
-	if opt.Baseline != nil {
-		baseline = *opt.Baseline
+	if v, ok := opt.Baseline.Get(); ok {
+		baseline = v
 	}
 	z := 0.0
-	if opt.Z != nil {
-		z = *opt.Z
+	if v, ok := opt.Z.Get(); ok {
+		z = v
 	}
 	zdir := normalized3DDir(opt.ZDir)
 
 	limitsChanged := a.observe3DPlaneBars(x[:n], heights[:n], width, baseline, opt.Baselines, z, opt.Zs, zdir)
 	color := a.NextPatchColor()
-	if opt.Color != nil {
-		color = *opt.Color
+	if v, ok := opt.Color.Get(); ok {
+		color = v
 	}
 	alpha := 1.0
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		alpha = *opt.Alpha
+	if v, ok := opt.Alpha.Get(); ok && v >= 0 && opt.Alpha.OrZero() <= 1 {
+		alpha = opt.Alpha.OrZero()
 	}
 	color = color.WithAlphaMultiplier(alpha)
 	edgeColor := render.Color{}
-	if opt.EdgeColor != nil {
-		edgeColor = *opt.EdgeColor
+	if opt.EdgeColor.IsSet() {
+		edgeColor = opt.EdgeColor.OrZero()
 		edgeColor = edgeColor.WithAlphaMultiplier(alpha)
 	}
 	edgeWidth := 0.0
-	if opt.EdgeWidth != nil {
-		edgeWidth = *opt.EdgeWidth
+	if v, ok := opt.EdgeWidth.Get(); ok {
+		edgeWidth = v
 	}
 
 	polygons, zorder := a.project3DPlaneBars(x[:n], heights[:n], width, baseline, opt.Baselines, z, opt.Zs, zdir)
@@ -100,28 +101,30 @@ func (a *Axes3D) Bar(x, heights []float64, opts ...Bar3DPlaneOptions) *core.Poly
 
 // Bar3DOptions configures projected wireframe bars.
 type Bar3DOptions struct {
-	Color     *render.Color
+	Color     optional.Value[render.Color]
 	Colors    []render.Color
-	LineWidth *float64
-	Alpha     *float64
+	LineWidth optional.Value[float64]
+	Alpha     optional.Value[float64]
 	Label     string
 	AxLimClip bool
 }
 
 // VoxelOptions configures boolean-grid voxel rendering.
 type VoxelOptions struct {
-	FaceColor  *render.Color
+	FaceColor  optional.Value[render.Color]
 	FaceColors map[[3]int]render.Color
-	EdgeColor  *render.Color
+	EdgeColor  optional.Value[render.Color]
 	EdgeColors map[[3]int]render.Color
-	Alpha      *float64
-	Shade      *bool
+	Alpha      optional.Value[float64]
+	Shade      optional.Value[bool]
 	Label      string
 	AxLimClip  bool
 }
 
 // Bar3D draws a simple projected wireframe column for each x/y/z sample.
-func (a *Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opts ...Bar3DOptions) *core.LineCollection {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opt Bar3DOptions) *core.LineCollection {
 	n := minLen(x, y, z, dx, dy, dz)
 	if n <= 0 || a == nil {
 		return nil
@@ -133,28 +136,26 @@ func (a *Axes3D) Bar3D(x, y, z, dx, dy, dz []float64, opts ...Bar3DOptions) *cor
 	alpha := 1.0
 	edgeAlpha := 0.0
 	label := ""
-	opt := Bar3DOptions{}
-	if supplied, ok := optarg.Optional("bar3d", opts); ok {
-		opt = supplied
-		o := opt
-		if o.Color != nil {
-			color = *o.Color
-		}
-		if o.LineWidth != nil {
-			lineWidth = *o.LineWidth
+	if v, ok := opt.Color.Get(); ok {
+		color = v
+	}
+	if v, ok := opt.LineWidth.Get(); ok {
+		lineWidth = v
+		edgeAlpha = alpha
+	}
+	alphaSet := false
+	if v, ok := opt.Alpha.Get(); ok && v >= 0 && v <= 1 {
+		alpha = v
+		alphaSet = true
+		if opt.LineWidth.IsSet() {
 			edgeAlpha = alpha
 		}
-		if o.Alpha != nil && *o.Alpha >= 0 && *o.Alpha <= 1 {
-			alpha = *o.Alpha
-			if o.LineWidth != nil {
-				edgeAlpha = alpha
-			}
-		}
-		label = o.Label
 	}
+	label = opt.Label
 
 	faceColor := color
-	if supplied, ok := optarg.Optional("bar3d", opts); ok && supplied.Alpha != nil {
+	// Only an explicitly requested alpha is baked into the face color.
+	if alphaSet {
 		faceColor = faceColor.WithAlphaMultiplier(alpha)
 	}
 	faceBaseColors := bar3DFaceBaseColors(faceColor, opt.Colors, alpha, n)
@@ -262,7 +263,9 @@ func bar3DFaceBaseColors(defaultColor render.Color, colors []render.Color, alpha
 
 // Voxels renders a boolean occupancy grid as per-voxel face collections with
 // internal-face culling, matching Matplotlib's voxel artist model.
-func (a *Axes3D) Voxels(filled [][][]bool, opts ...VoxelOptions) map[[3]int]*core.PolyCollection {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes3D) Voxels(filled [][][]bool, opt VoxelOptions) map[[3]int]*core.PolyCollection {
 	if a == nil || a.Axes == nil {
 		return nil
 	}
@@ -271,21 +274,20 @@ func (a *Axes3D) Voxels(filled [][][]bool, opts ...VoxelOptions) map[[3]int]*cor
 		return nil
 	}
 
-	opt := optarg.One("voxels", opts)
 	alpha := 1.0
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		alpha = *opt.Alpha
+	if v, ok := opt.Alpha.Get(); ok && v >= 0 && opt.Alpha.OrZero() <= 1 {
+		alpha = opt.Alpha.OrZero()
 	}
 	// Resolve the default face color once here so the reprojector closure
 	// does not re-call NextPatchColor() and advance the color cycle.
-	if opt.FaceColor == nil {
+	if !opt.FaceColor.IsSet() {
 		faceColor := a.NextPatchColor()
-		opt.FaceColor = &faceColor
+		opt.FaceColor = optional.Of(faceColor)
 	}
 	// Default edge width matches matplotlib's patch.linewidth (1.0) when an
 	// edge color is configured; without a positive width the edges are invisible.
 	edgeWidth := 0.0
-	if opt.EdgeColor != nil && opt.EdgeColor.A > 0 {
+	if edge, ok := opt.EdgeColor.Get(); ok && edge.A > 0 {
 		edgeWidth = 1.0
 	}
 	if edgeWidth == 0 && len(opt.EdgeColors) > 0 {
@@ -340,29 +342,20 @@ func (a *Axes3D) Voxels(filled [][][]bool, opts ...VoxelOptions) map[[3]int]*cor
 // Matplotlib's filled voxels() — a boolean occupancy grid rendered as shaded
 // solid cubes — use [Axes3D.Voxels] instead. The name is retained for
 // backwards compatibility.
-func (a *Axes3D) Voxel(x, y, z, dx, dy, dz []float64, opts ...core.PlotOptions) *core.LineCollection {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes3D) Voxel(x, y, z, dx, dy, dz []float64, opt core.PlotOptions) *core.LineCollection {
 	if a != nil && !a.voxelWarned {
 		a.voxelWarned = true
 		diag.Warnf("Axes3D.Voxel draws wireframe prisms, not filled cubes; use Axes3D.Voxels(grid) for filled voxels")
 	}
-	o, supplied := optarg.Optional("voxel", opts)
-	if !supplied {
-		return a.Bar3D(x, y, z, dx, dy, dz)
-	}
-
-	voxelOpts := make([]Bar3DOptions, 1)
-	if o.Color != nil {
-		voxelOpts[0].Color = o.Color
-	}
-	if o.LineWidth != nil {
-		voxelOpts[0].LineWidth = o.LineWidth
-	}
-	if o.Alpha != nil {
-		voxelOpts[0].Alpha = o.Alpha
-	}
-	voxelOpts[0].AxLimClip = o.AxLimClip
-	voxelOpts[0].Label = o.Label
-	return a.Bar3D(x, y, z, dx, dy, dz, voxelOpts...)
+	return a.Bar3D(x, y, z, dx, dy, dz, Bar3DOptions{
+		Color:     opt.Color,
+		LineWidth: opt.LineWidth,
+		Alpha:     opt.Alpha,
+		AxLimClip: opt.AxLimClip,
+		Label:     opt.Label,
+	})
 }
 
 type projectedVoxelCollection struct {
@@ -414,24 +407,25 @@ func (a *Axes3D) observe3DVoxels(filled [][][]bool) bool {
 	return changed
 }
 
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
 func (a *Axes3D) projectVoxelCollections(filled [][][]bool, opt VoxelOptions, alpha float64) map[[3]int]projectedVoxelCollection {
 	nx, ny, nz, ok := voxelGridShape(filled)
 	if !ok {
 		return nil
 	}
 	defaultFaceColor := a.NextPatchColor()
-	if opt.FaceColor != nil {
-		defaultFaceColor = *opt.FaceColor
+	if v, ok := opt.FaceColor.Get(); ok {
+		defaultFaceColor = v
 	}
 	defaultFaceColor = defaultFaceColor.WithAlphaMultiplier(alpha)
 	defaultEdgeColor := render.Color{}
-	if opt.EdgeColor != nil {
-		defaultEdgeColor = *opt.EdgeColor
+	if opt.EdgeColor.IsSet() {
+		defaultEdgeColor = opt.EdgeColor.OrZero()
 		defaultEdgeColor = defaultEdgeColor.WithAlphaMultiplier(alpha)
 	}
 	shade := true
-	if opt.Shade != nil {
-		shade = *opt.Shade
+	if v, ok := opt.Shade.Get(); ok {
+		shade = v
 	}
 
 	type voxelFace struct {

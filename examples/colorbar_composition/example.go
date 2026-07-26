@@ -43,7 +43,7 @@ func Plot() *core.Figure {
 		Colormap: optional.Of(cmap),
 		Origin:   optional.Of(core.ImageOriginLower),
 		Extent:   optional.Of(extent),
-		Aspect:   optional.Of("auto"),
+		Aspect:   optional.Of(core.AspectAuto),
 	})
 
 	ax.SetTitle("Heatmap with Colorbar")
@@ -63,7 +63,7 @@ func Plot() *core.Figure {
 		grid.LineWidth = 0.5
 	}
 
-	cbar := fig.AddColorbar(ax, im)
+	cbar := fig.AddColorbar(ax, im, core.ColorbarOptions{})
 	cbar.SetYLabel("Intensity")
 
 	return fig

@@ -4,35 +4,35 @@ import (
 	"math"
 
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
 // Barbs adds a wind-barb artist to the axes.
-func (a *Axes) Barbs(x, y, u, v []float64, opts ...BarbsOptions) *Barbs {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) Barbs(x, y, u, v []float64, opt BarbsOptions) *Barbs {
 	if a == nil {
 		return nil
 	}
-	opt, supplied := optarg.Optional("barbs", opts)
-	anchors, uu, vv, scalars, ok := flattenVectorSamples(x, y, u, v, barbsScalarOptions(opt, supplied))
+	anchors, uu, vv, scalars, ok := flattenVectorSamples(x, y, u, v, barbsScalarOptions(opt))
 	if !ok || len(anchors) == 0 {
 		return nil
 	}
 
 	color := a.NextColor()
-	if opt.Color != nil {
-		color = *opt.Color
+	if v, ok := opt.Color.Get(); ok {
+		color = v
 	}
 	barbColor := color
-	if opt.BarbColor != nil {
-		barbColor = *opt.BarbColor
+	if v, ok := opt.BarbColor.Get(); ok {
+		barbColor = v
 	}
 	flagColor := barbColor
-	if opt.FlagColor != nil {
-		flagColor = *opt.FlagColor
+	if v, ok := opt.FlagColor.Get(); ok {
+		flagColor = v
 	}
 	mapping, err := ResolveScalarMapValues(scalars, ScalarMapConfig{
-		Colormap: scalarColormap(opt.Colormap),
+		Colormap: scalarColormap(opt.Colormap.Ptr()),
 		Norm:     opt.Norm,
 		VMin:     opt.VMin,
 		VMax:     opt.VMax,
@@ -50,59 +50,56 @@ func (a *Axes) Barbs(x, y, u, v []float64, opts ...BarbsOptions) *Barbs {
 		ScalarColors: append([]float64(nil), scalars...),
 		BarbColor:    barbColor,
 		FlagColor:    flagColor,
-		LineWidth:    optionFloat(opt.LineWidth, 1),
-		Alpha:        optionAlpha(opt.Alpha),
+		LineWidth:    optionFloat(opt.LineWidth.Ptr(), 1),
+		Alpha:        optionAlpha(opt.Alpha.Ptr()),
 		Pivot:        normalizeVectorPivot(opt.Pivot, vectorPivotTip),
-		Length:       optionFloat(opt.Length, 7),
+		Length:       optionFloat(opt.Length.Ptr(), 7),
 		Units:        normalizeVectorUnits(opt.Units, "points"),
-		Sizes:        defaultBarbSizes(opt.Sizes),
-		Increments:   defaultBarbIncrements(opt.Increments),
-		FillEmpty:    optionBool(opt.FillEmpty, false),
-		Rounding:     optionBool(opt.Rounding, true),
-		Flip:         normalizeFlipSlice(opt.FlipBarb, opt.Flip, len(anchors)),
+		Sizes:        defaultBarbSizes(opt.Sizes.Ptr()),
+		Increments:   defaultBarbIncrements(opt.Increments.Ptr()),
+		FillEmpty:    optionBool(opt.FillEmpty.Ptr(), false),
+		Rounding:     optionBool(opt.Rounding.Ptr(), true),
+		Flip:         normalizeFlipSlice(opt.FlipBarb.Ptr(), opt.Flip, len(anchors)),
 		Label:        opt.Label,
 		Colormap:     mapping.Colormap,
 		Norm:         mapping.Norm,
 		VMin:         mapping.VMin,
 		VMax:         mapping.VMax,
-		z:            optionFloat(opt.ZOrder, 1),
+		z:            optionFloat(opt.ZOrder.Ptr(), 1),
 	}
 	a.Add(b)
 	return b
 }
 
 // BarbsGrid expands rectilinear x/y coordinates with u/v barb grids.
-func (a *Axes) BarbsGrid(x, y []float64, u, v [][]float64, opts ...BarbsOptions) *Barbs {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) BarbsGrid(x, y []float64, u, v [][]float64, opt BarbsOptions) *Barbs {
 	if a == nil {
 		return nil
 	}
-	supplied, ok := optarg.Optional("barbs grid", opts)
-	anchors, uu, vv, scalars, valid := flattenVectorGrid(x, y, u, v, barbsScalarOptions(supplied, ok))
+	anchors, uu, vv, scalars, valid := flattenVectorGrid(x, y, u, v, barbsScalarOptions(opt))
 	if !valid {
 		return nil
 	}
 
-	var opt BarbsOptions
-	if ok {
-		opt = supplied
-		opt.C = scalars
-		opt.CGrid = nil
-	}
+	opt.C = scalars
+	opt.CGrid = nil
 
 	color := a.NextColor()
-	if opt.Color != nil {
-		color = *opt.Color
+	if v, ok := opt.Color.Get(); ok {
+		color = v
 	}
 	barbColor := color
-	if opt.BarbColor != nil {
-		barbColor = *opt.BarbColor
+	if v, ok := opt.BarbColor.Get(); ok {
+		barbColor = v
 	}
 	flagColor := barbColor
-	if opt.FlagColor != nil {
-		flagColor = *opt.FlagColor
+	if v, ok := opt.FlagColor.Get(); ok {
+		flagColor = v
 	}
 	mapping, err := ResolveScalarMapValues(scalars, ScalarMapConfig{
-		Colormap: scalarColormap(opt.Colormap),
+		Colormap: scalarColormap(opt.Colormap.Ptr()),
 		Norm:     opt.Norm,
 		VMin:     opt.VMin,
 		VMax:     opt.VMax,
@@ -120,22 +117,22 @@ func (a *Axes) BarbsGrid(x, y []float64, u, v [][]float64, opts ...BarbsOptions)
 		ScalarColors: append([]float64(nil), scalars...),
 		BarbColor:    barbColor,
 		FlagColor:    flagColor,
-		LineWidth:    optionFloat(opt.LineWidth, 1),
-		Alpha:        optionAlpha(opt.Alpha),
+		LineWidth:    optionFloat(opt.LineWidth.Ptr(), 1),
+		Alpha:        optionAlpha(opt.Alpha.Ptr()),
 		Pivot:        normalizeVectorPivot(opt.Pivot, vectorPivotTip),
-		Length:       optionFloat(opt.Length, 7),
+		Length:       optionFloat(opt.Length.Ptr(), 7),
 		Units:        normalizeVectorUnits(opt.Units, "points"),
-		Sizes:        defaultBarbSizes(opt.Sizes),
-		Increments:   defaultBarbIncrements(opt.Increments),
-		FillEmpty:    optionBool(opt.FillEmpty, false),
-		Rounding:     optionBool(opt.Rounding, true),
-		Flip:         normalizeFlipSlice(opt.FlipBarb, opt.Flip, len(anchors)),
+		Sizes:        defaultBarbSizes(opt.Sizes.Ptr()),
+		Increments:   defaultBarbIncrements(opt.Increments.Ptr()),
+		FillEmpty:    optionBool(opt.FillEmpty.Ptr(), false),
+		Rounding:     optionBool(opt.Rounding.Ptr(), true),
+		Flip:         normalizeFlipSlice(opt.FlipBarb.Ptr(), opt.Flip, len(anchors)),
 		Label:        opt.Label,
 		Colormap:     mapping.Colormap,
 		Norm:         mapping.Norm,
 		VMin:         mapping.VMin,
 		VMax:         mapping.VMax,
-		z:            optionFloat(opt.ZOrder, 1),
+		z:            optionFloat(opt.ZOrder.Ptr(), 1),
 	}
 	a.Add(b)
 	return b

@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -42,18 +43,18 @@ func Plot() *core.Figure {
 	errorCap := 6.0
 
 	_, _ = ax.Plot(x, y, core.PlotOptions{
-		Color:     &lineColor,
-		LineWidth: &lineWidth,
+		Color:     optional.Of(lineColor),
+		LineWidth: optional.Of(lineWidth),
 	})
 	ax.Scatter(x, y, core.ScatterOptions{
-		Color:     &pointColor,
-		Size:      &pointSize,
-		EdgeWidth: &edgeWidth,
+		Color:     optional.Of(pointColor),
+		Size:      optional.Of(pointSize),
+		EdgeWidth: optional.Of(edgeWidth),
 	})
 	_, _ = ax.ErrorBar(x, y, xErr, yErr, core.ErrorBarOptions{
-		Color:      &black,
-		LineWidth:  &errorWidth,
-		CapSize:    &errorCap,
+		Color:      optional.Of(black),
+		LineWidth:  optional.Of(errorWidth),
+		CapSize:    optional.Of(errorCap),
 		NoDataLine: true,
 	})
 	return fig

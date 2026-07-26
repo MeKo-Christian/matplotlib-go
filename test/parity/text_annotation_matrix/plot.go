@@ -45,14 +45,14 @@ func addTextMatrix(ax *core.Axes) {
 		Color:          render.Color{R: 0.12, G: 0.20, B: 0.42, A: 1},
 		HAlign:         core.TextAlignLeft,
 		VAlign:         core.TextVAlignTop,
-		FontProperties: &italicBold,
-		BBox: &core.TextBBoxOptions{
+		FontProperties: optional.Of(italicBold),
+		BBox: optional.Of(core.TextBBoxOptions{
 			FaceColor:    render.Color{R: 0.88, G: 0.92, B: 1.00, A: 0.85},
 			EdgeColor:    render.Color{R: 0.20, G: 0.32, B: 0.68, A: 1},
 			LineWidth:    1,
 			Padding:      fontPad(13, 0.3),
 			CornerRadius: 5,
-		},
+		}),
 	})
 	ax.Text(2.25, 4.45, "rotated label", core.TextOptions{
 		FontSize: 12,
@@ -60,12 +60,12 @@ func addTextMatrix(ax *core.Axes) {
 		HAlign:   core.TextAlignCenter,
 		VAlign:   core.TextVAlignMiddle,
 		Angle:    -28,
-		BBox: &core.TextBBoxOptions{
+		BBox: optional.Of(core.TextBBoxOptions{
 			FaceColor: render.Color{R: 1.00, G: 0.90, B: 0.78, A: 0.72},
 			EdgeColor: render.Color{R: 0.65, G: 0.35, B: 0.12, A: 1},
 			LineWidth: 0.8,
 			Padding:   fontPad(12, 0.25),
-		},
+		}),
 	})
 }
 
@@ -84,12 +84,12 @@ func addAnnotationMatrix(ax *core.Axes) {
 		ConnectionStyle: arc,
 		HAlign:          core.TextAlignCenter,
 		VAlign:          core.TextVAlignMiddle,
-		BBox: &core.TextBBoxOptions{
+		BBox: optional.Of(core.TextBBoxOptions{
 			FaceColor: render.Color{R: 0.92, G: 0.97, B: 0.92, A: 0.92},
 			EdgeColor: render.Color{R: 0.23, G: 0.48, B: 0.20, A: 1},
 			LineWidth: 1,
 			Padding:   fontPad(11, 0.25),
-		},
+		}),
 	})
 
 	clip := true
@@ -104,8 +104,8 @@ func addAnnotationMatrix(ax *core.Axes) {
 	boxPos := geom.Pt{X: 4.7, Y: 3.9}
 	align := geom.Pt{X: 0.5, Y: 0.5}
 	ax.AnnotationBbox("TextArea box", 3.75, 3.05, core.AnnotationBboxOptions{
-		BoxPosition:  &boxPos,
-		BoxAlignment: &align,
+		BoxPosition:  optional.Of(boxPos),
+		BoxAlignment: optional.Of(align),
 		Padding:      fontPad(10, 0.35),
 		FaceColor:    render.Color{R: 0.96, G: 0.90, B: 1.00, A: 0.92},
 		EdgeColor:    render.Color{R: 0.45, G: 0.24, B: 0.62, A: 1},
@@ -133,7 +133,7 @@ func addOffsetBoxMatrix(ax *core.Axes) {
 	img := smallAnnotationImage()
 	imgPos := geom.Pt{X: 4.7, Y: 1.25}
 	ax.AnnotationBbox("", 3.75, 1.55, core.AnnotationBboxOptions{
-		BoxPosition: &imgPos,
+		BoxPosition: optional.Of(imgPos),
 		Image:       img,
 		ImageZoom:   2.4,
 		Padding:     fontPad(10, 0.25),
@@ -173,7 +173,7 @@ func addOffsetBoxMatrix(ax *core.Axes) {
 		Stroke:    render.Color{R: 0.08, G: 0.25, B: 0.35, A: 1},
 		LineWidth: 1,
 	})
-	packer.AddText("HPack")
+	packer.AddText("HPack", core.PackedTextOptions{})
 
 	fill := true
 	ax.AddAnchoredSizeBar(1.25, "1.25 data", core.AnchoredSizeBarOptions{
@@ -182,7 +182,7 @@ func addOffsetBoxMatrix(ax *core.Axes) {
 		Inset:           fontPad(9, 0.6),
 		Sep:             pt(4),
 		SizeVertical:    0.09,
-		FillBar:         &fill,
+		FillBar:         optional.Of(fill),
 		BackgroundColor: render.Color{R: 1, G: 1, B: 1, A: 0.82},
 		BorderColor:     render.Color{R: 0.20, G: 0.20, B: 0.20, A: 1},
 		BorderWidth:     1,

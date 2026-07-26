@@ -8,6 +8,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -40,8 +41,8 @@ func Plot() *core.Figure {
 		},
 		[]float64{12, 18, 9, 21},
 		core.PlotOptions{
-			Color:     &render.Color{R: 0.12, G: 0.47, B: 0.71, A: 1},
-			LineWidth: common.FloatPtr(2.0),
+			Color:     optional.Of(render.Color{R: 0.12, G: 0.47, B: 0.71, A: 1}),
+			LineWidth: optional.Of(2.0),
 		},
 	)
 	if err != nil {
@@ -60,9 +61,9 @@ func Plot() *core.Figure {
 		[]string{"alpha", "beta", "gamma", "delta"},
 		[]float64{4, 9, 6, 7},
 		core.BarOptions{
-			Color:     &render.Color{R: 1.0, G: 0.50, B: 0.05, A: 1},
-			EdgeColor: &render.Color{R: 0.60, G: 0.30, B: 0.03, A: 1},
-			EdgeWidth: common.FloatPtr(1.0),
+			Color:     optional.Of(render.Color{R: 1.0, G: 0.50, B: 0.05, A: 1}),
+			EdgeColor: optional.Of(render.Color{R: 0.60, G: 0.30, B: 0.03, A: 1}),
+			EdgeWidth: optional.Of(1.0),
 		},
 	)
 	if err != nil {
@@ -82,10 +83,10 @@ func Plot() *core.Figure {
 		[]common.TestDistanceKM{5, 10, 21.1, 42.2},
 		[]float64{6.4, 5.8, 5.2, 5.5},
 		core.ScatterOptions{
-			Color:     &render.Color{R: 0.17, G: 0.63, B: 0.17, A: 0.92},
-			EdgeColor: &render.Color{R: 0.09, G: 0.36, B: 0.09, A: 1},
-			EdgeWidth: common.FloatPtr(1.0),
-			Size:      common.FloatPtr(core.ScatterAreaFromRadius(8.0, style.Default.DPI)),
+			Color:     optional.Of(render.Color{R: 0.17, G: 0.63, B: 0.17, A: 0.92}),
+			EdgeColor: optional.Of(render.Color{R: 0.09, G: 0.36, B: 0.09, A: 1}),
+			EdgeWidth: optional.Of(1.0),
+			Size:      optional.Of(core.ScatterAreaFromRadius(8.0, style.Default.DPI)),
 		},
 	)
 	if err != nil {

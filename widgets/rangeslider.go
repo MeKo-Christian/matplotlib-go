@@ -7,7 +7,6 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -41,7 +40,9 @@ type RangeSlider struct {
 }
 
 // NewRangeSlider adds a two-handle range slider widget artist to the axes.
-func NewRangeSlider(a *core.Axes, label string, minValue, maxValue, low, high float64, opts ...RangeSliderOptions) *RangeSlider {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func NewRangeSlider(a *core.Axes, label string, minValue, maxValue, low, high float64, opt RangeSliderOptions) *RangeSlider {
 	if a == nil {
 		return nil
 	}
@@ -53,19 +54,17 @@ func NewRangeSlider(a *core.Axes, label string, minValue, maxValue, low, high fl
 		HandleColor: defaults.Handle,
 		TextColor:   defaults.Text,
 	}
-	if opt, ok := optarg.Optional("rangeslider", opts); ok {
-		mergeSliderOptions(&cfg, &opt)
-	}
+	mergeSliderOptions(&cfg, &opt)
 	step := (maxValue - minValue) / 100
-	if cfg.ValueStep != nil && *cfg.ValueStep > 0 {
-		step = *cfg.ValueStep
+	if v, ok := cfg.ValueStep.Get(); ok && v > 0 {
+		step = cfg.ValueStep.OrZero()
 	}
 	if step == 0 {
 		step = 1
 	}
 	valueFormat := "%.2f"
-	if cfg.ValueFormat != nil && strings.TrimSpace(*cfg.ValueFormat) != "" {
-		valueFormat = *cfg.ValueFormat
+	if cfg.ValueFormat.IsSet() && strings.TrimSpace(cfg.ValueFormat.OrZero()) != "" {
+		valueFormat = cfg.ValueFormat.OrZero()
 	}
 	low = normalizeSliderValue(minValue, maxValue, math.Abs(step), low)
 	high = normalizeSliderValue(minValue, maxValue, math.Abs(step), high)

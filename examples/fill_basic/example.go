@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -33,9 +34,9 @@ func Plot() *core.Figure {
 	edgeColor := render.Color{R: 0.1, G: 0.3, B: 0.5, A: 1.0}
 	edgeWidth := 2.0
 	_, _ = ax.FillBetween(x, zeros, y, core.FillOptions{
-		Color:     &faceColor,
-		EdgeColor: &edgeColor,
-		EdgeWidth: &edgeWidth,
+		Color:     optional.Of(faceColor),
+		EdgeColor: optional.Of(edgeColor),
+		EdgeWidth: optional.Of(edgeWidth),
 	})
 	return fig
 }

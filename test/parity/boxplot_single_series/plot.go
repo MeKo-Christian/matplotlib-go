@@ -26,7 +26,7 @@ func Plot() *core.Figure {
 	ax.SetXLabel("Series")
 	ax.SetYLabel("Value")
 
-	ax.BoxPlot([]float64{1.0, 1.4, 1.8, 2.2, 2.8, 3.5, 4.2, 4.8, 8.5})
+	ax.BoxPlot([]float64{1.0, 1.4, 1.8, 2.2, 2.8, 3.5, 4.2, 4.8, 8.5}, core.BoxPlotOptions{})
 	return fig
 }
 

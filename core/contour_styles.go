@@ -61,7 +61,7 @@ func lineStyleToDashesRC(spec string, lineWidth, pointPx float64, rc *style.Line
 // cmap.monochrome; a single explicit color produces a monochrome ListedColormap,
 // while a multi-color colormap such as the viridis default does not).
 func contourMonochrome(opt ContourOptions) bool {
-	return opt.Color != nil || len(opt.Colors) == 1
+	return opt.Color.IsSet() || len(opt.Colors) == 1
 }
 
 // resolveContourLineStyles returns one line-style name per level, porting
@@ -96,8 +96,8 @@ func resolveContourLineStyles(levels []float64, opt ContourOptions, monochrome b
 	}
 
 	negative := "dashed"
-	if opt.NegativeLineStyles != nil && *opt.NegativeLineStyles != "" {
-		negative = *opt.NegativeLineStyles
+	if style := opt.NegativeLineStyles.OrZero(); style != "" {
+		negative = style
 	}
 	zmin, zmax := levels[0], levels[0]
 	for _, lev := range levels {

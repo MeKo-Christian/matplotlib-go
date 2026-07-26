@@ -6,52 +6,47 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
 // Surface draws a structured surface as projected, z-sorted quadrilateral faces.
-func (a *Axes3D) Surface(x, y []float64, z [][]float64, opts ...core.PlotOptions) *core.PolyCollection {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes3D) Surface(x, y []float64, z [][]float64, opt core.PlotOptions) *core.PolyCollection {
 	limitsChanged := a.observe3DGrid(x, y, z)
-	polygons, faceColors, scalarValues, zorder, mapping := a.projectSurfacePolygons(x, y, z, opts...)
+	polygons, faceColors, scalarValues, zorder, mapping := a.projectSurfacePolygons(x, y, z, opt)
 	if len(polygons) == 0 {
 		return nil
 	}
 
 	alpha := 1.0
-	label := ""
+	if v, ok := opt.Alpha.Get(); ok && v >= 0 && v <= 1 {
+		alpha = v
+	}
+	// EdgeWidth wins over LineWidth, and a negative value falls through to the
+	// 1 pt default rather than being clamped.
 	edgeWidth := 1.0
-	edgeColor := render.Color{A: 0}
+	if v, ok := opt.EdgeWidth.Get(); ok && v >= 0 {
+		edgeWidth = v
+	} else if v, ok := opt.LineWidth.Get(); ok && v >= 0 {
+		edgeWidth = v
+	}
 	antialias := render.AntialiasDefault
-	if opt, ok := optarg.Optional("surface", opts); ok {
-		if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-			alpha = *opt.Alpha
-		}
-		if opt.EdgeWidth != nil && *opt.EdgeWidth >= 0 {
-			edgeWidth = *opt.EdgeWidth
-		} else if opt.LineWidth != nil && *opt.LineWidth >= 0 {
-			edgeWidth = *opt.LineWidth
-		}
-		if opt.EdgeColor != nil {
-			edgeColor = *opt.EdgeColor
-		}
-		if opt.Antialiased != nil && !*opt.Antialiased {
-			antialias = render.AntialiasOff
-		}
-		label = opt.Label
+	if v, ok := opt.Antialiased.Get(); ok && !v {
+		antialias = render.AntialiasOff
 	}
 	for i := range faceColors {
 		faceColors[i] = faceColors[i].WithAlphaMultiplier(alpha)
 	}
-	edgeColor = edgeColor.WithAlphaMultiplier(alpha)
-	edgeColors := surfaceEdgeColors(faceColors, optarg.One("surface", opts))
+	edgeColor := opt.EdgeColor.Or(render.Color{A: 0}).WithAlphaMultiplier(alpha)
+	edgeColors := surfaceEdgeColors(faceColors, opt)
 
 	collection := &core.PolyCollection{
 		Polygons: polygons,
 		PatchCollection: core.PatchCollection{
 			Collection: core.Collection{
 				Coords:       core.Coords(core.CoordData),
-				Label:        label,
+				Label:        opt.Label,
 				Alpha:        1,
 				Antialias:    antialias,
 				Colormap:     mapping.Colormap,
@@ -72,13 +67,13 @@ func (a *Axes3D) Surface(x, y []float64, z [][]float64, opts ...core.PlotOptions
 	a.Add(collection)
 	a.add3DReprojector(func() {
 		if collection != nil {
-			polygons, faceColors, scalarValues, zorder, mapping := a.projectSurfacePolygons(x, y, z, opts...)
+			polygons, faceColors, scalarValues, zorder, mapping := a.projectSurfacePolygons(x, y, z, opt)
 			for i := range faceColors {
 				faceColors[i] = faceColors[i].WithAlphaMultiplier(alpha)
 			}
 			collection.Polygons = polygons
 			collection.FaceColors = faceColors
-			collection.EdgeColors = surfaceEdgeColors(faceColors, optarg.One("surface", opts))
+			collection.EdgeColors = surfaceEdgeColors(faceColors, opt)
 			collection.Colormap = mapping.Colormap
 			collection.Norm = mapping.Norm
 			collection.VMin = mapping.VMin
@@ -98,7 +93,8 @@ type surfaceFace struct {
 	depth   float64
 }
 
-func (a *Axes3D) projectSurfacePolygons(x, y []float64, z [][]float64, opts ...core.PlotOptions) ([][]geom.Pt, []render.Color, []float64, float64, core.ScalarMapInfo) {
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes3D) projectSurfacePolygons(x, y []float64, z [][]float64, opt core.PlotOptions) ([][]geom.Pt, []render.Color, []float64, float64, core.ScalarMapInfo) {
 	if a == nil || len(z) == 0 {
 		return nil, nil, nil, 0, core.ScalarMapInfo{}
 	}
@@ -113,13 +109,12 @@ func (a *Axes3D) projectSurfacePolygons(x, y []float64, z [][]float64, opts ...c
 		}
 	}
 
-	opt := optarg.One("surface", opts)
 	faces := make([]surfaceFace, 0, (rows-1)*(cols-1))
 	values := make([]float64, 0, (rows-1)*(cols-1))
 	collectionDepth := math.Inf(1)
 	rowIndices, colIndices := surfaceSampleIndices(rows, cols, opt)
 	defaultColor := a.NextColor()
-	useMapping := opt.Colormap != nil && *opt.Colormap != ""
+	useMapping := opt.Colormap.OrZero() != ""
 	useExplicitFaceColors := len(opt.FaceColors) > 0
 	shade := surfaceShadeEnabled(opt, useMapping)
 	for rowIdx := 0; rowIdx+1 < len(rowIndices); rowIdx++ {
@@ -172,8 +167,8 @@ func (a *Axes3D) projectSurfacePolygons(x, y []float64, z [][]float64, opts ...c
 			switch {
 			case useExplicitFaceColors:
 				baseColor = faceColorAtIndex(opt.FaceColors, len(faces))
-			case opt.Color != nil:
-				baseColor = *opt.Color
+			case opt.Color.IsSet():
+				baseColor = opt.Color.OrZero()
 			}
 			if shade && !useMapping {
 				baseColor = shade3DFaceColor(baseColor, normal)
@@ -246,24 +241,13 @@ func surfaceGridSampleIndices(length, count int) []int {
 
 //nolint:gocritic // Sampling reads an immutable PlotOptions snapshot.
 func surfaceSampleIndices(rows, cols int, opt core.PlotOptions) ([]int, []int) {
-	hasStride := opt.RStride != nil || opt.CStride != nil
-	if hasStride {
-		rstride, cstride := 10, 10
-		if opt.RStride != nil {
-			rstride = *opt.RStride
-		}
-		if opt.CStride != nil {
-			cstride = *opt.CStride
-		}
+	if opt.RStride.IsSet() || opt.CStride.IsSet() {
+		rstride := opt.RStride.Or(10)
+		cstride := opt.CStride.Or(10)
 		return steppedSampleIndices(rows, rstride), steppedSampleIndices(cols, cstride)
 	}
-	rcount, ccount := default3DSurfaceCount, default3DSurfaceCount
-	if opt.RCount != nil {
-		rcount = *opt.RCount
-	}
-	if opt.CCount != nil {
-		ccount = *opt.CCount
-	}
+	rcount := opt.RCount.Or(default3DSurfaceCount)
+	ccount := opt.CCount.Or(default3DSurfaceCount)
 	return surfaceGridSampleIndices(rows, rcount), surfaceGridSampleIndices(cols, ccount)
 }
 
@@ -285,7 +269,7 @@ func surfacePatchPerimeter(row0, row1, col0, col1 int, emit func(row, col int)) 
 // Trisurf projects a triangulated unstructured surface mesh as filled polygons.
 //
 //nolint:gocritic // Triangulation is a public value type; keep the pre-v1 method signature value-semantic.
-func (a *Axes3D) Trisurf(tri core.Triangulation, z []float64, opts ...core.PlotOptions) *core.PolyCollection {
+func (a *Axes3D) Trisurf(tri core.Triangulation, z []float64, opt core.PlotOptions) *core.PolyCollection {
 	if a == nil || len(tri.X) == 0 {
 		return nil
 	}
@@ -299,37 +283,30 @@ func (a *Axes3D) Trisurf(tri core.Triangulation, z []float64, opts ...core.PlotO
 	}
 	limitsChanged := a.observe3DTriangulation(tri, z)
 
-	color := a.NextColor()
+	// NextColor runs even when the caller supplied a color, so the property
+	// cycle advances once per triangulated surface either way.
+	color := opt.Color.Or(a.NextColor())
 	lineWidth := 1.0
+	if v, ok := opt.EdgeWidth.Get(); ok {
+		lineWidth = v
+	} else if v, ok := opt.LineWidth.Get(); ok {
+		lineWidth = v
+	}
 	alpha := 1.0
-	label := ""
+	if v, ok := opt.Alpha.Get(); ok && v >= 0 && v <= 1 {
+		alpha = v
+	}
 	edgeColor := render.Color{A: 0}
+	if v, ok := opt.EdgeColor.Get(); ok {
+		edgeColor = v.WithAlphaMultiplier(alpha)
+	}
 	antialias := render.AntialiasDefault
-	if opt, ok := optarg.Optional("trisurf", opts); ok {
-		if opt.Color != nil {
-			color = *opt.Color
-		}
-		if opt.EdgeWidth != nil {
-			lineWidth = *opt.EdgeWidth
-		} else if opt.LineWidth != nil {
-			lineWidth = *opt.LineWidth
-		}
-		if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-			alpha = *opt.Alpha
-		}
-		if opt.EdgeColor != nil {
-			edgeColor = *opt.EdgeColor
-			edgeColor = edgeColor.WithAlphaMultiplier(alpha)
-		}
-		if opt.Antialiased != nil && !*opt.Antialiased {
-			antialias = render.AntialiasOff
-		}
-		label = opt.Label
+	if v, ok := opt.Antialiased.Get(); ok && !v {
+		antialias = render.AntialiasOff
 	}
 
-	faceColor := color
-	faceColor = faceColor.WithAlphaMultiplier(alpha)
-	faces, faceColors, scalarValues, faceZ, mapping := a.projectTriangulationFaces(tri, z, faceColor, optarg.One("trisurf", opts))
+	faceColor := color.WithAlphaMultiplier(alpha)
+	faces, faceColors, scalarValues, faceZ, mapping := a.projectTriangulationFaces(tri, z, faceColor, opt)
 	if len(faces) == 0 {
 		return nil
 	}
@@ -338,7 +315,7 @@ func (a *Axes3D) Trisurf(tri core.Triangulation, z []float64, opts ...core.PlotO
 		PatchCollection: core.PatchCollection{
 			Collection: core.Collection{
 				Coords:       core.Coords(core.CoordData),
-				Label:        label,
+				Label:        opt.Label,
 				Alpha:        1,
 				Antialias:    antialias,
 				Colormap:     mapping.Colormap,
@@ -358,7 +335,7 @@ func (a *Axes3D) Trisurf(tri core.Triangulation, z []float64, opts ...core.PlotO
 	a.Add(collection)
 	a.add3DReprojector(func() {
 		if collection != nil {
-			faces, faceColors, scalarValues, faceZ, mapping := a.projectTriangulationFaces(tri, z, faceColor, optarg.One("trisurf", opts))
+			faces, faceColors, scalarValues, faceZ, mapping := a.projectTriangulationFaces(tri, z, faceColor, opt)
 			collection.Polygons = faces
 			collection.FaceColors = faceColors
 			collection.Colormap = mapping.Colormap

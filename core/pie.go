@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -16,7 +16,7 @@ type PieOptions struct {
 	Radius           float64
 	Width            float64
 	StartAngle       float64
-	CounterClockwise *bool
+	CounterClockwise optional.Value[bool]
 	Colors           []render.Color
 	Labels           []string
 	Explode          []float64
@@ -24,7 +24,7 @@ type PieOptions struct {
 	LabelDistance    float64
 	PctDistance      float64
 	RotateLabels     bool
-	Normalize        *bool
+	Normalize        optional.Value[bool]
 	Hatch            string
 	Hatches          []string
 	HatchColor       render.Color
@@ -32,12 +32,12 @@ type PieOptions struct {
 	Shadow           bool
 	ShadowOffset     geom.Pt
 	ShadowColor      render.Color
-	EdgeColor        *render.Color
+	EdgeColor        optional.Value[render.Color]
 	LineWidth        float64
-	Antialiased      *bool
+	Antialiased      optional.Value[bool]
 	Alpha            float64
 	Coords           CoordinateSpec
-	Frame            *bool
+	Frame            optional.Value[bool]
 }
 
 // PieContainer groups the wedge and text artists created by Axes.Pie.
@@ -68,41 +68,31 @@ type Wedge struct {
 }
 
 // Pie draws pie-slice wedges and returns the artists grouped in a container.
-func (a *Axes) Pie(values []float64, opts ...PieOptions) *PieContainer {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) Pie(values []float64, opt PieOptions) *PieContainer {
 	if a == nil || len(values) == 0 {
 		return nil
 	}
 	rc := a.resolvedRC()
-	cfg := PieOptions{
-		Center:        geom.Pt{},
-		Radius:        1,
-		StartAngle:    0,
-		LabelDistance: 1.1,
-		PctDistance:   0.6,
-		LineWidth:     rc.Patch.LineWidth,
-		Alpha:         1,
-		Coords:        Coords(CoordData),
+	cfg := opt
+	if cfg.Radius <= 0 {
+		cfg.Radius = 1
 	}
-	if supplied, ok := optarg.Optional("pie", opts); ok {
-		cfg = supplied
-		if cfg.Radius <= 0 {
-			cfg.Radius = 1
-		}
-		if cfg.LabelDistance <= 0 {
-			cfg.LabelDistance = 1.1
-		}
-		if cfg.PctDistance <= 0 {
-			cfg.PctDistance = 0.6
-		}
-		if cfg.LineWidth <= 0 {
-			cfg.LineWidth = rc.Patch.LineWidth
-		}
-		if cfg.Alpha <= 0 {
-			cfg.Alpha = 1
-		}
-		if cfg.Coords == (CoordinateSpec{}) {
-			cfg.Coords = Coords(CoordData)
-		}
+	if cfg.LabelDistance <= 0 {
+		cfg.LabelDistance = 1.1
+	}
+	if cfg.PctDistance <= 0 {
+		cfg.PctDistance = 0.6
+	}
+	if cfg.LineWidth <= 0 {
+		cfg.LineWidth = rc.Patch.LineWidth
+	}
+	if cfg.Alpha <= 0 {
+		cfg.Alpha = 1
+	}
+	if cfg.Coords == (CoordinateSpec{}) {
+		cfg.Coords = Coords(CoordData)
 	}
 
 	total := 0.0
@@ -126,8 +116,8 @@ func (a *Axes) Pie(values []float64, opts ...PieOptions) *PieContainer {
 	if rc.Patch.ForceEdgeColor {
 		edgeColor = rc.Patch.EdgeColor
 	}
-	if cfg.EdgeColor != nil {
-		edgeColor = *cfg.EdgeColor
+	if v, ok := cfg.EdgeColor.Get(); ok {
+		edgeColor = v
 	}
 
 	theta := cfg.StartAngle
@@ -231,7 +221,7 @@ func (a *Axes) Pie(values []float64, opts ...PieOptions) *PieContainer {
 				HAlign:   labelHAlign,
 				VAlign:   labelVAlign,
 				Angle:    pieLabelRotation(mid, cfg.RotateLabels),
-				ClipOn:   &clipOn,
+				ClipOn:   optional.Of(clipOn),
 			}))
 		}
 		if cfg.AutoPct != "" {
@@ -242,7 +232,7 @@ func (a *Axes) Pie(values []float64, opts ...PieOptions) *PieContainer {
 				Coords: cfg.Coords,
 				HAlign: TextAlignCenter,
 				VAlign: TextVAlignMiddle,
-				ClipOn: &clipOn,
+				ClipOn: optional.Of(clipOn),
 			}))
 		}
 
@@ -268,23 +258,18 @@ func (a *Axes) Pie(values []float64, opts ...PieOptions) *PieContainer {
 }
 
 // PieLabel adds labels to an existing pie container, mirroring Matplotlib's pie_label helper.
-func (a *Axes) PieLabel(container *PieContainer, labels []string, opts ...PieLabelOptions) []*Text {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) PieLabel(container *PieContainer, labels []string, opt PieLabelOptions) []*Text {
 	if a == nil || container == nil || len(container.Wedges) == 0 {
 		return nil
 	}
-	cfg := PieLabelOptions{
-		Distance:  0.6,
-		Alignment: "auto",
-		Coords:    Coords(CoordData),
+	cfg := opt
+	if cfg.Distance <= 0 {
+		cfg.Distance = 0.6
 	}
-	if supplied, ok := optarg.Optional("pie label", opts); ok {
-		cfg = supplied
-		if cfg.Distance <= 0 {
-			cfg.Distance = 0.6
-		}
-		if cfg.Coords == (CoordinateSpec{}) {
-			cfg.Coords = Coords(CoordData)
-		}
+	if cfg.Coords == (CoordinateSpec{}) {
+		cfg.Coords = Coords(CoordData)
 	}
 	out := make([]*Text, 0, len(container.Wedges))
 	for i, wedge := range container.Wedges {
@@ -316,7 +301,7 @@ func (a *Axes) PieLabel(container *PieContainer, labels []string, opts ...PieLab
 			HAlign: hAlign,
 			VAlign: vAlign,
 			Angle:  pieLabelRotation(mid, cfg.Rotate),
-			ClipOn: &clipOn,
+			ClipOn: optional.Of(clipOn),
 		})
 		out = append(out, txt)
 		container.Labels = append(container.Labels, txt)

@@ -47,7 +47,7 @@ func addImageNorm(fig *core.Figure, rect geom.Rect, title, cmap string, data [][
 		Norm:     norm,
 		Origin:   optional.Of(core.ImageOriginLower),
 		Extent:   optional.Of(extent),
-		Aspect:   optional.Of("auto"),
+		Aspect:   optional.Of(core.AspectAuto),
 	})
 	if img != nil {
 		fig.AddColorbar(ax, img, core.ColorbarOptions{Label: label, Padding: 0.03})
@@ -65,7 +65,7 @@ func addBoundaryPanel(fig *core.Figure) {
 	}, core.MeshOptions{
 		XEdges:   []float64{0, 1, 2, 3, 4},
 		YEdges:   []float64{0, 1, 2, 3},
-		Colormap: &cmap,
+		Colormap: optional.Of(cmap),
 		Norm:     core.BoundaryNorm{Boundaries: []float64{0, 1, 2, 3, 4}, NColors: 256},
 	})
 	if mesh != nil {
@@ -91,9 +91,9 @@ func addExtensionsPanel(fig *core.Figure) {
 	}, core.MeshOptions{
 		XEdges:   []float64{0, 1, 2, 3},
 		YEdges:   []float64{0, 1, 2},
-		Colormap: &cmap,
-		VMin:     &vmin,
-		VMax:     &vmax,
+		Colormap: optional.Of(cmap),
+		VMin:     optional.Of(vmin),
+		VMax:     optional.Of(vmax),
 	})
 	if mesh != nil {
 		fig.AddColorbar(ax, mesh, core.ColorbarOptions{Label: "extended", Extend: "both", Padding: 0.03})

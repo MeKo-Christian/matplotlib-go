@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -33,7 +34,7 @@ func Plot() *core.Figure {
 	_, _ = host.Plot(
 		[]float64{0, 1, 2, 3, 4},
 		[]float64{0, 1, 2, 3, 4},
-		core.PlotOptions{Color: &blue, LineWidth: &lineWidth},
+		core.PlotOptions{Color: optional.Of(blue), LineWidth: optional.Of(lineWidth)},
 	)
 	host.SetXLim(0, 4)
 	host.SetYLim(0, 4)
@@ -48,7 +49,7 @@ func Plot() *core.Figure {
 	_, _ = twin.Plot(
 		[]float64{10, 20, 30, 40, 50},
 		[]float64{4, 3, 2, 1, 0},
-		core.PlotOptions{Color: &orange, LineWidth: &lineWidth},
+		core.PlotOptions{Color: optional.Of(orange), LineWidth: optional.Of(lineWidth)},
 	)
 	twin.SetXLim(10, 50)
 	twin.XAxisTop.Locator = ticker.FixedLocator{TicksList: []float64{10, 30, 50}}
@@ -67,7 +68,7 @@ func Plot() *core.Figure {
 	_, _ = primary.Plot(
 		[]float64{0, 1, 2, 3, 4},
 		[]float64{0, 20, 40, 60, 100},
-		core.PlotOptions{Color: &blue, LineWidth: &lineWidth},
+		core.PlotOptions{Color: optional.Of(blue), LineWidth: optional.Of(lineWidth)},
 	)
 	primary.SetXLim(0, 4)
 	primary.SetYLim(0, 100)

@@ -18,7 +18,7 @@ func TestSavefigWritesPNGAndSVG(t *testing.T) {
 	resetForTests()
 	t.Setenv("MATPLOTLIB_BACKEND", "gobasic")
 
-	if _, err := Plot([]float64{0, 1, 2}, []float64{2, 1, 3}); err != nil {
+	if _, err := Plot([]float64{0, 1, 2}, []float64{2, 1, 3}, core.PlotOptions{}); err != nil {
 		t.Fatalf("Plot() returned error: %v", err)
 	}
 	Title("Savefig")
@@ -323,7 +323,7 @@ func TestCLFClearsCurrentFigureAndAxesRegistry(t *testing.T) {
 
 	fig := Figure()
 	ax := GCA()
-	if _, err := Plot([]float64{0, 1}, []float64{0, 1}); err != nil {
+	if _, err := Plot([]float64{0, 1}, []float64{0, 1}, core.PlotOptions{}); err != nil {
 		t.Fatalf("Plot() returned error: %v", err)
 	}
 	fig.Add(&core.Text{Position: geom.Pt{X: 0.5, Y: 0.5}, Content: "figure note"})
@@ -357,10 +357,10 @@ func TestCLAClearsCurrentAxesButKeepsItCurrent(t *testing.T) {
 	resetForTests()
 
 	ax := GCA()
-	if _, err := Plot([]float64{0, 1}, []float64{0, 1}); err != nil {
+	if _, err := Plot([]float64{0, 1}, []float64{0, 1}, core.PlotOptions{}); err != nil {
 		t.Fatalf("Plot() returned error: %v", err)
 	}
-	button := widgets.NewButton(ax, "Run")
+	button := widgets.NewButton(ax, "Run", widgets.ButtonOptions{})
 	if button == nil {
 		t.Fatal("button constructor returned nil")
 	}

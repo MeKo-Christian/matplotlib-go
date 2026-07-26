@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -47,7 +48,7 @@ func Plot() *core.Figure {
 	}
 
 	blue := render.Color{R: 0.15, G: 0.35, B: 0.65, A: 1}
-	ax.Quiver(qx, qy, qu, qv, core.QuiverOptions{Color: &blue})
+	ax.Quiver(qx, qy, qu, qv, core.QuiverOptions{Color: optional.Of(blue)})
 	return fig
 }
 

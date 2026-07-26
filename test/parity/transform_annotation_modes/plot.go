@@ -29,7 +29,7 @@ func Plot() *core.Figure {
 
 	lineColor := render.Color{R: 0.12, G: 0.47, B: 0.71, A: 1}
 	width := 2.0
-	_, _ = ax.Plot([]float64{1, 3, 5, 7, 9}, []float64{1.5, 4, 3, 7, 8.5}, core.PlotOptions{Color: &lineColor, LineWidth: &width})
+	_, _ = ax.Plot([]float64{1, 3, 5, 7, 9}, []float64{1.5, 4, 3, 7, 8.5}, core.PlotOptions{Color: optional.Of(lineColor), LineWidth: optional.Of(width)})
 	textColor := render.Color{R: 0.10, G: 0.10, B: 0.10, A: 1}
 
 	ax.Annotate("data", 3, 4, core.AnnotationOptions{

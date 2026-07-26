@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -267,7 +268,7 @@ func TestAxesFillCreatesClosedPolygonCollection(t *testing.T) {
 	fill := ax.Fill(
 		[]float64{0, 2, 1},
 		[]float64{0, 0, 3},
-		FillOptions{Color: &color, EdgeColor: &edge, EdgeWidth: &edgeWidth, Label: "triangle"},
+		FillOptions{Color: optional.Of(color), EdgeColor: optional.Of(edge), EdgeWidth: optional.Of(edgeWidth), Label: "triangle"},
 	)
 	if fill == nil {
 		t.Fatal("Fill() returned nil")
@@ -294,7 +295,7 @@ func TestFillPlotPreservesColorAlphaWhenAlphaOmitted(t *testing.T) {
 	fill := ax.FillToBaseline(
 		[]float64{0, 1, 2},
 		[]float64{1, 2, 1},
-		FillOptions{Color: &fillColor},
+		FillOptions{Color: optional.Of(fillColor)},
 	)
 	if fill == nil {
 		t.Fatal("expected fill artist")
@@ -323,7 +324,7 @@ func TestFillPlotExplicitAlphaOverridesColorAlpha(t *testing.T) {
 		[]float64{0, 1, 2},
 		[]float64{1, 2, 1},
 		[]float64{0, 1, 0},
-		FillOptions{Color: &fillColor, Alpha: &alpha},
+		FillOptions{Color: optional.Of(fillColor), Alpha: optional.Of(alpha)},
 	)
 	if err != nil {
 		t.Fatalf("FillBetween() returned error: %v", err)
@@ -379,7 +380,7 @@ func TestFillBetweenXPreservesColorAlphaWhenAlphaOmitted(t *testing.T) {
 		[]float64{0, 1, 2},
 		[]float64{1, 2, 1},
 		[]float64{0, 1, 0},
-		FillOptions{Color: &fillColor},
+		FillOptions{Color: optional.Of(fillColor)},
 	)
 	if err != nil {
 		t.Fatalf("FillBetweenX() returned error: %v", err)
@@ -409,6 +410,7 @@ func TestFillBetweenAutoScalesYAndPreservesManualX(t *testing.T) {
 		[]float64{-100, 100},
 		[]float64{-50, 50},
 		[]float64{0, 0},
+		FillOptions{},
 	); err != nil {
 		t.Fatalf("FillBetween() returned error: %v", err)
 	}

@@ -10,6 +10,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -40,14 +41,14 @@ func Plot() *core.Figure {
 		ys[i] = math.Sin(x)
 	}
 	_, _ = ax.Plot(xs, ys, core.PlotOptions{
-		Color:     colorPtr(render.Color{R: 0.12, G: 0.47, B: 0.71, A: 1}),
-		LineWidth: floatPtr(2),
+		Color:     optional.Of(render.Color{R: 0.12, G: 0.47, B: 0.71, A: 1}),
+		LineWidth: optional.Of(2.0),
 	})
 
 	// A straight reference line, to show the wiggle on an otherwise flat path.
 	_, _ = ax.Plot([]float64{0, 10}, []float64{0, 0}, core.PlotOptions{
-		Color:     colorPtr(render.Color{R: 0.84, G: 0.15, B: 0.16, A: 1}),
-		LineWidth: floatPtr(2),
+		Color:     optional.Of(render.Color{R: 0.84, G: 0.15, B: 0.16, A: 1}),
+		LineWidth: optional.Of(2.0),
 	})
 
 	return fig

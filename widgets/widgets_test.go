@@ -5,6 +5,7 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -20,12 +21,12 @@ func TestWidgetConstructorsPrepareAxesAndStoreState(t *testing.T) {
 
 	pressed := true
 	active := true
-	button := NewButton(axButton, "Run", ButtonOptions{Pressed: &pressed})
-	slider := NewSlider(axSlider, "gain", 0, 10, 12)
-	rangeSlider := NewRangeSlider(axRange, "window", 0, 10, 8, 2)
-	checks := NewCheckButtons(axCheck, []string{"A", "B"}, []bool{true, false})
-	radios := NewRadioButtons(axRadio, []string{"x", "y", "z"}, 5)
-	text := NewTextBox(axText, "Query", "", TextBoxOptions{Placeholder: "type...", Active: &active})
+	button := NewButton(axButton, "Run", ButtonOptions{Pressed: optional.Of(pressed)})
+	slider := NewSlider(axSlider, "gain", 0, 10, 12, SliderOptions{})
+	rangeSlider := NewRangeSlider(axRange, "window", 0, 10, 8, 2, RangeSliderOptions{})
+	checks := NewCheckButtons(axCheck, []string{"A", "B"}, []bool{true, false}, CheckButtonsOptions{})
+	radios := NewRadioButtons(axRadio, []string{"x", "y", "z"}, 5, RadioButtonsOptions{})
+	text := NewTextBox(axText, "Query", "", TextBoxOptions{Placeholder: "type...", Active: optional.Of(active)})
 
 	if button == nil || slider == nil || rangeSlider == nil || checks == nil || radios == nil || text == nil {
 		t.Fatal("expected widget constructors to return artists")
@@ -34,15 +35,15 @@ func TestWidgetConstructorsPrepareAxesAndStoreState(t *testing.T) {
 		t.Fatal("button should store pressed state")
 	}
 	disabled := true
-	disabledButton := NewButton(axButton, "Stop", ButtonOptions{Disabled: &disabled})
+	disabledButton := NewButton(axButton, "Stop", ButtonOptions{Disabled: optional.Of(disabled)})
 	if disabledButton.Enabled {
 		t.Fatal("button should honor Disabled option")
 	}
-	disabledChecks := NewCheckButtons(axCheck, []string{"C"}, []bool{false}, CheckButtonsOptions{Disabled: &disabled})
+	disabledChecks := NewCheckButtons(axCheck, []string{"C"}, []bool{false}, CheckButtonsOptions{Disabled: optional.Of(disabled)})
 	if disabledChecks.Enabled {
 		t.Fatal("check buttons should honor Disabled option")
 	}
-	disabledRadios := NewRadioButtons(axRadio, []string{"m", "n"}, 0, RadioButtonsOptions{Disabled: &disabled})
+	disabledRadios := NewRadioButtons(axRadio, []string{"m", "n"}, 0, RadioButtonsOptions{Disabled: optional.Of(disabled)})
 	if disabledRadios.Enabled {
 		t.Fatal("radio buttons should honor Disabled option")
 	}
@@ -71,12 +72,12 @@ func TestSliderConstructorsSnapInitialValuesToStep(t *testing.T) {
 	axRange := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.3}, Max: geom.Pt{X: 0.8, Y: 0.4}})
 
 	step := 0.5
-	slider := NewSlider(axSlider, "gain", 0, 10, 5.26, SliderOptions{ValueStep: &step})
+	slider := NewSlider(axSlider, "gain", 0, 10, 5.26, SliderOptions{ValueStep: optional.Of(step)})
 	if slider.Value != 5.5 {
 		t.Fatalf("slider initial value = %v, want snapped 5.5", slider.Value)
 	}
 
-	rangeSlider := NewRangeSlider(axRange, "window", 0, 10, 7.76, 2.24, RangeSliderOptions{ValueStep: &step})
+	rangeSlider := NewRangeSlider(axRange, "window", 0, 10, 7.76, 2.24, RangeSliderOptions{ValueStep: optional.Of(step)})
 	if rangeSlider.Low != 2 || rangeSlider.High != 8 {
 		t.Fatalf("range slider initial range = [%v, %v], want snapped [2, 8]", rangeSlider.Low, rangeSlider.High)
 	}
@@ -85,17 +86,17 @@ func TestSliderConstructorsSnapInitialValuesToStep(t *testing.T) {
 func TestWidgetConstructorsUseConfiguredVisualStyle(t *testing.T) {
 	goFig := core.NewFigure(800, 600)
 	goAx := goFig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.2}})
-	goButton := NewButton(goAx, "Apply")
-	goSlider := NewSlider(goAx, "gain", 0, 1, 0.5)
+	goButton := NewButton(goAx, "Apply", ButtonOptions{})
+	goSlider := NewSlider(goAx, "gain", 0, 1, 0.5, SliderOptions{})
 
 	mplFig := core.NewFigure(800, 600, style.WithWidgetVisualStyle(style.WidgetVisualMatplotlib))
 	mplAx := mplFig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.2}})
-	mplButton := NewButton(mplAx, "Apply")
-	mplSlider := NewSlider(mplAx, "gain", 0, 1, 0.5)
-	mplRange := NewRangeSlider(mplAx, "window", 0, 1, 0.25, 0.75)
-	mplText := NewTextBox(mplAx, "label", "phase scan")
-	mplChecks := NewCheckButtons(mplAx, []string{"signal"}, []bool{true})
-	mplRadios := NewRadioButtons(mplAx, []string{"blue", "amber"}, 1)
+	mplButton := NewButton(mplAx, "Apply", ButtonOptions{})
+	mplSlider := NewSlider(mplAx, "gain", 0, 1, 0.5, SliderOptions{})
+	mplRange := NewRangeSlider(mplAx, "window", 0, 1, 0.25, 0.75, RangeSliderOptions{})
+	mplText := NewTextBox(mplAx, "label", "phase scan", TextBoxOptions{})
+	mplChecks := NewCheckButtons(mplAx, []string{"signal"}, []bool{true}, CheckButtonsOptions{})
+	mplRadios := NewRadioButtons(mplAx, []string{"blue", "amber"}, 1, RadioButtonsOptions{})
 
 	if goButton.FaceColor == mplButton.FaceColor {
 		t.Fatal("Matplotlib widget visual style should not replace the Go default style")
@@ -705,7 +706,7 @@ func (a widgetLayerDataArtist) Bounds(*core.DrawContext) geom.Rect { return geom
 func TestWidgetLayerDrawsAboveDataArtistZOrder(t *testing.T) {
 	fig := core.NewFigure(120, 80)
 	ax := fig.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
-	button := NewButton(ax, "Run")
+	button := NewButton(ax, "Run", ButtonOptions{})
 	button.z = -100
 	rec := &widgetLayerRecordingRenderer{}
 	ax.Add(widgetLayerDataArtist{events: &rec.events, z: 10000})

@@ -11,7 +11,7 @@ import (
 func TestPickPrefersWidgetLayerOverLaterHighZDataArtist(t *testing.T) {
 	fig := core.NewFigure(120, 80)
 	ax := fig.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
-	button := widgets.NewButton(ax, "Run")
+	button := widgets.NewButton(ax, "Run", widgets.ButtonOptions{})
 	ax.Add(widgetPickDataArtist{})
 
 	hits := Pick(fig, geom.Pt{X: 60, Y: 40})

@@ -8,7 +8,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/diag"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -311,9 +311,10 @@ func NewAxes(ax *core.Axes) *Axes3D {
 }
 
 // Plot3D projects x/y/z values and draws a line through projected points.
-func (a *Axes3D) Plot3D(x, y, z []float64, opts ...core.PlotOptions) *core.Line2D {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes3D) Plot3D(x, y, z []float64, opt core.PlotOptions) *core.Line2D {
 	limitsChanged := a.observe3DData(x, y, z)
-	opt, supplied := optarg.Optional("plot3d", opts)
 	projected := a.projectedData(x, y, z, opt.AxLimClip)
 	if len(projected) == 0 {
 		return nil
@@ -325,17 +326,7 @@ func (a *Axes3D) Plot3D(x, y, z []float64, opts ...core.PlotOptions) *core.Line2
 		y2[i] = p.Y
 	}
 
-	if supplied {
-		line, err := a.Plot(x2, y2, opt)
-		if err != nil {
-			return nil
-		}
-		a.add3DReprojector(func() {
-			reprojectLine3D(line, a.projectedData(x, y, z, opt.AxLimClip))
-		}, limitsChanged)
-		return line
-	}
-	line, err := a.Plot(x2, y2)
+	line, err := a.Plot(x2, y2, opt)
 	if err != nil {
 		return nil
 	}
@@ -346,15 +337,16 @@ func (a *Axes3D) Plot3D(x, y, z []float64, opts ...core.PlotOptions) *core.Line2
 }
 
 // Scatter3D projects x/y/z values and draws markers through projected points.
-func (a *Axes3D) Scatter3D(x, y, z []float64, opts ...core.ScatterOptions) *core.Scatter2D {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes3D) Scatter3D(x, y, z []float64, opt core.ScatterOptions) *core.Scatter2D {
 	limitsChanged := a.observe3DData(x, y, z)
 	if a.ensure3DZMargin(0.05) {
 		limitsChanged = true
 	}
-	opt, supplied := optarg.Optional("scatter3d", opts)
-	if opt.Size == nil {
+	if !opt.Size.IsSet() {
 		size := default3DScatterSize
-		opt.Size = &size
+		opt.Size = optional.Of(size)
 	}
 	projected := a.projectedScatterData(x, y, z, opt.AxLimClip)
 	if len(projected) == 0 {
@@ -368,19 +360,6 @@ func (a *Axes3D) Scatter3D(x, y, z []float64, opts ...core.ScatterOptions) *core
 	}
 	projectedOpt := scatterOptionsForProjected(opt, projected)
 
-	if supplied {
-		scatter, err := a.Scatter(x2, y2, projectedOpt)
-		if err != nil {
-			return nil
-		}
-		reprojectScatter3D(scatter, a.projectedScatterData(x, y, z, opt.AxLimClip), opt)
-		scatter.SetZ(a.points3DCollectionZ(x, y, z))
-		a.add3DReprojector(func() {
-			reprojectScatter3D(scatter, a.projectedScatterData(x, y, z, opt.AxLimClip), opt)
-			scatter.SetZ(a.points3DCollectionZ(x, y, z))
-		}, limitsChanged)
-		return scatter
-	}
 	scatter, err := a.Scatter(x2, y2, projectedOpt)
 	if err != nil {
 		return nil
@@ -399,21 +378,25 @@ func (a *Axes3D) Scatter3D(x, y, z []float64, opts ...core.ScatterOptions) *core
 // slices and delegates to [Axes3D.Plot3D]. For an actual surface from a 2D
 // height grid use [Axes3D.Surface] (or [Axes3D.Trisurf] for an unstructured
 // triangulation). The name is retained for backwards compatibility.
-func (a *Axes3D) PlotSurface(x, y, z []float64, opts ...core.PlotOptions) *core.Line2D {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes3D) PlotSurface(x, y, z []float64, opt core.PlotOptions) *core.Line2D {
 	if a != nil && !a.plotSurfaceWarned {
 		a.plotSurfaceWarned = true
 		diag.Warnf("Axes3D.PlotSurface draws a line strip, not a surface; use Axes3D.Surface(x, y, z) for a real surface")
 	}
-	return a.Plot3D(x, y, z, opts...)
+	return a.Plot3D(x, y, z, opt)
 }
 
 // Text3D projects a point and renders arbitrary text at the projected location.
-func (a *Axes3D) Text3D(x, y, z float64, text string, opts ...core.TextOptions) *core.Text {
+//
+//nolint:gocritic // TextOptions is forwarded unchanged to the axes method.
+func (a *Axes3D) Text3D(x, y, z float64, text string, opt core.TextOptions) *core.Text {
 	if a == nil || a.Axes == nil {
 		return nil
 	}
 	p := a.ProjectPoint(x, y, z)
-	txt := a.Text(p.X, p.Y, text, opts...)
+	txt := a.Text(p.X, p.Y, text, opt)
 	a.add3DReprojector(func() {
 		if txt != nil {
 			txt.Position = a.ProjectPoint(x, y, z)
@@ -424,19 +407,19 @@ func (a *Axes3D) Text3D(x, y, z float64, text string, opts ...core.TextOptions) 
 
 // Stem3DOptions configures Axes3D.Stem3D.
 type Stem3DOptions struct {
-	Color           *render.Color
-	LineWidth       *float64
-	Marker          *core.MarkerType
-	MarkerPath      *geom.Path
-	MarkerSize      *float64
-	Bottom          *float64
+	Color           optional.Value[render.Color]
+	LineWidth       optional.Value[float64]
+	Marker          optional.Value[core.MarkerType]
+	MarkerPath      optional.Value[geom.Path]
+	MarkerSize      optional.Value[float64]
+	Bottom          optional.Value[float64]
 	Orientation     string
-	BaselineColor   *render.Color
-	BaselineWidth   *float64
-	MarkerEdgeColor *render.Color
-	MarkerEdgeWidth *float64
+	BaselineColor   optional.Value[render.Color]
+	BaselineWidth   optional.Value[float64]
+	MarkerEdgeColor optional.Value[render.Color]
+	MarkerEdgeWidth optional.Value[float64]
 	Label           string
-	Alpha           *float64
+	Alpha           optional.Value[float64]
 	AxLimClip       bool
 }
 
@@ -451,26 +434,26 @@ const (
 
 // FillBetween3DOptions configures Axes3D.FillBetween3D.
 type FillBetween3DOptions struct {
-	Color     *render.Color
-	EdgeColor *render.Color
-	EdgeWidth *float64
-	Alpha     *float64
+	Color     optional.Value[render.Color]
+	EdgeColor optional.Value[render.Color]
+	EdgeWidth optional.Value[float64]
+	Alpha     optional.Value[float64]
 	Label     string
 	Mode      FillBetween3DMode
 	// Shade mirrors matplotlib's fill_between shade parameter: nil defaults
 	// to true in 'quad' mode and false in 'polygon' mode.
-	Shade     *bool
+	Shade     optional.Value[bool]
 	AxLimClip bool
 }
 
 // Quiver3DOptions configures Axes3D.Quiver.
 type Quiver3DOptions struct {
-	Color            *render.Color
-	LineWidth        *float64
-	Alpha            *float64
+	Color            optional.Value[render.Color]
+	LineWidth        optional.Value[float64]
+	Alpha            optional.Value[float64]
 	Label            string
-	Length           *float64
-	ArrowLengthRatio *float64
+	Length           optional.Value[float64]
+	ArrowLengthRatio optional.Value[float64]
 	Pivot            string
 	Normalize        bool
 	AxLimClip        bool
@@ -478,10 +461,10 @@ type Quiver3DOptions struct {
 
 // ErrorBar3DOptions configures Axes3D.ErrorBar3D.
 type ErrorBar3DOptions struct {
-	Color     *render.Color
-	LineWidth *float64
-	CapSize   *float64
-	Alpha     *float64
+	Color     optional.Value[render.Color]
+	LineWidth optional.Value[float64]
+	CapSize   optional.Value[float64]
+	Alpha     optional.Value[float64]
 	Label     string
 	AxLimClip bool
 
@@ -494,7 +477,9 @@ type ErrorBar3DOptions struct {
 }
 
 // Stem3D renders Matplotlib-style 3D stem lines, head markers, and a baseline.
-func (a *Axes3D) Stem3D(x, y, z []float64, opts ...Stem3DOptions) *core.StemContainer {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes3D) Stem3D(x, y, z []float64, opt Stem3DOptions) *core.StemContainer {
 	if a == nil || a.Axes == nil {
 		return nil
 	}
@@ -503,59 +488,58 @@ func (a *Axes3D) Stem3D(x, y, z []float64, opts ...Stem3DOptions) *core.StemCont
 		return nil
 	}
 
-	opt := optarg.One("stem3d", opts)
 	orientation := normalized3DDir(opt.Orientation)
 	bottom := 0.0
-	if opt.Bottom != nil {
-		bottom = *opt.Bottom
+	if v, ok := opt.Bottom.Get(); ok {
+		bottom = v
 	}
 
 	limitsChanged := a.observe3DStemData(x[:n], y[:n], z[:n], bottom, orientation)
 	color := a.NextColor()
-	if opt.Color != nil {
-		color = *opt.Color
+	if v, ok := opt.Color.Get(); ok {
+		color = v
 	}
 	alpha := 1.0
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		alpha = *opt.Alpha
+	if v, ok := opt.Alpha.Get(); ok && v >= 0 && opt.Alpha.OrZero() <= 1 {
+		alpha = opt.Alpha.OrZero()
 	}
 	color = color.WithAlphaMultiplier(alpha)
 
 	lineWidth := 1.5 // points; converted at the collection/line Paint sink
-	if opt.LineWidth != nil {
-		lineWidth = *opt.LineWidth
+	if v, ok := opt.LineWidth.Get(); ok {
+		lineWidth = v
 	}
 	markerType := core.MarkerCircle
-	if opt.Marker != nil {
-		markerType = *opt.Marker
+	if v, ok := opt.Marker.Get(); ok {
+		markerType = v
 	}
 	markerSize := 6.0
-	if opt.MarkerSize != nil {
-		markerSize = *opt.MarkerSize
+	if v, ok := opt.MarkerSize.Get(); ok {
+		markerSize = v
 	}
 	markerEdgeColor := color
-	if opt.MarkerEdgeColor != nil {
-		markerEdgeColor = *opt.MarkerEdgeColor
+	if opt.MarkerEdgeColor.IsSet() {
+		markerEdgeColor = opt.MarkerEdgeColor.OrZero()
 		markerEdgeColor = markerEdgeColor.WithAlphaMultiplier(alpha)
 	}
 	markerEdgeWidth := 1.0 // points; converted at the collection Paint sink
-	if opt.MarkerEdgeWidth != nil {
-		markerEdgeWidth = *opt.MarkerEdgeWidth
+	if v, ok := opt.MarkerEdgeWidth.Get(); ok {
+		markerEdgeWidth = v
 	}
 	baselineColor := colorCycleAt(a.Axes, 3)
-	if opt.BaselineColor != nil {
-		baselineColor = *opt.BaselineColor
+	if opt.BaselineColor.IsSet() {
+		baselineColor = opt.BaselineColor.OrZero()
 		baselineColor = baselineColor.WithAlphaMultiplier(alpha)
 	} else {
 		baselineColor = baselineColor.WithAlphaMultiplier(alpha)
 	}
 	baselineWidth := lineWidth
-	if opt.BaselineWidth != nil {
-		baselineWidth = *opt.BaselineWidth
+	if v, ok := opt.BaselineWidth.Get(); ok {
+		baselineWidth = v
 	}
 	markerPath := geom.Path{}
-	if opt.MarkerPath != nil {
-		markerPath = *opt.MarkerPath
+	if v, ok := opt.MarkerPath.Get(); ok {
+		markerPath = v
 	}
 	if len(markerPath.C) == 0 {
 		scatter := core.Scatter2D{Marker: markerType}
@@ -614,12 +598,16 @@ func (a *Axes3D) Stem3D(x, y, z []float64, opts ...Stem3DOptions) *core.StemCont
 }
 
 // Stem is the Matplotlib-compatible 3D stem entry point.
-func (a *Axes3D) Stem(x, y, z []float64, opts ...Stem3DOptions) *core.StemContainer {
-	return a.Stem3D(x, y, z, opts...)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes3D) Stem(x, y, z []float64, opt Stem3DOptions) *core.StemContainer {
+	return a.Stem3D(x, y, z, opt)
 }
 
 // FillBetween3D fills bands between two 3D curves.
-func (a *Axes3D) FillBetween3D(x1, y1, z1, x2, y2, z2 []float64, opts ...FillBetween3DOptions) *core.PolyCollection {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes3D) FillBetween3D(x1, y1, z1, x2, y2, z2 []float64, opt FillBetween3DOptions) *core.PolyCollection {
 	if a == nil || a.Axes == nil {
 		return nil
 	}
@@ -628,29 +616,28 @@ func (a *Axes3D) FillBetween3D(x1, y1, z1, x2, y2, z2 []float64, opts ...FillBet
 		return nil
 	}
 
-	opt := optarg.One("fill between 3d", opts)
 	limitsChanged := a.observe3DData(x1[:n], y1[:n], z1[:n])
 	if a.observe3DData(x2[:n], y2[:n], z2[:n]) {
 		limitsChanged = true
 	}
 
 	color := a.NextPatchColor()
-	if opt.Color != nil {
-		color = *opt.Color
+	if v, ok := opt.Color.Get(); ok {
+		color = v
 	}
 	alpha := 1.0
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		alpha = *opt.Alpha
+	if v, ok := opt.Alpha.Get(); ok && v >= 0 && opt.Alpha.OrZero() <= 1 {
+		alpha = opt.Alpha.OrZero()
 	}
 	color = color.WithAlphaMultiplier(alpha)
 	edgeColor := render.Color{}
-	if opt.EdgeColor != nil {
-		edgeColor = *opt.EdgeColor
+	if opt.EdgeColor.IsSet() {
+		edgeColor = opt.EdgeColor.OrZero()
 		edgeColor = edgeColor.WithAlphaMultiplier(alpha)
 	}
 	edgeWidth := 0.0
-	if opt.EdgeWidth != nil {
-		edgeWidth = *opt.EdgeWidth
+	if v, ok := opt.EdgeWidth.Get(); ok {
+		edgeWidth = v
 	}
 
 	// matplotlib fill_between: shade defaults to true in 'quad' mode and
@@ -659,8 +646,8 @@ func (a *Axes3D) FillBetween3D(x1, y1, z1, x2, y2, z2 []float64, opts ...FillBet
 	// art3d._generate_normals + _shade_colors).
 	mode := resolveFillBetween3DMode(x1[:n], y1[:n], z1[:n], x2[:n], y2[:n], z2[:n], opt.Mode)
 	shade := mode == FillBetween3DModeQuad
-	if opt.Shade != nil {
-		shade = *opt.Shade
+	if v, ok := opt.Shade.Get(); ok {
+		shade = v
 	}
 	raw := fillBetween3DRawPolygons(x1[:n], y1[:n], z1[:n], x2[:n], y2[:n], z2[:n], mode)
 	faceColors := make([]render.Color, len(raw))
@@ -702,12 +689,16 @@ func (a *Axes3D) FillBetween3D(x1, y1, z1, x2, y2, z2 []float64, opts ...FillBet
 }
 
 // FillBetween is the Matplotlib-compatible 3D fill_between entry point.
-func (a *Axes3D) FillBetween(x1, y1, z1, x2, y2, z2 []float64, opts ...FillBetween3DOptions) *core.PolyCollection {
-	return a.FillBetween3D(x1, y1, z1, x2, y2, z2, opts...)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes3D) FillBetween(x1, y1, z1, x2, y2, z2 []float64, opt FillBetween3DOptions) *core.PolyCollection {
+	return a.FillBetween3D(x1, y1, z1, x2, y2, z2, opt)
 }
 
 // Quiver plots a 3D vector field as projected shafts and arrowheads.
-func (a *Axes3D) Quiver(x, y, z, u, v, w []float64, opts ...Quiver3DOptions) *core.LineCollection {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes3D) Quiver(x, y, z, u, v, w []float64, opt Quiver3DOptions) *core.LineCollection {
 	if a == nil || a.Axes == nil {
 		return nil
 	}
@@ -716,20 +707,19 @@ func (a *Axes3D) Quiver(x, y, z, u, v, w []float64, opts ...Quiver3DOptions) *co
 		return nil
 	}
 
-	opt := optarg.One("quiver3d", opts)
 	limitsChanged := a.observeQuiver3DData(x[:n], y[:n], z[:n], u[:n], v[:n], w[:n], opt)
 	color := a.NextColor()
-	if opt.Color != nil {
-		color = *opt.Color
+	if v, ok := opt.Color.Get(); ok {
+		color = v
 	}
 	alpha := 1.0
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		alpha = *opt.Alpha
+	if v, ok := opt.Alpha.Get(); ok && v >= 0 && opt.Alpha.OrZero() <= 1 {
+		alpha = opt.Alpha.OrZero()
 	}
 	color = color.WithAlphaMultiplier(alpha)
 	lineWidth := 1.5 // points; converted at the collection Paint sink
-	if opt.LineWidth != nil {
-		lineWidth = *opt.LineWidth
+	if v, ok := opt.LineWidth.Get(); ok {
+		lineWidth = v
 	}
 
 	segments, zorder := a.projectQuiver3DSegments(x[:n], y[:n], z[:n], u[:n], v[:n], w[:n], opt)
@@ -755,12 +745,16 @@ func (a *Axes3D) Quiver(x, y, z, u, v, w []float64, opts ...Quiver3DOptions) *co
 }
 
 // Quiver3D is an explicit alias for Quiver.
-func (a *Axes3D) Quiver3D(x, y, z, u, v, w []float64, opts ...Quiver3DOptions) *core.LineCollection {
-	return a.Quiver(x, y, z, u, v, w, opts...)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes3D) Quiver3D(x, y, z, u, v, w []float64, opt Quiver3DOptions) *core.LineCollection {
+	return a.Quiver(x, y, z, u, v, w, opt)
 }
 
 // ErrorBar3D plots projected x/y/z error ranges.
-func (a *Axes3D) ErrorBar3D(x, y, z, xErr, yErr, zErr []float64, opts ...ErrorBar3DOptions) *core.LineCollection {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes3D) ErrorBar3D(x, y, z, xErr, yErr, zErr []float64, opt ErrorBar3DOptions) *core.LineCollection {
 	if a == nil || a.Axes == nil {
 		return nil
 	}
@@ -768,7 +762,6 @@ func (a *Axes3D) ErrorBar3D(x, y, z, xErr, yErr, zErr []float64, opts ...ErrorBa
 	if n <= 0 {
 		return nil
 	}
-	opt := optarg.One("errorbar3d", opts)
 	if !validErrorValues(xErr, n) || !validErrorValues(yErr, n) || !validErrorValues(zErr, n) ||
 		!validErrorValues(opt.XErrLower, n) || !validErrorValues(opt.XErrUpper, n) ||
 		!validErrorValues(opt.YErrLower, n) || !validErrorValues(opt.YErrUpper, n) ||
@@ -778,17 +771,17 @@ func (a *Axes3D) ErrorBar3D(x, y, z, xErr, yErr, zErr []float64, opts ...ErrorBa
 
 	limitsChanged := a.observe3DErrorBarData(x[:n], y[:n], z[:n], xErr, yErr, zErr, opt)
 	color := a.NextColor()
-	if opt.Color != nil {
-		color = *opt.Color
+	if v, ok := opt.Color.Get(); ok {
+		color = v
 	}
 	alpha := 1.0
-	if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-		alpha = *opt.Alpha
+	if v, ok := opt.Alpha.Get(); ok && v >= 0 && opt.Alpha.OrZero() <= 1 {
+		alpha = opt.Alpha.OrZero()
 	}
 	color = color.WithAlphaMultiplier(alpha)
 	lineWidth := 1.0
-	if opt.LineWidth != nil {
-		lineWidth = *opt.LineWidth
+	if v, ok := opt.LineWidth.Get(); ok {
+		lineWidth = v
 	}
 
 	segments, zorder := a.projectErrorBar3DSegments(x[:n], y[:n], z[:n], xErr, yErr, zErr, opt)
@@ -814,49 +807,47 @@ func (a *Axes3D) ErrorBar3D(x, y, z, xErr, yErr, zErr []float64, opts ...ErrorBa
 }
 
 // ErrorBar is the Matplotlib-compatible 3D errorbar entry point.
-func (a *Axes3D) ErrorBar(x, y, z, xErr, yErr, zErr []float64, opts ...ErrorBar3DOptions) *core.LineCollection {
-	return a.ErrorBar3D(x, y, z, xErr, yErr, zErr, opts...)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes3D) ErrorBar(x, y, z, xErr, yErr, zErr []float64, opt ErrorBar3DOptions) *core.LineCollection {
+	return a.ErrorBar3D(x, y, z, xErr, yErr, zErr, opt)
 }
 
 // PlotSurfaceGrid creates a filled surface from a structured z grid.
-func (a *Axes3D) PlotSurfaceGrid(x, y []float64, z [][]float64, opts ...core.PlotOptions) *core.PolyCollection {
-	return a.Surface(x, y, z, opts...)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes3D) PlotSurfaceGrid(x, y []float64, z [][]float64, opt core.PlotOptions) *core.PolyCollection {
+	return a.Surface(x, y, z, opt)
 }
 
 // Wireframe draws a structured wireframe as line segments.
-func (a *Axes3D) Wireframe(x, y []float64, z [][]float64, opts ...core.PlotOptions) *core.LineCollection {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes3D) Wireframe(x, y []float64, z [][]float64, opt core.PlotOptions) *core.LineCollection {
 	limitsChanged := a.observe3DGrid(x, y, z)
-	segments := a.projectWireframeSegments(x, y, z, opts...)
+	segments := a.projectWireframeSegments(x, y, z, opt)
 	if len(segments) == 0 {
 		return nil
 	}
 
-	color := a.NextColor()
-	lineWidth := 1.5 // points (matplotlib lines.linewidth default); converted at the collection Paint sink
+	// NextColor runs even when the caller supplied a color, so the property
+	// cycle advances once per wireframe either way.
+	color := opt.Color.Or(a.NextColor())
 	alpha := 1.0
-	label := ""
-	if opt, ok := optarg.Optional("wireframe", opts); ok {
-		if opt.Color != nil {
-			color = *opt.Color
-		}
-		if opt.LineWidth != nil {
-			lineWidth = *opt.LineWidth
-		}
-		if opt.Alpha != nil && *opt.Alpha >= 0 && *opt.Alpha <= 1 {
-			alpha = *opt.Alpha
-		}
-		label = opt.Label
+	if v, ok := opt.Alpha.Get(); ok && v >= 0 && v <= 1 {
+		alpha = v
 	}
 
 	collection := &core.LineCollection{
 		Collection: core.Collection{
 			Coords: core.Coords(core.CoordData),
-			Label:  label,
+			Label:  opt.Label,
 			Alpha:  alpha,
 		},
-		Segments:  segments,
-		Color:     color,
-		LineWidth: lineWidth,
+		Segments: segments,
+		Color:    color,
+		// points (matplotlib lines.linewidth default); converted at the collection Paint sink
+		LineWidth: opt.LineWidth.Or(1.5),
 		LineJoin:  render.JoinRound,
 		LineCap:   render.CapRound,
 	}
@@ -864,7 +855,7 @@ func (a *Axes3D) Wireframe(x, y []float64, z [][]float64, opts ...core.PlotOptio
 	a.Add(collection)
 	a.add3DReprojector(func() {
 		if collection != nil {
-			collection.Segments = a.projectWireframeSegments(x, y, z, opts...)
+			collection.Segments = a.projectWireframeSegments(x, y, z, opt)
 			collection.SetZ(a.grid3DCollectionZ(x, y, z))
 		}
 	}, limitsChanged)

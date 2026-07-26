@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -27,10 +28,10 @@ func Plot() *core.Figure {
 	barEdgeWidth := 1.0
 	barWidth := 0.8
 	_, err := left.Bar([]string{"draft", "review", "ship", "watch"}, []float64{3, 8, 6, 4}, core.BarOptions{
-		Color:     &orange,
-		EdgeColor: &edgeOrange,
-		EdgeWidth: &barEdgeWidth,
-		Width:     &barWidth,
+		Color:     optional.Of(orange),
+		EdgeColor: optional.Of(edgeOrange),
+		EdgeWidth: optional.Of(barEdgeWidth),
+		Width:     optional.Of(barWidth),
 	})
 	if err != nil {
 		panic(err)
@@ -48,11 +49,11 @@ func Plot() *core.Figure {
 	edgeGreen := render.Color{R: 0.09, G: 0.36, B: 0.09, A: 1}
 	orientation := core.BarHorizontal
 	_, err = right.BarH([]string{"north", "south", "east"}, []float64{4, 7, 5}, core.BarOptions{
-		Color:       &green,
-		EdgeColor:   &edgeGreen,
-		EdgeWidth:   &barEdgeWidth,
-		Width:       &barWidth,
-		Orientation: &orientation,
+		Color:       optional.Of(green),
+		EdgeColor:   optional.Of(edgeGreen),
+		EdgeWidth:   optional.Of(barEdgeWidth),
+		Width:       optional.Of(barWidth),
+		Orientation: optional.Of(orientation),
 	})
 	if err != nil {
 		panic(err)

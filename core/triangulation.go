@@ -2,7 +2,7 @@ package core
 
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/tri"
 )
@@ -20,42 +20,42 @@ func NewTriangulation(x, y []float64) (Triangulation, error) {
 
 // TriPlotOptions configures triplot rendering.
 type TriPlotOptions struct {
-	Color     *render.Color
-	LineWidth *float64
-	Alpha     *float64
+	Color     optional.Value[render.Color]
+	LineWidth optional.Value[float64]
+	Alpha     optional.Value[float64]
 	Label     string
 }
 
 // TriColorOptions configures tripcolor rendering.
 type TriColorOptions struct {
-	Colormap  *string
+	Colormap  optional.Value[string]
 	Norm      ScalarNormalizer
-	VMin      *float64
-	VMax      *float64
-	Alpha     *float64
-	EdgeColor *render.Color
-	EdgeWidth *float64
+	VMin      optional.Value[float64]
+	VMax      optional.Value[float64]
+	Alpha     optional.Value[float64]
+	EdgeColor optional.Value[render.Color]
+	EdgeWidth optional.Value[float64]
 	Label     string
 }
 
 // TriPlot draws the unique edges of the supplied triangulation.
-func (a *Axes) TriPlot(tri Triangulation, opts ...TriPlotOptions) *LineCollection {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) TriPlot(tri Triangulation, opt TriPlotOptions) *LineCollection {
 	if err := tri.Validate(); err != nil || len(tri.Triangles) == 0 {
 		return nil
 	}
 
-	opt := optarg.One("triplot", opts)
-
 	color := a.NextColor()
-	if opt.Color != nil {
-		color = *opt.Color
+	if v, ok := opt.Color.Get(); ok {
+		color = v
 	}
 	alpha := meshAlpha(opt.Alpha)
 	color = color.WithAlphaMultiplier(alpha)
 
 	width := 1.0
-	if opt.LineWidth != nil {
-		width = *opt.LineWidth
+	if v, ok := opt.LineWidth.Get(); ok {
+		width = v
 	}
 
 	edges := tri.Edges()
@@ -83,12 +83,12 @@ func (a *Axes) TriPlot(tri Triangulation, opts ...TriPlotOptions) *LineCollectio
 // TriColor draws per-triangle colored polygons over a triangulation. Values
 // may be provided per triangle or per point; point values are averaged onto
 // each triangle.
-func (a *Axes) TriColor(tri Triangulation, values []float64, opts ...TriColorOptions) *PolyCollection {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) TriColor(tri Triangulation, values []float64, opt TriColorOptions) *PolyCollection {
 	if err := tri.Validate(); err != nil || len(tri.Triangles) == 0 {
 		return nil
 	}
-
-	opt := optarg.One("tripcolor", opts)
 
 	triangleValues, ok := triColorValues(tri, values)
 	if !ok {
@@ -96,8 +96,8 @@ func (a *Axes) TriColor(tri Triangulation, values []float64, opts ...TriColorOpt
 	}
 
 	cmap := ""
-	if opt.Colormap != nil {
-		cmap = *opt.Colormap
+	if v, ok := opt.Colormap.Get(); ok {
+		cmap = v
 	}
 	mapping, err := ResolveScalarMapValues(triangleValues, ScalarMapConfig{
 		Colormap: cmap,
@@ -111,12 +111,12 @@ func (a *Axes) TriColor(tri Triangulation, values []float64, opts ...TriColorOpt
 	alpha := meshAlpha(opt.Alpha)
 
 	edgeColor := render.Color{}
-	if opt.EdgeColor != nil {
-		edgeColor = *opt.EdgeColor
+	if v, ok := opt.EdgeColor.Get(); ok {
+		edgeColor = v
 	}
 	edgeWidth := 0.0
-	if opt.EdgeWidth != nil {
-		edgeWidth = *opt.EdgeWidth
+	if v, ok := opt.EdgeWidth.Get(); ok {
+		edgeWidth = v
 	}
 
 	polygons := make([][]geom.Pt, 0, len(tri.Triangles))

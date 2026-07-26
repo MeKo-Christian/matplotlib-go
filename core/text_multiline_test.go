@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -54,10 +55,10 @@ func TestMultilineTextSplitsDrawsAndUsesBlockBBox(t *testing.T) {
 	ax.Text(0.1, 0.9, "top\nbottom", TextOptions{
 		Coords: Coords(CoordAxes),
 		VAlign: TextVAlignTop,
-		BBox: &TextBBoxOptions{
+		BBox: optional.Of(TextBBoxOptions{
 			FaceColor: render.Color{R: 1, G: 1, B: 1, A: 1},
 			EdgeColor: render.Color{R: 0.5, G: 0.5, B: 0.5, A: 1},
-		},
+		}),
 	})
 
 	var r textRecordingRenderer

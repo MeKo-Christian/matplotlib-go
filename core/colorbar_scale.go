@@ -41,7 +41,7 @@ func colorbarOptionBoundaries(values, boundaries []float64) []float64 {
 	return out
 }
 
-func colorbarInteriorBoundaries(boundaries []float64, extend string) []float64 {
+func colorbarInteriorBoundaries(boundaries []float64, extend ColorbarExtend) []float64 {
 	out := cloneFloat64s(boundaries)
 	if len(out) < 2 {
 		return out
@@ -66,7 +66,7 @@ func colorbarInteriorBoundaries(boundaries []float64, extend string) []float64 {
 	return out
 }
 
-func colorbarInteriorValues(values []float64, boundaries []float64, extend string) []float64 {
+func colorbarInteriorValues(values []float64, boundaries []float64, extend ColorbarExtend) []float64 {
 	out := cloneFloat64s(values)
 	if len(out) != len(boundaries)-1 {
 		return out
@@ -109,7 +109,7 @@ type colorbarAxisOps struct {
 	target    *Axis
 }
 
-func configureColorbarScale(ax *Axes, mapping ScalarMapInfo, location string, ticks, boundaries []float64, extend string) {
+func configureColorbarScale(ax *Axes, mapping ScalarMapInfo, location ColorbarLocation, ticks, boundaries []float64, extend ColorbarExtend) {
 	if ax == nil {
 		return
 	}
@@ -129,7 +129,7 @@ func configureColorbarScale(ax *Axes, mapping ScalarMapInfo, location string, ti
 	applyColorbarNormScale(ax, ops, &mapping, location, ticks, boundaries, extend)
 }
 
-func configureHorizontalColorbarScale(ax *Axes, mapping *ScalarMapInfo, location string, ticks, boundaries []float64, extend string) {
+func configureHorizontalColorbarScale(ax *Axes, mapping *ScalarMapInfo, location ColorbarLocation, ticks, boundaries []float64, extend ColorbarExtend) {
 	target := ax.XAxis
 	if location == "top" {
 		target = ax.TopAxis()
@@ -149,7 +149,7 @@ func configureHorizontalColorbarScale(ax *Axes, mapping *ScalarMapInfo, location
 // applyColorbarNormScale selects the colorbar axis scale, major/minor locators,
 // and formatter based on the norm type, mirroring matplotlib's
 // Colorbar._reset_locator_formatter_scale / _get_ticker_locator_formatter.
-func applyColorbarNormScale(ax *Axes, ops colorbarAxisOps, mapping *ScalarMapInfo, location string, ticks, boundaries []float64, extend string) {
+func applyColorbarNormScale(ax *Axes, ops colorbarAxisOps, mapping *ScalarMapInfo, location ColorbarLocation, ticks, boundaries []float64, extend ColorbarExtend) {
 	vmin, vmax := mapping.VMin, mapping.VMax
 	target := ops.target
 	if ax != nil {
@@ -298,7 +298,7 @@ func finalizeColorbarMinorTicks(ax *Axes, ops colorbarAxisOps) {
 	}
 }
 
-func verticalColorbarAxis(ax *Axes, location string) *Axis {
+func verticalColorbarAxis(ax *Axes, location ColorbarLocation) *Axis {
 	if ax == nil {
 		return nil
 	}
@@ -308,7 +308,7 @@ func verticalColorbarAxis(ax *Axes, location string) *Axis {
 	return ax.RightAxis()
 }
 
-func applyExplicitColorbarTicks(ax *Axes, location string, ticks []float64) {
+func applyExplicitColorbarTicks(ax *Axes, location ColorbarLocation, ticks []float64) {
 	if ax == nil || len(ticks) == 0 {
 		return
 	}
@@ -336,7 +336,7 @@ func applyExplicitColorbarTicks(ax *Axes, location string, ticks []float64) {
 	}
 }
 
-func configureColorbarAxes(ax *Axes, location, label string) {
+func configureColorbarAxes(ax *Axes, location ColorbarLocation, label string) {
 	if ax == nil {
 		return
 	}
@@ -431,7 +431,7 @@ func isNonlinearColorbarNorm(norm ScalarNormalizer) bool {
 	}
 }
 
-func normalizeColorbarExtend(extend string) string {
+func normalizeColorbarExtend(extend ColorbarExtend) ColorbarExtend {
 	switch extend {
 	case "min", "max", "both":
 		return extend
@@ -504,7 +504,7 @@ func colorbarBoundaryCoord(start, end float64, boundaries []float64, index int, 
 	return start + (end-start)*t
 }
 
-func colorbarBoundaryCellRectAt(clip geom.Rect, boundaries []float64, index int, spacing, orientation string) geom.Rect {
+func colorbarBoundaryCellRectAt(clip geom.Rect, boundaries []float64, index int, spacing string, orientation PlotOrientation) geom.Rect {
 	if index < 0 || index+1 >= len(boundaries) {
 		return geom.Rect{}
 	}

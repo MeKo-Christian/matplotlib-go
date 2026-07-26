@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -66,8 +67,8 @@ func Plot() *core.Figure {
 	lineColor := render.Color{R: 0.08, G: 0.16, B: 0.30, A: 1}
 	lineWidth := 1.8
 	_, _ = ax.Plot(lineTheta, lineRadius, core.PlotOptions{
-		Color:     &lineColor,
-		LineWidth: &lineWidth,
+		Color:     optional.Of(lineColor),
+		LineWidth: optional.Of(lineWidth),
 		Label:     "vector line",
 	})
 	ax.AddLegend()

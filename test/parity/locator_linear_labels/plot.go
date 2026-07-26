@@ -6,6 +6,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -35,7 +36,7 @@ func Plot() *core.Figure {
 		ax.SetXLabel("x")
 		ax.SetYLabel("y")
 		common.AddReferenceYGrid(ax)
-		_, _ = ax.Plot(x, y, core.PlotOptions{Color: &color, LineWidth: &width})
+		_, _ = ax.Plot(x, y, core.PlotOptions{Color: optional.Of(color), LineWidth: optional.Of(width)})
 		ax.SetXLim(0, 6)
 		ax.SetYLim(0, 1)
 		ax.YAxis.Locator = ticker.FixedLocator{TicksList: []float64{0, 0.5, 1.0}}

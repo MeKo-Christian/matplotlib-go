@@ -37,12 +37,12 @@ func TestColorbarBoundariesAndExtensionsAreDocumented(t *testing.T) {
 			"ExtendRect  bool",
 		},
 		filepath.Join("..", "core", "colorbar_draw.go"): {
-			"func colorbarExtensionPaths(clip geom.Rect, extend, orientation string, extendRect bool, fracMin, fracMax float64)",
+			"func colorbarExtensionPaths(clip geom.Rect, extend ColorbarExtend, orientation PlotOrientation, extendRect bool, fracMin, fracMax float64)",
 			"func drawColorbarBoundaryDividers",
 		},
 		filepath.Join("..", "core", "colorbar_scale.go"): {
 			"func colorbarOptionBoundaries(values, boundaries []float64) []float64",
-			"func colorbarInteriorBoundaries(boundaries []float64, extend string) []float64",
+			"func colorbarInteriorBoundaries(boundaries []float64, extend ColorbarExtend) []float64",
 			"func normalizeColorbarSpacing(spacing string) string",
 			"func (c *Colorbar) boundaryExtensionValue(mapping ScalarMapInfo, overRange bool) (float64, bool)",
 		},
@@ -59,7 +59,7 @@ func TestColorbarBoundariesAndExtensionsAreDocumented(t *testing.T) {
 		filepath.Join("..", "core", "norm.go"): {
 			"type BoundaryNorm struct",
 			"Clip       bool",
-			"Extend     string",
+			"Extend     ColorbarExtend",
 			"clip=true is not compatible with extend",
 			"boundary norm boundaries must be strictly increasing",
 		},
@@ -146,7 +146,7 @@ func TestColorbarTickAndLabelFormattingIsDocumented(t *testing.T) {
 		filepath.Join("..", "core", "colorbar.go"): {
 			"Ticks       []float64",
 			"Label       string",
-			"Orientation string",
+			"Orientation PlotOrientation",
 		},
 		filepath.Join("..", "core", "colorbar_scale.go"): {
 			"func configureColorbarScale",

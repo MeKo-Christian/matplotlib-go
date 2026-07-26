@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -52,7 +53,7 @@ func Plot() *core.Figure {
 
 	lineColor := render.Color{R: 0.14, G: 0.34, B: 0.70, A: 1}
 	lineWidth := 2.0
-	_, _ = ax.Plot(lon, lat, core.PlotOptions{Color: &lineColor, LineWidth: &lineWidth})
+	_, _ = ax.Plot(lon, lat, core.PlotOptions{Color: optional.Of(lineColor), LineWidth: optional.Of(lineWidth)})
 	return fig
 }
 

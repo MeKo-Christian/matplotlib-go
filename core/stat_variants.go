@@ -4,7 +4,7 @@ import (
 	"math"
 	"sort"
 
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -27,9 +27,9 @@ const (
 // StackPlotOptions configures Axes.StackPlot.
 type StackPlotOptions struct {
 	Colors       []render.Color
-	Alpha        *float64
-	EdgeColor    *render.Color
-	EdgeWidth    *float64
+	Alpha        optional.Value[float64]
+	EdgeColor    optional.Value[render.Color]
+	EdgeWidth    optional.Value[float64]
 	BaselineMode StackBaseline // baseline computation; defaults to StackBaselineZero
 	Baseline     []float64     // explicit per-point offset, used only in StackBaselineZero mode
 	Labels       []string
@@ -37,13 +37,13 @@ type StackPlotOptions struct {
 
 // ECDFOptions configures Axes.ECDF.
 type ECDFOptions struct {
-	Color         *render.Color
-	LineWidth     *float64
+	Color         optional.Value[render.Color]
+	LineWidth     optional.Value[float64]
 	Dashes        []float64
 	Complementary bool
 	Compress      bool
 	Label         string
-	Alpha         *float64
+	Alpha         optional.Value[float64]
 }
 
 // MultiHistOptions configures Axes.HistMulti.
@@ -56,14 +56,16 @@ type MultiHistOptions struct {
 	HistType   HistType
 	Stacked    bool
 	Colors     []render.Color
-	EdgeColor  *render.Color
-	EdgeWidth  *float64
-	Alpha      *float64
+	EdgeColor  optional.Value[render.Color]
+	EdgeWidth  optional.Value[float64]
+	Alpha      optional.Value[float64]
 	Labels     []string
 }
 
 // StackPlot draws cumulative filled layers over a shared x coordinate.
-func (a *Axes) StackPlot(x []float64, ys [][]float64, opts ...StackPlotOptions) []*Fill2D {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) StackPlot(x []float64, ys [][]float64, opt StackPlotOptions) []*Fill2D {
 	n := len(x)
 	if n == 0 || len(ys) == 0 {
 		return nil
@@ -76,8 +78,6 @@ func (a *Axes) StackPlot(x []float64, ys [][]float64, opts ...StackPlotOptions) 
 	if n < 2 {
 		return nil
 	}
-
-	opt := optarg.One("stackplot", opts)
 
 	xs := append([]float64(nil), x[:n]...)
 	m := len(ys)
@@ -106,13 +106,12 @@ func (a *Axes) StackPlot(x []float64, ys [][]float64, opts ...StackPlotOptions) 
 			upper[j] = cum[i][j] + firstLine[j]
 		}
 
-		// Pass an explicit color when provided; otherwise leave it nil so
+		// Pass an explicit color when provided; otherwise leave it unset so
 		// FillBetweenPlot advances the property cycle exactly once per layer,
 		// matching Matplotlib's stackplot (one cycle color per series).
-		var colorPtr *render.Color
+		var color optional.Value[render.Color]
 		if i < len(opt.Colors) {
-			c := opt.Colors[i]
-			colorPtr = &c
+			color = optional.Of(opt.Colors[i])
 		}
 		label := ""
 		if i < len(opt.Labels) {
@@ -121,7 +120,7 @@ func (a *Axes) StackPlot(x []float64, ys [][]float64, opts ...StackPlotOptions) 
 		// xs, lower, and upper are all built at length n >= 2 with no Where
 		// mask, so the fill cannot be rejected here.
 		fill, _ := a.FillBetweenPlot(xs, lower, upper, FillOptions{
-			Color:     colorPtr,
+			Color:     color,
 			EdgeColor: opt.EdgeColor,
 			EdgeWidth: opt.EdgeWidth,
 			Alpha:     opt.Alpha,
@@ -137,6 +136,8 @@ func (a *Axes) StackPlot(x []float64, ys [][]float64, opts ...StackPlotOptions) 
 
 // stackFirstLine computes the bottom edge of the first stacked layer per the
 // selected baseline mode, faithfully porting matplotlib's stackplot baselines.
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
 func stackFirstLine(ys, cum [][]float64, n, m int, opt StackPlotOptions) []float64 {
 	firstLine := make([]float64, n)
 
@@ -195,13 +196,14 @@ func stackFirstLine(ys, cum [][]float64, n, m int, opt StackPlotOptions) []float
 }
 
 // ECDF draws an empirical cumulative distribution function from raw samples.
-func (a *Axes) ECDF(data []float64, opts ...ECDFOptions) *Line2D {
+//
+//nolint:gocritic // ECDFOptions is an immutable snapshot of the caller's options.
+func (a *Axes) ECDF(data []float64, opt ECDFOptions) *Line2D {
 	samples := finiteSorted(data)
 	if len(samples) == 0 {
 		return nil
 	}
 
-	opt := optarg.One("ecdf", opts)
 	total := len(samples)
 	values := samples
 	probabilities := make([]float64, 0, total)
@@ -238,24 +240,23 @@ func (a *Axes) ECDF(data []float64, opts ...ECDFOptions) *Line2D {
 		y = append(y, p)
 	}
 
-	where := StepWherePost
 	return a.Step(x, y, StepOptions{
 		Color:     opt.Color,
 		LineWidth: opt.LineWidth,
 		Dashes:    opt.Dashes,
-		Where:     &where,
+		Where:     StepWherePost,
 		Label:     opt.Label,
 		Alpha:     opt.Alpha,
 	})
 }
 
 // HistMulti draws multiple histograms using shared bin edges.
-func (a *Axes) HistMulti(data [][]float64, opts ...MultiHistOptions) []*Hist2D {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) HistMulti(data [][]float64, opt MultiHistOptions) []*Hist2D {
 	if len(data) == 0 {
 		return nil
 	}
-
-	opt := optarg.One("hist multi", opts)
 
 	edges := append([]float64(nil), opt.BinEdges...)
 	if len(edges) < 2 {
@@ -291,7 +292,7 @@ func (a *Axes) HistMulti(data [][]float64, opts ...MultiHistOptions) []*Hist2D {
 			Norm:       opt.Norm,
 			Cumulative: opt.Cumulative,
 			HistType:   opt.HistType,
-			Color:      &color,
+			Color:      optional.Of(color),
 			EdgeColor:  opt.EdgeColor,
 			EdgeWidth:  opt.EdgeWidth,
 			Alpha:      opt.Alpha,

@@ -8,6 +8,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/backends/agg"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 	"github.com/cwbudde/matplotlib-go/test/parity"
@@ -191,7 +192,7 @@ func scalarMappedImageFigure(rows, cols int) *core.Figure {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.08, Y: 0.12}, Max: geom.Pt{X: 0.92, Y: 0.90}})
 	data := scalarGrid(rows, cols)
 	cmap := "viridis_r"
-	ax.Image(data, core.ImageOptions{Colormap: &cmap})
+	ax.Image(data, core.ImageOptions{Colormap: optional.Of(cmap)})
 	return fig
 }
 
@@ -215,8 +216,8 @@ func scalarMappedScatterFigure(n int) *core.Figure {
 	ax.Scatter(x, y, core.ScatterOptions{
 		ScalarValues: scalars,
 		Colormap:     cmap,
-		Size:         &size,
-		EdgeColor:    &render.Color{A: 0},
+		Size:         optional.Of(size),
+		EdgeColor:    optional.Of(render.Color{A: 0}),
 	})
 	return fig
 }
@@ -226,7 +227,7 @@ func scalarMappedQuadMeshFigure(rows, cols int) *core.Figure {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.08, Y: 0.12}, Max: geom.Pt{X: 0.92, Y: 0.90}})
 	data := scalarGrid(rows, cols)
 	cmap := "magma_r"
-	ax.PColorMesh(data, core.MeshOptions{Colormap: &cmap})
+	ax.PColorMesh(data, core.MeshOptions{Colormap: optional.Of(cmap)})
 	return fig
 }
 

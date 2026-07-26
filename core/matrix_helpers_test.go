@@ -16,7 +16,7 @@ func TestAxesMatShowConfiguresMatrixView(t *testing.T) {
 	img := ax.MatShow([][]float64{
 		{1, 2, 3},
 		{4, 5, 6},
-	})
+	}, MatShowOptions{})
 	if img == nil {
 		t.Fatal("MatShow() returned nil")
 	}
@@ -70,7 +70,7 @@ func TestAxesMatShowInterpolationPropagatesToImage(t *testing.T) {
 	ax := fig.AddAxes(unitRect())
 	bicubic := "bicubic"
 
-	img := ax.MatShow([][]float64{{0, 1}}, MatShowOptions{Interpolation: &bicubic})
+	img := ax.MatShow([][]float64{{0, 1}}, MatShowOptions{Interpolation: optional.Of(bicubic)})
 	if img == nil {
 		t.Fatal("MatShow() returned nil")
 	}
@@ -161,7 +161,7 @@ func TestAxesSpySupportsMarkerAndImageModes(t *testing.T) {
 	fig = NewFigure(400, 300)
 	ax = fig.AddAxes(unitRect())
 	useImage := false
-	result = ax.Spy(data, SpyOptions{UseImage: &useImage})
+	result = ax.Spy(data, SpyOptions{UseImage: optional.Of(useImage)})
 	if result == nil {
 		t.Fatal("Spy() returned nil for marker mode")
 	}
@@ -357,7 +357,7 @@ func TestAxesAnnotatedHeatmapAddsLabels(t *testing.T) {
 		{3, 4},
 	}, AnnotatedHeatmapOptions{
 		Format:    "%.1f",
-		Threshold: &threshold,
+		Threshold: optional.Of(threshold),
 	})
 	if result == nil {
 		t.Fatal("AnnotatedHeatmap() returned nil")
@@ -404,7 +404,7 @@ func TestImShow_DefaultInterpolationMatchesMatplotlib(t *testing.T) {
 	img := ax.ImShow([][]float64{{0, 1}, {2, 3}}, ImShowOptions{
 		Extent: optional.Of([4]float64{0, 2, 0, 2}),
 		Origin: optional.Of(ImageOriginLower),
-		Aspect: optional.Of("auto"),
+		Aspect: optional.Of(AspectAuto),
 	})
 	if img == nil {
 		t.Fatal("ImShow returned nil")

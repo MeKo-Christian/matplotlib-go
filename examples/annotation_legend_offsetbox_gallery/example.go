@@ -62,8 +62,8 @@ func addAnnotationLegendPanel(ax *core.Axes) {
 	blue := render.Color{R: 0.12, G: 0.31, B: 0.68, A: 1}
 	orange := render.Color{R: 0.86, G: 0.43, B: 0.16, A: 1}
 	lineWidth := 2.0
-	_, _ = ax.Plot(x, sin, core.PlotOptions{Color: &blue, LineWidth: &lineWidth, Label: "sin(x)"})
-	_, _ = ax.Plot(x, cos, core.PlotOptions{Color: &orange, LineWidth: &lineWidth, Label: "0.65 cos(0.8x)"})
+	_, _ = ax.Plot(x, sin, core.PlotOptions{Color: optional.Of(blue), LineWidth: optional.Of(lineWidth), Label: "sin(x)"})
+	_, _ = ax.Plot(x, cos, core.PlotOptions{Color: optional.Of(orange), LineWidth: optional.Of(lineWidth), Label: "0.65 cos(0.8x)"})
 
 	arrow, _ := core.ArrowStyleFromString("-|>,head_length=0.35,head_width=0.20")
 	arc, _ := core.ConnectionStyleFromString("arc3,rad=0.25")
@@ -77,10 +77,10 @@ func addAnnotationLegendPanel(ax *core.Axes) {
 		ConnectionStyle: arc,
 		ArrowColor:      blue,
 		ArrowWidth:      optional.Of(1.2),
-		BBox:            galleryBox(10, 0.28, render.Color{R: 0.92, G: 0.97, B: 1.00, A: 0.90}, blue),
+		BBox:            optional.Of(galleryBox(10, 0.28, render.Color{R: 0.92, G: 0.97, B: 1.00, A: 0.90}, blue)),
 	})
 	ax.AnnotationBbox("offset box", 5.65, -0.25, core.AnnotationBboxOptions{
-		BoxPosition: &geom.Pt{X: 6.75, Y: 0.55},
+		BoxPosition: optional.Of(geom.Pt{X: 6.75, Y: 0.55}),
 		Padding:     pt(3),
 		FaceColor:   render.Color{R: 0.96, G: 0.92, B: 1.00, A: 0.92},
 		EdgeColor:   render.Color{R: 0.42, G: 0.25, B: 0.60, A: 1},
@@ -156,7 +156,7 @@ func addOffsetBoxPanel(ax *core.Axes) {
 		LineWidth: 1,
 	})
 	packer.AddImage(smallAnnotationImage(), 1.35)
-	packer.AddText("HPacker")
+	packer.AddText("HPacker", core.PackedTextOptions{})
 
 	fill := true
 	ax.AddAnchoredSizeBar(1.4, "1.4 data", core.AnchoredSizeBarOptions{
@@ -165,7 +165,7 @@ func addOffsetBoxPanel(ax *core.Axes) {
 		Inset:           pt(8),
 		Sep:             pt(4),
 		SizeVertical:    0.10,
-		FillBar:         &fill,
+		FillBar:         optional.Of(fill),
 		BackgroundColor: render.Color{R: 1, G: 1, B: 1, A: 0.86},
 		BorderColor:     render.Color{R: 0.20, G: 0.20, B: 0.20, A: 1},
 		BorderWidth:     1,
@@ -174,8 +174,8 @@ func addOffsetBoxPanel(ax *core.Axes) {
 	})
 }
 
-func galleryBox(fontSize, pad float64, face, edge render.Color) *core.TextBBoxOptions {
-	return &core.TextBBoxOptions{
+func galleryBox(fontSize, pad float64, face, edge render.Color) core.TextBBoxOptions {
+	return core.TextBBoxOptions{
 		FaceColor:    face,
 		EdgeColor:    edge,
 		LineWidth:    0.9,

@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"testing"
 
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -101,7 +102,7 @@ func TestImShowRGBBypassesColormap(t *testing.T) {
 	img, err := ax.ImShowRGB([][][]float64{
 		{{1, 0, 0}, {0, 1, 0}},
 		{{0, 0, 1}, {1, 1, 0}},
-	})
+	}, ImShowRGBOptions{})
 	if err != nil {
 		t.Fatalf("ImShowRGB() returned error: %v", err)
 	}
@@ -153,7 +154,7 @@ func TestImShowRGBScalarSqueezeRoutesToColormap(t *testing.T) {
 	ax := &Axes{}
 	img, err := ax.ImShowRGB([][][]float64{
 		{{0}, {1}},
-	})
+	}, ImShowRGBOptions{})
 	if err != nil {
 		t.Fatalf("ImShowRGB() returned error: %v", err)
 	}
@@ -175,7 +176,7 @@ func TestImShowImageWrapsNativeImage(t *testing.T) {
 	src.SetRGBA(1, 0, color.RGBA{R: 40, G: 50, B: 60, A: 255})
 
 	ax := &Axes{}
-	img := ax.ImShowImage(src)
+	img := ax.ImShowImage(src, ImShowRGBOptions{})
 	if img == nil {
 		t.Fatal("expected image artist")
 	}
@@ -194,7 +195,7 @@ func TestImShowImageScalarAlphaApplies(t *testing.T) {
 
 	ax := &Axes{}
 	alpha := 0.5
-	img := ax.ImShowImage(src, ImShowRGBOptions{Alpha: &alpha})
+	img := ax.ImShowImage(src, ImShowRGBOptions{Alpha: optional.Of(alpha)})
 	if img == nil {
 		t.Fatal("expected image artist")
 	}

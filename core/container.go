@@ -5,7 +5,6 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/internal/diag"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -13,8 +12,8 @@ import (
 // stemIsHorizontal normalizes Matplotlib's stem orientation kwarg. Empty and
 // "vertical" keep the default vertical stems; "horizontal" flips to horizontal
 // stems. Any other value warns and falls back to vertical.
-func stemIsHorizontal(orientation string) bool {
-	switch strings.ToLower(strings.TrimSpace(orientation)) {
+func stemIsHorizontal(orientation PlotOrientation) bool {
+	switch strings.ToLower(strings.TrimSpace(string(orientation))) {
 	case "", "vertical":
 		return false
 	case "horizontal":
@@ -82,7 +81,7 @@ type StemOptions struct {
 	// orientation kwarg. "" and "vertical" keep stems along y (the default);
 	// "horizontal" runs stems along x with a vertical baseline. Any other value
 	// warns and falls back to vertical.
-	Orientation string
+	Orientation PlotOrientation
 }
 
 // Len reports the number of bars in the container.
@@ -255,8 +254,10 @@ func (e *ErrorBar) Container() *ErrorbarContainer {
 }
 
 // BarContainer creates bars and returns the corresponding result container.
-func (a *Axes) BarContainer(x, heights []float64, opts ...BarOptions) *BarContainer {
-	bar := a.bar(x, heights, optarg.One("bar container", opts))
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) BarContainer(x, heights []float64, opt BarOptions) *BarContainer {
+	bar := a.bar(x, heights, opt)
 	if bar == nil {
 		return nil
 	}
@@ -265,8 +266,10 @@ func (a *Axes) BarContainer(x, heights []float64, opts ...BarOptions) *BarContai
 
 // ErrorBarContainer creates error bars and returns the corresponding result
 // container. It reports the same rejections as Axes.ErrorBar.
-func (a *Axes) ErrorBarContainer(x, y, xErr, yErr []float64, opts ...ErrorBarOptions) (*ErrorbarContainer, error) {
-	errBar, err := a.ErrorBar(x, y, xErr, yErr, opts...)
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) ErrorBarContainer(x, y, xErr, yErr []float64, opt ErrorBarOptions) (*ErrorbarContainer, error) {
+	errBar, err := a.ErrorBar(x, y, xErr, yErr, opt)
 	if err != nil {
 		return nil, err
 	}

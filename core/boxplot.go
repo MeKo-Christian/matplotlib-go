@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
@@ -30,18 +30,18 @@ type BoxPlot2D struct {
 	CapWidth           float64 // cap length in data units
 	FlierSize          float64 // outlier marker size in points
 	FlierEdgeWidth     float64
-	Alpha              float64      // alpha transparency (0-1, 0 means 1.0)
-	PatchArtist        bool         // when true, fill the box (Matplotlib patch_artist=True); default is unfilled
-	Orientation        string       // "vertical" (default) or "horizontal"
-	ShowBox            bool         // whether to draw the box (Matplotlib showbox)
-	ShowCaps           bool         // whether to draw the whisker caps (Matplotlib showcaps)
-	ShowFliers         bool         // whether to draw outliers
-	ShowMeans          bool         // whether to draw the mean (Matplotlib showmeans)
-	MeanLine           bool         // draw the mean as a line across the box instead of a marker
-	MeanColor          render.Color // mean line/marker color
-	Notch              bool         // whether to draw a notched median confidence interval
-	Bootstrap          int          // number of bootstrap resamples for the notch CI (0 = analytic fallback)
-	Whis               *float64     // IQR multiplier for the whiskers (nil = Matplotlib default 1.5)
+	Alpha              float64         // alpha transparency (0-1, 0 means 1.0)
+	PatchArtist        bool            // when true, fill the box (Matplotlib patch_artist=True); default is unfilled
+	Orientation        PlotOrientation // "vertical" (default) or "horizontal"
+	ShowBox            bool            // whether to draw the box (Matplotlib showbox)
+	ShowCaps           bool            // whether to draw the whisker caps (Matplotlib showcaps)
+	ShowFliers         bool            // whether to draw outliers
+	ShowMeans          bool            // whether to draw the mean (Matplotlib showmeans)
+	MeanLine           bool            // draw the mean as a line across the box instead of a marker
+	MeanColor          render.Color    // mean line/marker color
+	Notch              bool            // whether to draw a notched median confidence interval
+	Bootstrap          int             // number of bootstrap resamples for the notch CI (0 = analytic fallback)
+	Whis               *float64        // IQR multiplier for the whiskers (nil = Matplotlib default 1.5)
 	ConfidenceInterval *[2]float64
 	CustomMedian       *float64
 	WhiskerPercentiles *[2]float64
@@ -88,22 +88,22 @@ type BxpOptions struct {
 	Positions   []float64
 	Widths      []float64
 	CapWidths   []float64
-	Orientation string
+	Orientation PlotOrientation
 
-	ShowNotches *bool
-	ShowMeans   *bool
-	ShowCaps    *bool
-	ShowBox     *bool
-	ShowFliers  *bool
+	ShowNotches optional.Value[bool]
+	ShowMeans   optional.Value[bool]
+	ShowCaps    optional.Value[bool]
+	ShowBox     optional.Value[bool]
+	ShowFliers  optional.Value[bool]
 	MeanLine    bool
-	ManageTicks *bool
+	ManageTicks optional.Value[bool]
 
-	Color       *render.Color
-	MedianColor *render.Color
-	MeanColor   *render.Color
-	FlierColor  *render.Color
-	LineWidth   *float64
-	MarkerSize  *float64
+	Color       optional.Value[render.Color]
+	MedianColor optional.Value[render.Color]
+	MeanColor   optional.Value[render.Color]
+	FlierColor  optional.Value[render.Color]
+	LineWidth   optional.Value[float64]
+	MarkerSize  optional.Value[float64]
 
 	Label  string
 	Labels []string
@@ -121,11 +121,12 @@ type BxpContainer struct {
 
 // Bxp draws box plots from precomputed statistics, matching Matplotlib's
 // low-level Axes.bxp surface while returning typed artist groups.
-func (a *Axes) Bxp(stats []BxpStat, opts ...BxpOptions) *BxpContainer {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func (a *Axes) Bxp(stats []BxpStat, opt BxpOptions) *BxpContainer {
 	if a == nil || len(stats) == 0 {
 		return nil
 	}
-	opt := optarg.One("bxp", opts)
 	rc := a.resolvedRC()
 	n := len(stats)
 	if !validOptionalList(opt.Positions, n) || !validOptionalScalarList(opt.Widths, n) || !validOptionalScalarList(opt.CapWidths, n) {
@@ -151,30 +152,30 @@ func (a *Axes) Bxp(stats []BxpStat, opts ...BxpOptions) *BxpContainer {
 	manageTicks := specialtyBool(opt.ManageTicks, true)
 
 	color := render.Color{R: 0, G: 0, B: 0, A: 1}
-	if opt.Color != nil {
-		color = *opt.Color
+	if v, ok := opt.Color.Get(); ok {
+		color = v
 	}
 	medianColor := rc.Boxplot.MedianColor
-	if opt.MedianColor != nil {
-		medianColor = *opt.MedianColor
+	if v, ok := opt.MedianColor.Get(); ok {
+		medianColor = v
 	}
 	meanColor := rc.Boxplot.MeanColor
-	if opt.MeanColor != nil {
-		meanColor = *opt.MeanColor
+	if v, ok := opt.MeanColor.Get(); ok {
+		meanColor = v
 	}
 	flierEdgeColor := rc.Boxplot.FlierColor
 	flierFaceColor := render.Color{}
-	if opt.FlierColor != nil {
-		flierEdgeColor = *opt.FlierColor
-		flierFaceColor = *opt.FlierColor
+	if opt.FlierColor.IsSet() {
+		flierEdgeColor = opt.FlierColor.OrZero()
+		flierFaceColor = opt.FlierColor.OrZero()
 	}
 	lineWidth := rc.Boxplot.BoxLineWidth
-	if opt.LineWidth != nil && *opt.LineWidth > 0 {
-		lineWidth = *opt.LineWidth
+	if v, ok := opt.LineWidth.Get(); ok && v > 0 {
+		lineWidth = opt.LineWidth.OrZero()
 	}
 	markerSize := rc.Boxplot.FlierMarkerSize
-	if opt.MarkerSize != nil && *opt.MarkerSize > 0 {
-		markerSize = *opt.MarkerSize
+	if v, ok := opt.MarkerSize.Get(); ok && v > 0 {
+		markerSize = opt.MarkerSize.OrZero()
 	}
 
 	container := &BxpContainer{}
@@ -300,7 +301,7 @@ func (a *Axes) addBxpMarkers(points []geom.Pt, marker MarkerType, face, edge ren
 	return line
 }
 
-func bxpBoxPoints(stat BxpStat, pos, left, right float64, notched bool, orientation string) []geom.Pt {
+func bxpBoxPoints(stat BxpStat, pos, left, right float64, notched bool, orientation PlotOrientation) []geom.Pt {
 	if !notched {
 		return []geom.Pt{
 			violinPoint(left, stat.Q1, orientation),
@@ -756,7 +757,7 @@ func (b *BoxPlot2D) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 }
 
-func (b *BoxPlot2D) boxPath(ctx *DrawContext, xLeft, xRight float64, orient string) geom.Path {
+func (b *BoxPlot2D) boxPath(ctx *DrawContext, xLeft, xRight float64, orient PlotOrientation) geom.Path {
 	if !b.Notch {
 		if orient != "horizontal" {
 			return rectPath(ctx, geom.Pt{X: xLeft, Y: b.stats.q1}, geom.Pt{X: xRight, Y: b.stats.q3})

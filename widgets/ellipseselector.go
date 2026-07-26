@@ -5,7 +5,6 @@ import (
 
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
-	"github.com/cwbudde/matplotlib-go/internal/optarg"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -33,7 +32,9 @@ type EllipseSelector struct {
 }
 
 // NewEllipseSelector creates an ellipse selector bound to the axes.
-func NewEllipseSelector(a *core.Axes, opts ...EllipseSelectorOptions) *EllipseSelector {
+//
+//nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
+func NewEllipseSelector(a *core.Axes, opt EllipseSelectorOptions) *EllipseSelector {
 	if a == nil {
 		return nil
 	}
@@ -42,9 +43,7 @@ func NewEllipseSelector(a *core.Axes, opts ...EllipseSelectorOptions) *EllipseSe
 		FillColor: render.Color{R: 0.16, G: 0.42, B: 0.76, A: 0.18},
 		LineWidth: 1.2,
 	}
-	if opt, ok := optarg.Optional("ellipseselector", opts); ok {
-		config = mergeEllipseSelectorOptions(config, opt)
-	}
+	config = mergeEllipseSelectorOptions(config, opt)
 	sel := &EllipseSelector{
 		EdgeColor: config.EdgeColor,
 		FillColor: config.FillColor,

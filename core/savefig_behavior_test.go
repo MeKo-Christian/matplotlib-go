@@ -17,7 +17,7 @@ func newSaveTestFigure(t *testing.T) (*core.Figure, *agg.Renderer) {
 	t.Helper()
 	fig := core.NewFigure(200, 150)
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.1}, Max: geom.Pt{X: 0.9, Y: 0.9}})
-	_, _ = ax.Plot([]float64{0, 1, 2, 3}, []float64{0, 1, 0, 1})
+	_, _ = ax.Plot([]float64{0, 1, 2, 3}, []float64{0, 1, 0, 1}, core.PlotOptions{})
 	r, err := agg.New(200, 150, render.Color{R: 1, G: 1, B: 1, A: 1})
 	if err != nil {
 		t.Fatalf("agg.New: %v", err)

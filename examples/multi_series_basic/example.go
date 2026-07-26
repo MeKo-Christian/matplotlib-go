@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/style"
 )
@@ -34,8 +35,8 @@ func Plot() *core.Figure {
 		[]float64{1, 2, 3, 4, 5, 6},
 		[]float64{1.5, 2.8, 2.2, 3.5, 3.8, 4.2},
 		core.PlotOptions{
-			Color:     &tab10[0],
-			LineWidth: &lineWidth,
+			Color:     optional.Of(tab10[0]),
+			LineWidth: optional.Of(lineWidth),
 		},
 	)
 
@@ -45,9 +46,9 @@ func Plot() *core.Figure {
 		[]float64{1.5, 2.5, 3.5, 4.5, 5.5},
 		[]float64{2.2, 3.1, 2.9, 4.1, 4.5},
 		core.ScatterOptions{
-			Color:     &tab10[1],
-			Size:      &size,
-			EdgeWidth: &edgeWidth,
+			Color:     optional.Of(tab10[1]),
+			Size:      optional.Of(size),
+			EdgeWidth: optional.Of(edgeWidth),
 		},
 	)
 
@@ -56,8 +57,8 @@ func Plot() *core.Figure {
 		[]float64{2, 3, 4, 5},
 		[]float64{3.8, 2.5, 4.8, 3.2},
 		core.BarOptions{
-			Color: &tab10[2],
-			Width: &width,
+			Color: optional.Of(tab10[2]),
+			Width: optional.Of(width),
 		},
 	)
 	return fig

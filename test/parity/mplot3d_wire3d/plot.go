@@ -7,6 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	common "github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/plot3d"
 	"github.com/cwbudde/matplotlib-go/render"
 )
@@ -33,8 +34,8 @@ func Plot() *core.Figure {
 	rStride := 10
 	cStride := 10
 	ax.Wireframe(x, y, z, core.PlotOptions{
-		RStride: &rStride,
-		CStride: &cStride,
+		RStride: optional.Of(rStride),
+		CStride: optional.Of(cStride),
 	})
 	return fig
 }

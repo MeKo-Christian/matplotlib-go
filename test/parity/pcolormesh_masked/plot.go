@@ -6,6 +6,7 @@ import (
 	matcolor "github.com/cwbudde/matplotlib-go/color"
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/internal/parityutil"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -20,9 +21,9 @@ func Render() image.Image {
 	ax.PColorMesh(common.MeshFixtureData(4, 5), core.MeshOptions{
 		XEdges:    []float64{0, 1, 2, 3, 4, 5},
 		YEdges:    []float64{0, 1, 2, 3, 4},
-		Colormap:  &cmapName,
-		EdgeColor: &edge,
-		EdgeWidth: &width,
+		Colormap:  optional.Of(cmapName),
+		EdgeColor: optional.Of(edge),
+		EdgeWidth: optional.Of(width),
 		Mask: [][]bool{
 			{false, true, false, false, false},
 			{false, false, false, true, false},

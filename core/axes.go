@@ -106,8 +106,8 @@ type Axes struct {
 	colorbarPadding       float64
 	colorbarAspect        float64
 	colorbarBase          geom.Rect
-	colorbarExtend        string
-	colorbarLocation      string
+	colorbarExtend        ColorbarExtend
+	colorbarLocation      ColorbarLocation
 	colorbarTicks         []float64
 	colorbarBounds        []float64
 	colorbarMinorTicks    bool
@@ -197,13 +197,13 @@ func (a *Axes) SetFrameOn(on bool) {
 	}
 }
 
-func (a *Axes) SetThetaZeroLocation(location string, offsetDeg ...float64) error {
+func (a *Axes) SetThetaZeroLocation(location ColorbarLocation, offsetDeg ...float64) error {
 	proj, ok := polarProjectionForAxes(a)
 	if !ok {
 		return fmt.Errorf("theta zero location requires polar axes")
 	}
 
-	base, ok := polarCompassAngle(location)
+	base, ok := polarCompassAngle(string(location))
 	if !ok {
 		return fmt.Errorf("unsupported theta zero location %q", location)
 	}

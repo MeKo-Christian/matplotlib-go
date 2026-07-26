@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -210,7 +211,7 @@ func TestAxesLegendDrawsOutsideAxesClip(t *testing.T) {
 	ax.SetYLim(0, 1)
 	color := render.Color{R: 0.1, G: 0.2, B: 0.3, A: 1}
 	_, _ = ax.Plot([]float64{0, 1}, []float64{0.2, 0.8}, PlotOptions{
-		Color: &color,
+		Color: optional.Of(color),
 		Label: "legend label",
 	})
 	ax.AddLegend()
