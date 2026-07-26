@@ -15,15 +15,20 @@ import (
 // instantiable artist.
 type Collection struct {
 	ArtistRasterization
-	Coords         CoordinateSpec
-	Label          string
-	Alpha          float64
-	Antialias      render.AntialiasMode
-	Colormap       string
-	Norm           ScalarNormalizer
-	VMin           float64
-	VMax           float64
-	ScalarValues   []float64
+	Coords       CoordinateSpec
+	Label        string
+	Alpha        float64
+	Antialias    render.AntialiasMode
+	Colormap     string
+	Norm         ScalarNormalizer
+	VMin         float64
+	VMax         float64
+	ScalarValues []float64
+	// EdgeColorsFace makes strokes follow the resolved face colors, matching
+	// Matplotlib's edgecolors="face". It is honored when the edge color is read
+	// rather than by copying FaceColors into EdgeColors at write time, so
+	// assigning the face colors directly and calling the setter agree. While it
+	// is set and face colors exist, it outranks whatever EdgeColors holds.
 	EdgeColorsFace bool
 	PathEffects    []render.PathEffect
 	z              float64

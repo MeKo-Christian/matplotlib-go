@@ -39,7 +39,7 @@ func TestPlotConsumesMultiPropertyCycle(t *testing.T) {
 	if got, want := first.Col, (render.Color{R: 1, A: 1}); got != want {
 		t.Fatalf("first color = %+v, want %+v", got, want)
 	}
-	if first.Dashes != nil {
+	if first.Dashes.Lengths != nil {
 		t.Fatalf("first dashes = %v, want nil (solid)", first.Dashes)
 	}
 	if !first.MarkerSet || first.Marker != MarkerCircle {
@@ -53,7 +53,7 @@ func TestPlotConsumesMultiPropertyCycle(t *testing.T) {
 	if got, want := second.Col, (render.Color{G: 1, A: 1}); got != want {
 		t.Fatalf("second color = %+v, want %+v", got, want)
 	}
-	if want := lineStyleToDashes("--", (3.0 * 100.0 / 72.0)); !reflect.DeepEqual(second.Dashes, want) {
+	if want := lineStyleToDashes("--", (3.0 * 100.0 / 72.0)); !reflect.DeepEqual(second.Dashes.Lengths, want) {
 		t.Fatalf("second dashes = %v, want %v", second.Dashes, want)
 	}
 	if !second.MarkerSet || second.Marker != MarkerSquare {
@@ -84,7 +84,7 @@ func TestPlotExplicitOptionsOverrideCycle(t *testing.T) {
 	if line.Marker != MarkerTriangle {
 		t.Fatalf("marker = %v, want explicit triangle", line.Marker)
 	}
-	if !reflect.DeepEqual(line.Dashes, dashes) {
+	if !reflect.DeepEqual(line.Dashes.Lengths, dashes) {
 		t.Fatalf("dashes = %v, want explicit %v", line.Dashes, dashes)
 	}
 }
@@ -98,7 +98,7 @@ func TestPlotColorOnlyCycleUnchanged(t *testing.T) {
 	palette := fig.RC.Palette()
 
 	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{})
-	if line.Dashes != nil || line.MarkerSet || line.W != 1.5 {
+	if line.Dashes.Lengths != nil || line.MarkerSet || line.W != 1.5 {
 		t.Fatalf("color-only defaults changed: dashes=%v markerSet=%v w=%v", line.Dashes, line.MarkerSet, line.W)
 	}
 	if line.Col != palette[0] {

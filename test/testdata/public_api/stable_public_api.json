@@ -3976,6 +3976,10 @@
           "declaration": "func MarkerTypeFromString(marker string) (MarkerType, bool)"
         },
         {
+          "id": "func MatplotlibDashes",
+          "declaration": "func MatplotlibDashes(lengths ...float64) DashPattern"
+        },
+        {
           "id": "func MustRegisterUnitConverter",
           "declaration": "func MustRegisterUnitConverter(sample any, factory UnitsConverterFactory)"
         },
@@ -4046,6 +4050,10 @@
         {
           "id": "func ParseTickDirection",
           "declaration": "func ParseTickDirection(direction string) (TickDirection, error)"
+        },
+        {
+          "id": "func PixelDashes",
+          "declaration": "func PixelDashes(lengths ...float64) DashPattern"
         },
         {
           "id": "func RadarAngles",
@@ -5612,6 +5620,10 @@
           "declaration": "func (ContourSet) Z() float64"
         },
         {
+          "id": "method DashPattern.Scaled",
+          "declaration": "func (DashPattern) Scaled(lineWidth float64) []float64"
+        },
+        {
           "id": "method DrawContext.AffineTransformFor",
           "declaration": "func (DrawContext) AffineTransformFor(spec CoordinateSpec) (geom.Affine, bool)"
         },
@@ -7172,6 +7184,10 @@
           "declaration": "type CorrelationResult struct{ Line *Line2D; Lags []float64; Values []float64 }"
         },
         {
+          "id": "type DashPattern",
+          "declaration": "type DashPattern struct{ Lengths []float64; Units DashUnits }"
+        },
+        {
           "id": "type DashUnits",
           "declaration": "type DashUnits uint8"
         },
@@ -7389,7 +7405,7 @@
         },
         {
           "id": "type Line2D",
-          "declaration": "type Line2D struct{ ArtistRasterization; XY []geom.Pt; W float64; Col render.Color; Dashes []float64; DashUnits DashUnits; LineCap render.LineCap; LineCapSet bool; LineJoin render.LineJoin; LineJoinSet bool; DashCap render.LineCap; DashJoin render.LineJoin; SolidCap render.LineCap; SolidJoin render.LineJoin; RCStrokeStylesSet bool; Antialiased bool; AntialiasedSet bool; GapColor optional.Value[render.Color]; PathEffects []render.PathEffect; DrawStyle LineDrawStyle; Marker MarkerType; MarkerSet bool; MarkerStyle MarkerStyle; MarkerPath geom.Path; MarkerSize float64; MarkerFaceColor render.Color; MarkerEdgeColor render.Color; MarkerEdgeWidth float64; MarkerFaceSpec MarkerColorSpec; MarkerEdgeSpec MarkerColorSpec; MarkerFaceAlt MarkerColorSpec; MarkEvery int; MarkEverySpec MarkEverySpec; Label string; Sketch render.SketchParams }"
+          "declaration": "type Line2D struct{ ArtistRasterization; XY []geom.Pt; W float64; Col render.Color; Dashes DashPattern; LineCap render.LineCap; LineCapSet bool; LineJoin render.LineJoin; LineJoinSet bool; DashCap render.LineCap; DashJoin render.LineJoin; SolidCap render.LineCap; SolidJoin render.LineJoin; RCStrokeStylesSet bool; Antialiased bool; AntialiasedSet bool; GapColor optional.Value[render.Color]; PathEffects []render.PathEffect; DrawStyle LineDrawStyle; Marker MarkerType; MarkerSet bool; MarkerStyle MarkerStyle; MarkerPath geom.Path; MarkerSize float64; MarkerEdgeWidth float64; MarkerFaceSpec MarkerColorSpec; MarkerEdgeSpec MarkerColorSpec; MarkerFaceAlt MarkerColorSpec; MarkEvery int; MarkEverySpec MarkEverySpec; Label string; Sketch render.SketchParams }"
         },
         {
           "id": "type LineCollection",
@@ -7521,7 +7537,7 @@
         },
         {
           "id": "type Patch",
-          "declaration": "type Patch struct{ ArtistRasterization; FaceColor optional.Value[render.Color]; EdgeColor optional.Value[render.Color]; EdgeWidth optional.Value[float64]; Alpha float64; Dashes []float64; DashUnits DashUnits; Label string; Hatch string; HatchColor render.Color; HatchWidth float64; HatchSpacing float64; PathEffects []render.PathEffect; LineJoin render.LineJoin; LineCap render.LineCap; Antialias render.AntialiasMode; Sketch render.SketchParams }"
+          "declaration": "type Patch struct{ ArtistRasterization; FaceColor optional.Value[render.Color]; EdgeColor optional.Value[render.Color]; EdgeWidth optional.Value[float64]; Alpha float64; Dashes DashPattern; Label string; Hatch string; HatchColor render.Color; HatchWidth float64; HatchSpacing float64; PathEffects []render.PathEffect; LineJoin render.LineJoin; LineCap render.LineCap; Antialias render.AntialiasMode; Sketch render.SketchParams }"
         },
         {
           "id": "type PatchCollection",

@@ -308,8 +308,45 @@ Four spellings were removed outright:
 - `Line2D.SetMarkEvery` is renamed `SetMarkEverySpec`, because it writes
   `MarkEverySpec` and never touched the `MarkEvery` stride its old name named.
 
-See `docs/plans/phase2-mutable-fields.md` for the classification, why the two
-kinds of companion want opposite fixes, and the families deliberately left alone.
+**Where the companion was a second value, the two merged into one.**
+`Line2D.Dashes` and `Patch.Dashes` are now a `DashPattern` — the sequence and its
+units together — because the lengths mean nothing without the units, and
+assigning the slice alone left them at pixels:
+
+```go
+core.Line2D{Dashes: []float64{4, 2}}                            // before (pixels)
+core.Patch{Dashes: []float64{4, 2}, DashUnits: core.DashUnitsMatplotlib}
+
+core.Line2D{Dashes: core.PixelDashes(4, 2)}                     // after
+core.Patch{Dashes: core.MatplotlibDashes(4, 2)}
+```
+
+`DashUnits` and its constants are unchanged; they now live on
+`DashPattern.Units`, and `line.Dashes.Scaled(width)` returns the device lengths.
+`Line2D.SetDashes` is unchanged.
+
+`Line2D.MarkerFaceColor` and `MarkerEdgeColor` are gone. They were read only when
+the neighboring `MarkerFaceSpec`/`MarkerEdgeSpec` was unset, so use the spec:
+
+```go
+core.Line2D{MarkerFaceColor: c}                        // before
+core.Line2D{MarkerFaceSpec: core.ExplicitMarkerColor(c)}  // after
+```
+
+A zero-alpha legacy color meant "inherit the line color", which is what the
+unset spec and `core.AutoMarkerColor()` already do. `SetMarkerFaceColor` and
+`SetMarkerEdgeColor` are unchanged.
+
+Collection edges that follow the face colors (`EdgeColorsFace`, Matplotlib's
+`edgecolors="face"`) are resolved when the stroke color is read instead of by
+copying `FaceColors` into `EdgeColors` at write time. Assigning `FaceColors`
+directly now behaves the same as `SetFaceColors`. Two consequences: reading
+`EdgeColors` no longer shows the mirrored faces — read the drawn color instead —
+and `SetEdgeColors` no longer turns the mode off, so clear `EdgeColorsFace`
+yourself when explicit edge colors should win.
+
+See `docs/plans/phase2-mutable-fields.md` for the classification and why the
+three kinds of companion want different fixes.
 
 The same getter pass removed the remaining exported `GetX` spellings:
 

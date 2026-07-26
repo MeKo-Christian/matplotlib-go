@@ -414,7 +414,7 @@ func (l *Line2D) legendEntry() (legendEntry, bool) {
 	if l == nil || l.Label == "" {
 		return legendEntry{}, false
 	}
-	entry := legendEntryFromLine(l.Label, l.ApplyArtistAlpha(l.Col), l.W, l.Dashes)
+	entry := legendEntryFromLine(l.Label, l.ApplyArtistAlpha(l.Col), l.W, l.Dashes.Lengths)
 	if l.hasMarkers() {
 		style := l.resolvedMarkerStyle()
 		spec := l.markerPathSpec(nil, nil)

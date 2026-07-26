@@ -250,7 +250,7 @@ func TestLegendDashedLineSampleUsesMatplotlibButtCap(t *testing.T) {
 		Label:  "dashed",
 		Col:    render.Color{A: 1},
 		W:      2,
-		Dashes: []float64{4, 2},
+		Dashes: PixelDashes(4, 2),
 	}
 	entry, ok := line.legendEntry()
 	if !ok {

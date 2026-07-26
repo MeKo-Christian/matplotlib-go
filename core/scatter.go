@@ -492,9 +492,6 @@ func (s *Scatter2D) toPathCollection(r render.Renderer, ctx *DrawContext) *PathC
 		pc.Snap = snap
 		pc.SnapSet = true
 	}
-	if pc.EdgeColorsFace && len(pc.FaceColors) > 0 {
-		pc.EdgeColors = cloneRenderColors(pc.FaceColors)
-	}
 	if len(s.ScalarValues) > 0 {
 		_ = pc.SetArray(s.ScalarValues)
 		if len(s.Colors) > 0 {
@@ -503,12 +500,11 @@ func (s *Scatter2D) toPathCollection(r render.Renderer, ctx *DrawContext) *PathC
 				pc.EdgeColors = cloneRenderColors(s.Colors)
 			} else {
 				pc.FaceColors = cloneRenderColors(s.Colors)
-				if pc.EdgeColorsFace {
-					pc.EdgeColors = cloneRenderColors(pc.FaceColors)
-				}
 			}
 		}
 		if len(s.EdgeColors) > 0 && !edgeUsesFace && style.FillStyle != MarkerFillNone {
+			// Explicit per-point edge colors win over the mapped faces.
+			pc.EdgeColorsFace = false
 			pc.EdgeColors = append([]render.Color(nil), s.EdgeColors...)
 		}
 	}

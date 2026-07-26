@@ -107,6 +107,24 @@ before it seeds the v1.0 `CHANGELOG.md`; it is not a release announcement.
   typed-constant pass missed. `AxisArtist.SetTickDirection` is unchanged.
 - Renamed `Line2D.SetMarkEvery` to `SetMarkEverySpec`, matching the
   `MarkEverySpec` field it actually writes; it never touched `MarkEvery`.
+- Merged `Dashes` and `DashUnits` into a single `core.DashPattern` value on
+  `Line2D` and `Patch`. Build one with `core.PixelDashes(...)` or
+  `core.MatplotlibDashes(...)`; `pattern.Scaled(lineWidth)` returns the device
+  lengths. Assigning the sequence alone used to leave the units at pixels and
+  silently render a Matplotlib pattern at the wrong scale. The `DashUnits` type
+  and its constants are unchanged, and `Line2D.SetDashes` keeps its signature.
+- Removed `Line2D.MarkerFaceColor` and `Line2D.MarkerEdgeColor`. Both were read
+  only while the neighboring `MarkerFaceSpec`/`MarkerEdgeSpec` was unset, so a
+  color now goes through `core.ExplicitMarkerColor(c)`. A zero-alpha legacy color
+  meant "inherit the line color", which `MarkerColorDefault` and
+  `core.AutoMarkerColor()` already express. `SetMarkerFaceColor` and
+  `SetMarkerEdgeColor` are unchanged.
+- Resolved collection `EdgeColorsFace` (Matplotlib `edgecolors="face"`) when the
+  stroke color is read rather than by mirroring `FaceColors` into `EdgeColors` at
+  write time, on `PathCollection`, `PatchCollection`, and `QuadMesh`. Assigning
+  `FaceColors` directly now matches `SetFaceColors`. Reading `EdgeColors` no
+  longer shows the mirrored faces, and `SetEdgeColors` no longer clears
+  `EdgeColorsFace` — clear it to make explicit edge colors win.
 
 ## Added
 

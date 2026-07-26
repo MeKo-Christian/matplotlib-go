@@ -63,7 +63,7 @@ func main() {
 		XY:     make([]geom.Pt, n),
 		W:      2.0,
 		Col:    render.Color{R: 0.2, G: 0.6, B: 0.2, A: 1}, // green
-		Dashes: []float64{8, 4},                            // dashed line
+		Dashes: core.PixelDashes(8, 4),                     // dashed line
 	}
 	for i := 0; i < n; i++ {
 		line2.XY[i] = geom.Pt{X: x[i], Y: y2[i]}
@@ -165,7 +165,7 @@ func main() {
 		XY:     make([]geom.Pt, nExp),
 		W:      3.0,
 		Col:    render.Color{R: 0.2, G: 0.6, B: 0.8, A: 1}, // blue
-		Dashes: []float64{10, 5},
+		Dashes: core.PixelDashes(10, 5),
 	}
 	for i := 0; i < nExp; i++ {
 		expLine.XY[i] = geom.Pt{X: xExp[i], Y: yExp2[i]}

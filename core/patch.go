@@ -44,8 +44,7 @@ type Patch struct {
 	EdgeColor optional.Value[render.Color]
 	EdgeWidth optional.Value[float64]
 	Alpha     float64
-	Dashes    []float64
-	DashUnits DashUnits
+	Dashes    DashPattern
 	Label     string
 
 	Hatch        string
@@ -251,16 +250,12 @@ func (p *Patch) strokePaint(rc *style.RC, color render.Color, edgeWidth float64)
 		LineWidth:   widthPx,
 		LineJoin:    p.LineJoin,
 		LineCap:     p.LineCap,
-		Dashes:      patchDashesForPaint(p.Dashes, widthPx, p.DashUnits),
+		Dashes:      p.Dashes.Scaled(widthPx),
 		PathEffects: devicePathEffects(*rc, p.PathEffects),
 		Snap:        render.SnapAuto,
 		Sketch:      p.Sketch,
 		Antialias:   p.resolvedAntialias(rc),
 	}
-}
-
-func patchDashesForPaint(dashes []float64, edgeWidth float64, units DashUnits) []float64 {
-	return lineDashesForPaint(dashes, edgeWidth, units)
 }
 
 func (p *Patch) drawStyledPath(r render.Renderer, rc *style.RC, fillPath, strokePath geom.Path) {
@@ -303,7 +298,7 @@ func (p *Patch) drawStyledPath(r render.Renderer, rc *style.RC, fillPath, stroke
 				paint.LineWidth = edgeWidthPx
 				paint.LineJoin = p.LineJoin
 				paint.LineCap = p.LineCap
-				paint.Dashes = patchDashesForPaint(p.Dashes, edgeWidthPx, p.DashUnits)
+				paint.Dashes = p.Dashes.Scaled(edgeWidthPx)
 			}
 		}
 		if faceColor.A > 0 || combinedStroke || (nativeHatch && p.Hatch != "") {

@@ -198,7 +198,7 @@ func (m *QuadMesh) drawQuadMesh(r render.Renderer, ctx *DrawContext) bool {
 				quad[i] = pt
 			}
 			face := m.alphaColor(colorAt(m.FaceColor, m.FaceColors, idx))
-			edge := m.alphaColor(colorAt(m.EdgeColor, m.EdgeColors, idx))
+			edge := m.alphaColor(colorAt(m.EdgeColor, m.resolvedEdgeColors(), idx))
 			width := widthAt(m.EdgeWidth, m.EdgeWidths, idx)
 			hatch := stringAt(m.Hatch, m.Hatches, idx)
 			hatchColor := m.alphaColor(colorAt(m.HatchColor, m.HatchColors, idx))
@@ -323,9 +323,6 @@ func (m *QuadMesh) refreshScalarMappedColors() {
 			colors[i] = mapping.Color(value, alpha)
 		}
 		m.FaceColors = colors
-	}
-	if m.EdgeColorsFace {
-		m.EdgeColors = cloneRenderColors(m.FaceColors)
 	}
 	m.SetStale(true)
 }

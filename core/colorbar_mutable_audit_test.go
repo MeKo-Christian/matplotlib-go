@@ -32,7 +32,7 @@ func TestColorbarMutableMappableUpdateContractIsDocumented(t *testing.T) {
 			"Norm     ScalarNormalizer",
 		},
 		filepath.Join("..", "core", "collection_common.go"): {
-			"ScalarValues   []float64",
+			"ScalarValues []float64",
 			"func (c *Collection) setArray(values []float64) error",
 			"func (c *Collection) setColormap(name string)",
 			"func (c *Collection) setNorm(norm ScalarNormalizer) error",

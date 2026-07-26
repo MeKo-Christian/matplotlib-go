@@ -41,7 +41,7 @@ func (c *PatchCollection) Draw(r render.Renderer, ctx *DrawContext) {
 		path = buildCachedDisplayPath(ctx, c.pathCacheSlot(i), c, c.Coords, path, geom.Identity())
 		patch := Patch{
 			FaceColor:   optional.Of(c.alphaColor(colorAt(c.FaceColor, c.FaceColors, i))),
-			EdgeColor:   optional.Of(c.alphaColor(colorAt(c.EdgeColor, c.EdgeColors, i))),
+			EdgeColor:   optional.Of(c.alphaColor(colorAt(c.EdgeColor, c.resolvedEdgeColors(), i))),
 			EdgeWidth:   optional.Of(widthAt(c.EdgeWidth, c.EdgeWidths, i)),
 			Hatch:       stringAt(c.Hatch, c.Hatches, i),
 			HatchColor:  c.alphaColor(colorAt(c.HatchColor, c.HatchColors, i)),
@@ -100,7 +100,7 @@ func (c *PatchCollection) legendEntry() (legendEntry, bool) {
 	return legendEntryFromPatchStyle(
 		c.label(),
 		fill,
-		c.alphaColor(colorAt(c.EdgeColor, c.EdgeColors, 0)),
+		c.alphaColor(colorAt(c.EdgeColor, c.resolvedEdgeColors(), 0)),
 		widthAt(c.EdgeWidth, c.EdgeWidths, 0),
 		stringAt(c.Hatch, c.Hatches, 0),
 		c.alphaColor(colorAt(c.HatchColor, c.HatchColors, 0)),
@@ -162,10 +162,17 @@ func (c *PatchCollection) SetEdgeColorFace() {
 		return
 	}
 	c.EdgeColorsFace = true
-	if len(c.FaceColors) > 0 {
-		c.EdgeColors = cloneRenderColors(c.FaceColors)
-	}
 	c.SetStale(true)
+}
+
+// resolvedEdgeColors returns the per-item stroke colors. Edges follow the face
+// colors while EdgeColorsFace is set and face colors exist; with no face colors
+// there is nothing to follow and the stored edge colors apply.
+func (c *PatchCollection) resolvedEdgeColors() []render.Color {
+	if c != nil && c.EdgeColorsFace && len(c.FaceColors) > 0 {
+		return c.FaceColors
+	}
+	return c.EdgeColors
 }
 
 func (c *PatchCollection) drawPathCollection(r render.Renderer, ctx *DrawContext) bool {
@@ -191,7 +198,7 @@ func (c *PatchCollection) drawPathCollection(r render.Renderer, ctx *DrawContext
 		}
 		path = buildCachedDisplayPath(ctx, c.pathCacheSlot(i), c, c.Coords, path, geom.Identity())
 		fill := c.alphaColor(colorAt(c.FaceColor, c.FaceColors, i))
-		edge := c.alphaColor(colorAt(c.EdgeColor, c.EdgeColors, i))
+		edge := c.alphaColor(colorAt(c.EdgeColor, c.resolvedEdgeColors(), i))
 		width := widthAt(c.EdgeWidth, c.EdgeWidths, i)
 		lineJoin := c.LineJoin
 		if lineJoin == 0 {
@@ -237,10 +244,6 @@ func (c *PatchCollection) refreshScalarMappedColors() {
 	if c == nil || len(c.ScalarValues) == 0 {
 		return
 	}
-	colors := c.mappedScalarColors()
-	c.FaceColors = colors
-	if c.EdgeColorsFace {
-		c.EdgeColors = cloneRenderColors(colors)
-	}
+	c.FaceColors = c.mappedScalarColors()
 	c.SetStale(true)
 }

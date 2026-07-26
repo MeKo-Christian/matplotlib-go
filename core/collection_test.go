@@ -414,7 +414,7 @@ func TestPathCollectionSetArrayRefreshesMappedFacesAndFaceEdges(t *testing.T) {
 	if got, want := pc.FaceColors[1], high; got != want {
 		t.Fatalf("second mapped face = %+v, want %+v", got, want)
 	}
-	if got, want := pc.EdgeColors[1], pc.FaceColors[1]; got != want {
+	if got, want := pc.edgeColorAt(1), pc.FaceColors[1]; got != want {
 		t.Fatalf("face-style edge = %+v, want mapped face %+v", got, want)
 	}
 
@@ -424,7 +424,7 @@ func TestPathCollectionSetArrayRefreshesMappedFacesAndFaceEdges(t *testing.T) {
 	if pc.FaceColors[1] == high {
 		t.Fatalf("SetCLim did not refresh mapped face colors: %+v", pc.FaceColors)
 	}
-	if got, want := pc.EdgeColors[1], pc.FaceColors[1]; got != want {
+	if got, want := pc.edgeColorAt(1), pc.FaceColors[1]; got != want {
 		t.Fatalf("face-style edge after clim = %+v, want mapped face %+v", got, want)
 	}
 }
@@ -885,7 +885,7 @@ func TestQuadMeshSetArrayRefreshesFlatColorsAndFaceEdges(t *testing.T) {
 	if got, want := mesh.FaceColors[3], high; got != want {
 		t.Fatalf("last flat face = %+v, want %+v", got, want)
 	}
-	if got, want := mesh.EdgeColors[3], mesh.FaceColors[3]; got != want {
+	if got, want := colorAt(mesh.EdgeColor, mesh.resolvedEdgeColors(), 3), mesh.FaceColors[3]; got != want {
 		t.Fatalf("face-style flat edge = %+v, want mapped face %+v", got, want)
 	}
 
@@ -893,7 +893,7 @@ func TestQuadMeshSetArrayRefreshesFlatColorsAndFaceEdges(t *testing.T) {
 	if got := mesh.ScalarMap().Colormap; got != "plasma" {
 		t.Fatalf("mesh colormap = %q, want plasma", got)
 	}
-	if got, want := mesh.EdgeColors[3], mesh.FaceColors[3]; got != want {
+	if got, want := colorAt(mesh.EdgeColor, mesh.resolvedEdgeColors(), 3), mesh.FaceColors[3]; got != want {
 		t.Fatalf("face-style edge after cmap = %+v, want mapped face %+v", got, want)
 	}
 }

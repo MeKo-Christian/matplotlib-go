@@ -734,7 +734,7 @@ func TestAxesScatterScalarValuesMapFacesAndDefaultEdges(t *testing.T) {
 		t.Fatal("default scatter scalar mapping should keep edgecolors='face'")
 	}
 	for i := range pc.FaceColors {
-		if got, want := pc.EdgeColors[i], pc.FaceColors[i]; got != want {
+		if got, want := pc.edgeColorAt(i), pc.faceColorAt(i); got != want {
 			t.Fatalf("mapped edge color %d = %+v, want face %+v", i, got, want)
 		}
 	}

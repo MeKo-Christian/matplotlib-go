@@ -285,14 +285,14 @@ func (a *Axes) addBxpMarker(point geom.Pt, marker MarkerType, face, edge render.
 
 func (a *Axes) addBxpMarkers(points []geom.Pt, marker MarkerType, face, edge render.Color, size float64) *Line2D {
 	line := &Line2D{
-		XY:              points,
-		Col:             edge,
-		Marker:          marker,
-		MarkerSet:       true,
-		MarkerSize:      size,
-		MarkerFaceColor: face,
-		MarkerEdgeColor: edge,
-		z:               2.1,
+		XY:             points,
+		Col:            edge,
+		Marker:         marker,
+		MarkerSet:      true,
+		MarkerSize:     size,
+		MarkerFaceSpec: ExplicitMarkerColor(face),
+		MarkerEdgeSpec: ExplicitMarkerColor(edge),
+		z:              2.1,
 	}
 	if face.A <= 0 {
 		line.SetMarkerFaceColorNone()

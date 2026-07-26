@@ -169,18 +169,16 @@ func (c *PathCollection) SetFaceColors(colors []render.Color) {
 		return
 	}
 	c.FaceColors = cloneRenderColors(colors)
-	if c.EdgeColorsFace {
-		c.EdgeColors = cloneRenderColors(c.FaceColors)
-	}
 	c.SetStale(true)
 }
 
-// SetEdgeColors replaces per-item edge colors, cloning the input slice.
+// SetEdgeColors replaces per-item edge colors, cloning the input slice. Edges
+// still follow the face colors while EdgeColorsFace is set; clear that field to
+// make these colors take effect.
 func (c *PathCollection) SetEdgeColors(colors []render.Color) {
 	if c == nil {
 		return
 	}
-	c.EdgeColorsFace = false
 	c.EdgeColors = cloneRenderColors(colors)
 	c.SetStale(true)
 }
@@ -265,9 +263,6 @@ func (c *PathCollection) SetEdgeColorFace() {
 		return
 	}
 	c.EdgeColorsFace = true
-	if len(c.FaceColors) > 0 {
-		c.EdgeColors = cloneRenderColors(c.FaceColors)
-	}
 	c.SetStale(true)
 }
 
@@ -507,7 +502,17 @@ func (c *PathCollection) faceColorAt(i int) render.Color {
 }
 
 func (c *PathCollection) edgeColorAt(i int) render.Color {
-	return c.alphaColor(colorAt(c.EdgeColor, c.EdgeColors, i))
+	return c.alphaColor(colorAt(c.EdgeColor, c.resolvedEdgeColors(), i))
+}
+
+// resolvedEdgeColors returns the per-item stroke colors. Edges follow the face
+// colors while EdgeColorsFace is set and face colors exist; with no face colors
+// there is nothing to follow and the stored edge colors apply.
+func (c *PathCollection) resolvedEdgeColors() []render.Color {
+	if c != nil && c.EdgeColorsFace && len(c.FaceColors) > 0 {
+		return c.FaceColors
+	}
+	return c.EdgeColors
 }
 
 func (c *PathCollection) edgeWidthAt(i int) float64 {
@@ -532,10 +537,6 @@ func (c *PathCollection) refreshScalarMappedColors() {
 	if c == nil || len(c.ScalarValues) == 0 {
 		return
 	}
-	colors := c.mappedScalarColors()
-	c.FaceColors = colors
-	if c.EdgeColorsFace {
-		c.EdgeColors = cloneRenderColors(colors)
-	}
+	c.FaceColors = c.mappedScalarColors()
 	c.SetStale(true)
 }

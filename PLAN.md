@@ -105,12 +105,12 @@ update the coupled API/doc tests in the same commit.
       in examples.
 - [x] Rename `GetX()` getters to `X()` (or an explicit `LookupX()` spelling
       where the noun conflicts with an exported type).
-- [ ] Resolve exported mutable fields versus setter duplication consistently.
+- [x] Resolve exported mutable fields versus setter duplication consistently.
   - [x] Classify exported mutable fields by immutable configuration, observable
         state, and internal cache; record the intended ownership per family.
   - [x] Encapsulate fields that duplicate setters and update callers/tests.
   - [x] Re-run the API/doc freeze and add migration notes for every removal.
-  - [ ] Close the two deferred families: move `PathCollection`'s
+  - [x] Close the two deferred families: move `PathCollection`'s
         `EdgeColorsFace` mirroring to read time, and fold
         `Line2D.MarkerFaceColor`/`MarkerEdgeColor` into their `*Spec` siblings
         and `Dashes`/`DashUnits` into one value type (see
@@ -208,9 +208,19 @@ field was unexported behind a same-named reader (`Axes.Title`/`XLabel`/`YLabel`,
 the duplicate `SetSuptitle`/`SetSupxlabel`/`SetSupylabel` casings, the alias
 `SetLocator` pair, `Axis.SetTickDirection` (replaced by `ParseTickDirection`,
 closing a raw-string enum the typed-constant pass missed), and the misnamed
-`SetMarkEvery` (now `SetMarkEverySpec`). `PathCollection`'s slice setters and
-the `Line2D` dash/marker-spec pairs are deliberately deferred with reasons in
-`docs/plans/phase2-mutable-fields.md`. Goldens stayed byte-identical. Core and
+`SetMarkEvery` (now `SetMarkEverySpec`). The two families whose companion was a
+second value rather than a flag then closed the bullet. Collection
+`EdgeColorsFace` (`edgecolors="face"`) is resolved where the stroke color is
+read instead of mirroring `FaceColors` into `EdgeColors` from four write sites,
+so assigning the field matches the setter; the `len(FaceColors) > 0` guard the
+write-time mirror carried is load-bearing, because `Scatter2D` uses the flag as
+a snapshot when building unfilled markers. `Line2D.MarkerFaceColor`/
+`MarkerEdgeColor` folded into `MarkerFaceSpec`/`MarkerEdgeSpec`, whose tri-state
+already expressed what a zero-alpha legacy color meant, and `Dashes`/`DashUnits`
+became one `DashPattern` value on both `Line2D` and `Patch`
+(`PixelDashes`/`MatplotlibDashes` constructors, `Scaled(lineWidth)` reader).
+Reasoning is in `docs/plans/phase2-mutable-fields.md`. Goldens stayed
+byte-identical. Core and
 plot3d alpha multiplier paths share
 `render.Color.WithAlphaMultiplier`, and 3D scalar maps derive their
 configuration through

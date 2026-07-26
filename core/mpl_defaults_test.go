@@ -379,7 +379,7 @@ func TestMPLStyleLinesStyleAndMarkersReachPlot(t *testing.T) {
 	if line == nil {
 		t.Fatal("Plot returned nil")
 	}
-	if len(line.Dashes) == 0 {
+	if len(line.Dashes.Lengths) == 0 {
 		t.Fatal("lines.linestyle: -- did not produce a dash pattern")
 	}
 	if !line.MarkerSet || line.Marker != MarkerCircle {
@@ -401,7 +401,7 @@ func TestMPLStyleLinesStyleAndMarkersReachPlot(t *testing.T) {
 		Marker:     optional.Of(marker),
 		MarkerSize: optional.Of(size),
 	})
-	if len(line2.Dashes) != 0 {
+	if len(line2.Dashes.Lengths) != 0 {
 		t.Fatalf("explicit solid linestyle still produced dashes %v", line2.Dashes)
 	}
 	if line2.Marker != MarkerTriangleUp || line2.MarkerSize != 4 {
@@ -435,8 +435,8 @@ lines.antialiased: False
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{}, Max: geom.Pt{X: 1, Y: 1}})
 	line, _ := ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{})
 	pointPx := theme.RC.DPI / 72
-	if len(line.Dashes) != 2 || math.Abs(line.Dashes[0]-4*pointPx) > 1e-9 ||
-		math.Abs(line.Dashes[1]-2*pointPx) > 1e-9 {
+	if len(line.Dashes.Lengths) != 2 || math.Abs(line.Dashes.Lengths[0]-4*pointPx) > 1e-9 ||
+		math.Abs(line.Dashes.Lengths[1]-2*pointPx) > 1e-9 {
 		t.Fatalf("unscaled rc dashes = %v, want [%v %v]", line.Dashes, 4*pointPx, 2*pointPx)
 	}
 	if line.DashCap != render.CapRound || line.DashJoin != render.JoinBevel ||
@@ -558,14 +558,14 @@ lines.antialiased: False
 	ax := fig.AddAxes(geom.Rect{Max: geom.Pt{X: 1, Y: 1}})
 	explicitFace := render.Color{G: 1, A: 1}
 	line := &Line2D{
-		Marker:          MarkerCircle,
-		MarkerSet:       true,
-		MarkerStyle:     MarkerStyle{Type: MarkerCircle, FillStyle: MarkerFillRight},
-		MarkerFaceColor: explicitFace,
-		Antialiased:     true,
-		AntialiasedSet:  true,
-		LineCap:         render.CapRound,
-		LineCapSet:      true,
+		Marker:         MarkerCircle,
+		MarkerSet:      true,
+		MarkerStyle:    MarkerStyle{Type: MarkerCircle, FillStyle: MarkerFillRight},
+		MarkerFaceSpec: ExplicitMarkerColor(explicitFace),
+		Antialiased:    true,
+		AntialiasedSet: true,
+		LineCap:        render.CapRound,
+		LineCapSet:     true,
 	}
 	ax.Add(line)
 	if !line.Antialiased || line.MarkerStyle.FillStyle != MarkerFillRight ||

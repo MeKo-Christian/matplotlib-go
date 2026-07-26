@@ -100,7 +100,7 @@ func TestLine2D_DashedCapstyleMatchesMatplotlib(t *testing.T) {
 		},
 		W:      2.0,
 		Col:    render.Color{R: 1, G: 0, B: 0, A: 1},
-		Dashes: []float64{3, 2},
+		Dashes: PixelDashes(3, 2),
 	}
 
 	r := &recordingRenderer{}
@@ -208,8 +208,8 @@ func TestLine2DDrawsMarkersWithFaceEdgeStyles(t *testing.T) {
 		Marker:          MarkerSquare,
 		MarkerSet:       true,
 		MarkerSize:      8,
-		MarkerFaceColor: render.Color{G: 1, A: 0.8},
-		MarkerEdgeColor: render.Color{B: 1, A: 0.6},
+		MarkerFaceSpec:  ExplicitMarkerColor(render.Color{G: 1, A: 0.8}),
+		MarkerEdgeSpec:  ExplicitMarkerColor(render.Color{B: 1, A: 0.6}),
 		MarkerEdgeWidth: 3,
 	}
 
@@ -228,10 +228,10 @@ func TestLine2DDrawsMarkersWithFaceEdgeStyles(t *testing.T) {
 		t.Fatalf("path calls = %d, want line plus two markers", len(r.pathCalls))
 	}
 	markerPaint := r.pathCalls[1].paint
-	if got, want := markerPaint.Fill, line.MarkerFaceColor; got != want {
+	if got, want := markerPaint.Fill, line.MarkerFaceSpec.Color; got != want {
 		t.Fatalf("marker fill = %+v, want %+v", got, want)
 	}
-	if got, want := markerPaint.Stroke, line.MarkerEdgeColor; got != want {
+	if got, want := markerPaint.Stroke, line.MarkerEdgeSpec.Color; got != want {
 		t.Fatalf("marker edge = %+v, want %+v", got, want)
 	}
 	if got, want := markerPaint.LineWidth, pointsToPixels(ctx.RC, line.MarkerEdgeWidth); got != want {
@@ -245,11 +245,11 @@ func TestLine2DMarkerColorSentinels(t *testing.T) {
 			{X: 0, Y: 0},
 			{X: 1, Y: 1},
 		},
-		W:               2,
-		Col:             render.Color{R: 0.2, G: 0.4, B: 0.6, A: 1},
-		Marker:          MarkerCircle,
-		MarkerSet:       true,
-		MarkerFaceColor: render.Color{R: 1, A: 0.25},
+		W:              2,
+		Col:            render.Color{R: 0.2, G: 0.4, B: 0.6, A: 1},
+		Marker:         MarkerCircle,
+		MarkerSet:      true,
+		MarkerFaceSpec: ExplicitMarkerColor(render.Color{R: 1, A: 0.25}),
 	}
 	line.SetMarkerEdgeColorAuto()
 
@@ -288,11 +288,11 @@ func TestLine2DLineOnlyMarkerDrawsStrokeOnly(t *testing.T) {
 			{X: 0, Y: 0},
 			{X: 1, Y: 1},
 		},
-		W:               2,
-		Col:             render.Color{R: 1, A: 1},
-		Marker:          MarkerPlus,
-		MarkerSet:       true,
-		MarkerFaceColor: render.Color{G: 1, A: 1},
+		W:              2,
+		Col:            render.Color{R: 1, A: 1},
+		Marker:         MarkerPlus,
+		MarkerSet:      true,
+		MarkerFaceSpec: ExplicitMarkerColor(render.Color{G: 1, A: 1}),
 	}
 
 	r := &recordingRenderer{}
@@ -325,8 +325,8 @@ func TestLine2DHalfFilledMarkerDrawsSplitHalvesWithEdges(t *testing.T) {
 		},
 		Col:             render.Color{R: 0.1, G: 0.2, B: 0.3, A: 1},
 		MarkerStyle:     markerStyle,
-		MarkerFaceColor: render.Color{R: 1, A: 1},
-		MarkerEdgeColor: render.Color{B: 1, A: 1},
+		MarkerFaceSpec:  ExplicitMarkerColor(render.Color{R: 1, A: 1}),
+		MarkerEdgeSpec:  ExplicitMarkerColor(render.Color{B: 1, A: 1}),
 		MarkerEdgeWidth: 2,
 	}
 	line.SetMarkerFaceColorAlt(render.Color{G: 1, A: 0.75})
@@ -345,14 +345,14 @@ func TestLine2DHalfFilledMarkerDrawsSplitHalvesWithEdges(t *testing.T) {
 	if len(r.pathCalls) != 2 {
 		t.Fatalf("path calls = %d, want primary and alternate half markers", len(r.pathCalls))
 	}
-	if got, want := r.pathCalls[0].paint.Fill, line.MarkerFaceColor; got != want {
+	if got, want := r.pathCalls[0].paint.Fill, line.MarkerFaceSpec.Color; got != want {
 		t.Fatalf("primary half fill = %+v, want %+v", got, want)
 	}
 	if got, want := r.pathCalls[1].paint.Fill, (render.Color{G: 1, A: 0.75}); got != want {
 		t.Fatalf("alternate half fill = %+v, want %+v", got, want)
 	}
 	for i := range r.pathCalls {
-		if got, want := r.pathCalls[i].paint.Stroke, line.MarkerEdgeColor; got != want {
+		if got, want := r.pathCalls[i].paint.Stroke, line.MarkerEdgeSpec.Color; got != want {
 			t.Fatalf("half marker %d stroke = %+v, want Matplotlib edge %+v", i, got, want)
 		}
 		if got := r.pathCalls[i].paint.LineWidth; got != pointsToPixels(ctx.RC, line.MarkerEdgeWidth) {
@@ -605,26 +605,26 @@ func TestAxesPlotTypedLineStyle(t *testing.T) {
 	}
 	widthPx := 1.5 * 100.0 / 72.0
 	want := []float64{3.7 * widthPx, 1.6 * widthPx}
-	if len(line.Dashes) != 2 || math.Abs(line.Dashes[0]-want[0]) > 1e-12 || math.Abs(line.Dashes[1]-want[1]) > 1e-12 {
+	if len(line.Dashes.Lengths) != 2 || math.Abs(line.Dashes.Lengths[0]-want[0]) > 1e-12 || math.Abs(line.Dashes.Lengths[1]-want[1]) > 1e-12 {
 		t.Fatalf("LineStyleDashed dashes = %v, want %v", line.Dashes, want)
 	}
 
 	// An explicit dash pattern overrides the typed style.
 	line, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{LineStyle: LineStyleDotted, Dashes: []float64{9, 9}})
-	if len(line.Dashes) != 2 || line.Dashes[0] != 9 || line.Dashes[1] != 9 {
+	if len(line.Dashes.Lengths) != 2 || line.Dashes.Lengths[0] != 9 || line.Dashes.Lengths[1] != 9 {
 		t.Fatalf("explicit Dashes = %v, want [9 9]", line.Dashes)
 	}
 
 	// "none" suppresses the line stroke entirely (markers-only plot).
 	line, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{LineStyle: LineStyleNone})
-	if line.W != 0 || line.Dashes != nil {
+	if line.W != 0 || line.Dashes.Lengths != nil {
 		t.Fatalf("LineStyleNone line: W = %v, Dashes = %v; want 0 and nil", line.W, line.Dashes)
 	}
 
 	// Solid and unset both keep a solid stroke.
 	for _, ls := range []LineStyle{"", LineStyleSolid} {
 		line, _ = ax.Plot([]float64{0, 1}, []float64{0, 1}, PlotOptions{LineStyle: ls})
-		if line.W != 1.5 || line.Dashes != nil {
+		if line.W != 1.5 || line.Dashes.Lengths != nil {
 			t.Fatalf("LineStyle %q: W = %v, Dashes = %v; want 1.5 and nil", ls, line.W, line.Dashes)
 		}
 	}
@@ -651,7 +651,7 @@ func TestAxesPlotConfiguresLineMarkers(t *testing.T) {
 	if line == nil {
 		t.Fatal("Plot returned nil")
 	}
-	if !line.MarkerSet || line.Marker != marker || line.MarkerSize != size || line.MarkerFaceColor != face || line.MarkerEdgeColor != edge || line.MarkerEdgeWidth != edgeWidth || line.MarkEvery != 3 {
+	if !line.MarkerSet || line.Marker != marker || line.MarkerSize != size || line.MarkerFaceSpec.Color != face || line.MarkerEdgeSpec.Color != edge || line.MarkerEdgeWidth != edgeWidth || line.MarkEvery != 3 {
 		t.Fatalf("line marker config not applied: %+v", line)
 	}
 }

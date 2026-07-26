@@ -17,7 +17,8 @@ line.Dashes = []float64{4, 2}      // leaves DashUnits at DashUnitsPixels
 line.SetDashes(4, 2)               // sets DashUnits to DashUnitsMatplotlib
 ```
 
-Both compile. Only the second renders the dash pattern matplotlib would.
+Both compiled. Only the second rendered the dash pattern matplotlib would. (The
+first no longer compiles — see the `DashPattern` section below.)
 
 ## Classification
 
@@ -38,10 +39,11 @@ All 29 conflicts sit in **observable state**, and the deciding question is:
 
 > **Does a correct write touch anything other than this field?**
 
-## Two kinds of companion, two different fixes
+## Three kinds of companion, three different fixes
 
-Answering that question split the conflicts cleanly in half, and the two halves
-want opposite treatments. This is the main finding of the pass.
+Answering that question sorts the conflicts into three groups, and each wants a
+different treatment. The first two splits were the main finding of the pass; the
+third closed the families it could not classify.
 
 ### 1. The companion is a hand-rolled optional → widen the field
 
@@ -84,6 +86,59 @@ no field type can carry that. There the setter must be the only writer, and the
 field becomes unexported with an exported reader.
 
 Applied to the axes title/label family and the widget value family (below).
+
+### 3. The companion is a second value → merge them
+
+Two families were carried over from the first pass because neither fix above
+applied: their companion is not a flag but another _value_.
+
+#### Mirroring belongs at read time, not write time
+
+`PathCollection`, `PatchCollection`, and `QuadMesh` share an `EdgeColorsFace`
+flag (Matplotlib's `edgecolors="face"`). It was honored by copying `FaceColors`
+into `EdgeColors` from four different write sites — `SetFaceColors`,
+`SetEdgeColorFace`, `refreshScalarMappedColors`, and again by hand in
+`Scatter2D.toPathCollection`. A direct `c.FaceColors = …` skipped all four, and
+even between the setters the result depended on call order.
+
+Reading the flag where the stroke color is resolved makes the copy unnecessary:
+
+```go
+func (c *PathCollection) resolvedEdgeColors() []render.Color {
+	if c != nil && c.EdgeColorsFace && len(c.FaceColors) > 0 {
+		return c.FaceColors
+	}
+	return c.EdgeColors
+}
+```
+
+The `len(c.FaceColors) > 0` guard is not incidental — it is what the write-time
+mirror did, and it is load-bearing. `Scatter2D` builds an unfilled marker
+(`MarkerFillNone`) by moving the face colors into `EdgeColors` and then clearing
+the face, relying on the flag as a _snapshot_ rather than a live mirror. With the
+guard, that path still reads its stored edge colors, so a naive
+"`EdgeColorsFace` ⇒ return the face colors" would have silently blanked every
+unfilled scatter marker.
+
+Two write-order behaviors were made explicit rather than dropped:
+`SetEdgeColors` no longer clears the flag (the flag simply outranks the field
+while it is set), and the one internal caller that really did mean "explicit edge
+colors win" now says `pc.EdgeColorsFace = false` in as many words.
+
+#### One value, not two half-values
+
+- **`Line2D.MarkerFaceColor` / `MarkerEdgeColor`** were read only when the
+  neighboring `*Spec` was in its unset mode, where a positive alpha meant
+  "explicit" and a zero alpha meant "inherit the line color". That is exactly
+  what `MarkerColorSpec` encodes, so the plain fields are gone and
+  `MarkerColorDefault` now resolves like `MarkerColorAuto`. The mode is still
+  distinct from `MarkerColorAuto`, because only an unset spec is seeded from the
+  `lines.marker*` rcParams.
+- **`Dashes` + `DashUnits`** (on both `Line2D` and `Patch`) became one
+  `DashPattern` value, with `PixelDashes` / `MatplotlibDashes` constructors and a
+  `Scaled(lineWidth)` reader. This is the pair the opening example was about: a
+  dash sequence is meaningless without its units, and assigning the slice alone
+  left the units at their pixel zero value.
 
 ## Ownership is a property of the family, not the field
 
@@ -143,26 +198,6 @@ write would break. It is not: `Stale()` has no consumer anywhere in the render
 path. It mirrors matplotlib's `Artist.stale` as observable metadata, and no
 drawing decision reads it. It therefore carries no weight in the classification
 above — worth knowing before treating it as a reason to encapsulate something.
-
-## Follow-on work
-
-Two families were deliberately left as they are, and both deserve a decision
-rather than a silent carry-over:
-
-- **`PathCollection.Offsets` / `Sizes` / `FaceColors` / `EdgeColors`.** These
-  setters clone the incoming slice and, for the color pair, mirror `FaceColors`
-  into `EdgeColors` when `EdgeColorsFace` is set. The clone is defensive rather
-  than an invariant, but the mirroring is real write coupling. The right fix is
-  probably to move the mirroring to _read_ time (`resolvedEdgeColors()` returning
-  the face colors when `EdgeColorsFace`), after which no coupling exists and both
-  spellings are safe. Encapsulating 4 of this struct's ~20 sibling fields would
-  have made it less consistent, not more.
-- **`Line2D.Dashes` + `DashUnits`, `MarkerFaceColor` + `MarkerFaceSpec`,
-  `MarkerEdgeColor` + `MarkerEdgeSpec`.** Here the companion is a second _value_,
-  not a flag, so neither fix above applies directly. `Dashes`/`DashUnits` wants a
-  single `DashPattern` value type; `MarkerFaceColor` is a legacy fallback that
-  `MarkerFaceSpec` already supersedes (it is read only when the spec's mode is
-  unset) and should simply be folded into the spec.
 
 The 1721 exported fields with no setter were not audited individually. Many are
 genuinely plain configuration, but the audit cannot distinguish those from fields

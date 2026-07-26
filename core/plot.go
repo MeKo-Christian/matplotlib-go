@@ -176,7 +176,7 @@ func (a *Axes) plot(x, y []float64, opt PlotOptions) *Line2D {
 		XY:                points,
 		W:                 lineWidth,
 		Col:               color,
-		Dashes:            dashes,
+		Dashes:            PixelDashes(dashes...),
 		DrawStyle:         opt.DrawStyle,
 		Label:             opt.Label,
 		DashCap:           rcLines.DashCap,
@@ -225,17 +225,13 @@ func (a *Axes) plot(x, y []float64, opt PlotOptions) *Line2D {
 		line.MarkerSize = rcLines.MarkerSize
 	}
 	markerFaceColor, markerFaceColorSet := opt.MarkerFaceColor.Get()
-	line.MarkerFaceColor = color
 	if markerFaceColorSet {
-		line.MarkerFaceColor = markerFaceColor
 		line.MarkerFaceSpec = ExplicitMarkerColor(markerFaceColor)
 	} else if !opt.MarkerFaceSpec.IsSet() {
 		line.MarkerFaceSpec = markerColorSpecFromRC(rcLines.MarkerFaceColor, &resolvedRC)
 	}
 	markerEdgeColor, markerEdgeColorSet := opt.MarkerEdgeColor.Get()
-	line.MarkerEdgeColor = color
 	if markerEdgeColorSet {
-		line.MarkerEdgeColor = markerEdgeColor
 		line.MarkerEdgeSpec = ExplicitMarkerColor(markerEdgeColor)
 	} else if !opt.MarkerEdgeSpec.IsSet() {
 		line.MarkerEdgeSpec = markerColorSpecFromRC(rcLines.MarkerEdgeColor, &resolvedRC)
@@ -263,12 +259,6 @@ func (a *Axes) plot(x, y []float64, opt PlotOptions) *Line2D {
 	// clamped, matching the pointer-model behavior this replaced.
 	if alpha, ok := opt.Alpha.Get(); ok && alpha >= 0 && alpha <= 1 {
 		line.Col.A = alpha
-		if !markerFaceColorSet {
-			line.MarkerFaceColor.A = alpha
-		}
-		if !markerEdgeColorSet {
-			line.MarkerEdgeColor.A = alpha
-		}
 		if line.MarkerFaceSpec.Mode == MarkerColorExplicit {
 			line.MarkerFaceSpec.Color.A = alpha
 		}
@@ -352,10 +342,10 @@ func applyLineRCDefaults(line *Line2D, rc *style.RC) {
 		line.MarkerStyle = NewMarkerStyle(line.Marker)
 		line.MarkerStyle.FillStyle = markerFillStyleFromRC(rcLines.MarkerFillStyle)
 	}
-	if line.MarkerFaceSpec.Mode == MarkerColorDefault && line.MarkerFaceColor == (render.Color{}) {
+	if line.MarkerFaceSpec.Mode == MarkerColorDefault {
 		line.MarkerFaceSpec = markerColorSpecFromRC(rcLines.MarkerFaceColor, rc)
 	}
-	if line.MarkerEdgeSpec.Mode == MarkerColorDefault && line.MarkerEdgeColor == (render.Color{}) {
+	if line.MarkerEdgeSpec.Mode == MarkerColorDefault {
 		line.MarkerEdgeSpec = markerColorSpecFromRC(rcLines.MarkerEdgeColor, rc)
 	}
 }

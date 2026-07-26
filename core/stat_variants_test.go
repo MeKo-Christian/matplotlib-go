@@ -180,13 +180,13 @@ func TestAxesBxpCreatesComponentArtistsAndTicks(t *testing.T) {
 	if len(container.Caps) != 4 || len(container.Fliers) != 1 || len(container.Means) != 1 {
 		t.Fatalf("unexpected optional component counts caps=%d fliers=%d means=%d", len(container.Caps), len(container.Fliers), len(container.Means))
 	}
-	if got := container.Means[0]; got.Marker != MarkerTriangle || got.MarkerSize != 6 || got.MarkerFaceColor != matcolor.Tab10[2] || got.MarkerEdgeColor != matcolor.Tab10[2] {
+	if got := container.Means[0]; got.Marker != MarkerTriangle || got.MarkerSize != 6 || got.MarkerFaceSpec.Color != matcolor.Tab10[2] || got.MarkerEdgeSpec.Color != matcolor.Tab10[2] {
 		t.Fatalf("mean marker style = marker %v size %v face %+v edge %+v, want Matplotlib default C2 triangle",
-			got.Marker, got.MarkerSize, got.MarkerFaceColor, got.MarkerEdgeColor)
+			got.Marker, got.MarkerSize, got.MarkerFaceSpec.Color, got.MarkerEdgeSpec.Color)
 	}
-	if got := container.Fliers[0]; got.Marker != MarkerCircle || got.MarkerSize != 6 || got.MarkerFaceSpec.Mode != MarkerColorNone || got.MarkerEdgeColor != (render.Color{R: 0, G: 0, B: 0, A: 1}) {
+	if got := container.Fliers[0]; got.Marker != MarkerCircle || got.MarkerSize != 6 || got.MarkerFaceSpec.Mode != MarkerColorNone || got.MarkerEdgeSpec.Color != (render.Color{R: 0, G: 0, B: 0, A: 1}) {
 		t.Fatalf("flier marker style = marker %v size %v face mode %v edge %+v, want Matplotlib default open black circle",
-			got.Marker, got.MarkerSize, got.MarkerFaceSpec.Mode, got.MarkerEdgeColor)
+			got.Marker, got.MarkerSize, got.MarkerFaceSpec.Mode, got.MarkerEdgeSpec.Color)
 	}
 	if container.Medians[0].Label != "stats" || container.Medians[1].Label != "" {
 		t.Fatalf("median labels = %q, %q; want first legend label only", container.Medians[0].Label, container.Medians[1].Label)

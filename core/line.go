@@ -62,6 +62,36 @@ const (
 	DashUnitsMatplotlib
 )
 
+// DashPattern is a dash sequence together with the unit system its lengths are
+// expressed in. The two travel as one value because a sequence means nothing
+// without its units: as separate fields, assigning the lengths alone left the
+// units at their pixel zero value and silently rendered a Matplotlib pattern at
+// the wrong scale.
+//
+// The zero value is a solid line.
+type DashPattern struct {
+	Lengths []float64
+	Units   DashUnits
+}
+
+// PixelDashes returns a dash pattern whose on/off lengths are renderer pixels,
+// used as given.
+func PixelDashes(lengths ...float64) DashPattern {
+	return DashPattern{Lengths: append([]float64(nil), lengths...), Units: DashUnitsPixels}
+}
+
+// MatplotlibDashes returns a dash pattern in Matplotlib Line2D.set_dashes units:
+// on/off lengths in points, scaled by the stroke width before rasterization.
+func MatplotlibDashes(lengths ...float64) DashPattern {
+	return DashPattern{Lengths: append([]float64(nil), lengths...), Units: DashUnitsMatplotlib}
+}
+
+// Scaled returns the dash lengths in renderer pixels for the given stroke width,
+// or nil for a solid line.
+func (d DashPattern) Scaled(lineWidth float64) []float64 {
+	return lineDashesForPaint(d.Lengths, lineWidth, d.Units)
+}
+
 // MarkEveryMode identifies a marker subsampling strategy for Line2D.
 type MarkEveryMode uint8
 
@@ -89,6 +119,9 @@ type MarkEverySpec struct {
 type MarkerColorMode uint8
 
 const (
+	// MarkerColorDefault is the unset zero value. It resolves like
+	// MarkerColorAuto, but only a default spec is seeded from the lines.marker*
+	// rcParams, so the two are not interchangeable at construction time.
 	MarkerColorDefault MarkerColorMode = iota
 	MarkerColorExplicit
 	MarkerColorAuto
@@ -144,8 +177,7 @@ type Line2D struct {
 	XY                []geom.Pt    // data space points
 	W                 float64      // stroke width in points
 	Col               render.Color // stroke color
-	Dashes            []float64    // dash pattern (on/off pairs)
-	DashUnits         DashUnits    // unit system for Dashes
+	Dashes            DashPattern  // dash pattern (on/off pairs) and its units
 	LineCap           render.LineCap
 	LineCapSet        bool
 	LineJoin          render.LineJoin
@@ -168,18 +200,19 @@ type Line2D struct {
 	MarkerStyle     MarkerStyle   // optional rich marker style
 	MarkerPath      geom.Path     // optional custom marker path in normalized marker space
 	MarkerSize      float64       // marker size in points, 0 uses Matplotlib's 6 pt default
-	MarkerFaceColor render.Color  // marker fill, 0 alpha falls back to line color
-	MarkerEdgeColor render.Color  // marker edge, 0 alpha falls back to line color
 	MarkerEdgeWidth float64       // marker edge width in points, 0 uses Matplotlib's 1 pt default
-	MarkerFaceSpec  MarkerColorSpec
-	MarkerEdgeSpec  MarkerColorSpec
-	MarkerFaceAlt   MarkerColorSpec
-	MarkEvery       int                 // optional every-N marker subset; <=1 draws every point
-	MarkEverySpec   MarkEverySpec       // optional richer marker subset; overrides MarkEvery when set
-	Label           string              // series label for legend
-	Sketch          render.SketchParams // per-artist sketch/xkcd override; zero inherits the figure default
-	z               float64             // z-order
-	pickRadius      float64             // pick tolerance in pixels (0 = default)
+	// Marker fill, edge, and alternate half-fill. Each carries its own explicit/
+	// auto/none tri-state, so there is no separate plain-color field that a write
+	// could leave disagreeing with the spec beside it.
+	MarkerFaceSpec MarkerColorSpec
+	MarkerEdgeSpec MarkerColorSpec
+	MarkerFaceAlt  MarkerColorSpec
+	MarkEvery      int                 // optional every-N marker subset; <=1 draws every point
+	MarkEverySpec  MarkEverySpec       // optional richer marker subset; overrides MarkEvery when set
+	Label          string              // series label for legend
+	Sketch         render.SketchParams // per-artist sketch/xkcd override; zero inherits the figure default
+	z              float64             // z-order
+	pickRadius     float64             // pick tolerance in pixels (0 = default)
 
 	// Persistent affine/non-affine cache for the data-coordinate draw path
 	// (Phase 13). transformedPath caches the non-affine projection of the source
@@ -249,13 +282,11 @@ func (l *Line2D) SetYData(y []float64) {
 // SetDashes sets the dash sequence using Matplotlib Line2D.set_dashes units.
 func (l *Line2D) SetDashes(seq ...float64) {
 	if len(seq) == 0 {
-		l.Dashes = nil
-		l.DashUnits = DashUnitsPixels
+		l.Dashes = DashPattern{}
 		l.SetStale(true)
 		return
 	}
-	l.Dashes = append([]float64(nil), seq...)
-	l.DashUnits = DashUnitsMatplotlib
+	l.Dashes = MatplotlibDashes(seq...)
 	l.SetStale(true)
 }
 
@@ -273,7 +304,6 @@ func (l *Line2D) SetMarkerFaceColor(color render.Color) {
 	if l == nil {
 		return
 	}
-	l.MarkerFaceColor = color
 	l.MarkerFaceSpec = ExplicitMarkerColor(color)
 	l.SetStale(true)
 }
@@ -319,7 +349,6 @@ func (l *Line2D) SetMarkerEdgeColor(color render.Color) {
 	if l == nil {
 		return
 	}
-	l.MarkerEdgeColor = color
 	l.MarkerEdgeSpec = ExplicitMarkerColor(color)
 	l.SetStale(true)
 }
@@ -374,7 +403,7 @@ func (l *Line2D) Draw(r render.Renderer, ctx *DrawContext) {
 		lineRC = ctx.RC
 	}
 	widthPx := pointsToPixels(lineRC, l.W)
-	dashes := lineDashesForPaint(l.Dashes, widthPx, l.DashUnits)
+	dashes := l.Dashes.Scaled(widthPx)
 	lineCap := render.CapSquare
 	lineJoin := render.JoinRound
 	if l.RCStrokeStylesSet {
@@ -1016,19 +1045,12 @@ func (l *Line2D) resolvedMarkerFaceColor() render.Color {
 	if l.resolvedMarkerStyle().FillStyle == MarkerFillNone {
 		return render.Color{}
 	}
-	var color render.Color
+	color := l.Col
 	switch l.MarkerFaceSpec.Mode {
 	case MarkerColorExplicit:
 		color = l.MarkerFaceSpec.Color
 	case MarkerColorNone:
 		return render.Color{}
-	case MarkerColorAuto:
-		color = l.Col
-	default:
-		color = l.MarkerFaceColor
-		if color.A <= 0 {
-			color = l.Col
-		}
 	}
 	return l.ApplyArtistAlpha(color)
 }
@@ -1059,22 +1081,14 @@ func (l *Line2D) resolvedMarkerEdgeColor() render.Color {
 		return l.ApplyArtistAlpha(l.MarkerEdgeSpec.Color)
 	case MarkerColorNone:
 		return render.Color{}
-	case MarkerColorAuto:
-		edge := l.ApplyArtistAlpha(l.Col)
-		if !l.markerFaceNone() {
-			edge.A = l.resolvedMarkerFaceColor().A
-		}
-		return edge
-	default:
-		if l.MarkerEdgeColor.A > 0 {
-			return l.ApplyArtistAlpha(l.MarkerEdgeColor)
-		}
-		edge := l.ApplyArtistAlpha(l.Col)
-		if !l.markerFaceNone() {
-			edge.A = l.resolvedMarkerFaceColor().A
-		}
-		return edge
 	}
+	// Auto and the unset default both take Matplotlib's auto behavior: the line
+	// RGB, inheriting the face alpha whenever the face is filled.
+	edge := l.ApplyArtistAlpha(l.Col)
+	if !l.markerFaceNone() {
+		edge.A = l.resolvedMarkerFaceColor().A
+	}
+	return edge
 }
 
 // resolvedMarkerEdgeWidth returns the marker edge width in points (matplotlib
