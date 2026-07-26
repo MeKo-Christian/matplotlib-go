@@ -46,216 +46,69 @@ reporting reflects runtime behavior.
 
 **Goal:** perform the single coordinated pre-v1.0 breaking pass: make the API
 Go-idiomatic, split the `core/` package, and re-freeze the public surface.
-Rendering must remain byte-identical to the current pre-break golden baseline.
+Rendering must remain byte-identical to the pre-break golden baseline.
 
-After every stage, regenerate the frozen API with
-`UPDATE_PUBLIC_API_AUDIT=1`, remap
-`internal/examplecatalog/public_surface_parity.go`, regenerate
-`docs/matplotlib-parity-status.md` with `go run ./cmd/paritystatusdoc`, and
-update the coupled API/doc tests in the same commit.
-
-### 2.1 Surface Tiering
-
-- [x] Classify all 3,102 frozen symbols as keep, demote, or delete in a design
-      document. Explicitly decide the fate of:
-  - Python-style introspection (`Setp`, `Getp`, `GetpAll`, `Findobj`,
-    `FindobjType`);
-  - `*Units` variants that overlap the new error convention;
-  - renderer-extension interfaces used only by backends.
-
-### 2.2 Package Split
-
-- [x] Move `core/axes3d*.go` and 3D projection files into `plot3d`
-      (approximately 98 exported symbols and 7k lines).
-- [x] Move tick locators, formatters, and date ticks into `ticker`, preserving
-      Matplotlib's natural `ticker`/dates boundary where useful.
-- [x] Move widget and selector implementations into `widgets`, beside the
-      canvas/event layer.
-- [x] After each move, keep `go build ./...` and `just test` green, verify
-      goldens are byte-identical, run the full API regeneration workflow,
-      refresh `docs/large-file-decomposition.md`, and run
-      `just large-file-audit`.
-
-### 2.3 Idiomatic Conventions
-
-- [x] Adopt one error convention: rejected plot input returns `(T, error)`;
-      `diag.Warnf` remains only for accepted degradations. Fold redundant
-      `*Units` variants into primary methods.
-  - [x] Fold `PlotUnits` into a transactional, unit-capable `Plot`.
-  - [x] Fold `ScatterUnits` into `Scatter`; reject conversion, shape, scalar-map,
-        and extra-option errors without mutating axes or advancing the cycle.
-  - [x] Fold `BarUnits` into `Bar`/`BarH`; preserve categorical-axis locator
-        behavior and make vertical/horizontal rejection transactional.
-  - [x] Fold `FillBetweenUnits` into `FillBetween`; validate all three converted
-        inputs before constructing polygons or committing axis-unit state.
-  - [x] Inventory the remaining warn-and-skip plotting entry points, convert
-        rejected input to errors, and retain warnings only where an artist is
-        accepted with a documented degradation.
-- [x] Replace the 83 variadic option structs and 408 pointer-to-primitive
-      fields with one consistent options model; extra option sets must be
-      impossible or rejected. Replace raw-string enums with typed constants.
-  - [x] Reject extra option values across the existing variadic surface as an
-        intermediate safety step.
-  - [x] Choose and document the final options representation, then migrate one
-        representative line, collection, image, and annotation API.
-  - [x] Migrate the remaining option families and replace option raw strings
-        with typed constants.
-- [x] Add `Figure.Save(path)`, `Figure.WriteTo(w, format)`, and
-      `Figure.Image()`; replace the repeated backend-specific save boilerplate
-      in examples.
-- [x] Rename `GetX()` getters to `X()` (or an explicit `LookupX()` spelling
-      where the noun conflicts with an exported type).
-- [x] Resolve exported mutable fields versus setter duplication consistently.
-  - [x] Classify exported mutable fields by immutable configuration, observable
-        state, and internal cache; record the intended ownership per family.
-  - [x] Encapsulate fields that duplicate setters and update callers/tests.
-  - [x] Re-run the API/doc freeze and add migration notes for every removal.
-  - [x] Close the two deferred families: move `PathCollection`'s
-        `EdgeColorsFace` mirroring to read time, and fold
-        `Line2D.MarkerFaceColor`/`MarkerEdgeColor` into their `*Spec` siblings
-        and `Dashes`/`DashUnits` into one value type (see
-        `docs/plans/phase2-mutable-fields.md`).
-- [x] Document the concurrency contract for global rc state, registries, and
-      figures; stop discarding pyplot errors.
-- [x] Consolidate duplicated alpha baking, option unpacking, and scalar-map
-      resolution paths.
-  - [x] Share alpha multiplication through `render.Color.WithAlphaMultiplier`.
-  - [x] Share plot/plot3d scalar-map configuration through
-        `PlotOptions.ScalarMapConfig`.
-  - [x] Centralize single-option unpacking/extra-option rejection through
-        `internal/optarg`.
-  - [x] Route remaining scalar-mappable artists through the shared resolver.
-
-### 2.4 Re-freeze
-
-- [x] Create the post-split checkpoint: regenerate `stable_public_api.json`,
-      remap public-surface classifications, regenerate the parity-status
-      document, add migration notes for every completed break, and draft the
-      Phase 4 changelog section.
-- [x] Repeat the freeze after the remaining error/options/mutable-field work
-      and treat that artifact as the final Phase 2 surface.
+- [x] **2.1 Surface tiering.** Classify all 3,102 frozen symbols as keep,
+      demote, or delete, deciding explicitly on Python-style introspection,
+      `*Units` variants, and backend-only renderer extensions.
+- [x] **2.2 Package split.** Move 3D axes and projection into `plot3d`, tick
+      locators/formatters and date ticks into `ticker`/`dates`, and widgets and
+      selectors into `widgets`, keeping builds, tests, and goldens green through
+      each move.
+- [x] **2.3 Idiomatic conventions.** One error convention (`(T, error)` for
+      rejected input, `diag.Warnf` only for accepted degradations, all four
+      `*Units` folds); one options model (exactly one options value per entry
+      point, `optional.Value[T]` fields, typed enum constants); `Figure.Save`/
+      `WriteTo`/`Image`; `GetX()` renamed to `X()`; one public writer per artist
+      field; a documented concurrency contract; and shared alpha,
+      option-unpacking, and scalar-map resolution paths.
+- [x] **2.4 Re-freeze.** Regenerate the frozen API, the public-surface
+      classifications, and the parity-status document; record migration notes
+      for every break and the Phase 4 changelog fragment.
 
 **Done when:** `core/` no longer owns plot3d/ticker/widgets; plot methods use
 the chosen error and options conventions; no raw-string option enums remain;
 the new figure save surface is used by examples; the API is re-frozen; and all
 goldens remain byte-identical to the pre-break baseline.
 
-**2026-07-25 checkpoint:** surface tiering, the `plot3d`/`ticker`/`dates`/
-`widgets` moves, figure output, getter naming, concurrency documentation,
-registry synchronization, example migration, API/parity remapping, migration
-notes, and the changelog draft are complete. No golden/reference fixture
-changed. The error convention is closed: all four `*Units` folds are done and
-the warn-and-skip inventory is complete. Remaining Phase 2 work is the
-options/raw-enum conversion, mutable-field cleanup, and the remaining
-option/scalar-map consolidation paths. `Axes.PlotUnits` is now folded into the
-transactional, unit-capable `Axes.Plot` method, which returns `(*Line2D, error)`
-and rejects extra option values; `PlotDate` and the corresponding pyplot
-wrappers propagate that error. `Axes.ScatterUnits` is likewise folded into the
-transactional, unit-capable `Axes.Scatter`; scalar-map and per-point shape
-validation happen before the scatter cycle advances, and `pyplot.Scatter`
-propagates errors. `Axes.BarUnits` is now folded into transactional,
-unit-capable `Axes.Bar`/`BarH`; shape, orientation, per-bar, and error-bar
-validation happen before the property cycle advances, categorical position
-locators remain intact, and the pyplot wrappers propagate errors.
-`Axes.FillBetweenUnits` is folded into the transactional, unit-capable
-`Axes.FillBetween`, which converts and validates x, y1, y2, and the `Where`
-mask before committing axis units or adding a polygon. The warn-and-skip
-inventory then converted the last five rejecting entry points — `FillBetweenX`,
-`FillBetweenPlot`, `Hist`, `ErrorBar`, and `ImShowRGB`, plus
-`ErrorBarContainer` and the matching pyplot wrappers — to `(T, error)`, leaving
-`diag.Warnf` only for artists accepted with a documented degradation; the audit
-and the retained-warning rationale are in
-`docs/plans/phase2-warn-and-skip-inventory.md`. The options rework then began
-with its intermediate safety step: `internal/optarg` is now the single place the
-"at most one option value" rule lives, and every variadic option tail routes
-through it. Entry points that already return an error report a
-`*optarg.TooManyError`; the rest panic, because an extra option value can only
-come from a literal at the call site. Internal helpers that received an
-already-unpacked option set lost their variadic tails outright, so the frozen
-public API is unchanged by that pass; the rationale, the enforcement table, and
-the variadic parameters deliberately left alone are in
-`docs/plans/phase2-extra-option-rejection.md`. The final options
-representation is now chosen and documented in
-`docs/plans/phase2-options-model.md`: entry points take exactly one options
-value instead of a variadic tail, so extra option sets are a compile error, and
-optional fields are the new `optional.Value[T]` instead of pointers or magic
-zero values. One API per artist family is migrated end to end — `Axes.Stem`
-(line), `Axes.HLines`/`Axes.VLines` (collection, via the new
-`LineCollectionOptions` that stops using the `LineCollection` artist as its own
-options), `Axes.ImShow` (image), and `Axes.Annotate` (annotation) — together
-with their pyplot wrappers, with no golden fixture changes. The bulk migration
-then closed the rest: all 205 variadic option tails and all 408
-pointer-to-primitive option fields are gone across `core`, `pyplot`, `plot3d`,
-and `widgets`, so an extra option set is a compile error everywhere and
-`internal/optarg` is deleted. The raw-string option enums became defined string
-types with named constants (`PlotOrientation`, `ColorbarExtend`,
-`ColorbarLocation`, `ImageAspect`, `VectorPivot`, `ViolinSide` in
-`core/option_enums.go`). Collapsing the two recurring merge shapes — the
-prepared-defaults literal that was immediately overwritten, and the `supplied`
-flag that guarded a no-op block — made the pass a net deletion; the four
-pointer-cloning helpers went with it. Goldens and references are byte-identical
-throughout. The mutable-field cleanup then gave every artist field exactly one
-public writer. Auditing all 1750 exported non-option fields found 29 shadowed by
-a `Set<Field>` that did more than assign, and the fix splits by what the setter
-was compensating for. Where the companion was a hand-rolled optional — a
-`faceColorSet`-style flag — the field widened to `optional.Value[T]` and the
-flag was deleted (`Patch.FaceColor`/`EdgeColor`/`EdgeWidth`, `Line2D.GapColor`,
-`PathCollection.OffsetCoords`), so the field stays exported and struct literals
-keep working. Where the setter clamps, normalizes, or fires a callback, the
-field was unexported behind a same-named reader (`Axes.Title`/`XLabel`/`YLabel`,
-`Figure.SupTitle`/`SupXLabel`/`SupYLabel`, `Slider.Value`, `TextBox.Value`,
-`RadioButtons.Active`, `RangeSlider.Low`/`High`). Four redundant spellings went:
-the duplicate `SetSuptitle`/`SetSupxlabel`/`SetSupylabel` casings, the alias
-`SetLocator` pair, `Axis.SetTickDirection` (replaced by `ParseTickDirection`,
-closing a raw-string enum the typed-constant pass missed), and the misnamed
-`SetMarkEvery` (now `SetMarkEverySpec`). The two families whose companion was a
-second value rather than a flag then closed the bullet. Collection
-`EdgeColorsFace` (`edgecolors="face"`) is resolved where the stroke color is
-read instead of mirroring `FaceColors` into `EdgeColors` from four write sites,
-so assigning the field matches the setter; the `len(FaceColors) > 0` guard the
-write-time mirror carried is load-bearing, because `Scatter2D` uses the flag as
-a snapshot when building unfilled markers. `Line2D.MarkerFaceColor`/
-`MarkerEdgeColor` folded into `MarkerFaceSpec`/`MarkerEdgeSpec`, whose tri-state
-already expressed what a zero-alpha legacy color meant, and `Dashes`/`DashUnits`
-became one `DashPattern` value on both `Line2D` and `Patch`
-(`PixelDashes`/`MatplotlibDashes` constructors, `Scaled(lineWidth)` reader).
-Reasoning is in `docs/plans/phase2-mutable-fields.md`. Goldens stayed
-byte-identical. Core and
-plot3d alpha multiplier paths share
-`render.Color.WithAlphaMultiplier`, and 3D scalar maps derive their
-configuration through
-`core.PlotOptions.ScalarMapConfig`, with no golden fixture changes. `just test`
-passes all packages, including the golden and Matplotlib-reference checks.
+Completed 2026-07-26. Every golden and Matplotlib-reference fixture stayed
+byte-identical through the whole phase. The final freeze is 3,176 symbols across
+29 packages in `test/testdata/public_api/stable_public_api.json`; that artifact
+is the surface Phases 3 and 4 are measured against. The pass was a net deletion:
+all 205 variadic option tails and all 408 pointer-to-primitive option fields are
+gone, `internal/optarg` with them. Design records live in `docs/plans/`
+(`phase2-public-api-tiering.md`, `phase2-warn-and-skip-inventory.md`,
+`phase2-extra-option-rejection.md`, `phase2-options-model.md`,
+`phase2-mutable-fields.md`, `phase4-changelog-draft.md`), user-facing breaks in
+`docs/matplotlib-migration-notes.md`, the concurrency contract in
+`docs/concurrency.md`, and the refreshed large-file inventory in
+`docs/large-file-decomposition.md`.
 
-**2026-07-26 Phase 2 closure:** the remaining scalar-mappable artists now route
-through the shared resolver. Every artist already called
-`ResolveScalarMapValues`/`ResolveScalarMapGrid`, but each rebuilt the config by
-hand, so the shared resolver had eleven divergent front doors; an unexported
-`core.scalarMapConfig` builder is now the single one. The three contour resolve
-sites share `resolveContourScalarMap`, which folds in the "pin the mapping to
-the outer level span when no normalizer was supplied" rule that filled contours
-and tricontourf had each copied, and the duplicated "explicit contour colors
-suppress the mapping" blocks became `contourFillScalarMap`. `plot3d`'s
-`scatterScalarColors` stopped rebuilding `ScalarMapInfo` field by field and
-calls the artist's own `ScalarMap()`. `plot3d/contourf.go` deliberately keeps
-its local color-override block: sharing it would require exporting the core
-helper, and plot3d's `contourScalarMap` guards on
-`!opt.VMin.IsSet() && !opt.VMax.IsSet()` where core guards on `opt.Norm == nil`,
-so unifying them would move plot3d's colorbar range — a behavior change, which
-Phase 3 owns. The post-move verification and the final re-freeze then closed the
-phase: `go build ./...` and `just test` are green across all 67 packages,
-goldens and Matplotlib references are byte-identical, and regenerating
-`stable_public_api.json` (`UPDATE_PUBLIC_API_AUDIT=1`), the public-surface
-classifications, and `docs/matplotlib-parity-status.md` produced no diff — the
-committed artifacts already matched the code. That 3,176-symbol,
-29-package artifact is the final Phase 2 surface; the changelog draft records it
-and no longer defers the error/options work. `docs/large-file-decomposition.md`
-carries a refreshed audit snapshot plus keep-large decisions for the six large
-files that previously had none (`style/style.go`, `core/line.go`,
-`core/line_test.go`, `core/signal_helpers.go`, `render/extensions.go`,
-`backends/webagg/webagg_test.go`). The file set is unchanged from the
-mid-phase snapshot; only line counts moved, `core/plot.go` most (1903 → 2169)
-from the options migration.
+### Phase 2 Follow-ups
+
+Deliberately deferred out of Phase 2 because each changes behavior or scope that
+the phase's byte-identical-rendering rule excluded. Neither blocks the "done
+when" criteria above.
+
+- [ ] Reconcile the plot3d/core scalar-map range divergence. `plot3d`'s
+      `contourScalarMap` pins levels when `!opt.VMin.IsSet() && !opt.VMax.IsSet()`
+      while `core`'s `resolveContourScalarMap` pins when `opt.Norm == nil`, so a
+      3D contour with an explicit norm plus explicit limits maps differently than
+      its 2D counterpart. Decide which guard is right against
+      `third_party/matplotlib`, then fold `plot3d/contourf.go`'s local
+      color-override block into a shared helper. Changes plot3d colorbar ranges,
+      so it needs a golden review — do it during Phase 3.
+- [ ] Reconcile the frozen-surface symbol delta against the tiering
+      classification. The freeze grew 3,102 → 3,176 despite Phase 2 being a
+      reduction pass. That direction is expected, since the `optional.Value[T]`
+      constructors and folded value types (`DashPattern`, `MarkerColorSpec`,
+      `MarkEverySpec`) add exported names while removing struct fields, which are
+      not counted as symbols — but the delta has never been walked symbol by
+      symbol against the keep/demote/delete decisions in
+      `docs/plans/phase2-public-api-tiering.json`. Diff that file against
+      `test/testdata/public_api/stable_public_api.json` and confirm every added
+      name is intended and every `delete` row is gone, before Phase 4 tags the
+      surface.
 
 ## Phase 3: Visual QA and Tolerance Closure
 
