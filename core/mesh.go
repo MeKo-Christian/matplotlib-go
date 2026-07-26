@@ -93,17 +93,8 @@ func (a *Axes) pcolorMesh(data [][]float64, snap render.SnapMode, antialias rend
 		return nil
 	}
 
-	cmap := ""
-	if v, ok := opt.Colormap.Get(); ok {
-		cmap = v
-	}
 	scalarData := meshScalarData(data, opt.Mask)
-	mapping, err := ResolveScalarMapGrid(scalarData, ScalarMapConfig{
-		Colormap: cmap,
-		Norm:     opt.Norm,
-		VMin:     opt.VMin,
-		VMax:     opt.VMax,
-	})
+	mapping, err := ResolveScalarMapGrid(scalarData, scalarMapConfig(opt.Colormap.OrZero(), opt.Norm, opt.VMin, opt.VMax))
 	if err != nil {
 		return nil
 	}

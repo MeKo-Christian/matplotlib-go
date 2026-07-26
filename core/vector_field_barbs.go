@@ -31,12 +31,7 @@ func (a *Axes) Barbs(x, y, u, v []float64, opt BarbsOptions) *Barbs {
 	if v, ok := opt.FlagColor.Get(); ok {
 		flagColor = v
 	}
-	mapping, err := ResolveScalarMapValues(scalars, ScalarMapConfig{
-		Colormap: scalarColormap(opt.Colormap.Ptr()),
-		Norm:     opt.Norm,
-		VMin:     opt.VMin,
-		VMax:     opt.VMax,
-	})
+	mapping, err := ResolveScalarMapValues(scalars, scalarMapConfig(scalarColormap(opt.Colormap.Ptr()), opt.Norm, opt.VMin, opt.VMax))
 	if err != nil {
 		return nil
 	}
@@ -98,12 +93,7 @@ func (a *Axes) BarbsGrid(x, y []float64, u, v [][]float64, opt BarbsOptions) *Ba
 	if v, ok := opt.FlagColor.Get(); ok {
 		flagColor = v
 	}
-	mapping, err := ResolveScalarMapValues(scalars, ScalarMapConfig{
-		Colormap: scalarColormap(opt.Colormap.Ptr()),
-		Norm:     opt.Norm,
-		VMin:     opt.VMin,
-		VMax:     opt.VMax,
-	})
+	mapping, err := ResolveScalarMapValues(scalars, scalarMapConfig(scalarColormap(opt.Colormap.Ptr()), opt.Norm, opt.VMin, opt.VMax))
 	if err != nil {
 		return nil
 	}

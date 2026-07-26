@@ -97,12 +97,7 @@ func scatterScalarColors(scatter *core.Scatter2D) []render.Color {
 	if scatter == nil || len(scatter.ScalarValues) == 0 {
 		return nil
 	}
-	mapping := core.ScalarMapInfo{
-		Colormap: scatter.Colormap,
-		Norm:     scatter.Norm,
-		VMin:     scatter.VMin,
-		VMax:     scatter.VMax,
-	}.Resolved()
+	mapping := scatter.ScalarMap().Resolved()
 	alpha := scatter.EffectiveAlpha(scatter.Alpha)
 	colors := make([]render.Color, len(scatter.ScalarValues))
 	for i, value := range scatter.ScalarValues {

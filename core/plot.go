@@ -65,12 +65,7 @@ type PlotOptions struct {
 // conversion beside the option definition ensures both surfaces pass the same
 // colormap, normalizer, and explicit limits to ResolveScalarMapValues.
 func (o PlotOptions) ScalarMapConfig() ScalarMapConfig {
-	return ScalarMapConfig{
-		Colormap: o.Colormap.OrZero(),
-		Norm:     o.Norm,
-		VMin:     o.VMin,
-		VMax:     o.VMax,
-	}
+	return scalarMapConfig(o.Colormap.OrZero(), o.Norm, o.VMin, o.VMax)
 }
 
 // Plot converts x and y through the axes units machinery and creates a line
@@ -495,12 +490,7 @@ func validateScatterInput(x, y []float64, opt ScatterOptions) error {
 		}
 	}
 	if len(opt.ScalarValues) > 0 {
-		if _, err := ResolveScalarMapValues(opt.ScalarValues, ScalarMapConfig{
-			Colormap: opt.Colormap,
-			Norm:     opt.Norm,
-			VMin:     opt.VMin,
-			VMax:     opt.VMax,
-		}); err != nil {
+		if _, err := ResolveScalarMapValues(opt.ScalarValues, scalarMapConfig(opt.Colormap, opt.Norm, opt.VMin, opt.VMax)); err != nil {
 			return fmt.Errorf("scatter scalar values: %w", err)
 		}
 	}
@@ -603,12 +593,7 @@ func (a *Axes) scatter(x, y []float64, opt ScatterOptions) *Scatter2D {
 				scalarValues[i] = opt.ScalarValues[0]
 			}
 		}
-		mapping, err := ResolveScalarMapValues(scalarValues, ScalarMapConfig{
-			Colormap: opt.Colormap,
-			Norm:     opt.Norm,
-			VMin:     opt.VMin,
-			VMax:     opt.VMax,
-		})
+		mapping, err := ResolveScalarMapValues(scalarValues, scalarMapConfig(opt.Colormap, opt.Norm, opt.VMin, opt.VMax))
 		if err != nil {
 			return nil
 		}

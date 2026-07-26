@@ -95,16 +95,7 @@ func (a *Axes) TriColor(tri Triangulation, values []float64, opt TriColorOptions
 		return nil
 	}
 
-	cmap := ""
-	if v, ok := opt.Colormap.Get(); ok {
-		cmap = v
-	}
-	mapping, err := ResolveScalarMapValues(triangleValues, ScalarMapConfig{
-		Colormap: cmap,
-		Norm:     opt.Norm,
-		VMin:     opt.VMin,
-		VMax:     opt.VMax,
-	})
+	mapping, err := ResolveScalarMapValues(triangleValues, scalarMapConfig(opt.Colormap.OrZero(), opt.Norm, opt.VMin, opt.VMax))
 	if err != nil {
 		return nil
 	}

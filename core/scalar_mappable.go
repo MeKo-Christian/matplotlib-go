@@ -39,6 +39,20 @@ type ScalarMapConfig struct {
 	VMax     optional.Value[float64]
 }
 
+// scalarMapConfig builds the shared scalar-map configuration from the
+// colormap/normalizer/limit quartet carried by every scalar-mappable plotting
+// option struct. Routing all artists through one builder keeps the inputs
+// handed to ResolveScalarMapValues/ResolveScalarMapGrid identical; an empty
+// colormap name falls back to the default inside the resolver.
+func scalarMapConfig(colormap string, norm ScalarNormalizer, vmin, vmax optional.Value[float64]) ScalarMapConfig {
+	return ScalarMapConfig{
+		Colormap: colormap,
+		Norm:     norm,
+		VMin:     vmin,
+		VMax:     vmax,
+	}
+}
+
 // Resolved returns a copy with sane defaults for downstream consumers.
 func (m ScalarMapInfo) Resolved() ScalarMapInfo {
 	if m.Colormap == "" {

@@ -173,12 +173,7 @@ func (a *Axes) Image(data [][]float64, opt ImageOptions) *Image2D {
 	if v, ok := opt.Colormap.Get(); ok {
 		cmap = v
 	}
-	mapping, err := ResolveScalarMapGrid(data, ScalarMapConfig{
-		Colormap: cmap,
-		Norm:     opt.Norm,
-		VMin:     opt.VMin,
-		VMax:     opt.VMax,
-	})
+	mapping, err := ResolveScalarMapGrid(data, scalarMapConfig(cmap, opt.Norm, opt.VMin, opt.VMax))
 	if err != nil {
 		return nil
 	}

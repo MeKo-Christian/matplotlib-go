@@ -40,12 +40,7 @@ func (a *Axes) Streamplot(x, y []float64, u, v [][]float64, opt StreamplotOption
 			return nil
 		}
 		var err error
-		mapping, err = ResolveScalarMapGrid(opt.CGrid, ScalarMapConfig{
-			Colormap: scalarColormap(opt.Colormap.Ptr()),
-			Norm:     opt.Norm,
-			VMin:     opt.VMin,
-			VMax:     opt.VMax,
-		})
+		mapping, err = ResolveScalarMapGrid(opt.CGrid, scalarMapConfig(scalarColormap(opt.Colormap.Ptr()), opt.Norm, opt.VMin, opt.VMax))
 		if err != nil {
 			return nil
 		}

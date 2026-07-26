@@ -195,12 +195,7 @@ func (a *Axes) Hexbin(x, y []float64, opt HexbinOptions) *HexbinCollection {
 		norm = LogNorm{VMin: math.NaN(), VMax: math.NaN()}
 	}
 
-	mapping, err := ResolveScalarMapValues(values, ScalarMapConfig{
-		Colormap: cfg.Colormap,
-		Norm:     norm,
-		VMin:     cfg.VMin,
-		VMax:     cfg.VMax,
-	})
+	mapping, err := ResolveScalarMapValues(values, scalarMapConfig(cfg.Colormap, norm, cfg.VMin, cfg.VMax))
 	if err != nil {
 		return nil
 	}

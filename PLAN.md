@@ -117,14 +117,14 @@ update the coupled API/doc tests in the same commit.
         `docs/plans/phase2-mutable-fields.md`).
 - [x] Document the concurrency contract for global rc state, registries, and
       figures; stop discarding pyplot errors.
-- [ ] Consolidate duplicated alpha baking, option unpacking, and scalar-map
+- [x] Consolidate duplicated alpha baking, option unpacking, and scalar-map
       resolution paths.
   - [x] Share alpha multiplication through `render.Color.WithAlphaMultiplier`.
   - [x] Share plot/plot3d scalar-map configuration through
         `PlotOptions.ScalarMapConfig`.
   - [x] Centralize single-option unpacking/extra-option rejection through
         `internal/optarg`.
-  - [ ] Route remaining scalar-mappable artists through the shared resolver.
+  - [x] Route remaining scalar-mappable artists through the shared resolver.
 
 ### 2.4 Re-freeze
 

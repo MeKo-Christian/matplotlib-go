@@ -30,12 +30,7 @@ func (a *Axes) Quiver(x, y, u, v []float64, opt QuiverOptions) *Quiver {
 	if v, ok := opt.EdgeColor.Get(); ok {
 		edgeColor = v
 	}
-	mapping, err := ResolveScalarMapValues(scalars, ScalarMapConfig{
-		Colormap: scalarColormap(opt.Colormap.Ptr()),
-		Norm:     opt.Norm,
-		VMin:     opt.VMin,
-		VMax:     opt.VMax,
-	})
+	mapping, err := ResolveScalarMapValues(scalars, scalarMapConfig(scalarColormap(opt.Colormap.Ptr()), opt.Norm, opt.VMin, opt.VMax))
 	if err != nil {
 		return nil
 	}
@@ -98,12 +93,7 @@ func (a *Axes) quiverFromFlattened(anchors []geom.Pt, u, v, scalars []float64, o
 	if v, ok := opt.Color.Get(); ok {
 		color = v
 	}
-	mapping, err := ResolveScalarMapValues(scalars, ScalarMapConfig{
-		Colormap: scalarColormap(opt.Colormap.Ptr()),
-		Norm:     opt.Norm,
-		VMin:     opt.VMin,
-		VMax:     opt.VMax,
-	})
+	mapping, err := ResolveScalarMapValues(scalars, scalarMapConfig(scalarColormap(opt.Colormap.Ptr()), opt.Norm, opt.VMin, opt.VMax))
 	if err != nil {
 		return nil
 	}

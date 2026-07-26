@@ -188,14 +188,7 @@ func (a *Axes) Contour(data [][]float64, opt ContourOptions) *ContourSet {
 	alpha := meshAlpha(opt.Alpha)
 	lineWidth := opt.LineWidth.OrZero()
 	colorFallback := a.NextColor()
-	cmapName := ""
-	if name, ok := opt.Colormap.Get(); ok {
-		cmapName = name
-	}
-	mapping, err := ResolveScalarMapValues(values, ScalarMapConfig{
-		Colormap: cmapName,
-		Norm:     opt.Norm,
-	})
+	mapping, err := resolveContourScalarMap(values, levels, opt.Colormap, opt.Norm, false)
 	if err != nil {
 		return nil
 	}
@@ -259,21 +252,9 @@ func (a *Axes) Contourf(data [][]float64, opt ContourOptions) *ContourSet {
 	}
 
 	alpha := meshAlpha(opt.Alpha)
-	cmapName := ""
-	if name, ok := opt.Colormap.Get(); ok {
-		cmapName = name
-	}
-	mapping, err := ResolveScalarMapValues(values, ScalarMapConfig{
-		Colormap: cmapName,
-		Norm:     opt.Norm,
-	})
+	mapping, err := resolveContourScalarMap(values, levels, opt.Colormap, opt.Norm, true)
 	if err != nil {
 		return nil
-	}
-	if opt.Norm == nil {
-		mapping.Norm = Normalize{VMin: levels[0], VMax: levels[len(levels)-1]}
-		mapping.VMin = levels[0]
-		mapping.VMax = levels[len(levels)-1]
 	}
 
 	geomLevels := contourExtendedLevels(levels, opt.Extend)
@@ -282,18 +263,7 @@ func (a *Axes) Contourf(data [][]float64, opt ContourOptions) *ContourSet {
 		return nil
 	}
 	fillPaths, polygons, faceColors, hatches := contourFillGeometry(rawPolygons, rawColors, rawHatches, bands)
-	cmap := ""
-	vmin := 0.0
-	vmax := 0.0
-	if !opt.Color.IsSet() && len(opt.Colors) == 0 {
-		cmap = mapping.Colormap
-		vmin = mapping.VMin
-		vmax = mapping.VMax
-	}
-	norm := mapping.Norm
-	if cmap == "" {
-		norm = nil
-	}
+	cmap, norm, vmin, vmax := contourFillScalarMap(&mapping, opt.Color.IsSet() || len(opt.Colors) > 0)
 	set := &ContourSet{
 		Levels:         append([]float64(nil), levels...),
 		Algorithm:      algorithm,
@@ -464,6 +434,34 @@ func (c *ContourSet) Z() float64 {
 	return defaultPatchZ
 }
 
+// resolveContourScalarMap routes contour, contourf, and tricontour through the
+// shared scalar-map resolver. When pinToLevels is set (filled contours) and the
+// caller supplied no normalizer, the mapping spans the outermost levels rather
+// than the raw data range, matching Matplotlib's ContourSet which normalizes
+// over the level boundaries it just computed.
+func resolveContourScalarMap(values, levels []float64, colormap optional.Value[string], norm ScalarNormalizer, pinToLevels bool) (ScalarMapInfo, error) {
+	mapping, err := ResolveScalarMapValues(values, scalarMapConfig(colormap.OrZero(), norm, optional.Value[float64]{}, optional.Value[float64]{}))
+	if err != nil {
+		return ScalarMapInfo{}, err
+	}
+	if pinToLevels && norm == nil && len(levels) >= 2 {
+		mapping.VMin = levels[0]
+		mapping.VMax = levels[len(levels)-1]
+		mapping.Norm = Normalize{VMin: mapping.VMin, VMax: mapping.VMax}
+	}
+	return mapping, nil
+}
+
+// contourFillScalarMap returns the collection scalar-map fields for a band
+// fill. Explicit contour colors suppress the mapping entirely so the resulting
+// PolyCollection is not treated as a scalar-mappable artist by colorbars.
+func contourFillScalarMap(mapping *ScalarMapInfo, explicitColors bool) (string, ScalarNormalizer, float64, float64) {
+	if explicitColors {
+		return "", nil, 0, 0
+	}
+	return mapping.Colormap, mapping.Norm, mapping.VMin, mapping.VMax
+}
+
 // ScalarMap exposes the contour fill's scalar mapping for colorbars.
 func (c *ContourSet) ScalarMap() ScalarMapInfo {
 	if c == nil || c.Fills == nil {
@@ -502,23 +500,9 @@ func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool,
 	lineWidth := opt.LineWidth.OrZero()
 
 	colorFallback := a.NextColor()
-	cmapName := ""
-	if name, ok := opt.Colormap.Get(); ok {
-		cmapName = name
-	}
-	mapping, err := ResolveScalarMapValues(values, ScalarMapConfig{
-		Colormap: cmapName,
-		Norm:     opt.Norm,
-	})
+	mapping, err := resolveContourScalarMap(values, levels, opt.Colormap, opt.Norm, filled)
 	if err != nil {
 		return nil
-	}
-	if filled {
-		if opt.Norm == nil {
-			mapping.Norm = Normalize{VMin: levels[0], VMax: levels[len(levels)-1]}
-			mapping.VMin = levels[0]
-			mapping.VMax = levels[len(levels)-1]
-		}
 	}
 
 	set := &ContourSet{
@@ -537,18 +521,7 @@ func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool,
 		rawPolygons, rawColors, rawHatches, bands := contourBandPolygonsBands(tri, values, geomLevels, opt, mapping, alpha)
 		fillPaths, polygons, faceColors, hatches := contourFillGeometry(rawPolygons, rawColors, rawHatches, bands)
 		if len(rawPolygons) > 0 {
-			cmap := ""
-			vmin := 0.0
-			vmax := 0.0
-			if !opt.Color.IsSet() && len(opt.Colors) == 0 {
-				cmap = mapping.Colormap
-				vmin = mapping.VMin
-				vmax = mapping.VMax
-			}
-			norm := mapping.Norm
-			if cmap == "" {
-				norm = nil
-			}
+			cmap, norm, vmin, vmax := contourFillScalarMap(&mapping, opt.Color.IsSet() || len(opt.Colors) > 0)
 			set.Fills = &PolyCollection{
 				PatchCollection: PatchCollection{
 					Collection: Collection{
