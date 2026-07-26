@@ -49,7 +49,7 @@
 
 The `test/` directory is flat and catalog-driven — do not add per-case test functions.
 
-- **Source of truth:** `internal/examplecatalog.Case` carries the ID, factory, and per-case tolerances (`MinPSNR`, `MaxMeanAbs`, `MaxRMSE`; zero = defaults).
+- **Source of truth:** `internal/examplecatalog.Case` carries the ID, factory, and per-case tolerances (`MaxMeanAbs`, `MaxRMSE`; zero = defaults). There is deliberately no `MinPSNR`: `imagecmp` derives PSNR from RMSE (`20*log10(255/RMSE)`), so a PSNR floor can only restate a `MaxRMSE` ceiling. Neither metric localizes a residual — see `docs/plans/phase3-tolerance-audit.md`.
 - **New parity case:** add a catalog row, drop `testdata/golden/{id}.png`, optionally drop `testdata/matplotlib_ref/{id}.png` + `test/matplotlib_ref/plots/{id}.py`. `TestGolden`, `TestMatplotlibRef`, and `TestReferenceCompare` discover it automatically. No test code edits needed.
 - **Run one case:** `CGO_ENABLED=1 go test -tags freetype ./test/ -run TestGolden/{id}` (or `TestMatplotlibRef/{id}`, `TestReferenceCompare/{id}`); regex works too.
 - **File responsibilities:** `helpers_test.go` (shared helpers), `golden_test.go` / `matplotlib_ref_test.go` / `reference_compare_test.go` (single subtest-loop each), `diagnostics_<family>_test.go` (env-gated dev probes, one file per diagnostic family — currently `alpha`, `bar_text`, `histogram_profile`, `nontext`, `rng`; add to the matching family file or start a new family), `contour_compare_test.go` and `artifact_test.go` (kept separate; bespoke).

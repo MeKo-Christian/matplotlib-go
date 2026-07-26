@@ -81,6 +81,67 @@ func TestComparePNG_SinglePixelDiff(t *testing.T) {
 	}
 }
 
+// TestComparePNG_LargeDiffDoesNotOverflowPSNR guards the Phase 3.1 fix: the
+// PSNR accumulator used to square uint8 differences in uint8 arithmetic, so any
+// per-channel difference above 15 wrapped mod 256 and reported a PSNR far better
+// than the actual error. A single black-vs-white pixel is the extreme case:
+// 255 squared wraps to 1, understating the error by more than 40 dB.
+func TestComparePNG_LargeDiffDoesNotOverflowPSNR(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		diff uint8
+	}{
+		{"just below the overflow threshold", 15},
+		{"just above the overflow threshold", 16},
+		{"mid range", 200},
+		{"full scale", 255},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			img1 := createSolidImage(10, 10, color.RGBA{A: 255})
+			img2 := createSolidImage(10, 10, color.RGBA{A: 255})
+			img2.Set(5, 5, color.RGBA{R: tc.diff, A: 255})
+
+			result, err := ComparePNG(img1, img2, 1)
+			if err != nil {
+				t.Fatalf("ComparePNG failed: %v", err)
+			}
+
+			// One channel of one pixel out of 100 differs, and squared error is
+			// averaged over the four channels: MSE = diff^2 / (4*100).
+			wantRMSE := math.Sqrt(float64(tc.diff) * float64(tc.diff) / 400)
+			if math.Abs(result.RMSE-wantRMSE) > 1e-9 {
+				t.Errorf("RMSE = %v, want %v", result.RMSE, wantRMSE)
+			}
+
+			wantPSNR := 20 * math.Log10(255/wantRMSE)
+			if math.Abs(result.PSNR-wantPSNR) > 1e-9 {
+				t.Errorf("PSNR = %v dB, want %v dB", result.PSNR, wantPSNR)
+			}
+		})
+	}
+}
+
+// TestComparePNG_PSNRIsDerivedFromRMSE pins the identity the catalog tolerances
+// rely on: PSNR is a monotone restatement of RMSE, not an independent gate, so a
+// MinPSNR floor can only ever duplicate a MaxRMSE ceiling.
+func TestComparePNG_PSNRIsDerivedFromRMSE(t *testing.T) {
+	img1 := createGradientImage(64, 64)
+	img2 := createNoisyGradientImage(64, 64, 40)
+
+	result, err := ComparePNG(img1, img2, 255)
+	if err != nil {
+		t.Fatalf("ComparePNG failed: %v", err)
+	}
+	if result.RMSE <= 0 {
+		t.Fatalf("expected a non-zero RMSE, got %v", result.RMSE)
+	}
+
+	want := 20 * math.Log10(255/result.RMSE)
+	if math.Abs(result.PSNR-want) > 1e-9 {
+		t.Errorf("PSNR = %v dB, want 20*log10(255/RMSE) = %v dB", result.PSNR, want)
+	}
+}
+
 func TestComparePNG_GradientImages(t *testing.T) {
 	// Create gradient images to test PSNR calculation
 	img1 := createGradientImage(100, 100)

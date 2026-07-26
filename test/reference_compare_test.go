@@ -1,7 +1,7 @@
 package test
 
 // Reference-compare tests cross-check our golden PNG against the matplotlib
-// reference PNG for each case, applying per-case PSNR/MeanAbs/RMSE tolerances
+// reference PNG for each case, applying the per-case MeanAbs/RMSE tolerances
 // stored on the catalog row.
 //
 // Per-case invocation:
@@ -20,8 +20,10 @@ import (
 )
 
 // TestReferenceCompare iterates every catalog case that has both a golden
-// PNG and a matplotlib reference PNG, comparing them with case-specific
-// tolerances pulled from the catalog row.
+// PNG and a matplotlib reference PNG, comparing them with the case-specific
+// tolerances pulled from the catalog row. Both inputs are committed files, so
+// this comparison is fully deterministic — a tight bound here cannot flake, it
+// can only fail when a fix moves the golden.
 func TestReferenceCompare(t *testing.T) {
 	for _, c := range rendererNeutralCases() {
 		c := c

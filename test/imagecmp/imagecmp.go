@@ -13,11 +13,18 @@ import (
 )
 
 // DiffResult contains metrics from comparing two images.
+//
+// PSNR is derived from RMSE as 20*log10(255/RMSE) and therefore carries no
+// information RMSE does not: it is a monotone restatement, useful for reading
+// logs, not as a second independent gate. Until Phase 3.1 the two were computed
+// from separate accumulators and looked independent, but only because the PSNR
+// accumulator squared its differences in uint8 arithmetic and wrapped mod 256
+// for every difference above 15.
 type DiffResult struct {
 	MaxDiff   uint8   // Maximum per-channel difference found
 	MeanAbs   float64 // Mean absolute difference across all channels
 	RMSE      float64 // Root-mean-square error across all channels
-	PSNR      float64 // Peak Signal-to-Noise Ratio in dB
+	PSNR      float64 // Peak Signal-to-Noise Ratio in dB, = 20*log10(255/RMSE)
 	Identical bool    // True if images are pixel-perfect identical
 }
 
@@ -38,7 +45,6 @@ func ComparePNG(got, want image.Image, tolerance uint8) (DiffResult, error) {
 	var sumDiff float64
 	var numPixels int64
 	var sumSquaredError float64
-	var sumSquaredErrorPSNR float64
 	identical := true
 
 	// Iterate through all pixels
@@ -63,11 +69,10 @@ func ComparePNG(got, want image.Image, tolerance uint8) (DiffResult, error) {
 			channelSum := float64(diffR + diffG + diffB + diffA)
 			sumDiff += channelSum / 4.0 // Average per pixel
 
-			// Calculate squared error for PSNR
-			rmseSquaredError := squareDiff(diffR) + squareDiff(diffG) + squareDiff(diffB) + squareDiff(diffA)
-			sumSquaredError += rmseSquaredError / 4.0 // Average per pixel
-			psnrSquaredError := float64(diffR*diffR + diffG*diffG + diffB*diffB + diffA*diffA)
-			sumSquaredErrorPSNR += psnrSquaredError / 4.0
+			// Accumulate squared error in float64: squaring a uint8 difference
+			// in uint8 arithmetic overflows for anything above 15.
+			squaredError := squareDiff(diffR) + squareDiff(diffG) + squareDiff(diffB) + squareDiff(diffA)
+			sumSquaredError += squaredError / 4.0 // Average per pixel
 
 			numPixels++
 
@@ -89,8 +94,7 @@ func ComparePNG(got, want image.Image, tolerance uint8) (DiffResult, error) {
 	} else {
 		mse := sumSquaredError / float64(numPixels)
 		rmse = math.Sqrt(mse)
-		psnrMSE := sumSquaredErrorPSNR / float64(numPixels)
-		psnr = 20 * math.Log10(255/math.Sqrt(psnrMSE))
+		psnr = 20 * math.Log10(255/rmse)
 	}
 
 	return DiffResult{

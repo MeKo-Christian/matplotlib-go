@@ -43,7 +43,6 @@ OUT_MD = os.path.join(REPO, "docs", "plans", "phase3-tolerance-audit.md")
 OUT_JSON = os.path.join(REPO, "docs", "plans", "phase3-tolerance-audit.json")
 
 # Harness defaults from test/helpers_test.go.
-DEFAULT_MIN_PSNR = 44.0
 DEFAULT_MAX_MEAN_ABS = 2.50
 DIFF_TOLERANCE = 1  # per-channel LSBs ignored, matching ComparePNG
 
@@ -64,7 +63,6 @@ MAX_CLUSTERS_ANALYZED = 12
 @dataclass
 class Row:
     id: str
-    min_psnr: float
     max_mean_abs: float
     max_rmse: float
     rmse: float = 0.0
@@ -96,7 +94,6 @@ def parse_catalog() -> list[Row]:
         rows.append(
             Row(
                 id=id_,
-                min_psnr=num("MinPSNR"),
                 max_mean_abs=num("MaxMeanAbs"),
                 max_rmse=num("MaxRMSE"),
             )
@@ -164,7 +161,7 @@ def measure(row: Row) -> None:
     per_channel = diff.astype(np.float64)
     row.rmse = round(float(np.sqrt((per_channel**2).mean())), 3)
     row.mean_abs = round(float(per_channel.mean()), 3)
-    # PSNR as imagecmp *intends* it (its uint8 square overflows; see the audit).
+    # Matches imagecmp since Phase 3.1: PSNR is a restatement of RMSE.
     row.psnr = round(float(20 * np.log10(255 / row.rmse)), 2) if row.rmse > 0 else float("inf")
 
     channel_max = diff.max(axis=2)
@@ -207,7 +204,6 @@ def render_markdown(rows: list[Row]) -> str:
     dense_high = [r for r in rows if r.family == "dense-highamp"]
     loose = [r for r in rows if r.verdict == "loose"]
     fragile = [r for r in rows if r.verdict == "fragile"]
-    psnr_breaks = [r for r in rows if r.psnr < (r.min_psnr or DEFAULT_MIN_PSNR)]
 
     out: list[str] = []
     w = out.append
@@ -230,8 +226,12 @@ def render_markdown(rows: list[Row]) -> str:
     w(f"- `MaxRMSE` at least {LOOSE_SLACK:g}x the measured value: **{len(loose)}**.")
     w(f"- `MaxRMSE` under {FRAGILE_SLACK:g}x the measured value: **{len(fragile)}**.")
     w(
-        f"- Cases that would fail their PSNR floor once `imagecmp` stops "
-        f"overflowing its `uint8` square: **{len(psnr_breaks)}**.\n"
+        "- PSNR is no longer a gate anywhere. Phase 3.1 fixed the `uint8` "
+        "overflow in `imagecmp`'s PSNR accumulator, which made `PSNR == "
+        "20*log10(255/RMSE)` exact and every `MinPSNR` floor a restatement of "
+        "`MaxRMSE`. `Case.MinPSNR` is gone; the 60 floors that were both binding "
+        "and reachable were folded into `MaxRMSE`, and the 65 that the overflow "
+        "had made unreachable were dropped for 3.6 to re-derive.\n"
     )
     w("## Why RMSE alone is not a gate\n")
     w(

@@ -38,11 +38,18 @@ var (
 // ----------------------------------------------------------------------------
 
 const (
-	mplRefDir  = "../testdata/matplotlib_ref"
-	mplMinPSNR = 10.0 // dB; below this indicates a fundamental rendering error
+	mplRefDir = "../testdata/matplotlib_ref"
+	// mplMaxRMSE is the loose "did we render the right picture at all" floor,
+	// the RMSE equivalent (255/10^(dB/20)) of the 10 dB PSNR floor this check
+	// used before Phase 3.1. Above it, output has diverged fundamentally rather
+	// than in placement or antialiasing.
+	mplMaxRMSE = 80.6
 
-	referenceCompareTolerance  = 1
-	referenceCompareMinPSNR    = 44.0
+	referenceCompareTolerance = 1
+	// There is no PSNR floor here: imagecmp derives PSNR from RMSE, so a floor
+	// would only restate a MaxRMSE ceiling. The former default of 44 dB was
+	// equivalent to RMSE 1.609 and was unreachable for 65 cases; it only ever
+	// passed because the PSNR accumulator overflowed. See Phase 3.1 in PLAN.md.
 	referenceCompareMaxMeanAbs = 2.50
 )
 
@@ -253,8 +260,8 @@ func prependEnvPath(path, existing string) string {
 }
 
 // runMplTest renders the parity example, loads the matplotlib reference,
-// writes artefacts for inspection, and fails only when PSNR drops below
-// mplMinPSNR (a fundamental rendering error).
+// writes artefacts for inspection, and fails only when RMSE exceeds
+// mplMaxRMSE (a fundamental rendering error).
 func runMplTest(t *testing.T, name string) {
 	t.Helper()
 	ensureRefs(t)
@@ -288,9 +295,9 @@ func runMplTest(t *testing.T, name string) {
 		t.Fatalf("could not save diff image: %v", err)
 	}
 
-	if !math.IsInf(diff.PSNR, 1) && diff.PSNR < mplMinPSNR {
-		t.Errorf("PSNR %.1f dB < %.1f dB: likely fundamental rendering mismatch with matplotlib",
-			diff.PSNR, mplMinPSNR)
+	if diff.RMSE > mplMaxRMSE {
+		t.Errorf("RMSE %.1f > %.1f: likely fundamental rendering mismatch with matplotlib",
+			diff.RMSE, mplMaxRMSE)
 	}
 }
 
@@ -371,17 +378,13 @@ func runReferenceCompareTest(t *testing.T, c *examplecatalog.Case) {
 	t.Logf("%s: MaxDiff=%d MeanAbs=%.2f RMSE=%.2f PSNR=%.2fdB",
 		c.ID, diff.MaxDiff, diff.MeanAbs, diff.RMSE, diff.PSNR)
 
-	minPSNR := referenceCompareMinPSNR
-	if c.MinPSNR > 0 {
-		minPSNR = c.MinPSNR
-	}
 	maxMeanAbs := referenceCompareMaxMeanAbs
 	if c.MaxMeanAbs > 0 {
 		maxMeanAbs = c.MaxMeanAbs
 	}
-	if diff.PSNR < minPSNR || diff.MeanAbs > maxMeanAbs || (c.MaxRMSE > 0 && diff.RMSE > c.MaxRMSE) {
-		t.Fatalf("reference mismatch for %s: PSNR=%.2f (min %.2f), MeanAbs=%.2f (max %.2f), RMSE=%.2f (max %.2f)",
-			c.ID, diff.PSNR, minPSNR, diff.MeanAbs, maxMeanAbs, diff.RMSE, c.MaxRMSE)
+	if diff.MeanAbs > maxMeanAbs || (c.MaxRMSE > 0 && diff.RMSE > c.MaxRMSE) {
+		t.Fatalf("reference mismatch for %s: MeanAbs=%.2f (max %.2f), RMSE=%.2f (max %.2f)",
+			c.ID, diff.MeanAbs, maxMeanAbs, diff.RMSE, c.MaxRMSE)
 	}
 }
 

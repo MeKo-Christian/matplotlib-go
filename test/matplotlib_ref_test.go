@@ -29,8 +29,8 @@ import (
 )
 
 // TestMatplotlibRef compares every catalog case that has a committed
-// matplotlib reference PNG against our renderer output. Fails when PSNR is
-// below mplMinPSNR (a fundamental rendering mismatch).
+// matplotlib reference PNG against our renderer output. Fails when RMSE exceeds
+// mplMaxRMSE (a fundamental rendering mismatch).
 func TestMatplotlibRef(t *testing.T) {
 	ensureRefs(t)
 	for _, c := range rendererNeutralCases() {
@@ -67,11 +67,15 @@ func TestAGGNativeMatplotlibRef(t *testing.T) {
 func runStrictMatplotlibRef(t *testing.T, name string) {
 	t.Helper()
 
+	// The RMSE ceilings are the exact equivalents of the PSNR floors these cases
+	// carried before Phase 3.1 (255/10^(dB/20): 48.0 dB and 46.5 dB), restated in
+	// RMSE because imagecmp derives PSNR from RMSE. Both cases measure far
+	// inside them — text_labels_strict at RMSE 0.028, title_strict at 0.
 	const (
 		strictTolerance      = 1
-		textLabelsMinPSNR    = 48.0
+		textLabelsMaxRMSE    = 1.015
 		textLabelsMaxMeanAbs = 1.25
-		titleMinPSNR         = 46.5
+		titleMaxRMSE         = 1.206
 		titleMaxMeanAbs      = 2.00
 	)
 
@@ -98,22 +102,22 @@ func runStrictMatplotlibRef(t *testing.T, name string) {
 		t.Fatalf("compare rendered %s against matplotlib ref: %v", name, err)
 	}
 
-	var minPSNR, maxMeanAbs float64
+	var maxRMSE, maxMeanAbs float64
 	switch name {
 	case "text_labels_strict":
-		minPSNR, maxMeanAbs = textLabelsMinPSNR, textLabelsMaxMeanAbs
+		maxRMSE, maxMeanAbs = textLabelsMaxRMSE, textLabelsMaxMeanAbs
 	case "title_strict":
-		minPSNR, maxMeanAbs = titleMinPSNR, titleMaxMeanAbs
+		maxRMSE, maxMeanAbs = titleMaxRMSE, titleMaxMeanAbs
 	default:
 		t.Fatalf("runStrictMatplotlibRef called for unconfigured case %q", name)
 	}
 
-	if diff.PSNR < minPSNR || diff.MeanAbs > maxMeanAbs {
+	if diff.RMSE > maxRMSE || diff.MeanAbs > maxMeanAbs {
 		if err := imagecmp.SaveDiffImage(got, want, strictTolerance, filepath.Join(artifactsDir, "diff.png")); err != nil {
 			t.Fatalf("save diff image: %v", err)
 		}
-		t.Fatalf("strict mismatch %s: MaxDiff=%d, MeanAbs=%.2f (max %.2f), PSNR=%.2fdB (min %.2f)",
-			name, diff.MaxDiff, diff.MeanAbs, maxMeanAbs, diff.PSNR, minPSNR)
+		t.Fatalf("strict mismatch %s: MaxDiff=%d, MeanAbs=%.2f (max %.2f), RMSE=%.4f (max %.4f)",
+			name, diff.MaxDiff, diff.MeanAbs, maxMeanAbs, diff.RMSE, maxRMSE)
 	}
 
 	// Acknowledge image type to keep the import live for hosts that strip
