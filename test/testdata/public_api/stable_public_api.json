@@ -3900,6 +3900,10 @@
           "declaration": "func ConnectionStyleFromString(style string) (ConnectionStyle, bool)"
         },
         {
+          "id": "func ContourFillScalarMap",
+          "declaration": "func ContourFillScalarMap(mapping *ScalarMapInfo, explicitColors bool) (colormap string, norm ScalarNormalizer, vmin, vmax float64)"
+        },
+        {
           "id": "func Coords",
           "declaration": "func Coords(space CoordinateSpace) CoordinateSpec"
         },
@@ -4070,6 +4074,10 @@
         {
           "id": "func RegisterUnitConverter",
           "declaration": "func RegisterUnitConverter(sample any, factory UnitsConverterFactory) error"
+        },
+        {
+          "id": "func ResolveContourScalarMap",
+          "declaration": "func ResolveContourScalarMap(levels []float64, cfg ScalarMapConfig) (ScalarMapInfo, error)"
         },
         {
           "id": "func ResolvePickRadius",

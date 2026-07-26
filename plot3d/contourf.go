@@ -26,18 +26,9 @@ func (a *Axes3D) Contourf(x, y []float64, z [][]float64, opt core.PlotOptions) *
 	if len(paths) == 0 {
 		return nil
 	}
-	cmap := mapping.Colormap
-	norm := mapping.Norm
-	vMin := mapping.VMin
-	vMax := mapping.VMax
+	cmap, norm, vMin, vMax := core.ContourFillScalarMap(&mapping, colorOverride)
 	if colorOverride {
 		scalarValues = nil
-	}
-	if colorOverride {
-		cmap = ""
-		norm = nil
-		vMin = 0
-		vMax = 0
 	}
 
 	collection := &core.PolyCollection{
@@ -69,18 +60,10 @@ func (a *Axes3D) Contourf(x, y []float64, z [][]float64, opt core.PlotOptions) *
 			collection.Polygons = nil
 			collection.Paths = paths
 			collection.FaceColors = colors
+			collection.Colormap, collection.Norm, collection.VMin, collection.VMax = core.ContourFillScalarMap(&mapping, colorOverride)
+			collection.ScalarValues = scalarValues
 			if colorOverride {
-				collection.Colormap = ""
-				collection.Norm = nil
-				collection.VMin = 0
-				collection.VMax = 0
 				collection.ScalarValues = nil
-			} else {
-				collection.Colormap = mapping.Colormap
-				collection.Norm = mapping.Norm
-				collection.VMin = mapping.VMin
-				collection.VMax = mapping.VMax
-				collection.ScalarValues = scalarValues
 			}
 			collection.SetZ(zorder)
 		}
@@ -117,18 +100,9 @@ func (a *Axes3D) TriContourf(tri core.Triangulation, z []float64, opt core.PlotO
 	if len(paths) == 0 {
 		return nil
 	}
-	cmap := mapping.Colormap
-	norm := mapping.Norm
-	vMin := mapping.VMin
-	vMax := mapping.VMax
+	cmap, norm, vMin, vMax := core.ContourFillScalarMap(&mapping, colorOverride)
 	if colorOverride {
 		scalarValues = nil
-	}
-	if colorOverride {
-		cmap = ""
-		norm = nil
-		vMin = 0
-		vMax = 0
 	}
 
 	collection := &core.PolyCollection{
@@ -160,18 +134,10 @@ func (a *Axes3D) TriContourf(tri core.Triangulation, z []float64, opt core.PlotO
 			collection.Polygons = nil
 			collection.Paths = paths
 			collection.FaceColors = colors
+			collection.Colormap, collection.Norm, collection.VMin, collection.VMax = core.ContourFillScalarMap(&mapping, colorOverride)
+			collection.ScalarValues = scalarValues
 			if colorOverride {
-				collection.Colormap = ""
-				collection.Norm = nil
-				collection.VMin = 0
-				collection.VMax = 0
 				collection.ScalarValues = nil
-			} else {
-				collection.Colormap = mapping.Colormap
-				collection.Norm = mapping.Norm
-				collection.VMin = mapping.VMin
-				collection.VMax = mapping.VMax
-				collection.ScalarValues = scalarValues
 			}
 			collection.SetZ(zorder)
 		}
@@ -179,15 +145,17 @@ func (a *Axes3D) TriContourf(tri core.Triangulation, z []float64, opt core.PlotO
 	return collection
 }
 
+// contourScalarMap resolves the 3D contour mapping through the same helper as
+// the 2D contour path, so a projected contour and its flat counterpart pick the
+// same colors. The mapping autoscales over the levels rather than the Z data;
+// see core.ResolveContourScalarMap for why.
+//
 //nolint:gocritic // PlotOptions is an immutable snapshot retained by redraw closures.
-func contourScalarMap(values, levels []float64, opt core.PlotOptions) core.ScalarMapInfo {
-	mapping := resolvePlotScalarMap(values, opt)
-	if len(levels) >= 2 && !opt.VMin.IsSet() && !opt.VMax.IsSet() {
-		mapping.VMin = levels[0]
-		mapping.VMax = levels[len(levels)-1]
-		if mapping.Norm == nil {
-			mapping.Norm = core.Normalize{VMin: mapping.VMin, VMax: mapping.VMax}
-		}
+func contourScalarMap(levels []float64, opt core.PlotOptions) core.ScalarMapInfo {
+	cfg := opt.ScalarMapConfig()
+	mapping, err := core.ResolveContourScalarMap(levels, cfg)
+	if err != nil {
+		return core.ScalarMapInfo{Colormap: cfg.Colormap}.Resolved()
 	}
 	return mapping
 }
@@ -223,7 +191,7 @@ func (a *Axes3D) projectedContourFillData(x, y []float64, z [][]float64, alpha f
 		return nil, nil, nil, defaultPatchZ, core.ScalarMapInfo{}
 	}
 	zdir := normalized3DDir(opt.ZDir)
-	mapping := contourScalarMap(values, levels, opt)
+	mapping := contourScalarMap(levels, opt)
 	layerValues := contourLayerValues(levels, mapping)
 	collectionDepth := math.Inf(1)
 	paths := make([]geom.Path, 0, len(levels)-1)
@@ -311,7 +279,7 @@ func (a *Axes3D) projectedTriContourFillData(tri core.Triangulation, z []float64
 	if len(levels) < 2 {
 		return nil, nil, nil, defaultPatchZ, core.ScalarMapInfo{}
 	}
-	mapping := contourScalarMap(rotatedValues, levels, opt)
+	mapping := contourScalarMap(levels, opt)
 	layerValues := contourLayerValues(levels, mapping)
 	collectionDepth := math.Inf(1)
 	paths := make([]geom.Path, 0, len(levels)-1)

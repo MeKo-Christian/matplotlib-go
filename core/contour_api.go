@@ -188,7 +188,7 @@ func (a *Axes) Contour(data [][]float64, opt ContourOptions) *ContourSet {
 	alpha := meshAlpha(opt.Alpha)
 	lineWidth := opt.LineWidth.OrZero()
 	colorFallback := a.NextColor()
-	mapping, err := resolveContourScalarMap(values, levels, opt.Colormap, opt.Norm, false)
+	mapping, err := resolveContourScalarMap(levels, opt.Colormap, opt.Norm)
 	if err != nil {
 		return nil
 	}
@@ -252,7 +252,7 @@ func (a *Axes) Contourf(data [][]float64, opt ContourOptions) *ContourSet {
 	}
 
 	alpha := meshAlpha(opt.Alpha)
-	mapping, err := resolveContourScalarMap(values, levels, opt.Colormap, opt.Norm, true)
+	mapping, err := resolveContourScalarMap(levels, opt.Colormap, opt.Norm)
 	if err != nil {
 		return nil
 	}
@@ -263,7 +263,7 @@ func (a *Axes) Contourf(data [][]float64, opt ContourOptions) *ContourSet {
 		return nil
 	}
 	fillPaths, polygons, faceColors, hatches := contourFillGeometry(rawPolygons, rawColors, rawHatches, bands)
-	cmap, norm, vmin, vmax := contourFillScalarMap(&mapping, opt.Color.IsSet() || len(opt.Colors) > 0)
+	cmap, norm, vmin, vmax := ContourFillScalarMap(&mapping, opt.Color.IsSet() || len(opt.Colors) > 0)
 	set := &ContourSet{
 		Levels:         append([]float64(nil), levels...),
 		Algorithm:      algorithm,
@@ -434,28 +434,32 @@ func (c *ContourSet) Z() float64 {
 	return defaultPatchZ
 }
 
-// resolveContourScalarMap routes contour, contourf, and tricontour through the
-// shared scalar-map resolver. When pinToLevels is set (filled contours) and the
-// caller supplied no normalizer, the mapping spans the outermost levels rather
-// than the raw data range, matching Matplotlib's ContourSet which normalizes
-// over the level boundaries it just computed.
-func resolveContourScalarMap(values, levels []float64, colormap optional.Value[string], norm ScalarNormalizer, pinToLevels bool) (ScalarMapInfo, error) {
-	mapping, err := ResolveScalarMapValues(values, scalarMapConfig(colormap.OrZero(), norm, optional.Value[float64]{}, optional.Value[float64]{}))
-	if err != nil {
-		return ScalarMapInfo{}, err
-	}
-	if pinToLevels && norm == nil && len(levels) >= 2 {
-		mapping.VMin = levels[0]
-		mapping.VMax = levels[len(levels)-1]
-		mapping.Norm = Normalize{VMin: mapping.VMin, VMax: mapping.VMax}
-	}
-	return mapping, nil
+// ResolveContourScalarMap resolves the scalar mapping shared by contour,
+// contourf, tricontour, and their 3D counterparts.
+//
+// Matplotlib bases contour colors on the levels, not on the Z data:
+// ContourSet._process_colors ends in norm.autoscale_None(self.levels), which
+// fills in only the limits the caller left open. Autoscaling the resolver over
+// the levels reproduces that exactly — an unconstrained norm spans the
+// outermost levels, an explicit vmin or vmax survives on its own side, and a
+// norm that already carries limits keeps them. It applies to line contours as
+// well as filled ones, so the first and last level land on the ends of the
+// colormap in both cases.
+//
+// levels must be the unextended level list. Matplotlib normalizes over
+// self.levels, not the ±inf-padded self._levels used for extended bands.
+func ResolveContourScalarMap(levels []float64, cfg ScalarMapConfig) (ScalarMapInfo, error) {
+	return ResolveScalarMapValues(levels, cfg)
 }
 
-// contourFillScalarMap returns the collection scalar-map fields for a band
-// fill. Explicit contour colors suppress the mapping entirely so the resulting
-// PolyCollection is not treated as a scalar-mappable artist by colorbars.
-func contourFillScalarMap(mapping *ScalarMapInfo, explicitColors bool) (string, ScalarNormalizer, float64, float64) {
+func resolveContourScalarMap(levels []float64, colormap optional.Value[string], norm ScalarNormalizer) (ScalarMapInfo, error) {
+	return ResolveContourScalarMap(levels, scalarMapConfig(colormap.OrZero(), norm, optional.Value[float64]{}, optional.Value[float64]{}))
+}
+
+// ContourFillScalarMap returns the scalar-map fields to copy onto a contour
+// band collection. Explicit contour colors suppress the mapping entirely so the
+// resulting collection is not treated as a scalar-mappable artist by colorbars.
+func ContourFillScalarMap(mapping *ScalarMapInfo, explicitColors bool) (colormap string, norm ScalarNormalizer, vmin, vmax float64) {
 	if explicitColors {
 		return "", nil, 0, 0
 	}
@@ -500,7 +504,7 @@ func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool,
 	lineWidth := opt.LineWidth.OrZero()
 
 	colorFallback := a.NextColor()
-	mapping, err := resolveContourScalarMap(values, levels, opt.Colormap, opt.Norm, filled)
+	mapping, err := resolveContourScalarMap(levels, opt.Colormap, opt.Norm)
 	if err != nil {
 		return nil
 	}
@@ -521,7 +525,7 @@ func (a *Axes) buildContourSet(tri Triangulation, values []float64, filled bool,
 		rawPolygons, rawColors, rawHatches, bands := contourBandPolygonsBands(tri, values, geomLevels, opt, mapping, alpha)
 		fillPaths, polygons, faceColors, hatches := contourFillGeometry(rawPolygons, rawColors, rawHatches, bands)
 		if len(rawPolygons) > 0 {
-			cmap, norm, vmin, vmax := contourFillScalarMap(&mapping, opt.Color.IsSet() || len(opt.Colors) > 0)
+			cmap, norm, vmin, vmax := ContourFillScalarMap(&mapping, opt.Color.IsSet() || len(opt.Colors) > 0)
 			set.Fills = &PolyCollection{
 				PatchCollection: PatchCollection{
 					Collection: Collection{

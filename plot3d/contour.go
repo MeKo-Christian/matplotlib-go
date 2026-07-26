@@ -15,7 +15,7 @@ import (
 //nolint:gocritic // The option value is an immutable snapshot forwarded unchanged.
 func (a *Axes3D) Contour(x, y []float64, z [][]float64, opt core.PlotOptions) *core.LineCollection {
 	limitsChanged := a.observe3DGrid(x, y, z)
-	segments, segmentLevels, levels, values, zorder := a.projectedContourLineData(x, y, z, opt)
+	segments, segmentLevels, levels, zorder := a.projectedContourLineData(x, y, z, opt)
 	if len(segments) == 0 {
 		return nil
 	}
@@ -38,7 +38,7 @@ func (a *Axes3D) Contour(x, y []float64, z [][]float64, opt core.PlotOptions) *c
 	scalarValues := []float64(nil)
 	collectionAlpha := alpha
 	if !colorOverride {
-		mapping = contourScalarMap(values, levels, opt)
+		mapping = contourScalarMap(levels, opt)
 		colors = make([]render.Color, len(segmentLevels))
 		for i, level := range segmentLevels {
 			colors[i] = mapping.Color(level, alpha)
@@ -69,10 +69,10 @@ func (a *Axes3D) Contour(x, y []float64, z [][]float64, opt core.PlotOptions) *c
 	a.Add(collection)
 	a.add3DReprojector(func() {
 		if collection != nil {
-			segments, segmentLevels, levels, values, zorder := a.projectedContourLineData(x, y, z, opt)
+			segments, segmentLevels, levels, zorder := a.projectedContourLineData(x, y, z, opt)
 			collection.Segments = segments
 			if !colorOverride {
-				mapping := contourScalarMap(values, levels, opt)
+				mapping := contourScalarMap(levels, opt)
 				colors := make([]render.Color, len(segmentLevels))
 				for i, level := range segmentLevels {
 					colors[i] = mapping.Color(level, alpha)
@@ -114,7 +114,7 @@ func (a *Axes3D) TriContour(tri core.Triangulation, z []float64, opt core.PlotOp
 	}
 
 	limitsChanged := a.observe3DTriangulation(tri, z)
-	segments, segmentLevels, levels, values, zorder := a.projectedTriContourLineData(tri, z, opt)
+	segments, segmentLevels, levels, zorder := a.projectedTriContourLineData(tri, z, opt)
 	if len(segments) == 0 {
 		return nil
 	}
@@ -136,7 +136,7 @@ func (a *Axes3D) TriContour(tri core.Triangulation, z []float64, opt core.PlotOp
 	scalarValues := []float64(nil)
 	collectionAlpha := alpha
 	if !colorOverride {
-		mapping = contourScalarMap(values, levels, opt)
+		mapping = contourScalarMap(levels, opt)
 		colors = make([]render.Color, len(segmentLevels))
 		for i, level := range segmentLevels {
 			colors[i] = mapping.Color(level, alpha)
@@ -167,10 +167,10 @@ func (a *Axes3D) TriContour(tri core.Triangulation, z []float64, opt core.PlotOp
 	a.Add(collection)
 	a.add3DReprojector(func() {
 		if collection != nil {
-			segments, segmentLevels, levels, values, zorder := a.projectedTriContourLineData(tri, z, opt)
+			segments, segmentLevels, levels, zorder := a.projectedTriContourLineData(tri, z, opt)
 			collection.Segments = segments
 			if !colorOverride {
-				mapping := contourScalarMap(values, levels, opt)
+				mapping := contourScalarMap(levels, opt)
 				colors := make([]render.Color, len(segmentLevels))
 				for i, level := range segmentLevels {
 					colors[i] = mapping.Color(level, alpha)
@@ -196,19 +196,19 @@ func (a *Axes3D) TriContour(tri core.Triangulation, z []float64, opt core.PlotOp
 }
 
 func (a *Axes3D) projectedContourSegments(x, y []float64, z [][]float64, levelCount int) [][]geom.Pt {
-	segments, _, _, _, _ := a.projectedContourLineData(x, y, z, core.PlotOptions{LevelCount: levelCount})
+	segments, _, _, _ := a.projectedContourLineData(x, y, z, core.PlotOptions{LevelCount: levelCount})
 	return segments
 }
 
 //nolint:gocritic // PlotOptions is an immutable snapshot retained by redraw closures.
-func (a *Axes3D) projectedContourLineData(x, y []float64, z [][]float64, opt core.PlotOptions) ([][]geom.Pt, []float64, []float64, []float64, float64) {
+func (a *Axes3D) projectedContourLineData(x, y []float64, z [][]float64, opt core.PlotOptions) ([][]geom.Pt, []float64, []float64, float64) {
 	if a == nil {
-		return nil, nil, nil, nil, defaultPatchZ
+		return nil, nil, nil, defaultPatchZ
 	}
 	zdir := normalized3DDir(opt.ZDir)
-	rawLines, rawLevels, levels, values, ok := a.contourLines3D(x, y, z, opt, zdir)
+	rawLines, rawLevels, levels, _, ok := a.contourLines3D(x, y, z, opt, zdir)
 	if !ok || len(rawLines) == 0 {
-		return nil, nil, nil, nil, defaultPatchZ
+		return nil, nil, nil, defaultPatchZ
 	}
 	segments := make([][]geom.Pt, 0, len(rawLines))
 	segmentLevels := make([]float64, 0, len(rawLines))
@@ -239,26 +239,26 @@ func (a *Axes3D) projectedContourLineData(x, y []float64, z [][]float64, opt cor
 			segmentLevels = append(segmentLevels, level)
 		}
 	}
-	return segments, segmentLevels, levels, values, computed3DCollectionZ(depth)
+	return segments, segmentLevels, levels, computed3DCollectionZ(depth)
 }
 
 //nolint:gocritic // Triangulation and PlotOptions remain value snapshots throughout projection.
-func (a *Axes3D) projectedTriContourLineData(tri core.Triangulation, z []float64, opt core.PlotOptions) ([][]geom.Pt, []float64, []float64, []float64, float64) {
+func (a *Axes3D) projectedTriContourLineData(tri core.Triangulation, z []float64, opt core.PlotOptions) ([][]geom.Pt, []float64, []float64, float64) {
 	if a == nil {
-		return nil, nil, nil, nil, defaultPatchZ
+		return nil, nil, nil, defaultPatchZ
 	}
 	zdir := normalized3DDir(opt.ZDir)
 	rotatedTri, rotatedValues, ok := rotatedTriangulation3D(tri, z, zdir)
 	if !ok {
-		return nil, nil, nil, nil, defaultPatchZ
+		return nil, nil, nil, defaultPatchZ
 	}
 	levels := contourLevels(rotatedValues, opt.Levels, opt.LevelCount, false)
 	if len(levels) == 0 {
-		return nil, nil, nil, nil, defaultPatchZ
+		return nil, nil, nil, defaultPatchZ
 	}
 	rawLines, rawLevels := contourPolylines(rotatedTri, rotatedValues, levels)
 	if len(rawLines) == 0 {
-		return nil, nil, nil, nil, defaultPatchZ
+		return nil, nil, nil, defaultPatchZ
 	}
 
 	segments := make([][]geom.Pt, 0, len(rawLines))
@@ -290,7 +290,7 @@ func (a *Axes3D) projectedTriContourLineData(tri core.Triangulation, z []float64
 			segmentLevels = append(segmentLevels, level)
 		}
 	}
-	return segments, segmentLevels, levels, rotatedValues, computed3DCollectionZ(depth)
+	return segments, segmentLevels, levels, computed3DCollectionZ(depth)
 }
 
 //nolint:gocritic // PlotOptions is an immutable snapshot shared by the contour projection stages.

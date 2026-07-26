@@ -88,16 +88,17 @@ gone, `internal/optarg` with them. Design records live in `docs/plans/`
 
 Deliberately deferred out of Phase 2 because each changes behavior or scope that
 the phase's byte-identical-rendering rule excluded. Neither blocks the "done
-when" criteria above.
+when" criteria above. The surviving item is a Phase 4 prerequisite.
 
-- [ ] Reconcile the plot3d/core scalar-map range divergence. `plot3d`'s
-      `contourScalarMap` pins levels when `!opt.VMin.IsSet() && !opt.VMax.IsSet()`
-      while `core`'s `resolveContourScalarMap` pins when `opt.Norm == nil`, so a
-      3D contour with an explicit norm plus explicit limits maps differently than
-      its 2D counterpart. Decide which guard is right against
-      `third_party/matplotlib`, then fold `plot3d/contourf.go`'s local
-      color-override block into a shared helper. Changes plot3d colorbar ranges,
-      so it needs a golden review — do it during Phase 3.
+- [x] Reconcile the plot3d/core scalar-map range divergence. Neither guard was
+      right: Matplotlib's `ContourSet._process_colors` ends in
+      `norm.autoscale_None(self.levels)`, so the mapping autoscales over the
+      levels — per limit, and for line contours as well as filled ones.
+      `core.ResolveContourScalarMap` now expresses exactly that and both
+      packages call it; `plot3d/contourf.go`'s duplicated color-override block
+      folded into `core.ContourFillScalarMap`. Two goldens moved
+      (`mplot3d_terrain`, `mplot3d_tricontour3d`), both **closer** to their
+      Matplotlib references (RMSE 1.159 → 1.015 and 2.500 → 2.443).
 - [ ] Reconcile the frozen-surface symbol delta against the tiering
       classification. The freeze grew 3,102 → 3,176 despite Phase 2 being a
       reduction pass. That direction is expected, since the `optional.Value[T]`
