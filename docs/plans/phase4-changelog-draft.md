@@ -103,6 +103,15 @@ It still needs release framing and a version heading before it seeds the v1.0
   spellings; the Go-cased `SetSupTitle`/`SetSupXLabel`/`SetSupYLabel` remain.
 - Removed `Legend.SetLocator` and `AnchoredTextBox.SetLocator`, which were pure
   aliases for the exported `Locator` field. Assign the field.
+- Removed `Axes.AddWidget` and the `core.WidgetArtist` interface. `Axes.Add`
+  detects artists that implement the (now unexported) widget interface and
+  routes them to the widget layer, so widgets are added like any other artist.
+  A custom widget still joins that layer by implementing `Draw`, `Z`, `Bounds`,
+  and `WidgetLayer`.
+- Moved the widget axes helpers with the widgets themselves:
+  `Figure.AddWidgetAxes`, `SubFigure.AddWidgetAxes`, and
+  `SubplotSpec.AddWidgetAxes` are now `widgets.NewAxes`,
+  `widgets.NewSubFigureAxes`, and `widgets.NewSubplotAxes`.
 - Replaced `Axis.SetTickDirection(string) error` with
   `core.ParseTickDirection(string) (TickDirection, error)`; assign the result to
   the already-typed `Axis.TickDirection`. This closes a raw-string enum the
@@ -153,8 +162,14 @@ It still needs release framing and a version heading before it seeds the v1.0
 - Remapped parity-catalog source ownership to the new packages without changing
   render behavior or golden images.
 - Took the final Phase 2 freeze after the error, options, and mutable-field
-  work: `test/testdata/public_api/stable_public_api.json` now holds 3,176
-  symbols across 29 packages, and that artifact is the surface Phase 3 and
-  Phase 4 are measured against. Regenerating it, the parity-status document,
-  and the public-surface classifications produced no diff, so the committed
-  artifacts already matched the code when Phase 2 closed.
+  work: `test/testdata/public_api/stable_public_api.json` held 3,176 symbols
+  across 29 packages, and that artifact is the surface Phase 3 and Phase 4 are
+  measured against. Regenerating it, the parity-status document, and the
+  public-surface classifications produced no diff, so the committed artifacts
+  already matched the code when Phase 2 closed. The Phase 2 follow-ups then
+  added the two shared contour scalar-map helpers, bringing the freeze to 3,178.
+- Reconciled that freeze against the Phase 2.1 tiering decisions symbol by
+  symbol in `docs/plans/phase2-freeze-delta.{md,json}`. All 19 `delete` rows are
+  absent and the one `demote` row landed in `backends`; every one of the 402
+  removed and 478 added names carries a category and, where it is a rename or a
+  move, a replacement that the test verifies is frozen.

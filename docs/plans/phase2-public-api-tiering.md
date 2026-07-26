@@ -54,7 +54,9 @@ symbol coverage, the allowed dispositions, replacement/rationale rules, the
 landmark decisions above, and retention of the remaining renderer interfaces.
 The artifact preserves the Phase 2.1 baseline; later API regeneration should
 update this design record deliberately rather than silently accepting new
-symbols.
+symbols. `phase2-freeze-delta.md` is where that reconciliation lives: it walks
+every difference between these decisions and the live freeze, and
+`TestPublicAPIFreezeDeltaIsReconciled` keeps the walk current.
 
 The Phase 2 API collector parses every non-test Go source file in each audited
 package, independent of build constraints. It deduplicates equivalent function

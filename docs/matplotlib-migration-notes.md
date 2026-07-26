@@ -30,6 +30,23 @@ names are unchanged apart from the package qualifier: use
 `widgets.NewCursor`, `widgets.NewMultiCursor`, and the `widgets.New*Selector`
 family.
 
+The widget axes helpers moved with them. Replace `fig.AddWidgetAxes(rect, ...)`
+with `widgets.NewAxes(fig, rect, ...)`, `subfig.AddWidgetAxes(rect, ...)` with
+`widgets.NewSubFigureAxes(subfig, rect, ...)`, and
+`spec.AddWidgetAxes(...)` with `widgets.NewSubplotAxes(spec, ...)`.
+
+`core.Axes.AddWidget` and `core.WidgetArtist` were removed. `core.Axes.Add` now
+detects artists that implement the widget interface and routes them to the
+widget layer itself, so a widget is added like any other artist:
+
+```go
+ax.Add(widgets.NewButton(ax, "run", widgets.ButtonOptions{}))
+```
+
+The marker interface is unexported (`core.widgetArtist`). A custom widget still
+joins the widget layer by implementing `Draw`, `Z`, `Bounds`, and `WidgetLayer`;
+it no longer names a `core` interface to do so.
+
 Date conversion moved with the date tick API:
 `core.Date2Num`/`Num2Date`/`SetEpoch` are now
 `dates.Date2Num`/`Num2Date`/`SetEpoch`. The getter was made idiomatic during

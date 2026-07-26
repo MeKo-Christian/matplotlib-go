@@ -72,9 +72,11 @@ the new figure save surface is used by examples; the API is re-frozen; and all
 goldens remain byte-identical to the pre-break baseline.
 
 Completed 2026-07-26. Every golden and Matplotlib-reference fixture stayed
-byte-identical through the whole phase. The final freeze is 3,176 symbols across
+byte-identical through the whole phase. The final freeze is 3,178 symbols across
 29 packages in `test/testdata/public_api/stable_public_api.json`; that artifact
-is the surface Phases 3 and 4 are measured against. The pass was a net deletion:
+is the surface Phases 3 and 4 are measured against, and
+`docs/plans/phase2-freeze-delta.md` reconciles every symbol of it against the
+Phase 2.1 tiering decisions. The pass was a net deletion:
 all 205 variadic option tails and all 408 pointer-to-primitive option fields are
 gone, `internal/optarg` with them. Design records live in `docs/plans/`
 (`phase2-public-api-tiering.md`, `phase2-warn-and-skip-inventory.md`,
@@ -87,8 +89,8 @@ gone, `internal/optarg` with them. Design records live in `docs/plans/`
 ### Phase 2 Follow-ups
 
 Deliberately deferred out of Phase 2 because each changes behavior or scope that
-the phase's byte-identical-rendering rule excluded. Neither blocks the "done
-when" criteria above. The surviving item is a Phase 4 prerequisite.
+the phase's byte-identical-rendering rule excluded. Neither blocked the "done
+when" criteria above. Both are now closed.
 
 - [x] Reconcile the plot3d/core scalar-map range divergence. Neither guard was
       right: Matplotlib's `ContourSet._process_colors` ends in
@@ -99,17 +101,20 @@ when" criteria above. The surviving item is a Phase 4 prerequisite.
       folded into `core.ContourFillScalarMap`. Two goldens moved
       (`mplot3d_terrain`, `mplot3d_tricontour3d`), both **closer** to their
       Matplotlib references (RMSE 1.159 → 1.015 and 2.500 → 2.443).
-- [ ] Reconcile the frozen-surface symbol delta against the tiering
-      classification. The freeze grew 3,102 → 3,176 despite Phase 2 being a
-      reduction pass. That direction is expected, since the `optional.Value[T]`
-      constructors and folded value types (`DashPattern`, `MarkerColorSpec`,
-      `MarkEverySpec`) add exported names while removing struct fields, which are
-      not counted as symbols — but the delta has never been walked symbol by
-      symbol against the keep/demote/delete decisions in
-      `docs/plans/phase2-public-api-tiering.json`. Diff that file against
-      `test/testdata/public_api/stable_public_api.json` and confirm every added
-      name is intended and every `delete` row is gone, before Phase 4 tags the
-      surface.
+- [x] Reconcile the frozen-surface symbol delta against the tiering
+      classification. Walked all 402 removed and 478 added names; the residue is
+      empty. All 19 `delete` rows are gone and the one `demote` row landed in
+      `backends`. The growth (3,102 → 3,178) is 73 symbols of field-to-name
+      trades the audit only counts in one direction, 30 symbols of pre-existing
+      API the baseline collector never parsed (build-tagged FFmpeg and native
+      Skia), 19 helpers the package split forced open, and follow-up 1's two
+      contour helpers. Three previously unrecorded findings: `core.WidgetArtist`
+      and `Axes.AddWidget` were deleted while classified `keep` (now in the
+      migration notes), `Renderer.Image` kept its symbol id while changing
+      meaning, and the freeze is 3,178 rather than 3,176. Recorded in
+      `docs/plans/phase2-freeze-delta.{md,json}` and enforced by
+      `TestPublicAPIFreezeDeltaIsReconciled`, which pins both inputs by hash so
+      the delta cannot grow silently before Phase 4 tags the surface.
 
 ## Phase 3: Visual QA and Tolerance Closure
 
