@@ -1,7 +1,7 @@
 // Package bar_variants is a user-facing showcase that gathers the bar-chart
 // surface into one figure: vertical categorical bars with tick labels,
 // horizontal bars, grouped bars, and stacked bars with bar labels. It closes
-// the Phase 18.1 "bar-variants" demo-breadth gap by promoting behavior that
+// the "bar-variants" demo-breadth gap by promoting behavior that
 // previously only existed as parity fixtures (bar_horizontal, bar_grouped,
 // bar_basic_tick_labels, plot_variants) into a single browsable gallery.
 package bar_variants

@@ -22,7 +22,7 @@ import (
 // rasterizer's view of our PDF/PS/SVG output against the AGG golden, so it
 // carries whole-glyph antialiasing and hinting differences by construction.
 //
-// The bound was a PSNR floor of 18 dB until Phase 3.1 fixed imagecmp's
+// The bound was a PSNR floor of 18 dB until fixed imagecmp's
 // overflowing PSNR accumulator, which had been flattering every case; the floor
 // is now stated as its RMSE equivalent and recalibrated against measurement.
 // Across the 15 subtests RMSE measures 19.3 (mathtext_basic/svg) to 32.1

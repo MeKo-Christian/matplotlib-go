@@ -67,7 +67,7 @@ func TestStatefulHelpersDelegateToCurrentAxes(t *testing.T) {
 	}
 }
 
-// TestPyplotWrappersShareCoreAxesPath proves the Phase 17.6.7 contract that
+// TestPyplotWrappersShareCoreAxesPath proves the contract that
 // stateful pyplot wrappers route through GCA()/GCF() to the same core
 // implementation as the object-oriented API: the artist a wrapper returns is the
 // exact artist the current axes appended, and a direct GCA() call produces an

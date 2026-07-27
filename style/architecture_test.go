@@ -84,7 +84,7 @@ func TestSupportedMPLStyleKeysAreAuditedAgainstUpstream(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(doc)), " ")
 	for _, phrase := range []string{
-		"Phase 9.7 rcParams Key Audit",
+		"rcParams Key Audit",
 		"`style.SupportedMPLStyleKeys()` is the supported rcParams subset",
 		"Unsupported rcParams are reported through `MPLStyleReport.Unsupported` and ignored",
 		"unsupported keys are intentional typed-API divergences unless a fixture needs them",

@@ -62,7 +62,7 @@ type Patch struct {
 	Sketch render.SketchParams
 	z      float64
 
-	// pathCache holds the persistent display-path projection cache (Phase 13).
+	// pathCache holds the persistent display-path projection cache.
 	// Every artist embedding Patch reuses its non-affine projection across
 	// affine-only redraws; the zero value is an empty cache filled on first draw.
 	pathCache  displayPathCache

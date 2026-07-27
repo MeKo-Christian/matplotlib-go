@@ -7,7 +7,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/style"
 )
 
-// Phase 16 date.* rcParam consumption. date.epoch resolution is covered by
+// date.* rcParam consumption. date.epoch resolution is covered by
 // TestParseDateEpochString only: the epoch is process-global and locks on the
 // first conversion (matching matplotlib set_epoch/get_epoch), so an
 // end-to-end rc test would poison every other date test in the package.

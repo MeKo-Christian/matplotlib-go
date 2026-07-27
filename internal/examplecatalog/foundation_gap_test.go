@@ -107,7 +107,7 @@ func TestPatchTextLegendFoundationGapsAreSplitBySurface(t *testing.T) {
 	} {
 		gap, ok := LookupFoundationAPIGap(tc.id)
 		if !ok {
-			t.Fatalf("missing Phase 12.4 foundation API gap %q", tc.id)
+			t.Fatalf("missing foundation API gap %q", tc.id)
 		}
 		if !sameStrings(gap.UpstreamModules, tc.modules) {
 			t.Fatalf("%s UpstreamModules = %v, want %v", tc.id, gap.UpstreamModules, tc.modules)
@@ -128,7 +128,7 @@ func TestImagePyplotBackendFoundationGapsAreSplitBySurface(t *testing.T) {
 	} {
 		gap, ok := LookupFoundationAPIGap(tc.id)
 		if !ok {
-			t.Fatalf("missing Phase 12.5 foundation API gap %q", tc.id)
+			t.Fatalf("missing foundation API gap %q", tc.id)
 		}
 		if !sameStrings(gap.UpstreamModules, tc.modules) {
 			t.Fatalf("%s UpstreamModules = %v, want %v", tc.id, gap.UpstreamModules, tc.modules)
@@ -149,8 +149,7 @@ func TestImageGapClassifiesPColorFast(t *testing.T) {
 	}
 }
 
-// TestImplementGapsHaveCatalogCoverageOrReclassification enforces the Phase 17
-// exit criterion that every GapDecisionImplement row is either implemented with
+// TestImplementGapsHaveCatalogCoverageOrReclassification enforces the // exit criterion that every GapDecisionImplement row is either implemented with
 // catalog coverage or deliberately reclassified with rationale. A gap that is
 // still marked "implement" must point at a coverage row that carries at least
 // one catalog case; otherwise it should be reclassified to an idiomatic

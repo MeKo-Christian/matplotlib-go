@@ -8,7 +8,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/internal/diag"
 )
 
-// This file implements PLAN.md Phase 16 ("rcParams Honesty & Coverage"): of the
+// This file keeps the rcParams surface honest: of the
 // rcParams matplotlib-go parses, a sizeable subset is stored on RC but never
 // read by any drawing or backend code, so setting them has no effect. That
 // silent no-op gives callers porting real matplotlib scripts false confidence a

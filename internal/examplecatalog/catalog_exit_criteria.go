@@ -9,8 +9,8 @@ const (
 	CatalogDecisionOmitted     CatalogAuditDecision = "intentional-omission"
 )
 
-// CatalogAudit records the evidence used to close one Phase 9 enumerable
-// catalog or miscellaneous coverage-audit decision.
+// CatalogAudit records the evidence behind one enumerable-catalog or
+// miscellaneous coverage-audit decision.
 type CatalogAudit struct {
 	ID              string
 	Title           string
@@ -22,9 +22,10 @@ type CatalogAudit struct {
 	Notes           string
 }
 
-// EnumerableCatalogAudits returns the machine-readable Phase 9 closure
-// ledger. The guard tests named here are the CI checks that keep each catalog
-// from silently drifting away from the local Matplotlib 3.10.9 snapshot.
+// EnumerableCatalogAudits returns the machine-readable closure ledger for the
+// enumerable catalogs. The guard tests named here are the CI checks that keep
+// each catalog from silently drifting away from the local Matplotlib 3.10.9
+// snapshot.
 func EnumerableCatalogAudits() []CatalogAudit {
 	rows := []CatalogAudit{
 		{
@@ -182,14 +183,16 @@ func EnumerableCatalogAudits() []CatalogAudit {
 	return out
 }
 
-// CatalogExitStatus records whether a Phase 9 exit criterion is satisfied.
+// CatalogExitStatus records whether a catalog-coverage exit criterion is
+// satisfied.
 type CatalogExitStatus string
 
 const (
 	CatalogExitSatisfied CatalogExitStatus = "satisfied"
 )
 
-// CatalogExitCriterion records evidence for one Phase 9 exit criterion.
+// CatalogExitCriterion records evidence for one catalog-coverage exit
+// criterion.
 type CatalogExitCriterion struct {
 	ID        string
 	Criterion string
@@ -197,8 +200,9 @@ type CatalogExitCriterion struct {
 	Evidence  string
 }
 
-// CatalogExitCriteria returns the machine-checked closure ledger for PLAN.md
-// Phase 9's exit criteria.
+// CatalogExitCriteria returns the machine-checked closure ledger for the
+// catalog-coverage exit criteria: every enumerable Matplotlib catalog is
+// either ported or has a recorded omission rationale.
 func CatalogExitCriteria() []CatalogExitCriterion {
 	rows := []CatalogExitCriterion{
 		{

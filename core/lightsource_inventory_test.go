@@ -59,7 +59,7 @@ func TestLightSourceAlgorithmInventoryIsDocumented(t *testing.T) {
 	}
 	doc := string(data)
 	requiredDocs := []string{
-		"Phase 17.6.5 LightSource Algorithm Inventory",
+		"LightSource Algorithm Inventory",
 		"`azdeg=315` and `altdeg=45`",
 		"`dy = -dy`",
 		"`fraction` multiplies the dot-product intensity",
@@ -112,7 +112,7 @@ func TestLightSourceExampleNeedListIsDocumented(t *testing.T) {
 	}
 	doc := string(data)
 	requiredDocs := []string{
-		"Phase 17.6.5 LightSource Example Need List",
+		"LightSource Example Need List",
 		"No committed Python parity fixture imports `LightSource`",
 		"No 2D image fixture",
 		"`hillshade`, `shade`, or `shade_rgb`",
@@ -166,7 +166,7 @@ func TestLightSourceHillshadeCoreOmissionIsDocumented(t *testing.T) {
 	}
 	doc := string(data)
 	requiredDocs := []string{
-		"Phase 17.6.5 LightSource Hillshade Core Decision",
+		"LightSource Hillshade Core Decision",
 		"`hillshade` remains intentionally omitted",
 		"`core.LightSource` or `color.LightSource` type is added",
 		"`azdeg=315`, `altdeg=45`",
@@ -190,7 +190,7 @@ func TestLightSourceBlendModeOmissionIsDocumented(t *testing.T) {
 	}
 	doc := string(data)
 	requiredDocs := []string{
-		"Phase 17.6.5 LightSource RGB Blend Mode Decision",
+		"LightSource RGB Blend Mode Decision",
 		"`shade` and `shade_rgb` remain intentionally omitted",
 		"`blend_overlay`",
 		"`blend_soft_light`",
@@ -227,7 +227,7 @@ func TestLightSourceImagePathIntegrationOmissionIsDocumented(t *testing.T) {
 	}
 	doc := string(data)
 	requiredDocs := []string{
-		"Phase 17.6.5 LightSource Image Path Integration Decision",
+		"LightSource Image Path Integration Decision",
 		"LightSource path is connected",
 		"`Image2D`, `imshow`, `matshow`, or",
 		"transformed-image rendering",
@@ -263,7 +263,7 @@ func TestLightSourceSurfacePathIntegrationDecisionIsDocumented(t *testing.T) {
 	}
 	doc := string(data)
 	requiredDocs := []string{
-		"Phase 17.6.5 LightSource Surface Path Integration Decision",
+		"LightSource Surface Path Integration Decision",
 		"no public `LightSource` object is connected",
 		"`Surface`",
 		"`Trisurf`",
@@ -302,7 +302,7 @@ func TestLightSourceFixtureDecisionIsDocumented(t *testing.T) {
 	}
 	doc := string(data)
 	requiredDocs := []string{
-		"Phase 17.6.5 LightSource Fixture Decision",
+		"LightSource Fixture Decision",
 		"No new LightSource or shaded-image visual triplet is added",
 		"`hillshade`, `shade`, and `shade_rgb` reference fixtures are deferred",
 		"`mplot3d_terrain` remains an mplot3d surface fixture",
@@ -323,7 +323,7 @@ func TestLightSourceMetadataUpdateIsDocumented(t *testing.T) {
 	}
 	doc := string(data)
 	requiredDocs := []string{
-		"Phase 17.6.5 LightSource Metadata Update",
+		"LightSource Metadata Update",
 		"`colors.py:class:LightSource`",
 		"`intentional-omission`",
 		"`mplot3d_terrain`",

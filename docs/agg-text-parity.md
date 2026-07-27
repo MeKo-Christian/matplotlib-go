@@ -43,7 +43,7 @@ Keep these cases in the loop for text-rendering changes:
 - `title_strict`
 
 The strict text cases run unconditionally (the historical
-`RUN_OPTIONAL_VISUAL_TESTS` gate was removed in Phase 18).
+`RUN_OPTIONAL_VISUAL_TESTS` gate was removed earlier).
 
 ## Commands
 

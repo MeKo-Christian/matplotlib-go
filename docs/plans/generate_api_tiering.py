@@ -10,8 +10,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-FROZEN_API = ROOT / "docs/plans/phase2-prebreak-public-api.json"
-OUTPUT = ROOT / "docs/plans/phase2-public-api-tiering.json"
+FROZEN_API = ROOT / "docs/plans/prebreak-public-api.json"
+OUTPUT = ROOT / "docs/plans/api-tiering.json"
 
 
 INTROSPECTION_DELETE = {
@@ -156,9 +156,9 @@ def generate() -> bytes:
 
     artifact = {
         "schema_version": 1,
-        "generated_by": "docs/plans/generate_phase2_public_api_tiering.py",
+        "generated_by": "docs/plans/generate_api_tiering.py",
         "baseline": {
-            "path": "docs/plans/phase2-prebreak-public-api.json",
+            "path": "docs/plans/prebreak-public-api.json",
             "sha256": hashlib.sha256(frozen_bytes).hexdigest(),
             "symbol_count": len(rows),
         },

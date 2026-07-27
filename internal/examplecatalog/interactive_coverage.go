@@ -54,7 +54,7 @@ var interactiveCoverage = []InteractiveCoverageRow{
 	{Topic: "widgets", RepresentativeID: "widgets_gallery", WebAgg: true, Gio: true},
 }
 
-// InteractiveCoverageMatrix returns a copy of the Phase 4 interactive
+// InteractiveCoverageMatrix returns a copy of the interactive
 // representative matrix.
 func InteractiveCoverageMatrix() []InteractiveCoverageRow {
 	out := make([]InteractiveCoverageRow, len(interactiveCoverage))

@@ -93,7 +93,7 @@ func TestNormGapListDocumentsSupportedFixtureNeeds(t *testing.T) {
 	}
 	doc := string(data)
 	required := []string{
-		"Phase 17.6.5 Norm Gap List",
+		"Norm Gap List",
 		"`lognorm_imshow`",
 		"`twoslope_norm_image`",
 		"`boundarynorm_pcolormesh`",
@@ -137,7 +137,7 @@ func TestFuncNormUpstreamContractIsDocumented(t *testing.T) {
 	}
 	doc := string(data)
 	docRequired := []string{
-		"Phase 17.6.5 FuncNorm Upstream Contract",
+		"FuncNorm Upstream Contract",
 		"`make_norm_from_scale`",
 		"`scale.FuncScale`",
 		"forward and inverse",
@@ -160,7 +160,7 @@ func TestFuncNormGoCallbackShapeDecisionIsDocumented(t *testing.T) {
 	}
 	doc := string(data)
 	required := []string{
-		"Phase 17.6.5 FuncNorm Go Callback Shape",
+		"FuncNorm Go Callback Shape",
 		"`ScalarNormalizer`",
 		"`Map(float64) float64`",
 		"`Inverse(float64) (float64, bool)`",
@@ -185,7 +185,7 @@ func TestFuncNormOmissionLedgerIsDocumented(t *testing.T) {
 	}
 	doc := string(data)
 	required := []string{
-		"Phase 17.6.5 FuncNorm Omission Ledger",
+		"FuncNorm Omission Ledger",
 		"intentional omission",
 		"no supported parity fixture",
 		"`asinh_norm_image`",
@@ -209,7 +209,7 @@ func TestNormMetadataDocsAndStatusAreCurrent(t *testing.T) {
 	}
 	doc := string(data)
 	required := []string{
-		"Phase 17.6.5 Norm Public Surface Metadata",
+		"Norm Public Surface Metadata",
 		"`idiomatic-equivalent`",
 		"`make_norm_from_scale` remains marked `intentional-omission`",
 		"`LogNorm` remains covered by the",
@@ -234,7 +234,7 @@ func TestNormMetadataDocsAndStatusAreCurrent(t *testing.T) {
 	if strings.Contains(status, "| colors.py:class:Normalize | colors-cm | partial |") {
 		t.Fatal("parity status still reports Normalize through the broad partial colors row")
 	}
-	if !strings.Contains(status, "norm classes and the dynamic norm factory have explicit Phase 17.6.5 rows") {
+	if !strings.Contains(status, "norm classes and the dynamic norm factory have explicit rows") {
 		t.Fatal("parity status broad colors note does not point to explicit norm rows")
 	}
 }
@@ -273,7 +273,7 @@ func TestScalarMappableNormUpdateAuditIsDocumented(t *testing.T) {
 	}
 	doc := string(data)
 	for _, phrase := range []string{
-		"Phase 17.6.5 Scalar-Mappable Norm Update Audit",
+		"Scalar-Mappable Norm Update Audit",
 		"Matplotlib `Colorizer` connects norm callbacks",
 		"`set_clim`",
 		"blocks norm callbacks",
@@ -297,7 +297,7 @@ func TestScalarMappableNormUpdateDecisionIsDocumented(t *testing.T) {
 	}
 	doc := string(data)
 	for _, phrase := range []string{
-		"Phase 17.6.5 Scalar-Mappable Norm Update Decision",
+		"Scalar-Mappable Norm Update Decision",
 		"supported Go update path",
 		"`SetArray`",
 		"`SetColormap`",

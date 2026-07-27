@@ -185,7 +185,7 @@ func TestHighPriorityDemoBreadthGapsAreClosedOrSplit(t *testing.T) {
 			continue
 		}
 		if len(gap.ShowcaseIDs) == 0 {
-			t.Fatalf("%s has no user-facing showcase and no Phase 9C split", gap.ID)
+			t.Fatalf("%s has no user-facing showcase and no split", gap.ID)
 		}
 		for _, phrase := range stalePhrases {
 			if containsStringFragment(gap.CurrentCoverage, phrase) {
@@ -197,7 +197,7 @@ func TestHighPriorityDemoBreadthGapsAreClosedOrSplit(t *testing.T) {
 		}
 		if containsStringFragment(gap.CurrentCoverage, "residual") || containsStringFragment(gap.RecommendedDemo, "residual") {
 			if gap.ImplementationSplitRationale == "" {
-				t.Fatalf("%s mentions residual work but has no Phase 9C split rationale", gap.ID)
+				t.Fatalf("%s mentions residual work but has no split rationale", gap.ID)
 			}
 		}
 	}

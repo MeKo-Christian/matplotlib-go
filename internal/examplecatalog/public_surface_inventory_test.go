@@ -118,7 +118,7 @@ func TestImageClassAndIOOmissionsHaveExplicitRows(t *testing.T) {
 	for _, upstreamID := range want {
 		row, ok := LookupPublicSurfaceParityByUpstreamID(upstreamID)
 		if !ok {
-			t.Fatalf("missing explicit Phase 12.5 image public-surface classification for %q", upstreamID)
+			t.Fatalf("missing explicit image public-surface classification for %q", upstreamID)
 		}
 		if row.Status == PublicSurfaceNotStarted {
 			t.Fatalf("%s status = %s, want an implemented, partial, idiomatic, or intentional-omission decision", upstreamID, row.Status)
@@ -138,7 +138,7 @@ func TestPyplotImageHelpersHaveExplicitRows(t *testing.T) {
 	for _, upstreamID := range want {
 		row, ok := LookupPublicSurfaceParityByUpstreamID(upstreamID)
 		if !ok {
-			t.Fatalf("missing explicit Phase 12.5 pyplot image-helper classification for %q", upstreamID)
+			t.Fatalf("missing explicit pyplot image-helper classification for %q", upstreamID)
 		}
 		if row.Status == PublicSurfaceNotStarted {
 			t.Fatalf("%s status = %s, want an implemented, partial, idiomatic, or intentional-omission decision", upstreamID, row.Status)
@@ -168,7 +168,7 @@ func TestPyplotDynamicShortcutsHaveExplicitRows(t *testing.T) {
 	for _, upstreamID := range want {
 		row, ok := LookupPublicSurfaceParityByUpstreamID(upstreamID)
 		if !ok {
-			t.Fatalf("missing explicit Phase 12.5 pyplot dynamic/global shortcut classification for %q", upstreamID)
+			t.Fatalf("missing explicit pyplot dynamic/global shortcut classification for %q", upstreamID)
 		}
 		if row.Status == PublicSurfaceNotStarted {
 			t.Fatalf("%s status = %s, want an implemented, partial, idiomatic, or intentional-omission decision", upstreamID, row.Status)
@@ -176,7 +176,7 @@ func TestPyplotDynamicShortcutsHaveExplicitRows(t *testing.T) {
 	}
 }
 
-// TestPyplotStateSurfaceRowsAreExplicitlyDecided locks the Phase 17.6.7 closure
+// TestPyplotStateSurfaceRowsAreExplicitlyDecided locks the closure
 // of the stateful pyplot wrapper surface: every upstream pyplot.py and
 // _pylab_helpers.py row must resolve to a parity decision that is not
 // not-started. Implemented wrappers, documented partials, idiomatic equivalents,
@@ -192,7 +192,7 @@ func TestPyplotStateSurfaceRowsAreExplicitlyDecided(t *testing.T) {
 		checked++
 		row, ok := PublicSurfaceParityForRow(surface)
 		if !ok {
-			t.Fatalf("missing Phase 17.6.7 pyplot state classification for %q", surface.ID)
+			t.Fatalf("missing pyplot state classification for %q", surface.ID)
 		}
 		if row.Status == PublicSurfaceNotStarted {
 			t.Fatalf("%s status = %s, want an implemented, partial, idiomatic, or intentional-omission decision", surface.ID, row.Status)
@@ -214,7 +214,7 @@ func TestPatchStyleClosureRowsAreNotLeftPartial(t *testing.T) {
 		}
 		row, ok := PublicSurfaceParityForRow(surface)
 		if !ok {
-			t.Fatalf("missing Phase 17.6.6 patch-style classification for %q", surface.ID)
+			t.Fatalf("missing patch-style classification for %q", surface.ID)
 		}
 		if row.Status == PublicSurfacePartial || row.Status == PublicSurfaceNotStarted {
 			t.Fatalf("%s status = %s, want closed patch class/registry decision", surface.ID, row.Status)
@@ -232,7 +232,7 @@ func TestTextAnnotationOffsetboxRowsAreSplitByStaticAndGuiScope(t *testing.T) {
 			}
 			row, ok := PublicSurfaceParityForRow(surface)
 			if !ok {
-				t.Fatalf("missing Phase 17.6.6 text/offsetbox classification for %q", upstreamID)
+				t.Fatalf("missing text/offsetbox classification for %q", upstreamID)
 			}
 			return row
 		}
@@ -287,7 +287,7 @@ func TestLegendStaticRowsAreNotLeftPartial(t *testing.T) {
 			}
 			row, ok := PublicSurfaceParityForRow(surface)
 			if !ok {
-				t.Fatalf("missing Phase 17.6.6 static legend classification for %q", upstreamID)
+				t.Fatalf("missing static legend classification for %q", upstreamID)
 			}
 			return row
 		}
@@ -329,7 +329,7 @@ func TestDraggableLegendRowIsExplicitlyOmitted(t *testing.T) {
 		}
 		row, ok := PublicSurfaceParityForRow(surface)
 		if !ok {
-			t.Fatal("missing Phase 17.6.6 DraggableLegend classification")
+			t.Fatal("missing DraggableLegend classification")
 		}
 		if row.Status != PublicSurfaceIntentionalOmission {
 			t.Fatalf("DraggableLegend status = %s, want intentional omission", row.Status)
@@ -349,7 +349,7 @@ func TestArtistDynamicRowsAreSplitFromStaticArtistSurface(t *testing.T) {
 			}
 			row, ok := PublicSurfaceParityForRow(surface)
 			if !ok {
-				t.Fatalf("missing Phase 17.6.6 artist classification for %q", upstreamID)
+				t.Fatalf("missing artist classification for %q", upstreamID)
 			}
 			return row
 		}
@@ -389,7 +389,7 @@ func TestHatchImplementationRowsAreSplitFromRendererHatchSurface(t *testing.T) {
 			}
 			row, ok := PublicSurfaceParityForRow(surface)
 			if !ok {
-				t.Fatalf("missing Phase 17.6.6 hatch classification for %q", upstreamID)
+				t.Fatalf("missing hatch classification for %q", upstreamID)
 			}
 			return row
 		}
@@ -454,7 +454,7 @@ func TestPatchDebugHelperRowsAreExplicitlyOmitted(t *testing.T) {
 			found = true
 			row, ok := PublicSurfaceParityForRow(surface)
 			if !ok {
-				t.Fatalf("missing Phase 17.6.6 patch helper classification for %q", upstreamID)
+				t.Fatalf("missing patch helper classification for %q", upstreamID)
 			}
 			if row.Status != PublicSurfaceIntentionalOmission {
 				t.Fatalf("%s status = %s, want intentional omission", upstreamID, row.Status)
@@ -476,7 +476,7 @@ func TestFontManagerRowsAreSplitByTypedFontSurfaceAndRuntimeHelpers(t *testing.T
 			}
 			row, ok := PublicSurfaceParityForRow(surface)
 			if !ok {
-				t.Fatalf("missing Phase 17.6.6 font-manager classification for %q", upstreamID)
+				t.Fatalf("missing font-manager classification for %q", upstreamID)
 			}
 			return row
 		}
@@ -527,7 +527,7 @@ func TestTextPathRowsUseRendererLevelEquivalent(t *testing.T) {
 			found = true
 			row, ok := PublicSurfaceParityForRow(surface)
 			if !ok {
-				t.Fatalf("missing Phase 17.6.6 textpath classification for %q", upstreamID)
+				t.Fatalf("missing textpath classification for %q", upstreamID)
 			}
 			if row.Status == PublicSurfacePartial || row.Status == PublicSurfaceNotStarted {
 				t.Fatalf("%s status = %s, want renderer-level textpath equivalent", upstreamID, row.Status)
@@ -541,7 +541,7 @@ func TestTextPathRowsUseRendererLevelEquivalent(t *testing.T) {
 
 // assertModuleRowsClosed verifies every upstream row in the given modules
 // resolves to a parity decision that is neither not-started nor partial. It is
-// the Phase 17.6.8 closure guard for the backend/widget/animation tail: those
+// the closure guard for the backend/widget/animation tail: those
 // rows used to be allowed to stay partial, but 17.6.8 resolved each into a
 // direct/idiomatic equivalent or an explicit intentional omission.
 func assertModuleRowsClosed(t *testing.T, modules ...string) {
@@ -559,7 +559,7 @@ func assertModuleRowsClosed(t *testing.T, modules ...string) {
 		checked++
 		row, ok := PublicSurfaceParityForRow(surface)
 		if !ok {
-			t.Fatalf("missing Phase 17.6.8 classification for %q", surface.ID)
+			t.Fatalf("missing classification for %q", surface.ID)
 		}
 		if row.Status == PublicSurfacePartial || row.Status == PublicSurfaceNotStarted {
 			t.Fatalf("%s status = %s, want a closed backend/widget/animation decision (idiomatic, direct, or intentional-omission)", surface.ID, row.Status)
@@ -604,8 +604,7 @@ func TestBackendLifecycleAndToolRowsAreExplicit(t *testing.T) {
 	assertModuleRowsClosed(t, "backend_bases.py", "backend_tools.py")
 }
 
-// TestBackendWidgetAnimationTailDecisions locks the specific Phase 17.6.8
-// closure decisions for the most load-bearing rows, including the ported GIF
+// TestBackendWidgetAnimationTailDecisions locks the specific // closure decisions for the most load-bearing rows, including the ported GIF
 // writer stack and the static-vs-GUI tool split.
 func TestBackendWidgetAnimationTailDecisions(t *testing.T) {
 	artifact := loadPublicSurfaceArtifact(t)
@@ -626,11 +625,11 @@ func TestBackendWidgetAnimationTailDecisions(t *testing.T) {
 		{"animation.py:class:PillowWriter", PublicSurfaceDirectEquivalent, "image/gif"},
 		{"animation.py:class:AbstractMovieWriter", PublicSurfaceIdiomaticEquivalent, "MovieWriter interface"},
 		{"animation.py:class:MovieWriterRegistry", PublicSurfaceIdiomaticEquivalent, "registry"},
-		{"animation.py:class:FuncAnimation", PublicSurfaceIdiomaticEquivalent, "17.6.8"},
+		{"animation.py:class:FuncAnimation", PublicSurfaceIdiomaticEquivalent, "remain out of scope"},
 		{"animation.py:class:FFMpegWriter", PublicSurfaceDirectEquivalent, "ffmpeg"},
 		{"animation.py:class:HTMLWriter", PublicSurfaceDirectEquivalent, "HTML"},
-		{"widgets.py:class:Button", PublicSurfaceIdiomaticEquivalent, "17.6.8"},
-		{"backend_bases.py:class:FigureCanvasBase", PublicSurfaceIdiomaticEquivalent, "17.6.8"},
+		{"widgets.py:class:Button", PublicSurfaceIdiomaticEquivalent, "intentionally omitted for v1.0"},
+		{"backend_bases.py:class:FigureCanvasBase", PublicSurfaceIdiomaticEquivalent, "intentionally omitted for v1.0"},
 		{"backend_tools.py:registry:tool:fullscreen", PublicSurfaceIntentionalOmission, "intentionally omitted"},
 	}
 	for _, tc := range cases {
@@ -663,13 +662,13 @@ func TestColorsNormSurfaceRowsHaveExplicitDecisions(t *testing.T) {
 	for _, upstreamID := range want {
 		row, ok := LookupPublicSurfaceParityByUpstreamID(upstreamID)
 		if !ok {
-			t.Fatalf("missing explicit Phase 17.6.5 norm classification for %q", upstreamID)
+			t.Fatalf("missing explicit norm classification for %q", upstreamID)
 		}
 		if row.Status == PublicSurfaceNotStarted {
 			t.Fatalf("%s status = %s, want an implemented, partial, idiomatic, or intentional-omission decision", upstreamID, row.Status)
 		}
 		if !strings.Contains(row.Note, "17.6.5") && !strings.Contains(row.Note, "ScalarNormalizer") {
-			t.Fatalf("%s note does not reference the Phase 17.6.5 norm decision or ScalarNormalizer contract: %q", upstreamID, row.Note)
+			t.Fatalf("%s note does not reference the norm decision or ScalarNormalizer contract: %q", upstreamID, row.Note)
 		}
 	}
 }
@@ -677,13 +676,12 @@ func TestColorsNormSurfaceRowsHaveExplicitDecisions(t *testing.T) {
 func TestColorsLightSourceSurfaceRowIsIntentionalOmission(t *testing.T) {
 	row, ok := LookupPublicSurfaceParityByUpstreamID("colors.py:class:LightSource")
 	if !ok {
-		t.Fatal("missing explicit Phase 17.6.5 LightSource classification")
+		t.Fatal("missing explicit LightSource classification")
 	}
 	if row.Status != PublicSurfaceIntentionalOmission {
 		t.Fatalf("LightSource status = %s, want %s", row.Status, PublicSurfaceIntentionalOmission)
 	}
 	required := []string{
-		"Phase 17.6.5",
 		"intentional omission",
 		"LightSource.hillshade",
 		"shade_rgb",
@@ -706,25 +704,25 @@ func TestBivarMultivarColormapRowsAreIntentionalOmissions(t *testing.T) {
 	}{
 		{
 			upstreamID: "colors.py:class:BivarColormap",
-			required:   []string{"Phase 17.6.5", "intentional omission", "two-component", "2D colorbar"},
+			required:   []string{"intentional omission", "two-component", "2D colorbar"},
 		},
 		{
 			upstreamID: "colors.py:class:BivarColormapFromImage",
-			required:   []string{"Phase 17.6.5", "intentional omission", "image-backed bivariate", "two-dimensional LUT"},
+			required:   []string{"intentional omission", "image-backed bivariate", "two-dimensional LUT"},
 		},
 		{
 			upstreamID: "colors.py:class:MultivarColormap",
-			required:   []string{"Phase 17.6.5", "intentional omission", "tuple-valued component arrays", "multi-component colorbar"},
+			required:   []string{"intentional omission", "tuple-valued component arrays", "multi-component colorbar"},
 		},
 		{
 			upstreamID: "colors.py:class:SegmentedBivarColormap",
-			required:   []string{"Phase 17.6.5", "intentional omission", "segmented bivariate", "visual fixture"},
+			required:   []string{"intentional omission", "segmented bivariate", "visual fixture"},
 		},
 	}
 	for _, tc := range tests {
 		row, ok := LookupPublicSurfaceParityByUpstreamID(tc.upstreamID)
 		if !ok {
-			t.Fatalf("missing explicit Phase 17.6.5 classification for %s", tc.upstreamID)
+			t.Fatalf("missing explicit classification for %s", tc.upstreamID)
 		}
 		if row.Status != PublicSurfaceIntentionalOmission {
 			t.Fatalf("%s status = %s, want %s", tc.upstreamID, row.Status, PublicSurfaceIntentionalOmission)
@@ -799,11 +797,8 @@ func TestOpenPublicSurfaceParityRowsHaveClosureOwners(t *testing.T) {
 		if row.Status != PublicSurfacePartial && row.Status != PublicSurfaceNotStarted {
 			continue
 		}
-		if row.ClosurePhase == "" && row.ClosureRationale == "" {
-			t.Fatalf("%s (%s) is %s without a closure phase or omission rationale", row.ID, row.UpstreamID, row.Status)
-		}
-		if row.ClosurePhase != "" && !validPublicSurfaceClosurePhase(row.ClosurePhase) {
-			t.Fatalf("%s has invalid closure phase %q", row.ID, row.ClosurePhase)
+		if row.ClosureRationale == "" {
+			t.Fatalf("%s (%s) is %s without a closure rationale", row.ID, row.UpstreamID, row.Status)
 		}
 	}
 }
@@ -904,27 +899,6 @@ func validatePublicSurfaceParityRow(t *testing.T, artifact publicSurfaceArtifact
 	}
 }
 
-func validPublicSurfaceClosurePhase(phase string) bool {
-	switch phase {
-	case "12.2C",
-		"12.2D/E",
-		"12.2G",
-		"12.4C",
-		"12.5",
-		"17.6.2",
-		"17.6.3",
-		"17.6.4",
-		"17.6.5",
-		"17.6.6",
-		"17.6.7",
-		"17.6.8",
-		"17.6.9":
-		return true
-	default:
-		return false
-	}
-}
-
 func partialNoteDocumentsRemainingScope(note string) bool {
 	note = strings.ToLower(note)
 	for _, marker := range []string{
@@ -957,7 +931,7 @@ func validPublicSurfaceParityStatus(status PublicSurfaceParityStatus) bool {
 	}
 }
 
-// TestAllUpstreamPublicRowsAreClassified guards Phase 3: every row in the
+// TestAllUpstreamPublicRowsAreClassified guards that every row in the
 // committed upstream_public_surface.json must have a parity classification so
 // docs/matplotlib-parity-status.md remains complete.
 func TestAllUpstreamPublicRowsAreClassified(t *testing.T) {
@@ -969,7 +943,7 @@ func TestAllUpstreamPublicRowsAreClassified(t *testing.T) {
 	}
 }
 
-// TestPartialAndOmissionRowsHaveNotes guards Phase 3: every partial,
+// TestPartialAndOmissionRowsHaveNotes guards that every partial,
 // not-started, and intentional-omission row must carry a note explaining the
 // rationale and (for partial/not-started) the remaining work.
 func TestPartialAndOmissionRowsHaveNotes(t *testing.T) {

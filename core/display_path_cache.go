@@ -9,7 +9,7 @@ import (
 // (sub-)path so a redraw that changes only the trailing affine (axes
 // resize/pan/zoom) reuses the cached non-affine projection instead of
 // re-projecting every vertex. It is the patch/collection analogue of the Line2D
-// cache (Phase 13 rollout).
+// cache.
 //
 // Unlike Line2D — whose source is the stable l.XY backing — patches and
 // collections rebuild their source path fresh each draw (e.g. rectanglePath,

@@ -81,7 +81,7 @@ func TestComparePNG_SinglePixelDiff(t *testing.T) {
 	}
 }
 
-// TestComparePNG_LargeDiffDoesNotOverflowPSNR guards the Phase 3.1 fix: the
+// TestComparePNG_LargeDiffDoesNotOverflowPSNR guards the fix: the
 // PSNR accumulator used to square uint8 differences in uint8 arithmetic, so any
 // per-channel difference above 15 wrapped mod 256 and reported a PSNR far better
 // than the actual error. A single black-vs-white pixel is the extreme case:
@@ -228,7 +228,7 @@ func TestComparePNG_ResidualShape(t *testing.T) {
 	}
 }
 
-// TestComparePNG_ShapeSeesWhatRMSECannot is the reason Phase 3.2 exists: a
+// TestComparePNG_ShapeSeesWhatRMSECannot is the reason exists: a
 // small, dense, maximum-amplitude residual — a glyph in the wrong place —
 // disappears into a whole-image average but is obvious as one cluster.
 func TestComparePNG_ShapeSeesWhatRMSECannot(t *testing.T) {

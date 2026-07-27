@@ -16,8 +16,8 @@ import (
 //
 // PSNR is derived from RMSE as 20*log10(255/RMSE) and therefore carries no
 // information RMSE does not: it is a monotone restatement, useful for reading
-// logs, not as a second independent gate. Until Phase 3.1 the two were computed
-// from separate accumulators and looked independent, but only because the PSNR
+// logs, not as a second independent gate. The two were once computed from
+// separate accumulators and looked independent, but only because the PSNR
 // accumulator squared its differences in uint8 arithmetic and wrapped mod 256
 // for every difference above 15.
 //
@@ -26,7 +26,7 @@ import (
 // whole-image averages — structurally cannot do. A wholly misplaced glyph is a
 // few hundred pixels at near-maximum amplitude; averaged over a 640x360 frame
 // it disappears into a small RMSE, but it is unmistakable as one dense cluster.
-// See docs/plans/phase3-tolerance-audit.md.
+// See the tolerance audit in docs/plans/.
 type DiffResult struct {
 	MaxDiff   uint8   // Maximum per-channel difference found
 	MeanAbs   float64 // Mean absolute difference across all channels
@@ -137,7 +137,7 @@ func ComparePNG(got, want image.Image, tolerance uint8) (DiffResult, error) {
 // clusterStats labels the 8-connected components of mask and returns their
 // count along with the size of the largest one. Connectivity matches the
 // 3x3 structuring element the audit generator uses
-// (docs/plans/generate_phase3_tolerance_audit.py), so the two agree per case.
+// (the tolerance-audit generator in docs/plans/), so the two agree per case.
 func clusterStats(mask []bool, width, height int) (clusters, largest int) {
 	if width <= 0 || height <= 0 {
 		return 0, 0

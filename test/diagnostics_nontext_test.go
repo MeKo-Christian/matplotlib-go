@@ -11,7 +11,7 @@ import (
 
 // === non-text residual diagnostics ====================================
 //
-// PLAN.md Phase 1 calls for AGG parity diagnostics on the remaining non-text
+// PLAN.md calls for AGG parity diagnostics on the remaining non-text
 // residuals. These are opt-in dev probes: they render catalog cases, log the
 // AGG-vs-Matplotlib residual metrics, and dump diff PNGs so the gaps can be
 // localized. They never assert a ceiling, so the default suite is unaffected.

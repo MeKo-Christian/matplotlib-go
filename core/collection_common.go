@@ -35,7 +35,7 @@ type Collection struct {
 	scalarCLimSet  bool
 
 	// pathCaches holds one persistent display-path projection cache per element
-	// (Phase 13). Collections rebuild each element's source path every draw, so
+	// Collections rebuild each element's source path every draw, so
 	// reuse across affine-only redraws relies on the value-based change detection
 	// in displayPathCache. Grown lazily by pathCacheSlot.
 	pathCaches []displayPathCache

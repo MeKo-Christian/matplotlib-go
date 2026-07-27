@@ -158,7 +158,7 @@ func TestSkiaTaggedRendererMatchesMathTextGoldens(t *testing.T) {
 			if err != nil {
 				t.Fatalf("compare Skia MathText against AGG golden: %v", err)
 			}
-			// Phase 3.1: this was a 35 dB PSNR floor, which the overflowing PSNR
+			// This was a 35 dB PSNR floor, which the overflowing PSNR
 			// accumulator in imagecmp had made unreachable-but-passing for every
 			// case here. Restated in RMSE and set from measurement plus headroom:
 			// native Skia MathText measures RMSE 19.1 (mathtext_basic) to 30.2

@@ -35,15 +35,15 @@ type freezeDeltaRow struct {
 	SourceID      string `json:"source_id"`
 }
 
-// TestPublicAPIFreezeDeltaIsReconciled is the Phase 4 prerequisite guard: the
-// live freeze may differ from the Phase 2.1 tiering baseline only in ways the
+// TestPublicAPIFreezeDeltaIsReconciled is the prerequisite guard: the
+// live freeze may differ from the tiering baseline only in ways the
 // delta artifact accounts for row by row. The artifact pins both inputs by
 // hash, so any change to the exported surface or to the tiering decisions
-// invalidates it until docs/plans/generate_phase2_freeze_delta.py is rerun --
+// invalidates it until docs/plans/generate_api_freeze_delta.py is rerun --
 // and that generator refuses to emit an artifact with an unclassified symbol.
 func TestPublicAPIFreezeDeltaIsReconciled(t *testing.T) {
 	root := repoRootForAPIAudit(t)
-	deltaPath := filepath.Join(root, "docs", "plans", "phase2-freeze-delta.json")
+	deltaPath := filepath.Join(root, "docs", "plans", "api-freeze-delta.json")
 	data, err := os.ReadFile(deltaPath)
 	if err != nil {
 		t.Fatalf("read public API freeze delta artifact: %v", err)
@@ -151,7 +151,7 @@ func loadFreezeDeltaSource(t *testing.T, root string, src freezeDeltaSource, wha
 	}
 	sum := sha256.Sum256(raw)
 	if got := hex.EncodeToString(sum[:]); got != src.SHA256 {
-		t.Fatalf("%s hash = %s, artifact records %s; rerun docs/plans/generate_phase2_freeze_delta.py and review the delta",
+		t.Fatalf("%s hash = %s, artifact records %s; rerun docs/plans/generate_api_freeze_delta.py and review the delta",
 			what, got, src.SHA256)
 	}
 

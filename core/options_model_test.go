@@ -8,7 +8,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
-// The pointer and magic-zero option spellings replaced in Phase 2.3 could not
+// The pointer and magic-zero option spellings this replaced could not
 // tell "the caller wants zero" from "the caller said nothing". These tests pin
 // the distinction for the four APIs migrated to optional.Value.
 

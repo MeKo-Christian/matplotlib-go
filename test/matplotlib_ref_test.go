@@ -68,7 +68,7 @@ func runStrictMatplotlibRef(t *testing.T, name string) {
 	t.Helper()
 
 	// The RMSE ceilings are the exact equivalents of the PSNR floors these cases
-	// carried before Phase 3.1 (255/10^(dB/20): 48.0 dB and 46.5 dB), restated in
+	// carried before (255/10^(dB/20): 48.0 dB and 46.5 dB), restated in
 	// RMSE because imagecmp derives PSNR from RMSE. Both cases measure far
 	// inside them — text_labels_strict at RMSE 0.028, title_strict at 0.
 	const (

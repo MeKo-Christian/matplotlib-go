@@ -71,13 +71,13 @@ type Axes struct {
 	yLabelWeight    int
 	textDefaultsSet bool
 
-	// Per-axes autoscale margins (Phase 7). nil => fall back to
+	// Per-axes autoscale margins. nil => fall back to
 	// defaultAutoScaleMargin (0.05); a non-nil value (including 0) is honored.
 	xMargin       *float64
 	yMargin       *float64
 	autolimitMode string // "" => "data"; "round_numbers" snaps limits to round values
 
-	// label_outer / shared-axes suppression (Phase 7). Hide redundant tick
+	// label_outer / shared-axes suppression. Hide redundant tick
 	// labels (and offset text) / axis labels on inner shared subplots without
 	// mutating the possibly-shared Axis artist.
 	hideXTickLabels     bool
@@ -118,7 +118,7 @@ type Axes struct {
 
 	coordFormatter CoordFormatter
 
-	// Persistent transform graph (Phase 11: live bbox-linked transforms).
+	// Persistent transform graph of live bbox-linked transforms.
 	// axesBbox holds the axes pixel rectangle; transAxes maps the unit square
 	// onto it via transform.BboxTransformTo. transData composes the data->axes
 	// leg with transAxes and is cached across draws: resizing the axes (or

@@ -428,8 +428,7 @@ func LookupColormap(name string) Colormap {
 // Name matching is currently case-insensitive because the registry stores
 // normalized (lower-cased) keys; Matplotlib is case-sensitive ("Blues" !=
 // "blues"). Honoring case sensitivity requires re-registering the builtin
-// colormaps under their canonical mixed-case names and is tracked as Phase 17
-// work in PLAN.md.
+// colormaps under their canonical mixed-case names, which has not been done.
 func LookupColormapStrict(name string) (Colormap, error) {
 	key := normalizeColormapName(name)
 	colormapMu.RLock()

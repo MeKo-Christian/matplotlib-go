@@ -41,7 +41,7 @@ const (
 	mplRefDir = "../testdata/matplotlib_ref"
 	// mplMaxRMSE is the loose "did we render the right picture at all" floor,
 	// the RMSE equivalent (255/10^(dB/20)) of the 10 dB PSNR floor this check
-	// used before Phase 3.1. Above it, output has diverged fundamentally rather
+	// used before Above it, output has diverged fundamentally rather
 	// than in placement or antialiasing.
 	mplMaxRMSE = 80.6
 
@@ -49,7 +49,7 @@ const (
 	// There is no PSNR floor here: imagecmp derives PSNR from RMSE, so a floor
 	// would only restate a MaxRMSE ceiling. The former default of 44 dB was
 	// equivalent to RMSE 1.609 and was unreachable for 65 cases; it only ever
-	// passed because the PSNR accumulator overflowed. See Phase 3.1 in PLAN.md.
+	// passed because the PSNR accumulator overflowed. See in PLAN.md.
 	referenceCompareMaxMeanAbs = 2.50
 )
 
@@ -69,7 +69,7 @@ func goldenWriteDir() string {
 // strictMplRefIDs routes hand-curated text/title cases to the tight
 // PSNR/MeanAbs strict check instead of the loose runMplTest floor.
 //
-// Historical note (Phase 18, 2026-07-01): these two plus 49 golden cases used
+// Historical note (2026-07-01): these two plus 49 golden cases used
 // to skip in default CI behind RUN_OPTIONAL_VISUAL_TESTS=true. The gate
 // predated the vendored FreeType 2.6.1 default (glyph rasterization now
 // byte-matches the references) and each render costs ~0.05 s, so every case

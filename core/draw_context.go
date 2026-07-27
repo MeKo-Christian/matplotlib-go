@@ -65,8 +65,8 @@ type Transform2D struct {
 	YScale      transform.Scale
 	DataToAxes  transform.T
 	AxesToPixel transform.T
-	// composed is the persistent, cache-backed data->pixel transform (Phase 11
-	// live bbox-linked transforms). When non-nil it is the authoritative
+	// composed is the persistent, cache-backed data->pixel transform built on
+	// the live bbox-linked transform graph. When non-nil it is the authoritative
 	// composition used by Apply/Invert/TransData; it is numerically identical to
 	// chaining DataToAxes with AxesToPixel, which the separable-decomposition
 	// fast-paths continue to rebuild from the component fields.

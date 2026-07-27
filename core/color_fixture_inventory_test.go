@@ -97,7 +97,7 @@ func TestColorImageColorbarFixtureGapInventoryIsDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Fixture Gap Inventory",
+		"Fixture Gap Inventory",
 		"Color fixtures currently cover named colors plus diverging, qualitative, and cyclic scalar colormaps",
 		"Image fixtures cover heatmap, clipped, transformed, bilinear, bicubic, interpolation-matrix, alpha, matshow, spy-marker, spy-image, and arrays-showcase paths",
 		"Norm and colorbar fixtures cover log, asinh, two-slope, boundary/discrete, mutable scalar-map, explicit ticks, and extensions",
@@ -208,7 +208,7 @@ func TestColorImageColorbarFixtureTripletsAreDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Color/Image/Colorbar Fixture Triplets",
+		"Color/Image/Colorbar Fixture Triplets",
 		"Committed triplets cover scalar colormap swatches, named colors, image heatmap/clipped/transformed/interpolation/alpha/matshow/spy paths, and the colorbar norm/update/extension set",
 		"Existing norm triplets cover LogNorm, AsinhNorm, TwoSlopeNorm, BoundaryNorm, and Normalize-backed mutable scalar maps",
 		"No new FuncNorm, LightSource, shaded-relief, bivariate, or multivariate triplet is added for this phase because those APIs are documented omissions",
@@ -234,7 +234,7 @@ func TestColorImageColorbarMetadataAndMigrationNotesAreDocumented(t *testing.T) 
 			"colors-boundarynorm-class",
 			"colors-asinhnorm-class",
 			"colors-twoslope-norm-class",
-			"Phase 9 implements FuncNorm as core.FuncNorm",
+			"The port implements FuncNorm as core.FuncNorm",
 			"LightSource as an intentional omission",
 			"bivar/multivar colormaps",
 			"pyplot-imshow",
@@ -270,8 +270,8 @@ func TestColorImageColorbarMetadataAndMigrationNotesAreDocumented(t *testing.T) 
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Metadata and Migration Notes",
-		"Public-surface metadata marks color conversion, scalar colormaps, norms, images, colorbars, and colorizer routing with Phase 17.6.5 notes",
+		"Metadata and Migration Notes",
+		"Public-surface metadata marks color conversion, scalar colormaps, norms, images, colorbars, and colorizer routing with notes",
 		"Implemented fixture IDs are attached to image, colorbar, colors-cm, Normalize, BoundaryNorm, AsinhNorm, TwoSlopeNorm, pyplot imshow, pyplot colorbar, current-image, and current-mappable rows",
 		"Intentional omissions remain recorded for LightSource, bivariate colormaps, and multivariate colormaps",
 		"Migration notes summarize typed Go API differences for dynamic Python color inputs, callback-driven colorbar updates, custom colorbar formatters, gridspec and multi-parent colorbar helpers, and omitted shaded-relief or multi-component colorbars",
@@ -321,7 +321,7 @@ func TestFinalColorStatusRegenerationIsDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Final Color Status Regeneration",
+		"Final Color Status Regeneration",
 		"`docs/matplotlib-parity-status.md` was regenerated from `cmd/paritystatusdoc` after color, image, norm, and colorbar metadata updates",
 		"The final sweep covers Golden, MatplotlibRef, and ReferenceCompare for color, norm, image, and colorbar fixtures",
 		"The catalog/doc freshness checks are `TestMatplotlibParityStatusDocIsCurrent`, `TestPublicSurfaceParityRowsCoverCommittedInventory`, and `TestPublicSurfaceParityRowsReferenceExistingLocalArtifacts`",

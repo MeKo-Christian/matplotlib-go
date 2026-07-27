@@ -11,7 +11,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/ticker"
 )
 
-// Phase 19 default-value fidelity: an unstyled plot must use matplotlib
+// Default-value fidelity: an unstyled plot must use matplotlib
 // 3.10.9's rc defaults. Each literal below is the matplotlib default.
 
 func TestDefaultLineWidthMatchesMatplotlib(t *testing.T) {

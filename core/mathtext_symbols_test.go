@@ -17,7 +17,7 @@ func joinMathRunText(runs []MathTextLayoutRun) string {
 }
 
 // TestLayoutMathTextResolvesExpandedSymbols verifies that the expanded tex2uni
-// table (Phase 8) lets common symbols render as their Unicode glyph instead of
+// table lets common symbols render as their Unicode glyph instead of
 // echoing the literal command.
 func TestLayoutMathTextResolvesExpandedSymbols(t *testing.T) {
 	var r textRecordingRenderer

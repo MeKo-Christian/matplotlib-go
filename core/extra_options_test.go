@@ -2,7 +2,7 @@ package core
 
 import "testing"
 
-// Phase 2.3 finished what the variadic-tail rejection started: every plotting
+// The options-model pass finished what the variadic-tail rejection started: every plotting
 // entry point now takes exactly one option value, so passing a second one is a
 // compile error rather than a run-time rejection. The tests that exercised that
 // rejection are gone with the tails they guarded; what remains is the guard

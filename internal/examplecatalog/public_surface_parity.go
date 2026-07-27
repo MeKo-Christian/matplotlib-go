@@ -1,5 +1,5 @@
 // This curated parity catalog is intentionally kept as a single large file.
-// See docs/large-file-decomposition.md for the Phase 4 L7 decision.
+// See docs/large-file-decomposition.md for the L7 decision.
 package examplecatalog
 
 import (
@@ -34,7 +34,6 @@ type PublicSurfaceParity struct {
 	UpstreamID        string
 	FeatureCoverageID string
 	Status            PublicSurfaceParityStatus
-	ClosurePhase      string
 	ClosureRationale  string
 	GoFiles           []string
 	CatalogIDs        []string
@@ -49,7 +48,6 @@ type publicSurfaceParityRule struct {
 	name              string
 	featureCoverageID string
 	status            PublicSurfaceParityStatus
-	closurePhase      string
 	closureRationale  string
 	goFiles           []string
 	catalogIDs        []string
@@ -82,7 +80,6 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		UpstreamID:        "axes/_axes.py:method:Axes.bxp",
 		FeatureCoverageID: "axes",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.6.2",
 		GoFiles:           []string{"core/boxplot.go", "core/plot.go"},
 		CatalogIDs:        []string{"boxplot_basic", "stat_variants", "axes_convenience_helpers"},
 		Note:              "Precomputed-stat Axes.Bxp now creates typed Line2D component groups with Matplotlib-style positions, widths, caps, fliers, means, labels, and tick management. Remaining partial scope is Python property-dict alias breadth and patch_artist return-shape compatibility.",
@@ -92,7 +89,6 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		UpstreamID:        "axes/_axes.py:method:Axes.violin",
 		FeatureCoverageID: "axes",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.6.2",
 		GoFiles:           []string{"core/violin.go", "core/stat_variants.go"},
 		CatalogIDs:        []string{"stat_variants", "specialty_artists", "axes_convenience_helpers"},
 		Note:              "Axes.Violin now accepts precomputed coords/vals/stat summaries and shares the lower-level violin renderer with Violinplot. Remaining partial scope is Python collection return-shape exactness and full style alias breadth.",
@@ -102,17 +98,15 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		UpstreamID:        "axes/_axes.py:method:Axes.arrow",
 		FeatureCoverageID: "axes",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.6.2",
 		GoFiles:           []string{"core/patch_fancyarrow.go", "core/arrow_patch.go"},
 		CatalogIDs:        []string{"patch_showcase", "plot_variants"},
-		Note:              "Arrow artists exist through lower-level patch helpers and pyplot, but a typed Axes.arrow convenience method with Matplotlib-style defaults and fixture coverage remains a Phase 17.6.2 task.",
+		Note:              "Arrow artists exist through lower-level patch helpers and pyplot, but a typed Axes.arrow convenience method with Matplotlib-style defaults and fixture coverage remains outstanding.",
 	},
 	{
 		ID:                "axes-hlines-method",
 		UpstreamID:        "axes/_axes.py:method:Axes.hlines",
 		FeatureCoverageID: "axes",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.6.2",
 		GoFiles:           []string{"core/collection_line.go", "core/line_collection_helpers.go"},
 		CatalogIDs:        []string{"plot_variants", "axes_convenience_helpers"},
 		Note:              "Axes.HLines now creates data-coordinate LineCollection artists with single-value endpoint broadcasting and fixture coverage. Remaining partial scope is Matplotlib's kwargs/color/linestyle alias grammar and masked-array handling.",
@@ -122,7 +116,6 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		UpstreamID:        "axes/_axes.py:method:Axes.vlines",
 		FeatureCoverageID: "axes",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.6.2",
 		GoFiles:           []string{"core/collection_line.go", "core/line_collection_helpers.go"},
 		CatalogIDs:        []string{"plot_variants", "axes_convenience_helpers"},
 		Note:              "Axes.VLines now creates data-coordinate LineCollection artists with single-value extent broadcasting and fixture coverage. Remaining partial scope is Matplotlib's kwargs/color/linestyle alias grammar and masked-array handling.",
@@ -132,7 +125,6 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		UpstreamID:        "axes/_axes.py:method:Axes.clabel",
 		FeatureCoverageID: "axes",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.6.2",
 		GoFiles:           []string{"core/contour.go"},
 		CatalogIDs:        []string{"mesh_contour_tri", "axes_convenience_helpers"},
 		Note:              "Axes.Clabel now delegates to ContourSet.Clabel for post-hoc contour label placement with level filtering, formatter/font/color options, inline spacing, manual positions, and fixture coverage. Remaining partial scope is GUI/manual event-loop semantics and exact Text artist compatibility.",
@@ -142,7 +134,6 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		UpstreamID:        "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.tricontour",
 		FeatureCoverageID: "toolkits-projections",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.6.4",
 		GoFiles:           []string{"plot3d/contour_surface.go", "core/triangulation.go", "core/contour.go"},
 		CatalogIDs:        []string{"mesh_contour_tri", "mplot3d_trisurf3d", "mplot3d_tricontour3d"},
 		Note:              "Axes3D.TriContour now projects triangulated contour lines through Matplotlib-style rotate_axes/juggle_axes handling with levels, offset planes, zdir, axlim clipping, colormap/norm metadata, reprojectors, focused unit coverage, and the dedicated mplot3d_tricontour3d Matplotlib-reference fixture. Remaining partial scope is Python's dynamic overload grammar and residual 3D projection/depth-order differences documented as typed Go deviations.",
@@ -152,7 +143,6 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		UpstreamID:        "mpl_toolkits/mplot3d/axes3d.py:method:Axes3D.tricontourf",
 		FeatureCoverageID: "toolkits-projections",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.6.4",
 		GoFiles:           []string{"plot3d/contour_surface.go", "core/triangulation.go", "core/contour.go"},
 		CatalogIDs:        []string{"mesh_contour_tri", "mplot3d_trisurf3d", "mplot3d_tricontourf3d"},
 		Note:              "Axes3D.TriContourf now projects filled triangulated contour bands through Matplotlib-style rotate_axes/juggle_axes handling with levels, offset planes, zdir, axlim clipping, colormap/norm metadata, filled-level autoscaling, reprojectors, focused unit coverage, and the dedicated mplot3d_tricontourf3d Matplotlib-reference fixture. Remaining partial scope is Python's dynamic overload grammar and residual 3D projection/depth-order differences documented as typed Go deviations.",
@@ -164,7 +154,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"core/norm.go", "core/scalar_mappable.go", "core/colorbar.go"},
 		CatalogIDs:        []string{"image_heatmap", "colorbar_boundary_values", "collection_mutable_scalarmap"},
-		Note:              "Phase 17.6.5 records Normalize as core.Normalize through the ScalarNormalizer contract: linear mapping, clipping, autoscale, inverse, scalar-mappable clim updates, and colorbar synchronization are covered by focused norm tests and visible scalar-map fixtures.",
+		Note:              "The port records Normalize as core.Normalize through the ScalarNormalizer contract: linear mapping, clipping, autoscale, inverse, scalar-mappable clim updates, and colorbar synchronization are covered by focused norm tests and visible scalar-map fixtures.",
 	},
 	{
 		ID:                "colors-symlognorm-class",
@@ -172,7 +162,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "colors-cm",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"core/norm.go", "core/colorbar.go"},
-		Note:              "Phase 17.6.5 records SymLogNorm as core.SymLogNorm through the ScalarNormalizer contract, with scalar, inverse, autoscale, clipping, out-of-range, and colorbar function-scale routing covered by focused norm tests.",
+		Note:              "The port records SymLogNorm as core.SymLogNorm through the ScalarNormalizer contract, with scalar, inverse, autoscale, clipping, out-of-range, and colorbar function-scale routing covered by focused norm tests.",
 	},
 	{
 		ID:                "colors-powernorm-class",
@@ -180,7 +170,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "colors-cm",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"core/norm.go", "core/colorbar.go"},
-		Note:              "Phase 17.6.5 records PowerNorm as core.PowerNorm through the ScalarNormalizer contract, with gamma mapping, inverse, autoscale, clipping, and colorbar function-scale routing covered by focused norm tests.",
+		Note:              "The port records PowerNorm as core.PowerNorm through the ScalarNormalizer contract, with gamma mapping, inverse, autoscale, clipping, and colorbar function-scale routing covered by focused norm tests.",
 	},
 	{
 		ID:                "colors-twoslope-norm-class",
@@ -189,7 +179,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"core/norm.go", "core/colorbar.go"},
 		CatalogIDs:        []string{"twoslope_norm_image"},
-		Note:              "Phase 17.6.5 records TwoSlopeNorm as core.TwoSlopeNorm through the ScalarNormalizer contract, with strict ascending vmin/vcenter/vmax validation, inverse behavior, autoscale expansion, colorbar routing, and the twoslope_norm_image fixture covered.",
+		Note:              "The port records TwoSlopeNorm as core.TwoSlopeNorm through the ScalarNormalizer contract, with strict ascending vmin/vcenter/vmax validation, inverse behavior, autoscale expansion, colorbar routing, and the twoslope_norm_image fixture covered.",
 	},
 	{
 		ID:                "colors-centerednorm-class",
@@ -197,7 +187,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "colors-cm",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"core/norm.go", "core/colorbar.go"},
-		Note:              "Phase 17.6.5 records CenteredNorm as core.CenteredNorm through the ScalarNormalizer contract, with halfrange symmetry, vcenter handling, autoscale, inverse behavior, clipping, and colorbar function-scale routing covered by focused norm tests.",
+		Note:              "The port records CenteredNorm as core.CenteredNorm through the ScalarNormalizer contract, with halfrange symmetry, vcenter handling, autoscale, inverse behavior, clipping, and colorbar function-scale routing covered by focused norm tests.",
 	},
 	{
 		ID:                "colors-boundarynorm-class",
@@ -206,7 +196,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"core/norm.go", "core/colorbar.go", "core/mesh.go"},
 		CatalogIDs:        []string{"boundarynorm_pcolormesh", "colorbar_boundary_values", "colorbar_extensions"},
-		Note:              "Phase 17.6.5 records BoundaryNorm as core.BoundaryNorm through the ScalarNormalizer contract, with upstream-matched region indexes, clip/extend validation, non-invertible behavior, boundary ticks/values, colorbar extensions, and dedicated visual fixtures covered.",
+		Note:              "The port records BoundaryNorm as core.BoundaryNorm through the ScalarNormalizer contract, with upstream-matched region indexes, clip/extend validation, non-invertible behavior, boundary ticks/values, colorbar extensions, and dedicated visual fixtures covered.",
 	},
 	{
 		ID:                "colors-nonorm-class",
@@ -214,7 +204,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "colors-cm",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"core/norm.go", "core/scalar_mappable.go", "core/colorbar.go"},
-		Note:              "Phase 17.6.5 records NoNorm as core.NoNorm through the ScalarNormalizer contract, with identity index-style mapping and scalar-map color lookup covered by focused norm and scalar-mappable tests.",
+		Note:              "The port records NoNorm as core.NoNorm through the ScalarNormalizer contract, with identity index-style mapping and scalar-map color lookup covered by focused norm and scalar-mappable tests.",
 	},
 	{
 		ID:                "colors-asinhnorm-class",
@@ -223,17 +213,16 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"core/norm.go", "core/colorbar.go"},
 		CatalogIDs:        []string{"asinh_norm_image"},
-		Note:              "Phase 17.6.5 records AsinhNorm as core.AsinhNorm through the ScalarNormalizer contract, with smooth asinh mapping, inverse, autoscale, clipping, asinh colorbar routing, and the asinh_norm_image fixture covered.",
+		Note:              "The port records AsinhNorm as core.AsinhNorm through the ScalarNormalizer contract, with smooth asinh mapping, inverse, autoscale, clipping, asinh colorbar routing, and the asinh_norm_image fixture covered.",
 	},
 	{
 		ID:                "colors-funcnorm-class",
 		UpstreamID:        "colors.py:class:FuncNorm",
 		FeatureCoverageID: "colors-cm",
 		Status:            PublicSurfaceIdiomaticEquivalent,
-		ClosurePhase:      "9",
 		GoFiles:           []string{"core/norm.go", "core/funcnorm_test.go"},
 		CatalogIDs:        []string{"asinh_norm_image", "twoslope_norm_image"},
-		Note:              "Phase 9 implements FuncNorm as core.FuncNorm through the ScalarNormalizer contract: Forward/Reverse callbacks plus VMin/VMax/Clip, normalizing Forward(value) between Forward(VMin) and Forward(VMax) (clip clamps in data space), with inverse, autoscale over transform-domain finite values, and validation. Covered by core/funcnorm_test.go; no transpiler-backed golden because arbitrary Go callbacks do not transpile to a Matplotlib reference. The dynamic make_norm_from_scale factory remains an intentional omission. Axis-level function/functionlog scales remain separate transform.Scale APIs.",
+		Note:              "The port implements FuncNorm as core.FuncNorm through the ScalarNormalizer contract: Forward/Reverse callbacks plus VMin/VMax/Clip, normalizing Forward(value) between Forward(VMin) and Forward(VMax) (clip clamps in data space), with inverse, autoscale over transform-domain finite values, and validation. Covered by core/funcnorm_test.go; no transpiler-backed golden because arbitrary Go callbacks do not transpile to a Matplotlib reference. The dynamic make_norm_from_scale factory remains an intentional omission. Axis-level function/functionlog scales remain separate transform.Scale APIs.",
 	},
 	{
 		ID:                "colors-make-norm-from-scale-function",
@@ -242,7 +231,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIntentionalOmission,
 		GoFiles:           []string{"core/norm.go", "transform/scale_registry.go"},
 		CatalogIDs:        []string{"asinh_norm_image", "lognorm_imshow", "twoslope_norm_image"},
-		Note:              "Phase 17.6.5 intentionally omits Matplotlib's dynamic make_norm_from_scale class factory; Go exposes concrete ScalarNormalizer values and transform.Scale registration instead, while caller-defined ScalarNormalizer implementations cover custom normalization without Python-style generated classes.",
+		Note:              "The port intentionally omits Matplotlib's dynamic make_norm_from_scale class factory; Go exposes concrete ScalarNormalizer values and transform.Scale registration instead, while caller-defined ScalarNormalizer implementations cover custom normalization without Python-style generated classes.",
 	},
 	{
 		ID:                "colors-lightsource-class",
@@ -251,7 +240,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIntentionalOmission,
 		GoFiles:           []string{"plot3d/projection.go", "core/lightsource_inventory_test.go"},
 		CatalogIDs:        []string{"mplot3d_terrain"},
-		Note:              "Phase 17.6.5 records LightSource as an intentional omission for the 2D image-lighting API: no committed fixture requires LightSource.hillshade, shade, or shade_rgb output, and supported mplot3d face shading remains a separate shade3DFaceColor path covered by the mplot3d_terrain audit and focused tests.",
+		Note:              "The port records LightSource as an intentional omission for the 2D image-lighting API: no committed fixture requires LightSource.hillshade, shade, or shade_rgb output, and supported mplot3d face shading remains a separate shade3DFaceColor path covered by the mplot3d_terrain audit and focused tests.",
 	},
 	{
 		ID:                "colors-bivar-colormap-class",
@@ -260,7 +249,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIntentionalOmission,
 		GoFiles:           []string{"color/colormap.go", "core/colormap_inventory_test.go"},
 		CatalogIDs:        []string{"colormap_diverging", "colormap_qualitative", "colormap_cyclic"},
-		Note:              "Phase 17.6.5 records BivarColormap as an intentional omission: Go keeps the public color API single-variate, no committed fixture needs two-component lookup-table inputs, and a future implementation would need explicit outside/bad handling plus a 2D colorbar contract.",
+		Note:              "The port records BivarColormap as an intentional omission: Go keeps the public color API single-variate, no committed fixture needs two-component lookup-table inputs, and a future implementation would need explicit outside/bad handling plus a 2D colorbar contract.",
 	},
 	{
 		ID:                "colors-bivar-colormap-from-image-class",
@@ -269,7 +258,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIntentionalOmission,
 		GoFiles:           []string{"color/colormap.go", "core/image_io.go", "core/colormap_inventory_test.go"},
 		CatalogIDs:        []string{"colormap_diverging", "image_heatmap"},
-		Note:              "Phase 17.6.5 records BivarColormapFromImage as an intentional omission: Go supports scalar colormap lookup and image IO, but image-backed bivariate construction would require a two-dimensional LUT surface and matching 2D colorbar behavior.",
+		Note:              "The port records BivarColormapFromImage as an intentional omission: Go supports scalar colormap lookup and image IO, but image-backed bivariate construction would require a two-dimensional LUT surface and matching 2D colorbar behavior.",
 	},
 	{
 		ID:                "colors-multivar-colormap-class",
@@ -278,7 +267,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIntentionalOmission,
 		GoFiles:           []string{"color/colormap.go", "core/scalar_mappable.go", "core/colormap_inventory_test.go"},
 		CatalogIDs:        []string{"colormap_diverging", "collection_mutable_scalarmap"},
-		Note:              "Phase 17.6.5 records MultivarColormap as an intentional omission: the scalar-mappable model is single-variate, no Go artist accepts tuple-valued component arrays, and a future API would need explicit combination_mode plus multi-component colorbar semantics.",
+		Note:              "The port records MultivarColormap as an intentional omission: the scalar-mappable model is single-variate, no Go artist accepts tuple-valued component arrays, and a future API would need explicit combination_mode plus multi-component colorbar semantics.",
 	},
 	{
 		ID:                "colors-segmented-bivar-colormap-class",
@@ -287,7 +276,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIntentionalOmission,
 		GoFiles:           []string{"color/colormap.go", "core/colormap_inventory_test.go"},
 		CatalogIDs:        []string{"colormap_diverging", "colormap_cyclic"},
-		Note:              "Phase 17.6.5 records SegmentedBivarColormap as an intentional omission: segmented bivariate lookup needs a direct visual fixture before Go adds patch resampling, two-component input handling, and bivariate colorbar semantics.",
+		Note:              "The port records SegmentedBivarColormap as an intentional omission: segmented bivariate lookup needs a direct visual fixture before Go adds patch resampling, two-component input handling, and bivariate colorbar semantics.",
 	},
 	{
 		ID:                "patches-arrowstyle-private-base",
@@ -931,7 +920,6 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		UpstreamID:        "pyplot.py:function:arrow",
 		FeatureCoverageID: "pyplot-state",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.6.2",
 		GoFiles:           []string{"pyplot/pyplot.go", "core/patch_fancyarrow.go"},
 		CatalogIDs:        []string{"patch_showcase", "plot_variants"},
 		Note:              "Stateful pyplot Arrow creates a core FancyArrow artist on the current axes in data coordinates. Remaining partial scope is Matplotlib's full Patch kwargs alias grammar and default style tuning.",
@@ -1066,7 +1054,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfacePartial,
 		GoFiles:           []string{"pyplot/pyplot.go", "core/artist.go"},
 		CatalogIDs:        []string{"axes_control_surface"},
-		Note:              "Matplotlib's pyplot margins shortcut maps only partially to Go's immediate margin-based AutoScale path. Phase 17.6.7 keeps persistent per-axis margin state, tight-view toggling, and getter/setter overloads as a documented intentional divergence; callers use the typed AutoScale margin path.",
+		Note:              "Matplotlib's pyplot margins shortcut maps only partially to Go's immediate margin-based AutoScale path. The port keeps persistent per-axis margin state, tight-view toggling, and getter/setter overloads as a documented intentional divergence; callers use the typed AutoScale margin path.",
 	},
 	{
 		ID:                "pyplot-gcf",
@@ -1219,7 +1207,6 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		UpstreamID:        "pyplot.py:function:hlines",
 		FeatureCoverageID: "pyplot-state",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.6.2",
 		GoFiles:           []string{"pyplot/pyplot.go", "core/collection_line.go", "core/line_collection_helpers.go"},
 		CatalogIDs:        []string{"plot_variants", "axes_convenience_helpers"},
 		Note:              "Stateful pyplot HLines delegates to Axes.HLines, including data-coordinate LineCollection creation and single-value endpoint broadcasting. Remaining partial scope is Matplotlib's color/linestyle kwargs aliases and masked-array handling.",
@@ -1229,7 +1216,6 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		UpstreamID:        "pyplot.py:function:vlines",
 		FeatureCoverageID: "pyplot-state",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.6.2",
 		GoFiles:           []string{"pyplot/pyplot.go", "core/collection_line.go", "core/line_collection_helpers.go"},
 		CatalogIDs:        []string{"plot_variants", "axes_convenience_helpers"},
 		Note:              "Stateful pyplot VLines delegates to Axes.VLines, including data-coordinate LineCollection creation and single-value extent broadcasting. Remaining partial scope is Matplotlib's color/linestyle kwargs aliases and masked-array handling.",
@@ -1275,7 +1261,6 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		UpstreamID:        "pyplot.py:function:clabel",
 		FeatureCoverageID: "pyplot-state",
 		Status:            PublicSurfacePartial,
-		ClosurePhase:      "17.6.2",
 		GoFiles:           []string{"pyplot/pyplot.go", "core/contour.go"},
 		CatalogIDs:        []string{"mesh_contour_tri", "axes_convenience_helpers"},
 		Note:              "Stateful pyplot Clabel now delegates post-hoc contour label placement to the current axes over an existing ContourSet. Remaining partial scope is Matplotlib's GUI/manual event-loop semantics and full Text artist compatibility.",
@@ -1737,7 +1722,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"canvas/draw.go", "canvas/dispatcher.go", "canvas/connect.go"},
-		Note:              "Draw lifecycle callbacks are represented through canvas draw/draw-idle dispatch. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact Matplotlib DrawEvent object fields and renderer exposure.",
+		Note:              "Draw lifecycle callbacks are represented through canvas draw/draw-idle dispatch. GUI-only behavior is intentionally omitted for v1.0: exact Matplotlib DrawEvent object fields and renderer exposure.",
 	},
 	{
 		ID:                "backend-key-event",
@@ -1745,7 +1730,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"canvas/input.go", "canvas/dispatcher.go", "canvas/widget_interaction.go"},
-		Note:              "Go KeyEvent carries key/modifier state through the canvas dispatcher and widget interaction layer. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact GUI key-string normalization parity.",
+		Note:              "Go KeyEvent carries key/modifier state through the canvas dispatcher and widget interaction layer. GUI-only behavior is intentionally omitted for v1.0: exact GUI key-string normalization parity.",
 	},
 	{
 		ID:                "backend-mouse-event",
@@ -1753,7 +1738,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"canvas/input.go", "canvas/dispatcher.go", "canvas/navigation.go", "canvas/widget_interaction.go"},
-		Note:              "Go MouseEvent carries position, button, scroll, and modifier state for picking, navigation, and widgets. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact GUI enter/leave and dblclick semantics.",
+		Note:              "Go MouseEvent carries position, button, scroll, and modifier state for picking, navigation, and widgets. GUI-only behavior is intentionally omitted for v1.0: exact GUI enter/leave and dblclick semantics.",
 	},
 	{
 		ID:                "backend-pick-event",
@@ -1761,7 +1746,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"canvas/picker.go", "canvas/dispatcher.go", "core/picker.go"},
-		Note:              "Go has pick dispatch with typed PickInfo and artist hit testing. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact Matplotlib PickEvent payload breadth.",
+		Note:              "Go has pick dispatch with typed PickInfo and artist hit testing. GUI-only behavior is intentionally omitted for v1.0: exact Matplotlib PickEvent payload breadth.",
 	},
 	{
 		ID:                "backend-resize-event",
@@ -1769,7 +1754,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"canvas/input.go", "canvas/canvas.go", "backends/runtime.go"},
-		Note:              "Go canvases expose Resize and resize event routing. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): backend-specific GUI resize timing and payload parity.",
+		Note:              "Go canvases expose Resize and resize event routing. GUI-only behavior is intentionally omitted for v1.0: backend-specific GUI resize timing and payload parity.",
 	},
 	{
 		ID:                "backend-close-event",
@@ -1777,7 +1762,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"canvas/canvas.go", "pyplot/pyplot.go", "backends/runtime.go"},
-		Note:              "Go managers and canvases expose Close lifecycle hooks. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact GUI close-event dispatch ordering and global manager destruction behavior.",
+		Note:              "Go managers and canvases expose Close lifecycle hooks. GUI-only behavior is intentionally omitted for v1.0: exact GUI close-event dispatch ordering and global manager destruction behavior.",
 	},
 	{
 		ID:                "backend-figure-canvas-base",
@@ -1785,7 +1770,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"canvas/canvas.go", "canvas/connect.go", "canvas/draw.go", "backends/runtime.go"},
-		Note:              "Go FigureCanvas covers figure ownership, draw/draw-idle, resize, close, callback connection, optional blit, and save integration. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact GUI toolkit event synthesis and Matplotlib's broad method surface.",
+		Note:              "Go FigureCanvas covers figure ownership, draw/draw-idle, resize, close, callback connection, optional blit, and save integration. GUI-only behavior is intentionally omitted for v1.0: exact GUI toolkit event synthesis and Matplotlib's broad method surface.",
 	},
 	{
 		ID:                "backend-figure-manager-base",
@@ -1793,7 +1778,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"canvas/canvas.go", "backends/runtime.go", "pyplot/pyplot.go"},
-		Note:              "Go FigureManager covers canvas ownership, show, close, title, and ToolManager access. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact GUI window lifecycle and current-manager transitions.",
+		Note:              "Go FigureManager covers canvas ownership, show, close, title, and ToolManager access. GUI-only behavior is intentionally omitted for v1.0: exact GUI window lifecycle and current-manager transitions.",
 	},
 	{
 		ID:                "backend-navigation-toolbar2",
@@ -1801,7 +1786,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"canvas/toolbar.go", "canvas/navigation.go", "canvas/tool.go"},
-		Note:              "Go toolbar/navigation support covers home, back, forward, pan, zoom, configure, and save command surfaces. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): GUI-specific cursor/status messages and tool item presentation.",
+		Note:              "Go toolbar/navigation support covers home, back, forward, pan, zoom, configure, and save command surfaces. GUI-only behavior is intentionally omitted for v1.0: GUI-specific cursor/status messages and tool item presentation.",
 	},
 	{
 		ID:                "backend-timer-base",
@@ -1809,7 +1794,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"canvas/scheduler.go"},
-		Note:              "Go Timer and EventLoop provide start/stop/running behavior for animation and draw scheduling. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact multi-callback TimerBase API parity.",
+		Note:              "Go Timer and EventLoop provide start/stop/running behavior for animation and draw scheduling. GUI-only behavior is intentionally omitted for v1.0: exact multi-callback TimerBase API parity.",
 	},
 	{
 		ID:                "backend-get-registered-canvas-class",
@@ -1841,7 +1826,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"canvas/toolbar.go", "canvas/navigation.go", "canvas/tool.go"},
-		Note:              "Home navigation exists as a toolbar command and tool-manager action. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): backend-specific tool UI state.",
+		Note:              "Home navigation exists as a toolbar command and tool-manager action. GUI-only behavior is intentionally omitted for v1.0: backend-specific tool UI state.",
 	},
 	{
 		ID:                "backend-tools-tool-back",
@@ -1849,7 +1834,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"canvas/toolbar.go", "canvas/navigation.go", "canvas/tool.go"},
-		Note:              "Back navigation exists as a toolbar command and navigation-stack action. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): backend-specific tool UI state.",
+		Note:              "Back navigation exists as a toolbar command and navigation-stack action. GUI-only behavior is intentionally omitted for v1.0: backend-specific tool UI state.",
 	},
 	{
 		ID:                "backend-tools-tool-forward",
@@ -1857,7 +1842,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"canvas/toolbar.go", "canvas/navigation.go", "canvas/tool.go"},
-		Note:              "Forward navigation exists as a toolbar command and navigation-stack action. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): backend-specific tool UI state.",
+		Note:              "Forward navigation exists as a toolbar command and navigation-stack action. GUI-only behavior is intentionally omitted for v1.0: backend-specific tool UI state.",
 	},
 	{
 		ID:                "backend-tools-tool-pan",
@@ -1865,7 +1850,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"canvas/toolbar.go", "canvas/navigation.go", "canvas/tool.go"},
-		Note:              "Pan exists as a toolbar mode and drag-navigation path. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact cursor/status behavior and GUI presentation.",
+		Note:              "Pan exists as a toolbar mode and drag-navigation path. GUI-only behavior is intentionally omitted for v1.0: exact cursor/status behavior and GUI presentation.",
 	},
 	{
 		ID:                "backend-tools-tool-zoom",
@@ -1873,7 +1858,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"canvas/toolbar.go", "canvas/navigation.go", "canvas/tool.go"},
-		Note:              "Zoom exists as a toolbar mode and drag-zoom navigation path. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact rubberband/cursor/status behavior and GUI presentation.",
+		Note:              "Zoom exists as a toolbar mode and drag-zoom navigation path. GUI-only behavior is intentionally omitted for v1.0: exact rubberband/cursor/status behavior and GUI presentation.",
 	},
 	{
 		ID:                "backend-tools-save-figure",
@@ -1881,7 +1866,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"canvas/toolbar.go", "canvas/tool.go", "core/savefig.go"},
-		Note:              "Save is represented as a toolbar/tool-manager command and core SaveFig dispatch. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): GUI save-dialog behavior.",
+		Note:              "Save is represented as a toolbar/tool-manager command and core SaveFig dispatch. GUI-only behavior is intentionally omitted for v1.0: GUI save-dialog behavior.",
 	},
 	{
 		ID:                "backend-tools-registry-home",
@@ -1889,7 +1874,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"canvas/toolbar.go", "canvas/navigation.go", "canvas/tool.go"},
-		Note:              "The home tool registry entry maps to Go toolbar home navigation; backend presentation details are GUI-only and intentionally omitted for v1.0 (Phase 17.6.8).",
+		Note:              "The home tool registry entry maps to Go toolbar home navigation; backend presentation details are GUI-only and intentionally omitted for v1.0.",
 	},
 	{
 		ID:                "backend-tools-registry-back",
@@ -1897,7 +1882,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"canvas/toolbar.go", "canvas/navigation.go", "canvas/tool.go"},
-		Note:              "The back tool registry entry maps to Go toolbar back navigation; backend presentation details are GUI-only and intentionally omitted for v1.0 (Phase 17.6.8).",
+		Note:              "The back tool registry entry maps to Go toolbar back navigation; backend presentation details are GUI-only and intentionally omitted for v1.0.",
 	},
 	{
 		ID:                "backend-tools-registry-forward",
@@ -1905,7 +1890,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"canvas/toolbar.go", "canvas/navigation.go", "canvas/tool.go"},
-		Note:              "The forward tool registry entry maps to Go toolbar forward navigation; backend presentation details are GUI-only and intentionally omitted for v1.0 (Phase 17.6.8).",
+		Note:              "The forward tool registry entry maps to Go toolbar forward navigation; backend presentation details are GUI-only and intentionally omitted for v1.0.",
 	},
 	{
 		ID:                "backend-tools-registry-pan",
@@ -1913,7 +1898,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"canvas/toolbar.go", "canvas/navigation.go", "canvas/tool.go"},
-		Note:              "The pan tool registry entry maps to Go toolbar pan mode; cursor/status and backend presentation details are GUI-only and intentionally omitted for v1.0 (Phase 17.6.8).",
+		Note:              "The pan tool registry entry maps to Go toolbar pan mode; cursor/status and backend presentation details are GUI-only and intentionally omitted for v1.0.",
 	},
 	{
 		ID:                "backend-tools-registry-zoom",
@@ -1921,7 +1906,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"canvas/toolbar.go", "canvas/navigation.go", "canvas/tool.go"},
-		Note:              "The zoom tool registry entry maps to Go toolbar zoom mode; rubberband/cursor/status and backend presentation details are GUI-only and intentionally omitted for v1.0 (Phase 17.6.8).",
+		Note:              "The zoom tool registry entry maps to Go toolbar zoom mode; rubberband/cursor/status and backend presentation details are GUI-only and intentionally omitted for v1.0.",
 	},
 	{
 		ID:                "backend-tools-registry-save",
@@ -1929,7 +1914,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"canvas/toolbar.go", "canvas/tool.go", "core/savefig.go"},
-		Note:              "The save tool registry entry maps to Go toolbar save/SaveFig dispatch; GUI save-dialog behavior is GUI-only and intentionally omitted for v1.0 (Phase 17.6.8).",
+		Note:              "The save tool registry entry maps to Go toolbar save/SaveFig dispatch; GUI save-dialog behavior is GUI-only and intentionally omitted for v1.0.",
 	},
 	{
 		ID:                "widgets-widget-base",
@@ -1954,7 +1939,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"widgets/button.go", "widgets/widgets_common.go", "canvas/widget_interaction.go", "canvas/dispatcher.go"},
 		CatalogIDs:        []string{"widgets_gallery"},
-		Note:              "Button has a static artist, callback registration/removal, click triggering, mouse press/release routing, keyboard activation, and widget-layer picking. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact hover/disabled styling parity and GUI-backend cursor/status behavior.",
+		Note:              "Button has a static artist, callback registration/removal, click triggering, mouse press/release routing, keyboard activation, and widget-layer picking. GUI-only behavior is intentionally omitted for v1.0: exact hover/disabled styling parity and GUI-backend cursor/status behavior.",
 	},
 	{
 		ID:                "widgets-slider-base",
@@ -1971,7 +1956,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"widgets/slider.go", "widgets/widgets_common.go", "canvas/widget_interaction.go"},
 		CatalogIDs:        []string{"widgets_gallery"},
-		Note:              "Slider supports static drawing, callback registration/removal, clamping, step snapping, pointer dragging, and keyboard adjustment. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact upstream formatting, orientation breadth, and GUI-specific styling behavior.",
+		Note:              "Slider supports static drawing, callback registration/removal, clamping, step snapping, pointer dragging, and keyboard adjustment. GUI-only behavior is intentionally omitted for v1.0: exact upstream formatting, orientation breadth, and GUI-specific styling behavior.",
 	},
 	{
 		ID:                "widgets-range-slider",
@@ -1980,7 +1965,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"widgets/rangeslider.go", "widgets/slider.go", "canvas/widget_interaction.go"},
 		CatalogIDs:        []string{"widgets_gallery"},
-		Note:              "RangeSlider supports two-handle state, callbacks, clamped/stepped range updates, pointer dragging, and keyboard adjustment. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact handle selection/styling parity and less common upstream formatting options.",
+		Note:              "RangeSlider supports two-handle state, callbacks, clamped/stepped range updates, pointer dragging, and keyboard adjustment. GUI-only behavior is intentionally omitted for v1.0: exact handle selection/styling parity and less common upstream formatting options.",
 	},
 	{
 		ID:                "widgets-check-buttons",
@@ -1989,7 +1974,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"widgets/checkbuttons.go", "widgets/widgets_common.go", "canvas/widget_interaction.go"},
 		CatalogIDs:        []string{"widgets_gallery"},
-		Note:              "CheckButtons supports static drawing, per-index state changes, callbacks, pointer toggles, keyboard activation, and disabled input suppression. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact upstream marker styling and disabled-state visual parity.",
+		Note:              "CheckButtons supports static drawing, per-index state changes, callbacks, pointer toggles, keyboard activation, and disabled input suppression. GUI-only behavior is intentionally omitted for v1.0: exact upstream marker styling and disabled-state visual parity.",
 	},
 	{
 		ID:                "widgets-radio-buttons",
@@ -1998,7 +1983,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"widgets/radiobuttons.go", "widgets/widgets_common.go", "canvas/widget_interaction.go"},
 		CatalogIDs:        []string{"widgets_gallery"},
-		Note:              "RadioButtons supports static drawing, active-index changes, callbacks, pointer selection, keyboard cycling, and disabled input suppression. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact upstream styling and disabled-state visual parity.",
+		Note:              "RadioButtons supports static drawing, active-index changes, callbacks, pointer selection, keyboard cycling, and disabled input suppression. GUI-only behavior is intentionally omitted for v1.0: exact upstream styling and disabled-state visual parity.",
 	},
 	{
 		ID:                "widgets-text-box",
@@ -2007,7 +1992,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"widgets/textbox.go", "widgets/widgets_common.go", "canvas/widget_interaction.go"},
 		CatalogIDs:        []string{"widgets_gallery"},
-		Note:              "TextBox supports static drawing, submit/change callbacks, focus, text editing, cursor movement, selection, and keyboard input through canvas events. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact upstream text editing shortcuts and GUI input-method behavior.",
+		Note:              "TextBox supports static drawing, submit/change callbacks, focus, text editing, cursor movement, selection, and keyboard input through canvas events. GUI-only behavior is intentionally omitted for v1.0: exact upstream text editing shortcuts and GUI input-method behavior.",
 	},
 	{
 		ID:                "widgets-span-selector",
@@ -2016,7 +2001,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"widgets/spanselector.go", "widgets/selectors_common.go", "canvas/widget_interaction.go"},
 		CatalogIDs:        []string{"widgets_gallery"},
-		Note:              "SpanSelector supports static selection state, callbacks, pointer drag creation/move, keyboard movement, and clearing. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact handle artist parity and advanced upstream props.",
+		Note:              "SpanSelector supports static selection state, callbacks, pointer drag creation/move, keyboard movement, and clearing. GUI-only behavior is intentionally omitted for v1.0: exact handle artist parity and advanced upstream props.",
 	},
 	{
 		ID:                "widgets-rectangle-selector",
@@ -2025,7 +2010,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"widgets/rectangleselector.go", "widgets/selectors_common.go", "canvas/widget_interaction.go"},
 		CatalogIDs:        []string{"widgets_gallery"},
-		Note:              "RectangleSelector supports static bounds, callbacks, drag creation/move, keyboard movement, clearing, and widget-layer picking. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact handle/resizing parity and advanced upstream props.",
+		Note:              "RectangleSelector supports static bounds, callbacks, drag creation/move, keyboard movement, clearing, and widget-layer picking. GUI-only behavior is intentionally omitted for v1.0: exact handle/resizing parity and advanced upstream props.",
 	},
 	{
 		ID:                "widgets-ellipse-selector",
@@ -2034,7 +2019,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"widgets/ellipseselector.go", "widgets/rectangleselector.go", "canvas/widget_interaction.go"},
 		CatalogIDs:        []string{"widgets_gallery"},
-		Note:              "EllipseSelector follows the rectangle selector interaction model with ellipse drawing and movement. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact handle/resizing parity and advanced upstream props.",
+		Note:              "EllipseSelector follows the rectangle selector interaction model with ellipse drawing and movement. GUI-only behavior is intentionally omitted for v1.0: exact handle/resizing parity and advanced upstream props.",
 	},
 	{
 		ID:                "widgets-polygon-selector",
@@ -2043,7 +2028,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"widgets/polygonselector.go", "widgets/selectors_common.go", "canvas/widget_interaction.go"},
 		CatalogIDs:        []string{"widgets_gallery"},
-		Note:              "PolygonSelector supports point append/close, callbacks, point movement, whole-polygon movement, keyboard movement, and clearing. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact handle artist parity and advanced modifier behavior.",
+		Note:              "PolygonSelector supports point append/close, callbacks, point movement, whole-polygon movement, keyboard movement, and clearing. GUI-only behavior is intentionally omitted for v1.0: exact handle artist parity and advanced modifier behavior.",
 	},
 	{
 		ID:                "widgets-lasso-selector",
@@ -2052,7 +2037,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"widgets/lassoselector.go", "widgets/selectors_common.go", "canvas/widget_interaction.go"},
 		CatalogIDs:        []string{"widgets_gallery"},
-		Note:              "LassoSelector supports freehand selection paths, callbacks, pointer drag capture, keyboard clearing, and widget-layer picking. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact event timing and GUI backend cursor behavior.",
+		Note:              "LassoSelector supports freehand selection paths, callbacks, pointer drag capture, keyboard clearing, and widget-layer picking. GUI-only behavior is intentionally omitted for v1.0: exact event timing and GUI backend cursor behavior.",
 	},
 	{
 		ID:                "widgets-lasso",
@@ -2069,7 +2054,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"widgets/cursor.go", "canvas/widget_interaction.go"},
 		CatalogIDs:        []string{"widgets_gallery"},
-		Note:              "Cursor supports hover-driven crosshair updates and visibility through shared canvas motion events. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact useblit behavior and GUI cursor/status integration.",
+		Note:              "Cursor supports hover-driven crosshair updates and visibility through shared canvas motion events. GUI-only behavior is intentionally omitted for v1.0: exact useblit behavior and GUI cursor/status integration.",
 	},
 	{
 		ID:                "widgets-multi-cursor",
@@ -2078,7 +2063,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"widgets/multicursor.go", "canvas/widget_interaction.go"},
 		CatalogIDs:        []string{"widgets_gallery"},
-		Note:              "MultiCursor supports synchronized hover lines across axes in a figure. GUI-only behavior is intentionally omitted for v1.0 (Phase 17.6.8): exact useblit behavior and multi-canvas GUI integration.",
+		Note:              "MultiCursor supports synchronized hover lines across axes in a figure. GUI-only behavior is intentionally omitted for v1.0: exact useblit behavior and multi-canvas GUI integration.",
 	},
 	{
 		ID:                "widgets-lock-draw",
@@ -2119,7 +2104,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"animation/animation.go", "animation/writers.go", "animation/writer_pillow.go", "animation/writer_apng.go", "animation/writer_html.go", "animation/writer_ffmpeg.go", "canvas/scheduler.go"},
 		CatalogIDs:        []string{"animation_gallery"},
-		Note:              "Go Animation provides frame stepping, start/stop event-loop integration, repeat handling, animated artist tracking, blit fallback hooks, and Save through the deterministic GifWriter analogue of PillowWriter (Phase 17.6.8), dependency-free full-RGBA APNG output, self-contained HTML playback payloads, and optional runtime-detected MP4/WebM shellout writers in builds compiled with -tags ffmpeg. Frame-cache tuning and ImageMagick-style writers remain out of scope.",
+		Note:              "Go Animation provides frame stepping, start/stop event-loop integration, repeat handling, animated artist tracking, blit fallback hooks, and Save through the deterministic GifWriter analogue of PillowWriter, dependency-free full-RGBA APNG output, self-contained HTML playback payloads, and optional runtime-detected MP4/WebM shellout writers in builds compiled with -tags ffmpeg. Frame-cache tuning and ImageMagick-style writers remain out of scope.",
 	},
 	{
 		ID:                "animation-timed-animation",
@@ -2137,7 +2122,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"animation/animation.go", "animation/writers.go", "animation/writer_pillow.go", "animation/writer_apng.go", "animation/writer_html.go", "animation/writer_ffmpeg.go", "canvas/scheduler.go"},
 		CatalogIDs:        []string{"animation_gallery"},
-		Note:              "Go FuncAnimation-style playback supports frame stepping, init callbacks, repeat and repeat-delay handling, animated artist tracking, blit-region hooks, event-loop start/stop behavior, and Save with a save-count frame loop (WithSaveCount) writing GIF via GifWriter (Phase 17.6.8), APNG via APNGWriter, self-contained HTML via HTMLWriter, plus optional MP4/WebM via -tags ffmpeg. ImageMagick-style writers remain out of scope; cache_frame_data is unnecessary because frames regenerate deterministically.",
+		Note:              "Go FuncAnimation-style playback supports frame stepping, init callbacks, repeat and repeat-delay handling, animated artist tracking, blit-region hooks, event-loop start/stop behavior, and Save with a save-count frame loop (WithSaveCount) writing GIF via GifWriter, APNG via APNGWriter, self-contained HTML via HTMLWriter, plus optional MP4/WebM via -tags ffmpeg. ImageMagick-style writers remain out of scope; cache_frame_data is unnecessary because frames regenerate deterministically.",
 	},
 	{
 		ID:                "animation-artist-animation",
@@ -2146,7 +2131,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"animation/animation.go", "animation/writers.go", "animation/writer_pillow.go", "animation/writer_apng.go", "animation/writer_html.go", "animation/writer_ffmpeg.go", "canvas/scheduler.go"},
 		CatalogIDs:        []string{"animation_gallery"},
-		Note:              "Go ArtistAnimation-style playback toggles per-frame artist visibility and uses the same stepping, repeat, blit, GIF/APNG/HTML Save, and optional -tags ffmpeg MP4/WebM infrastructure as FuncAnimation (Phase 17.6.8 / Phase 6.2). ImageMagick-style writers remain out of scope.",
+		Note:              "Go ArtistAnimation-style playback toggles per-frame artist visibility and uses the same stepping, repeat, blit, GIF/APNG/HTML Save, and optional -tags ffmpeg MP4/WebM infrastructure as FuncAnimation. ImageMagick-style writers remain out of scope.",
 	},
 	{
 		ID:                "animation-movie-writer",
@@ -2162,7 +2147,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceIdiomaticEquivalent,
 		GoFiles:           []string{"animation/writers.go"},
-		Note:              "Go ports AbstractMovieWriter as the animation.MovieWriter interface (Setup/FrameSize/GrabFrame/Finish) plus the Saving helper that sequences setup/finish like the saving() context manager (Phase 17.6.8). The setup(fig) signature takes a canvas.FigureCanvas because the Go canvas carries both the figure and its renderer.",
+		Note:              "Go ports AbstractMovieWriter as the animation.MovieWriter interface (Setup/FrameSize/GrabFrame/Finish) plus the Saving helper that sequences setup/finish like the saving() context manager. The setup(fig) signature takes a canvas.FigureCanvas because the Go canvas carries both the figure and its renderer.",
 	},
 	{
 		ID:                "animation-file-movie-writer",
@@ -2186,7 +2171,7 @@ var publicSurfaceParityOverrides = []PublicSurfaceParity{
 		FeatureCoverageID: "widgets-events-animation",
 		Status:            PublicSurfaceDirectEquivalent,
 		GoFiles:           []string{"animation/writer_pillow.go"},
-		Note:              "Go exposes GifWriter as a deterministic, dependency-free analogue of PillowWriter (Phase 17.6.8): GrabFrame captures the canvas RGBA buffer (canvas.RasterCanvas, the analogue of grab_frame's fig.savefig(format=\"rgba\")) and Finish encodes with the standard library image/gif (EncodeAll, Delay=int(100/fps) centiseconds matching duration=int(1000/fps), LoopCount=0 matching loop=0). Frames are quantized against a fixed palette so output is byte-for-byte deterministic across platforms; PillowWriter remains a compatibility alias.",
+		Note:              "Go exposes GifWriter as a deterministic, dependency-free analogue of PillowWriter: GrabFrame captures the canvas RGBA buffer (canvas.RasterCanvas, the analogue of grab_frame's fig.savefig(format=\"rgba\")) and Finish encodes with the standard library image/gif (EncodeAll, Delay=int(100/fps) centiseconds matching duration=int(1000/fps), LoopCount=0 matching loop=0). Frames are quantized against a fixed palette so output is byte-for-byte deterministic across platforms; PillowWriter remains a compatibility alias.",
 	},
 	{
 		ID:                "animation-html-writer",
@@ -2325,7 +2310,6 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		kind:              "method",
 		featureCoverageID: "axes",
 		status:            PublicSurfacePartial,
-		closurePhase:      "17.6.3",
 		goFiles:           []string{"core/artist.go", "core/plot.go", "core/plot_variants.go", "core/histogram.go", "core/mesh.go", "core/contour.go"},
 		catalogIDs:        []string{"basic_line", "scatter_basic", "bar_basic", "hist_basic", "mesh_contour_tri", "stat_variants", "axes_option_breadth"},
 		exampleIDs:        []string{"basic_line", "scatter_basic", "bar_basic", "hist_basic", "mesh_contour_tri", "stat_variants"},
@@ -2336,11 +2320,10 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		module:            "axes/_axes.py",
 		featureCoverageID: "axes",
 		status:            PublicSurfacePartial,
-		closurePhase:      "17.6.3",
 		goFiles:           []string{"core/artist.go", "core/plot.go", "core/plot_variants.go", "core/histogram.go", "core/mesh.go", "core/contour.go"},
 		catalogIDs:        []string{"basic_line", "scatter_basic", "bar_basic", "hist_basic", "mesh_contour_tri", "stat_variants", "axes_option_breadth"},
 		exampleIDs:        []string{"basic_line", "scatter_basic", "bar_basic", "hist_basic", "mesh_contour_tri", "stat_variants"},
-		note:              "The upstream Axes plotting class maps to Go's typed Axes and helper functions. Phase 17.6.3 option-breadth coverage includes typed histogram weights/ranges/cumulative density, scatter scalar styling, edge-aligned/stacked bar labels, fill_between where/interpolate/step semantics, errorbar errorevery, and collection/mesh scalar mutation. Remaining partial scope is Python overload grammar, dynamic kwargs/property-dict aliases, and lower-priority method families outside the 17.6.3 option-breadth slice.",
+		note:              "The upstream Axes plotting class maps to Go's typed Axes and helper functions. option-breadth coverage includes typed histogram weights/ranges/cumulative density, scatter scalar styling, edge-aligned/stacked bar labels, fill_between where/interpolate/step semantics, errorbar errorevery, and collection/mesh scalar mutation. Remaining partial scope is Python overload grammar, dynamic kwargs/property-dict aliases, and lower-priority method families outside the 17.6.3 option-breadth slice.",
 	},
 	{
 		idPrefix:          "axes-base-method",
@@ -2348,22 +2331,20 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		kind:              "method",
 		featureCoverageID: "axes",
 		status:            PublicSurfacePartial,
-		closurePhase:      "17.6.3",
 		goFiles:           []string{"core/artist.go", "core/axis.go", "core/figure_layout.go", "core/subplots.go"},
 		catalogIDs:        []string{"axes_control_surface", "transform_coordinates", "layout_bbox_helpers"},
 		exampleIDs:        []string{"axes_control_surface"},
-		note:              "Axes base methods are represented through typed axes state, limits, scales, labels, transforms, layout, shared-axis helpers, frame toggling, and independently rc-configurable rectilinear spine visibility. Remaining option breadth and Python overload compatibility are owned by Phase 17.6.3.",
+		note:              "Axes base methods are represented through typed axes state, limits, scales, labels, transforms, layout, shared-axis helpers, frame toggling, and independently rc-configurable rectilinear spine visibility. Remaining option breadth and Python overload compatibility are still outstanding.",
 	},
 	{
 		idPrefix:          "mplot3d-axes3d",
 		module:            "mpl_toolkits/mplot3d/axes3d.py",
 		featureCoverageID: "toolkits-projections",
 		status:            PublicSurfacePartial,
-		closurePhase:      "17.6.4",
 		goFiles:           []string{"plot3d/axes.go", "plot3d/view.go", "plot3d/frame.go", "plot3d/contour_surface.go", "plot3d/bar_voxel.go", "plot3d/geometry.go", "plot3d/projection.go", "core/scalar_mappable.go", "core/collection_common.go", "core/colorbar.go"},
 		catalogIDs:        []string{"mplot3d_basic", "mplot3d_terrain", "mplot3d_gallery", "mplot3d_scatter3d", "mplot3d_surface3d", "mplot3d_wire3d", "mplot3d_trisurf3d", "mplot3d_bar3d", "mplot3d_voxels", "mplot3d_quiver3d", "mplot3d_stem3d", "mplot3d_fill_between3d", "mplot3d_errorbar3d", "mplot3d_contour3d", "mplot3d_contourf3d", "mplot3d_tricontour3d", "mplot3d_tricontourf3d", "mplot3d_bar2d_zdir", "mplot3d_text3d"},
 		exampleIDs:        []string{"mplot3d_terrain", "mplot3d_gallery"},
-		note:              "Axes3D construction and common 3D plot helpers exist as typed core APIs with catalog coverage. Phase 17.6.4 depth/clipping work covers line and marker helpers, surfaces, contours, triangulated contours, trisurf, bar3d, fill-between3d, voxels, quiver, stem, and errorbar with computed depth ordering, visible-face or face sorting where applicable, AxLimClip-style explicit-limit clipping, and redraw reprojectors. Axis/view-state work covers Matplotlib 3.10-style view defaults, roll and vertical-axis view_init state, perspective/orthographic projection type and focal-length validation, box-aspect reset behavior, explicit and inverted 3D limits, autoscale margins, active panes, grid/tick styling, tick-label placement, and tick-label visibility toggles. Colormapping work covers surface, trisurf, contour, filled contour, triangulated contour, and scatter scalar-map metadata for colorbars, plus explicit-color/non-scalar-mappable behavior for bars, voxels, quiver, stems, error bars, wireframes, plot lines, and fill-between surfaces. The mplot3d_gallery showcase now gives users one broad visual entry point for line/scatter/surface/wireframe/trisurf/bar/voxel/quiver/stem/fill-between behavior, while dedicated Matplotlib-reference fixtures keep residual coverage for structured and triangulated 3D contours (contour3d, contourf3d, tricontour3d, tricontourf3d), planar 2D bars projected with zdir (bar2d_zdir), and flat 3D text labels (text3d), in addition to the focused line/scatter/stem/errorbar/bar/wireframe/surface/trisurf/voxel/fill-between triplets. Remaining 3D partial scope is GUI/event methods, Python overload grammar, and residual projection/depth-order/text-autoscale differences that are documented as typed Go deviations in docs/matplotlib-migration-notes.md.",
+		note:              "Axes3D construction and common 3D plot helpers exist as typed core APIs with catalog coverage. depth/clipping work covers line and marker helpers, surfaces, contours, triangulated contours, trisurf, bar3d, fill-between3d, voxels, quiver, stem, and errorbar with computed depth ordering, visible-face or face sorting where applicable, AxLimClip-style explicit-limit clipping, and redraw reprojectors. Axis/view-state work covers Matplotlib 3.10-style view defaults, roll and vertical-axis view_init state, perspective/orthographic projection type and focal-length validation, box-aspect reset behavior, explicit and inverted 3D limits, autoscale margins, active panes, grid/tick styling, tick-label placement, and tick-label visibility toggles. Colormapping work covers surface, trisurf, contour, filled contour, triangulated contour, and scatter scalar-map metadata for colorbars, plus explicit-color/non-scalar-mappable behavior for bars, voxels, quiver, stems, error bars, wireframes, plot lines, and fill-between surfaces. The mplot3d_gallery showcase now gives users one broad visual entry point for line/scatter/surface/wireframe/trisurf/bar/voxel/quiver/stem/fill-between behavior, while dedicated Matplotlib-reference fixtures keep residual coverage for structured and triangulated 3D contours (contour3d, contourf3d, tricontour3d, tricontourf3d), planar 2D bars projected with zdir (bar2d_zdir), and flat 3D text labels (text3d), in addition to the focused line/scatter/stem/errorbar/bar/wireframe/surface/trisurf/voxel/fill-between triplets. Remaining 3D partial scope is GUI/event methods, Python overload grammar, and residual projection/depth-order/text-autoscale differences that are documented as typed Go deviations in docs/matplotlib-migration-notes.md.",
 	},
 	{
 		idPrefix:          "axis",
@@ -2778,7 +2759,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		status:            PublicSurfacePartial,
 		goFiles:           []string{"color/colormap.go", "color/listed_colormaps.go", "color/named_colors.go", "core/norm.go"},
 		catalogIDs:        []string{"colormap_diverging", "colormap_qualitative", "colormap_cyclic", "named_colors", "asinh_norm_image", "lognorm_imshow", "twoslope_norm_image"},
-		note:              "Named colors, Matplotlib hex forms, grayscale strings, typed RGB/RGBA values, color-cycle references, and single-variate colormaps exist; norm classes and the dynamic norm factory have explicit Phase 17.6.5 rows, while LightSource and bivar/multivar colormaps have explicit intentional-omission rows. Python-only dynamic color-alpha tuples, to_rgba_array batch inputs, masked values, and NaN component pass-through remain typed Go omissions.",
+		note:              "Named colors, Matplotlib hex forms, grayscale strings, typed RGB/RGBA values, color-cycle references, and single-variate colormaps exist; norm classes and the dynamic norm factory have explicit rows, while LightSource and bivar/multivar colormaps have explicit intentional-omission rows. Python-only dynamic color-alpha tuples, to_rgba_array batch inputs, masked values, and NaN component pass-through remain typed Go omissions.",
 	},
 	{
 		idPrefix:          "pyplot",
@@ -2808,7 +2789,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"render/render.go", "render/graphics_context.go", "render/extensions.go", "backends/registry.go", "canvas/canvas.go", "canvas/dispatcher.go"},
 		catalogIDs:        []string{"basic_line", "mixed_raster_vector", "large_scatter", "clip_path_batch"},
 		exampleIDs:        []string{"basic_line", "mixed_raster_vector"},
-		note:              "Renderer, canvas, events, and backend registration are split into Go packages rather than mirroring Matplotlib backend base classes directly. SVG/PDF vector image output preserves placement, clip structure, alpha masks, and embedded raster image objects, with mixed_raster_vector providing a public dense-raster/vector-text artifact example; interpolation hints are not emitted as SVG image-rendering or PDF Interpolate directives, and viewer-side image resampling remains a documented vector-backend residual. Figure-manager lifecycle, draw/resize/close routing, and timer start/stop/running behavior are covered idiomatically (Phase 17.6.8); remaining GUI-toolkit-specific behavior (live window event synthesis, cursor/status presentation) is intentionally omitted for v1.0.",
+		note:              "Renderer, canvas, events, and backend registration are split into Go packages rather than mirroring Matplotlib backend base classes directly. SVG/PDF vector image output preserves placement, clip structure, alpha masks, and embedded raster image objects, with mixed_raster_vector providing a public dense-raster/vector-text artifact example; interpolation hints are not emitted as SVG image-rendering or PDF Interpolate directives, and viewer-side image resampling remains a documented vector-backend residual. Figure-manager lifecycle, draw/resize/close routing, and timer start/stop/running behavior are covered idiomatically; remaining GUI-toolkit-specific behavior (live window event synthesis, cursor/status presentation) is intentionally omitted for v1.0.",
 	},
 	{
 		idPrefix:          "backend-tool-registry",
@@ -2817,7 +2798,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		featureCoverageID: "widgets-events-animation",
 		status:            PublicSurfaceIntentionalOmission,
 		goFiles:           []string{"canvas/tool.go", "canvas/navigation.go"},
-		note:              "The home/back/forward/pan/zoom/save tool-registry entries have explicit idiomatic-equivalent rows backed by Go toolbar/navigation actions. The remaining default tools (configure/subplots, help, cursor/position, set-cursor, fullscreen, copy-to-clipboard, grid/grid_minor, quit/quit_all, rubberband, x/y axis-scale toggles, and the internal _views_positions) are GUI-toolkit behaviors intentionally omitted for v1.0 (Phase 17.6.8).",
+		note:              "The home/back/forward/pan/zoom/save tool-registry entries have explicit idiomatic-equivalent rows backed by Go toolbar/navigation actions. The remaining default tools (configure/subplots, help, cursor/position, set-cursor, fullscreen, copy-to-clipboard, grid/grid_minor, quit/quit_all, rubberband, x/y axis-scale toggles, and the internal _views_positions) are GUI-toolkit behaviors intentionally omitted for v1.0.",
 	},
 	{
 		idPrefix:          "backend-tools",
@@ -2825,7 +2806,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		featureCoverageID: "widgets-events-animation",
 		status:            PublicSurfaceIntentionalOmission,
 		goFiles:           []string{"canvas/tool.go", "canvas/navigation.go", "canvas/dispatcher.go"},
-		note:              "ToolBase and the implemented home/back/forward/pan/zoom/save tools have explicit idiomatic-equivalent rows. The remaining backend tools classes (ConfigureSubplotsBase, ToolHelpBase, ToolCursorPosition/ToolSetCursor/Cursors, ToolFullScreen, ToolCopyToClipboardBase, ToolGrid/ToolMinorGrid, ToolQuit/ToolQuitAll, RubberbandBase, ToolXScale/ToolYScale/AxisScaleBase, and the ViewsPositions/ZoomPan base/toggle helpers plus add-tools-to wiring) are GUI tool-manager behaviors intentionally omitted for v1.0; Go provides navigation idiomatically through canvas/navigation.go and canvas/toolbar.go (Phase 17.6.8).",
+		note:              "ToolBase and the implemented home/back/forward/pan/zoom/save tools have explicit idiomatic-equivalent rows. The remaining backend tools classes (ConfigureSubplotsBase, ToolHelpBase, ToolCursorPosition/ToolSetCursor/Cursors, ToolFullScreen, ToolCopyToClipboardBase, ToolGrid/ToolMinorGrid, ToolQuit/ToolQuitAll, RubberbandBase, ToolXScale/ToolYScale/AxisScaleBase, and the ViewsPositions/ZoomPan base/toggle helpers plus add-tools-to wiring) are GUI tool-manager behaviors intentionally omitted for v1.0; Go provides navigation idiomatically through canvas/navigation.go and canvas/toolbar.go.",
 	},
 	{
 		idPrefix:          "widgets",
@@ -2835,7 +2816,7 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"widgets/button.go", "widgets/slider.go", "widgets/rangeslider.go", "widgets/checkbuttons.go", "widgets/radiobuttons.go", "widgets/textbox.go", "widgets/selectors_common.go", "widgets/widgets_common.go", "canvas/widget_interaction.go", "canvas/dispatcher.go", "canvas/picker.go"},
 		catalogIDs:        []string{"widgets_gallery"},
 		exampleIDs:        []string{"widgets_gallery"},
-		note:              "Widget artists and event dispatch exist for buttons, sliders, range sliders, check buttons, radio buttons, text boxes, cursor, multi-cursor, and common selectors including span, rectangle, ellipse, polygon, and lasso workflows, with active-state, handle, disabled-state, and keyboard-modifier interaction verified under both widget visual styles (Phase 17.6.8). GUI-only behavior is intentionally omitted for v1.0: useblit, live cursor/status integration, input-method editing, the SubplotTool/menu widgets, and browser-demo interaction (deferred to Phase 19).",
+		note:              "Widget artists and event dispatch exist for buttons, sliders, range sliders, check buttons, radio buttons, text boxes, cursor, multi-cursor, and common selectors including span, rectangle, ellipse, polygon, and lasso workflows, with active-state, handle, disabled-state, and keyboard-modifier interaction verified under both widget visual styles. GUI-only behavior is intentionally omitted for v1.0: useblit, live cursor/status integration, input-method editing, the SubplotTool/menu widgets, and browser-demo interaction (deferred).",
 	},
 	{
 		idPrefix:          "animation",
@@ -2845,11 +2826,11 @@ var publicSurfaceParityRules = []publicSurfaceParityRule{
 		goFiles:           []string{"animation/animation.go", "animation/writers.go", "animation/writer_pillow.go", "animation/writer_apng.go", "animation/writer_html.go", "animation/writer_ffmpeg.go", "canvas/scheduler.go"},
 		catalogIDs:        []string{"animation_gallery"},
 		exampleIDs:        []string{"animation_gallery"},
-		note:              "Go has FuncAnimation- and ArtistAnimation-style stepping on top of the canvas scheduler, including init callbacks, repeat and repeat-delay handling, animated artist tracking, blit-region hooks, event-loop start/stop behavior, Save to deterministic GIF via the AbstractMovieWriter/GifWriter stack (Phase 17.6.8), dependency-free full-RGBA APNG output, self-contained HTML playback payloads, and optional MP4/WebM output via -tags ffmpeg (Phase 6.2). animation_gallery gives catalog-visible setup and deterministic stepping coverage. ImageMagick-style writers remain out of scope.",
+		note:              "Go has FuncAnimation- and ArtistAnimation-style stepping on top of the canvas scheduler, including init callbacks, repeat and repeat-delay handling, animated artist tracking, blit-region hooks, event-loop start/stop behavior, Save to deterministic GIF via the AbstractMovieWriter/GifWriter stack, dependency-free full-RGBA APNG output, self-contained HTML playback payloads, and optional MP4/WebM output via -tags ffmpeg. animation_gallery gives catalog-visible setup and deterministic stepping coverage. ImageMagick-style writers remain out of scope.",
 	},
 }
 
-// PublicSurfaceParityRows returns Phase 9B public-surface parity
+// PublicSurfaceParityRows returns public-surface parity
 // classifications.
 func PublicSurfaceParityRows() []PublicSurfaceParity {
 	out := make([]PublicSurfaceParity, len(publicSurfaceParityOverrides))
@@ -2919,7 +2900,6 @@ func (r publicSurfaceParityRule) classification(surface PublicSurfaceRow) Public
 		UpstreamID:        surface.ID,
 		FeatureCoverageID: r.featureCoverageID,
 		Status:            r.status,
-		ClosurePhase:      r.closurePhase,
 		ClosureRationale:  r.closureRationale,
 		GoFiles:           append([]string(nil), r.goFiles...),
 		CatalogIDs:        append([]string(nil), r.catalogIDs...),
@@ -2940,43 +2920,35 @@ func publicSurfaceParityWithClosureDefaults(row PublicSurfaceParity) PublicSurfa
 	if row.Status != PublicSurfacePartial && row.Status != PublicSurfaceNotStarted {
 		return row
 	}
-	if row.ClosurePhase == "" {
-		row.ClosurePhase = publicSurfaceDefaultClosurePhase(row)
-	}
-	if row.ClosurePhase == "" && row.ClosureRationale == "" && publicSurfaceNoteHasIntentionalOmission(row.Note) {
+	if row.ClosureRationale == "" && publicSurfaceNoteHasIntentionalOmission(row.Note) {
 		row.ClosureRationale = "Intentional omission scope is documented in the row note."
+	}
+	if row.ClosureRationale == "" {
+		row.ClosureRationale = publicSurfaceDefaultClosureRationale(row.FeatureCoverageID)
 	}
 	return row
 }
 
-func publicSurfaceDefaultClosurePhase(row PublicSurfaceParity) string {
-	switch {
-	case strings.Contains(row.Note, "12.2C"):
-		return "12.2C"
-	case strings.Contains(row.Note, "12.2D/E"):
-		return "12.2D/E"
-	case strings.Contains(row.Note, "12.2G"):
-		return "12.2G"
-	case strings.Contains(row.Note, "12.4C"):
-		return "12.4C"
-	case strings.Contains(row.Note, "12.5"):
-		return "12.5"
-	}
-	switch row.FeatureCoverageID {
+// publicSurfaceDefaultClosureRationale names the work an open row is waiting
+// on, grouped by the area that owns it. The generated parity-status document
+// groups its open rows by this string, so it has to stand on its own: it says
+// which body of work closes the row rather than pointing at a schedule.
+func publicSurfaceDefaultClosureRationale(featureCoverageID string) string {
+	switch featureCoverageID {
 	case "axes", "lines", "collections", "axis-ticker-scale":
-		return "17.6.3"
+		return "Awaiting the Axes/Line/Collection plotting-method breadth pass."
 	case "toolkits-projections":
-		return "17.6.4"
+		return "Awaiting the 3D and projection toolkit breadth pass."
 	case "image", "colorbar", "colors-cm":
-		return "17.6.5"
+		return "Awaiting the image, colorbar, and colormap breadth pass."
 	case "artist", "patches", "text-annotation-legend":
-		return "17.6.6"
+		return "Awaiting the artist, patch, and text/legend breadth pass."
 	case "pyplot-state":
-		return "17.6.7"
+		return "Awaiting the pyplot state-machine breadth pass."
 	case "renderer-backends", "widgets-events-animation":
-		return "17.6.8"
+		return "Awaiting the renderer-backend and widget/animation breadth pass."
 	default:
-		return "17.6.9"
+		return "Awaiting a breadth pass over the remaining public surface."
 	}
 }
 

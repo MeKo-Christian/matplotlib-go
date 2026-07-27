@@ -1,6 +1,6 @@
 # Phase 2.3 — exported mutable fields vs. setter duplication
 
-Companion to [`phase2-options-model.md`](phase2-options-model.md). That document
+Companion to [`options-model.md`](options-model.md). That document
 settled how options _enter_ an artist; this one settles who may _mutate_ an
 artist afterwards.
 

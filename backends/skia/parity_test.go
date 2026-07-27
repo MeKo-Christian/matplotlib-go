@@ -25,7 +25,7 @@ import (
 // Skia renderer still uses renderer-neutral fallbacks for text and some artist
 // features, so complete figures do not necessarily pixel-match AGG exactly.
 //
-// The RMSE ceiling replaced a 22 dB PSNR floor in Phase 3.1; 20.2 is that
+// The RMSE ceiling replaced an earlier 22 dB PSNR floor; 20.2 is that
 // floor's exact equivalent (255/10^(dB/20)). Stating it as RMSE matters because
 // imagecmp derives PSNR from RMSE, so the two were never independent gates.
 const (
@@ -136,7 +136,7 @@ var skiaParityMaxMeanAbsOverride = map[string]float64{
 }
 
 // skiaParityMaxRMSEOverride carries the per-case RMSE ceilings for this
-// harness. Until Phase 3.1 the per-case bound was a PSNR floor, drawn either
+// harness. Previously the per-case bound was a PSNR floor, drawn either
 // from examplecatalog.Case.MinPSNR or from a local override map. Case.MinPSNR is
 // gone (imagecmp derives PSNR from RMSE, so a catalog PSNR floor could only
 // restate the case's MaxRMSE ceiling — and those ceilings are calibrated for
@@ -148,8 +148,8 @@ var skiaParityMaxMeanAbsOverride = map[string]float64{
 // comparisons had been failing the 22 dB default all along and passing only
 // because the metric flattered them; line2d_markers is the extreme at RMSE ~63.
 // Whether those are acceptable cross-rasterizer differences or real Skia
-// divergences is a Phase 3 question (the Phase 1 parity promotions were signed
-// off against the broken metric) — these ceilings pin current behavior so a
+// divergences is still open (the Skia native-path parity promotions were
+// signed off against the broken metric) — these ceilings pin current behavior so a
 // further regression still fails.
 var skiaParityMaxRMSEOverride = map[string]float64{
 	"line2d_markers":           73.0,

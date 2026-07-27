@@ -58,10 +58,10 @@ type Case struct {
 	// MaxRMSE bounds the L2 residual and MaxMeanAbs the L1 residual; the two are
 	// genuinely independent, so a case can carry both. There is deliberately no
 	// MinPSNR: imagecmp derives PSNR from RMSE as 20*log10(255/RMSE), so a PSNR
-	// floor can only restate a MaxRMSE ceiling. The field existed until Phase
-	// 3.1, when the uint8 overflow that made PSNR look independent was fixed;
+	// floor can only restate a MaxRMSE ceiling. A MinPSNR field existed until
+	// the uint8 overflow that made PSNR look independent was fixed;
 	// every floor that was both binding and reachable was folded into MaxRMSE.
-	// Neither metric localizes a residual — see docs/plans/phase3-tolerance-audit.md.
+	// Neither metric localizes a residual — see the tolerance audit in docs/plans/.
 	MaxMeanAbs float64
 	MaxRMSE    float64
 
@@ -74,8 +74,8 @@ type Case struct {
 	// residual is one y tick label drawn a pixel low — 139 pixels at
 	// per-channel difference up to 249 — which still scores RMSE 2.49 against
 	// a 2.8 allowance, because 139 pixels out of 230,400 cannot move an
-	// average. A cluster ceiling sees it immediately. Added in Phase 3.2;
-	// Phase 3.6 ratchets the remaining cases.
+	// average. A cluster ceiling sees it immediately. Populated per case as
+	// each residual is measured.
 	MaxDiffPixels     int
 	MaxLargestCluster int
 }
@@ -214,7 +214,7 @@ var cases = []Case{
 	// Axis-below ratchet: showcase grids now mirror Matplotlib set_axisbelow(True);
 	// refreshed golden-vs-reference RMSE is 2.29.
 	{ID: "plot_variants", Topic: "variants", Title: "Plot Variants", Optional: true, WebDemoID: "variants", Description: "Step, stairs, reference lines, spans, broken bars, and stacked bars.", Showcase: true, GoBasicSmokeFamily: "variants", MaxRMSE: 2.6},
-	// Phase 2 ratchet: off-bin fixture signal avoids undefined phase residues;
+	// Tolerance ratchet: off-bin fixture signal avoids undefined phase residues;
 	// regenerated golden-vs-reference RMSE is 1.15.
 	{ID: "spectrum_variants", Topic: "signal", Title: "Spectrum Variants", FixtureOnly: true, GoBasicSmokeFamily: "signal", MaxMeanAbs: 0.10, MaxRMSE: 1.5},
 	{ID: "psd_welch", Topic: "signal", Title: "Welch Power Spectral Density", Description: "Direct PSD coverage with overlapping Hann-windowed, mean-detrended segments and zero padding.", FixtureOnly: true, Width: 640, Height: 360, MaxMeanAbs: 0.05, MaxRMSE: 0.227},
@@ -224,7 +224,7 @@ var cases = []Case{
 	{ID: "stat_variants", Topic: "statistics", Title: "Statistical Views", Optional: true, WebDemoID: "statistics", Description: "Box plots, violin plots, empirical CDFs, and stack plots.", Showcase: true, GoBasicSmokeFamily: "statistics", MaxMeanAbs: 0.35, MaxRMSE: 3.4, MaxDiffPixels: 1400, MaxLargestCluster: 530},
 	{ID: "specialty_depth", Topic: "statistics", Title: "Specialty Depth", FixtureOnly: true, MaxRMSE: 1.608},
 	{ID: "stem_plot", Topic: "specialty", Title: "Stem Plot", Optional: true, MaxRMSE: 1.608},
-	// Phase 9 "misc artist kwargs" parity fixtures.
+	// "misc artist kwargs" parity fixtures.
 	{ID: "stem_horizontal", Topic: "specialty", Title: "Horizontal Stem", Description: "Stem plot with orientation=\"horizontal\": locs along y, heads along x from a vertical baseline.", FixtureOnly: true, MaxMeanAbs: 2.0, MaxRMSE: 1.608},
 	{ID: "errorbar_capthick", Topic: "errorbar", Title: "Error Bars (capthick)", Description: "Error bars whose caps use a thicker line than the bars via the capthick kwarg.", FixtureOnly: true, MaxMeanAbs: 2.0, MaxRMSE: 1.608},
 	{ID: "scatter_plotnonfinite", Topic: "scatter", Title: "Scatter (plotnonfinite)", Description: "Scatter with plotnonfinite=True: non-finite scalar values ride the colormap bad color while finite points map through viridis.", FixtureOnly: true, MaxMeanAbs: 2.0, MaxRMSE: 1.608},

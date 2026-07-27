@@ -5,16 +5,16 @@ import "testing"
 func TestEnumerableCatalogAuditsAreComplete(t *testing.T) {
 	audits := EnumerableCatalogAudits()
 	if len(audits) == 0 {
-		t.Fatal("missing Phase 9 enumerable catalog audits")
+		t.Fatal("missing enumerable catalog audits")
 	}
 
 	seen := map[string]bool{}
 	for _, audit := range audits {
 		if audit.ID == "" || audit.Title == "" || audit.Decision == "" {
-			t.Fatalf("incomplete Phase 9 audit row: %+v", audit)
+			t.Fatalf("incomplete catalog audit row: %+v", audit)
 		}
 		if seen[audit.ID] {
-			t.Fatalf("duplicate Phase 9 audit row %q", audit.ID)
+			t.Fatalf("duplicate catalog audit row %q", audit.ID)
 		}
 		seen[audit.ID] = true
 		if len(audit.UpstreamSources) == 0 {
@@ -45,7 +45,7 @@ func TestEnumerableCatalogAuditsAreComplete(t *testing.T) {
 		"rcparams",
 	} {
 		if !seen[id] {
-			t.Fatalf("missing Phase 9 audit row %q", id)
+			t.Fatalf("missing catalog audit row %q", id)
 		}
 	}
 }
@@ -53,11 +53,11 @@ func TestEnumerableCatalogAuditsAreComplete(t *testing.T) {
 func TestCatalogExitCriteriaAreSatisfied(t *testing.T) {
 	criteria := CatalogExitCriteria()
 	if len(criteria) != 3 {
-		t.Fatalf("Phase 9 exit criteria count = %d, want 3", len(criteria))
+		t.Fatalf("catalog exit criteria count = %d, want 3", len(criteria))
 	}
 	for _, criterion := range criteria {
 		if criterion.ID == "" || criterion.Criterion == "" || criterion.Evidence == "" {
-			t.Fatalf("incomplete Phase 9 exit criterion: %+v", criterion)
+			t.Fatalf("incomplete catalog exit criterion: %+v", criterion)
 		}
 		if criterion.Status != CatalogExitSatisfied {
 			t.Fatalf("%s status = %s, want %s", criterion.ID, criterion.Status, CatalogExitSatisfied)

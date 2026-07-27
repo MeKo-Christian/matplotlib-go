@@ -119,7 +119,7 @@ func TestLine2DDisplayPathCacheParity(t *testing.T) {
 // directly with a non-affine data leg and a live bbox, then changes only the
 // bbox (an affine-only redraw) and asserts the non-affine projection is reused
 // (Apply count unchanged) while the output reflects the new affine. This proves
-// the Phase 13 cache split at the artist level; driving displayPath directly
+// the cache split at the artist level; driving displayPath directly
 // avoids the every-draw refreshDataTransform that re-projects non-affine legs
 // end-to-end (the deferred leg-change-detection follow-up).
 func TestLine2DDisplayPathReusesNonAffineProjection(t *testing.T) {
@@ -155,7 +155,7 @@ func TestLine2DDisplayPathReusesNonAffineProjection(t *testing.T) {
 // between draws (as a full figure draw does). With leg-change detection, an
 // unchanged non-affine leg no longer fires InvalidNonAffine, so a resize that only
 // moves the axes bbox reuses the cached projection; only an actual leg change
-// re-projects (Phase 13 leg-change detection).
+// re-projects (leg-change detection).
 func TestLine2DDisplayPathReusesProjectionThroughRefresh(t *testing.T) {
 	applies := 0
 	counting := countingTransform{applies: &applies}

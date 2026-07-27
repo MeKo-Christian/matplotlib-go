@@ -80,7 +80,7 @@ func TestBivarMultivarColormapUpstreamInventoryIsDocumented(t *testing.T) {
 	}
 	doc := string(data)
 	requiredDocs := []string{
-		"Phase 17.6.5 Bivar/Multivar Upstream API Inventory",
+		"Bivar/Multivar Upstream API Inventory",
 		"`MultivarColormap`",
 		"`combination_mode`",
 		"`sRGB_add`",
@@ -137,7 +137,7 @@ func TestBivarMultivarGoFitAssessmentIsDocumented(t *testing.T) {
 	}
 	doc := string(data)
 	requiredDocs := []string{
-		"Phase 17.6.5 Bivar/Multivar Go Fit Assessment",
+		"Bivar/Multivar Go Fit Assessment",
 		"`color.Colormap` maps one",
 		"normalized `float64`",
 		"`ScalarMapInfo` stores one colormap name, one norm, and",
@@ -188,7 +188,7 @@ func TestBivarColormapAPIShapeDecisionIsDocumented(t *testing.T) {
 	}
 	doc := string(data)
 	requiredDocs := []string{
-		"Phase 17.6.5 Bivariate API Shape Decision",
+		"Bivariate API Shape Decision",
 		"`color.BivarColormap`",
 		"no `BivarColormapFromImage`",
 		"`SegmentedBivarColormap`",
@@ -239,7 +239,7 @@ func TestBivarColormapOmissionIsDocumented(t *testing.T) {
 	}
 	doc := string(data)
 	requiredDocs := []string{
-		"Phase 17.6.5 Bivariate Colormap Omission Ledger",
+		"Bivariate Colormap Omission Ledger",
 		"`BivarColormap`",
 		"`BivarColormapFromImage`",
 		"`SegmentedBivarColormap`",
@@ -290,7 +290,7 @@ func TestMultivarColormapAPIShapeDecisionIsDocumented(t *testing.T) {
 	doc := string(data)
 	docText := strings.Join(strings.Fields(doc), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Multivariate API Shape Decision",
+		"Multivariate API Shape Decision",
 		"no `color.MultivarColormap`",
 		"future API would need a component-colormap list",
 		"`combination_mode`",
@@ -342,7 +342,7 @@ func TestMultivarColormapOmissionIsDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Multivariate Colormap Omission Ledger",
+		"Multivariate Colormap Omission Ledger",
 		"`MultivarColormap`",
 		"`combination_mode`",
 		"`sRGB_add`",
@@ -375,7 +375,7 @@ func TestFocusedColormapLookupTestsAreDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Focused Colormap Lookup Tests",
+		"Focused Colormap Lookup Tests",
 		"implemented lookup path is single-variate `color.Colormap`",
 		"listed lookup-table quantization",
 		"linear-segment alpha interpolation",
@@ -412,7 +412,7 @@ func TestBivarMultivarOmissionDiagnosticsAreDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Colormap Omission Diagnostics",
+		"Colormap Omission Diagnostics",
 		"unsupported bivariate inputs are two-component lookup-table inputs",
 		"unsupported multivariate inputs are tuple-valued component arrays",
 		"no Go artist accepts tuple-valued colormap input",

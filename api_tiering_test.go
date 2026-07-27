@@ -31,17 +31,17 @@ type publicAPITieringRow struct {
 
 func TestPublicAPITieringMatchesPreBreakSnapshot(t *testing.T) {
 	root := repoRootForAPIAudit(t)
-	tieringPath := filepath.Join(root, "docs", "plans", "phase2-public-api-tiering.json")
+	tieringPath := filepath.Join(root, "docs", "plans", "api-tiering.json")
 	data, err := os.ReadFile(tieringPath)
 	if err != nil {
-		t.Fatalf("read Phase 2 API tiering artifact: %v", err)
+		t.Fatalf("read API tiering artifact: %v", err)
 	}
 	var tiering publicAPITieringArtifact
 	if err := json.Unmarshal(data, &tiering); err != nil {
-		t.Fatalf("decode Phase 2 API tiering artifact: %v", err)
+		t.Fatalf("decode API tiering artifact: %v", err)
 	}
 	if tiering.SchemaVersion != 1 {
-		t.Fatalf("Phase 2 API tiering schema = %d, want 1", tiering.SchemaVersion)
+		t.Fatalf("API tiering schema = %d, want 1", tiering.SchemaVersion)
 	}
 
 	frozenPath := filepath.Join(root, filepath.FromSlash(tiering.Baseline.Path))
@@ -51,7 +51,7 @@ func TestPublicAPITieringMatchesPreBreakSnapshot(t *testing.T) {
 	}
 	sum := sha256.Sum256(frozenData)
 	if got := hex.EncodeToString(sum[:]); got != tiering.Baseline.SHA256 {
-		t.Fatalf("Phase 2 API baseline hash = %s, frozen API hash = %s; review and regenerate the tiering decisions", tiering.Baseline.SHA256, got)
+		t.Fatalf("API baseline hash = %s, frozen API hash = %s; review and regenerate the tiering decisions", tiering.Baseline.SHA256, got)
 	}
 
 	var frozen stableAPIArtifact
@@ -69,22 +69,22 @@ func TestPublicAPITieringMatchesPreBreakSnapshot(t *testing.T) {
 		}
 	}
 	if tiering.Baseline.SymbolCount != len(want) {
-		t.Fatalf("Phase 2 API baseline count = %d, frozen API has %d symbols", tiering.Baseline.SymbolCount, len(want))
+		t.Fatalf("API baseline count = %d, frozen API has %d symbols", tiering.Baseline.SymbolCount, len(want))
 	}
 	if len(tiering.Symbols) != len(want) {
-		t.Fatalf("Phase 2 API tiering has %d rows, want %d", len(tiering.Symbols), len(want))
+		t.Fatalf("API tiering has %d rows, want %d", len(tiering.Symbols), len(want))
 	}
 
 	got := make(map[string]publicAPITieringRow, len(tiering.Symbols))
 	for _, row := range tiering.Symbols {
 		key := tieringKey(row.Package, row.ID)
 		if _, exists := got[key]; exists {
-			t.Errorf("duplicate Phase 2 API tiering row %q", key)
+			t.Errorf("duplicate API tiering row %q", key)
 			continue
 		}
 		got[key] = row
 		if _, exists := want[key]; !exists {
-			t.Errorf("Phase 2 API tiering contains unknown symbol %q", key)
+			t.Errorf("API tiering contains unknown symbol %q", key)
 		}
 		switch row.Disposition {
 		case "keep":
@@ -107,7 +107,7 @@ func TestPublicAPITieringMatchesPreBreakSnapshot(t *testing.T) {
 	}
 	for key := range want {
 		if _, exists := got[key]; !exists {
-			t.Errorf("frozen public API symbol %q has no Phase 2 tiering row", key)
+			t.Errorf("frozen public API symbol %q has no tiering row", key)
 		}
 	}
 
@@ -179,7 +179,7 @@ func assertTieringDisposition(t *testing.T, rows map[string]publicAPITieringRow,
 	key := tieringKey(pkg, id)
 	row, ok := rows[key]
 	if !ok {
-		t.Errorf("missing landmark Phase 2 API decision %q", key)
+		t.Errorf("missing landmark API decision %q", key)
 		return
 	}
 	if row.Disposition != want {

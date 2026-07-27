@@ -1,7 +1,7 @@
 // Package histogram_variants is a user-facing showcase that gathers the
 // histogram surface into one figure: raw counts, a density-normalized
 // histogram, a cumulative histogram, and two overlapping probability
-// histograms. It closes the Phase 18.1 "histogram-variants" demo-breadth gap by
+// histograms. It closes the "histogram-variants" demo-breadth gap by
 // promoting behavior that previously only existed as parity fixtures
 // (hist_basic, hist_density, hist_strategies) into a single browsable gallery.
 //

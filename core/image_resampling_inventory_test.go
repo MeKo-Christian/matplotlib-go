@@ -75,7 +75,7 @@ func TestTransformedImageBackendMatrixIsDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Transformed Image Backend Matrix",
+		"Transformed Image Backend Matrix",
 		"`AGG`",
 		"native `render.ImageTransformer`",
 		"consumes `Interpolation()`",
@@ -131,7 +131,7 @@ func TestTransformedImageMatplotlibComparisonIsDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Transformed Image Matplotlib Comparison",
+		"Transformed Image Matplotlib Comparison",
 		"upstream comparison anchor is `third_party/matplotlib/lib/matplotlib/image.py`",
 		"`_ImageBase._make_image`",
 		"`AxesImage.make_image`",
@@ -161,7 +161,7 @@ func TestTransformedImageResamplingGapInventoryIsDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Resampling Gap Inventory",
+		"Resampling Gap Inventory",
 		"Backend matrix coverage and Matplotlib pipeline comparison are the inventory inputs",
 		"`Image2D.Draw`",
 		"`Image2D.rasterizeForRect`",
@@ -223,7 +223,7 @@ func TestTransformedImageInterpolationKernelAlignmentIsDocumented(t *testing.T) 
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Interpolation Kernel Alignment",
+		"Interpolation Kernel Alignment",
 		"`nearest` and `none`",
 		"`bilinear` and `bicubic`",
 		"`auto` and `antialiased`",
@@ -284,7 +284,7 @@ func TestTransformedImageTransformAndExtentAlignmentIsDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Transform and Extent Alignment",
+		"Transform and Extent Alignment",
 		"`Axes.ImShow` now matches Matplotlib explicit extent handling",
 		"`origin='upper'` does not invert explicit `extent=(left, right, bottom, top)` limits",
 		"default centered-pixel extents still use origin-driven Y presentation",
@@ -308,7 +308,7 @@ func TestTransformedImageAggRasterAlignmentIsDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 AGG and Raster Backend Alignment",
+		"AGG and Raster Backend Alignment",
 		"Interpolation Kernel Alignment and Transform and Extent Alignment are the raster alignment inputs",
 		"`AGG` is the parity raster backend",
 		"`GoBasic` is the deterministic nearest-only raster fallback",
@@ -379,7 +379,7 @@ func TestTransformedImageVectorBackendBehaviorIsDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 SVG/PDF Vector Image Behavior",
+		"SVG/PDF Vector Image Behavior",
 		"`SVG` emits embedded PNG data-URI `<image>` nodes",
 		"`preserveAspectRatio=\"none\"`",
 		"`transform=\"matrix(...)\"`",
@@ -404,7 +404,7 @@ func TestTransformedImageVectorBackendDivergenceNotesAreDocumented(t *testing.T)
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Vector Backend Divergence Notes",
+		"Vector Backend Divergence Notes",
 		"These residual vector differences do not block AGG raster parity",
 		"`SVG` viewer-side image resampling can differ by browser or SVG consumer",
 		"`PDF` viewer-side image resampling can differ by reader or print pipeline",
@@ -427,7 +427,7 @@ func TestTransformedImageVectorBackendFallbacksAreDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Vector Backend Fallbacks",
+		"Vector Backend Fallbacks",
 		"SVG/PDF Vector Image Behavior and Vector Backend Divergence Notes are the fallback inputs",
 		"`SVG` and `PDF` preserve placement, transforms, alpha structure, and clipping contracts",
 		"exact image resampling is viewer-dependent and not a raster parity gate",
@@ -518,7 +518,7 @@ func TestTransformedImageFixturePriorityIsDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Image Fixture Priority",
+		"Image Fixture Priority",
 		"smallest transformed-image fixture priority set is `imshow_interpolation_matrix`, `imshow_clipped`, and `imshow_transformed`",
 		"`imshow_interpolation_matrix` covers interpolation breadth",
 		"`imshow_clipped` covers clipping plus explicit `extent` and `origin='lower'`",
@@ -541,7 +541,7 @@ func TestTransformedImageTripletGenerationIsDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Image Triplet Generation",
+		"Image Triplet Generation",
 		"refreshed triplets are `imshow_interpolation_matrix`, `imshow_clipped`, and `imshow_transformed`",
 		"`rtk go test -tags freetype ./test -run 'TestGolden/(imshow_interpolation_matrix|imshow_clipped|imshow_transformed)$' -count=1 -update-golden`",
 		"`rtk env PYTHONPATH=. python3 test/matplotlib_ref/generate.py --output-dir testdata/matplotlib_ref --plots imshow_interpolation_matrix imshow_clipped imshow_transformed`",
@@ -563,7 +563,7 @@ func TestTransformedImageFixtureRefreshIsDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Fixture Refresh",
+		"Fixture Refresh",
 		"Image Fixture Priority and Image Triplet Generation are the fixture refresh inputs",
 		"the refreshed priority triplets are `imshow_interpolation_matrix`, `imshow_clipped`, and `imshow_transformed`",
 		"the refresh happened after AGG/raster alignment and SVG/PDF fallback documentation",
@@ -610,7 +610,7 @@ func TestTransformedImageRasterBackendNotesAreDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Raster Backend Notes",
+		"Raster Backend Notes",
 		"`AGG` remains the raster parity backend for transformed-image fixtures",
 		"`imshow_interpolation_matrix`, `imshow_clipped`, and `imshow_transformed` are AGG-backed parity triplets",
 		"the remaining AGG raster residual is clipped scalar-stage resampling from Matplotlib's `clipped_bbox` output shape",
@@ -657,7 +657,7 @@ func TestTransformedImageVectorBackendNotesAreDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Vector Backend Notes",
+		"Vector Backend Notes",
 		"`SVG` and `PDF` are structural vector backends for image fixtures",
 		"placement, affine transforms, clip structure, embedded raster images, and PDF soft masks are the parity contract",
 		"interpolation hints are not emitted as SVG `image-rendering` or PDF `/Interpolate` directives",
@@ -681,7 +681,7 @@ func TestTransformedImageBackendNotesAreDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Backend Notes",
+		"Backend Notes",
 		"Raster Backend Notes and Vector Backend Notes are the backend notes inputs",
 		"raster residuals are AGG clipped scalar-stage resampling and GoBasic nearest-only fallback behavior",
 		"vector residuals are SVG/PDF viewer-side resampling, interpolation-hint omission, clip-edge antialiasing, and structural raster embedding",
@@ -703,7 +703,7 @@ func TestTransformedImageFixtureLedgerIsDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Image Fixture Ledger",
+		"Image Fixture Ledger",
 		"Fixture Refresh and Backend Notes are the image fixture ledger inputs",
 		"the ledger closes on `imshow_interpolation_matrix`, `imshow_clipped`, and `imshow_transformed` as the priority transformed-image triplets",
 		"the selected triplets have Go wrappers, Matplotlib reference scripts, golden PNGs, and Matplotlib reference PNGs",
@@ -726,7 +726,7 @@ func TestTransformedImageResamplingIsDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Transformed Image Resampling",
+		"Transformed Image Resampling",
 		"Resampling Gap Inventory, AGG and Raster Backend Alignment, Vector Backend Fallbacks, and Image Fixture Ledger are the closure inputs",
 		"AGG is the pixel-parity backend for refreshed transformed-image fixtures",
 		"GoBasic is documented as the nearest-only raster fallback",

@@ -132,7 +132,7 @@ func TestCatalogIncludesMixedRasterVectorFixture(t *testing.T) {
 func TestCatalogIncludesPatchStyleMatrixFixture(t *testing.T) {
 	c, ok := Lookup("patch_style_matrix")
 	if !ok {
-		t.Fatal("missing Phase 12.4 focused patch style parity catalog case")
+		t.Fatal("missing focused patch style parity catalog case")
 	}
 	if c.Topic != "patches" {
 		t.Fatalf("patch_style_matrix topic = %q, want patches", c.Topic)
@@ -145,7 +145,7 @@ func TestCatalogIncludesPatchStyleMatrixFixture(t *testing.T) {
 func TestCatalogIncludesLegendLayoutMatrixFixture(t *testing.T) {
 	c, ok := Lookup("legend_layout_matrix")
 	if !ok {
-		t.Fatal("missing Phase 12.4 focused legend layout parity catalog case")
+		t.Fatal("missing focused legend layout parity catalog case")
 	}
 	if c.Topic != "legend" {
 		t.Fatalf("legend_layout_matrix topic = %q, want legend", c.Topic)
@@ -158,7 +158,7 @@ func TestCatalogIncludesLegendLayoutMatrixFixture(t *testing.T) {
 func TestCatalogIncludesTextAnnotationMatrixFixture(t *testing.T) {
 	c, ok := Lookup("text_annotation_matrix")
 	if !ok {
-		t.Fatal("missing Phase 12.4 focused text/annotation parity catalog case")
+		t.Fatal("missing focused text/annotation parity catalog case")
 	}
 	if c.Topic != "annotation" {
 		t.Fatalf("text_annotation_matrix topic = %q, want annotation", c.Topic)
@@ -171,7 +171,7 @@ func TestCatalogIncludesTextAnnotationMatrixFixture(t *testing.T) {
 func TestCatalogIncludesImshowInterpolationMatrixFixture(t *testing.T) {
 	c, ok := Lookup("imshow_interpolation_matrix")
 	if !ok {
-		t.Fatal("missing Phase 12.5 focused interpolation matrix parity catalog case")
+		t.Fatal("missing focused interpolation matrix parity catalog case")
 	}
 	if c.Topic != "image" {
 		t.Fatalf("imshow_interpolation_matrix topic = %q, want image", c.Topic)
@@ -194,7 +194,7 @@ func TestCatalogIncludesColorImageGalleryShowcases(t *testing.T) {
 	for id, topic := range want {
 		c, ok := Lookup(id)
 		if !ok {
-			t.Fatalf("missing Phase 18.2 showcase catalog case %q", id)
+			t.Fatalf("missing showcase catalog case %q", id)
 		}
 		if c.Topic != topic {
 			t.Fatalf("%s topic = %q, want %q", id, c.Topic, topic)
@@ -217,7 +217,7 @@ func TestCatalogIncludesTextGalleryShowcases(t *testing.T) {
 	for id, topic := range want {
 		c, ok := Lookup(id)
 		if !ok {
-			t.Fatalf("missing Phase 18.2 showcase catalog case %q", id)
+			t.Fatalf("missing showcase catalog case %q", id)
 		}
 		if c.Topic != topic {
 			t.Fatalf("%s topic = %q, want %q", id, c.Topic, topic)
@@ -316,7 +316,7 @@ func TestCatalogIncludesTicksScalesFormattersGalleryShowcase(t *testing.T) {
 func TestCatalogIncludesWidgetsGalleryShowcase(t *testing.T) {
 	c, ok := Lookup("widgets_gallery")
 	if !ok {
-		t.Fatal("missing Phase 12.5 widgets gallery catalog case")
+		t.Fatal("missing widgets gallery catalog case")
 	}
 	if c.Topic != "widgets" {
 		t.Fatalf("widgets_gallery topic = %q, want widgets", c.Topic)
@@ -329,7 +329,7 @@ func TestCatalogIncludesWidgetsGalleryShowcase(t *testing.T) {
 func TestCatalogIncludesAnimationGalleryShowcase(t *testing.T) {
 	c, ok := Lookup("animation_gallery")
 	if !ok {
-		t.Fatal("missing Phase 12.5 animation gallery catalog case")
+		t.Fatal("missing animation gallery catalog case")
 	}
 	if c.Topic != "animation" {
 		t.Fatalf("animation_gallery topic = %q, want animation", c.Topic)

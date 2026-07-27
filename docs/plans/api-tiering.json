@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "generated_by": "docs/plans/generate_phase2_public_api_tiering.py",
+  "generated_by": "docs/plans/generate_api_tiering.py",
   "baseline": {
-    "path": "docs/plans/phase2-prebreak-public-api.json",
+    "path": "docs/plans/prebreak-public-api.json",
     "sha256": "57ff043091e26d35989fb44259907784b959433a2150564407ff3da8ed9f95f4",
     "symbol_count": 3102
   },

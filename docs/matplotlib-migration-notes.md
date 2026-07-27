@@ -4,9 +4,9 @@ This project keeps Matplotlib's plotting model and visual behavior where it can,
 but the Go API uses typed option structs instead of Python's dynamic keyword
 and property-dict conventions.
 
-## Phase 2 Pre-v1 API Migration
+## Pre-v1 API Migration
 
-Phase 2 is the coordinated pre-v1 breaking pass. Code using the former
+This is the coordinated pre-v1 breaking pass. Code using the former
 all-in-one `core` surface must import the package that now owns each feature:
 
 | Before (`core`)                                 | After              |
@@ -172,7 +172,7 @@ previously returned a bare nil.
 `diag.Warnf` is now reserved for calls that accept an artist with a degradation
 — unrecognized stem orientation, renderer capability fallbacks, RGB(A) channel
 clipping, unknown mathtext commands, and unresolvable text bbox styles. See
-`docs/plans/phase2-warn-and-skip-inventory.md` for the full audit.
+`docs/plans/warn-and-skip-inventory.md` for the full audit.
 
 ### Extra option values are rejected
 
@@ -265,7 +265,7 @@ In exchange, values that the old spellings could not express now work:
 and `Origin: optional.Of(core.ImageOriginUpper)` against an rc of
 `image.origin: lower`.
 
-See `docs/plans/phase2-options-model.md` for the model, the two merge shapes it
+See `docs/plans/options-model.md` for the model, the two merge shapes it
 collapsed, and what was deliberately left as a plain `string`.
 
 ### Artist state has one writer, not two
@@ -362,7 +362,7 @@ directly now behaves the same as `SetFaceColors`. Two consequences: reading
 and `SetEdgeColors` no longer turns the mode off, so clear `EdgeColorsFace`
 yourself when explicit edge colors should win.
 
-See `docs/plans/phase2-mutable-fields.md` for the classification and why the
+See `docs/plans/mutable-fields.md` for the classification and why the
 three kinds of companion want different fixes.
 
 The same getter pass removed the remaining exported `GetX` spellings:
@@ -426,7 +426,7 @@ such as `backends/agg` for PNG or `backends/svg` for SVG. Without a matching
 registration, `Save`, `WriteTo`, and `Image` return an error instead of choosing
 a backend implicitly.
 
-## Phase 17.6.2 Axes Helpers
+## Axes Helpers
 
 The 17.6.2 helpers cover common Matplotlib migration calls with intentionally
 typed signatures:
@@ -481,7 +481,7 @@ in `third_party/matplotlib`:
   `use_clabeltext`, and exact `Text` artist return semantics remain out of
   scope for the typed Go surface.
 
-## Phase 17.6.3 Axes Option Breadth
+## Axes Option Breadth
 
 The 17.6.3 option-breadth work covers visible high-use options through typed
 Go option structs:
@@ -519,7 +519,7 @@ reference output. Collection and mesh mutable-setter behavior is covered by
 focused unit tests and existing mesh/colorbar fixtures where it produces
 visible output.
 
-## Phase 17.6.4 mplot3d Depth and Clipping
+## mplot3d Depth and Clipping
 
 The 17.6.4 depth/clipping audit aligns common static mplot3d helpers with
 Matplotlib 3.10.9 while keeping the Go API typed:
@@ -543,7 +543,7 @@ ordering are implemented as deterministic pre-projected 2D artists, so rare
 interpenetrating 3D geometry can still differ from Matplotlib's painter-order
 heuristics.
 
-## Phase 17.6.4 mplot3d Axis Defaults and View State
+## mplot3d Axis Defaults and View State
 
 The 17.6.4 axis/view audit checked the Go `Axes3D` state against
 `mpl_toolkits/mplot3d/axes3d.py` and `axis3d.py` in the vendored Matplotlib
@@ -574,7 +574,7 @@ mutation. `Axes3D.View()` reports the legacy elevation/azimuth/distance triple;
 roll, vertical-axis, projection type, and focal length are controlled through
 dedicated typed methods.
 
-## Phase 17.6.5 Color Conversion
+## Color Conversion
 
 `color.ToRGBA` covers the Matplotlib color forms that map cleanly to typed Go:
 single-letter base colors, CSS4/X11 names, `tab:` Tableau colors, `xkcd:`
@@ -603,11 +603,11 @@ as `to_rgb`, `to_hex`, `same_color`, `is_color_like`, and `to_rgba_array`
 remain intentionally omitted unless a later migration fixture needs dedicated
 typed APIs.
 
-## Phase 17.6.5 Norm Inventory
+## Norm Inventory
 
 Current scalar-mappable normalization is exposed through the typed
 `core.ScalarNormalizer` interface rather than Matplotlib's mutable `Normalize`
-class hierarchy. The Phase 17.6.5 inventory maps the upstream `colors.py`
+class hierarchy. The inventory maps the upstream `colors.py`
 norm surface to Go as follows:
 
 | Matplotlib norm | Go surface          | Related axis scale                              | Colorbar route                                     |
@@ -627,7 +627,7 @@ This keeps axes scales and color normalization deliberately separate: axis
 `function`/`functionlog` scales do not automatically become color norms, and
 custom color normalization should implement `ScalarNormalizer` directly.
 
-## Phase 17.6.5 Norm Gap List
+## Norm Gap List
 
 Supported parity fixtures currently exercise the norm behavior needed by
 visible examples:
@@ -640,7 +640,7 @@ visible examples:
 - `asinh_norm_image` covers `AsinhNorm` image mapping and its colorbar scale.
 
 No supported parity fixture currently requires `FuncNorm`, `MultiNorm`, or a
-multi-stage normalization pipeline. As of Phase 9 `FuncNorm` is implemented as
+multi-stage normalization pipeline. As of `FuncNorm` is implemented as
 the concrete `core.FuncNorm` type and is covered by focused unit tests
 (`core/funcnorm_test.go`); it has no transpiler-backed golden because its
 arbitrary Go forward/inverse callbacks do not transpile to a Matplotlib
@@ -657,7 +657,7 @@ mutable scalar-mappable callback lifecycle, exact `clip` edge behavior for
 nonlinear norms beyond the covered fixtures, and richer boundary/under/over
 interactions when a colorbar is updated after construction.
 
-## Phase 17.6.5 FuncNorm Upstream Contract
+## FuncNorm Upstream Contract
 
 In Matplotlib 3.10.9, `FuncNorm` is not handwritten normalization logic. It is
 generated by `make_norm_from_scale` using `scale.FuncScale`, so its behavior is
@@ -679,7 +679,7 @@ scales with forward and inverse callbacks, but a color `FuncNorm` decision must
 choose a typed `ScalarNormalizer` constructor, the callback shape, and how much
 of Matplotlib's array-like, mask, `clip`, and autoscale behavior to mirror.
 
-## Phase 17.6.5 FuncNorm Go Callback Shape
+## FuncNorm Go Callback Shape
 
 The current Go callback shape for arbitrary color normalization remains the
 existing `ScalarNormalizer` interface:
@@ -694,16 +694,16 @@ existing `ScalarNormalizer` interface:
 This deliberately does not share the axis `transform.Scale` callback shape.
 Axis scales map data coordinates into axes fraction space, while color norms
 also carry scalar-map range, validation, autoscale, and colorbar identity
-metadata. Phase 9 adds a concrete `core.FuncNorm` type that implements this
+metadata. The port adds a concrete `core.FuncNorm` type that implements this
 `ScalarNormalizer` interface: it carries `Forward`/`Reverse` callbacks plus
 `VMin`/`VMax`/`Clip`, normalizes `Forward(value)` between `Forward(VMin)` and
 `Forward(VMax)`, and reverses through `Reverse`. Callers may still provide any
 other typed `ScalarNormalizer` implementation for bespoke normalization.
 
-## Phase 17.6.5 FuncNorm Omission Ledger
+## FuncNorm Omission Ledger
 
-**Superseded by Phase 9.** This section originally recorded `FuncNorm` as an
-intentional omission. Phase 9 implemented it as the concrete `core.FuncNorm`
+**Superseded.** This section originally recorded `FuncNorm` as an
+intentional omission. implemented it as the concrete `core.FuncNorm`
 type, so the omission no longer holds; the ledger is retained as history.
 
 The earlier rationale was API scope: Matplotlib's `FuncNorm` is array-like,
@@ -713,7 +713,7 @@ no supported parity fixture for it. `asinh_norm_image`, `twoslope_norm_image`,
 norms, and the other supported colorbar examples use explicit `Normalize` or
 `BoundaryNorm` behavior.
 
-Phase 9 adds `core.FuncNorm` with `Forward`/`Reverse` callbacks and
+The port adds `core.FuncNorm` with `Forward`/`Reverse` callbacks and
 `VMin`/`VMax`/`Clip`, mirroring Matplotlib's scale-backed forward/inverse
 mapping (clip clamps in data space, then transforms). It is covered by
 `core/funcnorm_test.go`; no transpiler-backed golden exists because arbitrary
@@ -723,12 +723,12 @@ color normalization. Axis-level custom transforms continue to use
 `transform.Scale` through `function` and `functionlog`, which remains separate
 from scalar-mappable color normalization.
 
-## Phase 17.6.5 Norm Public Surface Metadata
+## Norm Public Surface Metadata
 
 The public-surface ledger now gives norm behavior explicit rows instead of
 leaving it inside the broad `colors.py` partial classification. `Normalize`,
 `SymLogNorm`, `PowerNorm`, `TwoSlopeNorm`, `CenteredNorm`, `BoundaryNorm`,
-`NoNorm`, `AsinhNorm`, and (as of Phase 9) `FuncNorm` are marked
+`NoNorm`, `AsinhNorm`, and `FuncNorm` are marked
 `idiomatic-equivalent`: Go exposes their behavior as concrete
 `ScalarNormalizer` values rather than Matplotlib's mutable normalizer classes,
 and the focused norm/scalar-mappable tests plus the `asinh_norm_image`,
@@ -747,9 +747,9 @@ carry a separate `colors.py:class:LogNorm` row.
 
 `docs/matplotlib-parity-status.md` was regenerated after those row decisions.
 The open broad `colors.py` rows now point to the explicit norm rows and no
-longer list implemented normalizers as unresolved Phase 17.6.5 partials.
+longer list implemented normalizers as unresolved partials.
 
-## Phase 17.6.5 Scalar-Mappable Norm Update Audit
+## Scalar-Mappable Norm Update Audit
 
 Matplotlib `Colorizer` connects norm callbacks into a changed-event pipeline:
 norm changes trigger the colorizer, scalar mappables forward `changed`, and
@@ -765,7 +765,7 @@ mutable collections and meshes expose `SetNorm`, `SetCLim`, `SetArray`, and
 norm changes. The current supported behavior is explicit mutation followed by
 redraw, with colorbars pulling the latest norm and clim from the mappable.
 
-## Phase 17.6.5 Scalar-Mappable Norm Update Decision
+## Scalar-Mappable Norm Update Decision
 
 The supported Go update path is explicit mutation followed by redraw:
 `SetArray`, `SetColormap`, `SetNorm`, and `SetCLim` update the mappable state
@@ -778,7 +778,7 @@ Matplotlib-style callback registry remains intentionally omitted for this
 surface. Callers should mutate the typed mappable and redraw the figure; they
 should not expect norm objects to notify colorbars independently.
 
-## Phase 17.6.5 LightSource Algorithm Inventory
+## LightSource Algorithm Inventory
 
 Matplotlib's `colors.LightSource` is a 2D elevation-image lighting helper, not
 the same code path as mplot3d collection face shading. Its constructor defaults
@@ -814,7 +814,7 @@ preserves alpha. The current Go 3D shading helper mirrors that mplot3d face
 shading route; it does not implement the 2D `LightSource.hillshade`,
 `shade`, or `shade_rgb` image-lighting API.
 
-## Phase 17.6.5 LightSource Example Need List
+## LightSource Example Need List
 
 No committed Python parity fixture imports `LightSource`, passes
 `lightsource=`, or calls the 2D image-lighting helpers. No 2D image fixture
@@ -840,7 +840,7 @@ keep LightSource as an explicit omission with this fixture audit, or add a
 small static subset only if a new visual fixture exercises hillshade/blend
 behavior.
 
-## Phase 17.6.5 LightSource Hillshade Core Decision
+## LightSource Hillshade Core Decision
 
 `hillshade` remains intentionally omitted for the current Go public API. No
 `core.LightSource` or `color.LightSource` type is added, and there is no
@@ -860,7 +860,7 @@ image-row spacing, `np.gradient`-style derivative handling, normalized
 `(-e_dx, -e_dy, 1)` normals, fraction scaling before min/max rescale, and final
 `[0, 1]` clipping.
 
-## Phase 17.6.5 LightSource RGB Blend Mode Decision
+## LightSource RGB Blend Mode Decision
 
 `shade` and `shade_rgb` remain intentionally omitted along with the
 LightSource RGB blend-mode surface. That means there is no public Go equivalent
@@ -878,7 +878,7 @@ omission. Colormapped images continue to use normal scalar mapping, and
 explicit-color 3D faces continue to use the separate `shade3DFaceColor`
 implementation documented above.
 
-## Phase 17.6.5 LightSource Image Path Integration Decision
+## LightSource Image Path Integration Decision
 
 Because the LightSource hillshade and RGB blend APIs are omitted, no
 LightSource path is connected to `Image2D`, `imshow`, `matshow`, or
@@ -893,7 +893,7 @@ would have no public `LightSource` API or visual parity fixture. A future
 shaded-relief fixture should add the typed lighting surface first, then connect
 it through image creation before backend resampling.
 
-## Phase 17.6.5 LightSource Surface Path Integration Decision
+## LightSource Surface Path Integration Decision
 
 For mplot3d, no public `LightSource` object is connected to `Surface`,
 `Trisurf`, `Bar3D`, or `Voxels`. The supported integration remains the
@@ -912,7 +912,7 @@ Do not add a `lightsource` option to these paths until a visual fixture needs
 custom mplot3d light-source positioning. Such a fixture should compare against
 `art3d._shade_colors`, not the 2D `colors.LightSource.shade_rgb` image path.
 
-## Phase 17.6.5 LightSource Fixture Decision
+## LightSource Fixture Decision
 
 No new LightSource or shaded-image visual triplet is added for this phase.
 `hillshade`, `shade`, and `shade_rgb` reference fixtures are deferred because
@@ -929,7 +929,7 @@ triplet should call one of `hillshade`, `shade`, or `shade_rgb` directly so the
 Go port has a concrete reference for gradient, fraction, blend-mode, alpha, and
 mask behavior.
 
-## Phase 17.6.5 LightSource Metadata Update
+## LightSource Metadata Update
 
 The public-surface ledger now marks `colors.py:class:LightSource` as
 `intentional-omission`. The row is anchored to `mplot3d_terrain` only as a
@@ -937,14 +937,14 @@ fixture-audit reference: that case uses mplot3d surface rendering and does not
 exercise `LightSource.hillshade`, `shade`, or `shade_rgb` image lighting.
 
 `docs/matplotlib-parity-status.md` was regenerated after the metadata update,
-so `LightSource` no longer appears as an open Phase 17.6.5 partial row. The
+so `LightSource` no longer appears as an open partial row. The
 broad `colors.py` rows now point to explicit norm and dynamic norm-factory
 rows, plus explicit intentional-omission rows for LightSource and
 bivariate/multivariate colormaps. Remaining open color-surface work is the
 Python-only dynamic color input surface and batch/masked color conversion
 edge cases.
 
-## Phase 17.6.5 Bivar/Multivar Upstream API Inventory
+## Bivar/Multivar Upstream API Inventory
 
 Matplotlib 3.10.9 treats bivariate and multivariate colormaps as separate
 public color-mapping surfaces rather than ordinary scalar colormap names.
@@ -976,7 +976,7 @@ converts uint8 data to floats, and adds opaque alpha when only RGB is supplied.
 the colormap input is a tuple of component arrays, not one normalized scalar
 array.
 
-## Phase 17.6.5 Bivar/Multivar Go Fit Assessment
+## Bivar/Multivar Go Fit Assessment
 
 The current Go color API is intentionally scalar. `color.Colormap` maps one
 normalized `float64` to one `render.Color` through `At` / `AtValue`.
@@ -998,7 +998,7 @@ hidden mode of `color.Colormap`. The scalar colormap path should stay stable
 for existing `ScalarMappable` artists, and colorbar expectations would also
 need a new contract before bivariate or multivariate mappables become public.
 
-## Phase 17.6.5 Bivariate API Shape Decision
+## Bivariate API Shape Decision
 
 No bivariate colormap API is added in this phase: there is no
 `color.BivarColormap`, no `BivarColormapFromImage`, and no
@@ -1017,7 +1017,7 @@ bivariate API directly. Without such a fixture, adding only the LUT type or
 only a registry entry would leave colorbar, scalar-mappable, outside-color, and
 component-colormap behavior underspecified.
 
-## Phase 17.6.5 Focused Colormap Lookup Tests
+## Focused Colormap Lookup Tests
 
 The implemented lookup path is single-variate `color.Colormap`. Focused unit
 coverage now locks down listed lookup-table quantization, the empty-table
@@ -1030,7 +1030,7 @@ colors, component alpha semantics, and colorbar contracts are documented in
 the bivariate and multivariate omission ledgers instead of being hidden inside
 the scalar lookup API.
 
-## Phase 17.6.5 Colormap Omission Diagnostics
+## Colormap Omission Diagnostics
 
 For this phase, unsupported bivariate inputs are two-component lookup-table
 inputs, and unsupported multivariate inputs are tuple-valued component arrays.
@@ -1044,7 +1044,7 @@ fixture and ledger diagnostics are covered by `TestBivarColormapOmissionIsDocume
 multivariate fixture and ledger diagnostics are covered by
 `TestMultivarColormapOmissionIsDocumented`.
 
-## Phase 17.6.5 Bivariate Colormap Omission Ledger
+## Bivariate Colormap Omission Ledger
 
 `BivarColormap`, `BivarColormapFromImage`, and `SegmentedBivarColormap` are
 intentional omissions in the current Go API. The affected examples are
@@ -1058,7 +1058,7 @@ the bivariate API directly. Future bivariate support should start with a visual
 fixture so lookup-table shape, outside/bad handling, alpha behavior, and 2D
 colorbar expectations are all tested together.
 
-## Phase 17.6.5 Multivariate API Shape Decision
+## Multivariate API Shape Decision
 
 No multivariate colormap API is added in this phase: there is no
 `color.MultivarColormap`, no multivariate registry, and no scalar-mappable
@@ -1076,7 +1076,7 @@ multivariate mapping inside `color.Colormap` or `ScalarMapInfo` would blur the
 current scalar contract and leave component-array validation, alpha semantics,
 and colorbar behavior implicit.
 
-## Phase 17.6.5 Multivariate Colormap Omission Ledger
+## Multivariate Colormap Omission Ledger
 
 `MultivarColormap` is an intentional omission in the current Go API, including
 the `combination_mode` variants `sRGB_add` and `sRGB_sub`. The affected
@@ -1093,7 +1093,7 @@ input validation, `combination_mode` behavior, bad-value propagation, alpha
 multiplication, and multi-component colorbar expectations are all tested
 together.
 
-## Phase 17.6.5 Transformed Image Resampling
+## Transformed Image Resampling
 
 Resampling Gap Inventory, AGG and Raster Backend Alignment, Vector Backend
 Fallbacks, and Image Fixture Ledger are the closure inputs. AGG is the
@@ -1109,7 +1109,7 @@ where exact raster parity is expected and where backend fallback behavior is
 intentional. The future colorbar work starts after transformed-image resampling
 is closed.
 
-## Phase 17.6.5 Resampling Gap Inventory
+## Resampling Gap Inventory
 
 Backend matrix coverage and Matplotlib pipeline comparison are the inventory
 inputs for transformed image parity. The Go comparison surface is
@@ -1129,7 +1129,7 @@ selection, clipping, extent/origin placement, affine transforms, and
 pixel-center placement. The remaining vector gaps are interpolation hints,
 clipping structure, and documented viewer-side resampling divergence.
 
-## Phase 17.6.5 Transformed Image Backend Matrix
+## Transformed Image Backend Matrix
 
 `Image2D.Draw` routes rotated images through a native `render.ImageTransformer`
 when the renderer implements it; otherwise the core fallback ignores rotation
@@ -1152,7 +1152,7 @@ transformed raster image objects, and PS/PGF are structural transform emitters
 whose exact display resampling may differ by viewer. Skia is optional
 `-tags skia` coverage rather than a required default backend.
 
-## Phase 17.6.5 Transformed Image Matplotlib Comparison
+## Transformed Image Matplotlib Comparison
 
 The upstream comparison anchor is `third_party/matplotlib/lib/matplotlib/image.py`.
 For the examples currently covered by the catalog, the relevant path is
@@ -1176,7 +1176,7 @@ support from the backend matrix. The remaining comparison work is AGG
 interpolation-stage selection, clipped output-size quantization, transformed
 image clipping, and pixel-center placement under explicit extents and rotation.
 
-## Phase 17.6.5 AGG and Raster Backend Alignment
+## AGG and Raster Backend Alignment
 
 Interpolation Kernel Alignment and Transform and Extent Alignment are the
 raster alignment inputs. `AGG` is the parity raster backend: it consumes the
@@ -1199,7 +1199,7 @@ for the active fixtures but can produce different scalar-stage resampling when a
 large image is mostly outside the axes clip. The fixture refresh can proceed
 with AGG as the raster reference and GoBasic documented as a fallback.
 
-## Phase 17.6.5 Vector Backend Fallbacks
+## Vector Backend Fallbacks
 
 SVG/PDF Vector Image Behavior and Vector Backend Divergence Notes are the
 fallback inputs for transformed image resampling. `SVG` and `PDF` preserve
@@ -1211,7 +1211,7 @@ future fixture work should compare vector structure rather than SVG/PDF viewer
 pixels. AGG remains the raster parity backend for image fixtures, and GoBasic
 remains the deterministic nearest-only raster fallback.
 
-## Phase 17.6.5 SVG/PDF Vector Image Behavior
+## SVG/PDF Vector Image Behavior
 
 `SVG` emits embedded PNG data-URI `<image>` nodes with
 `preserveAspectRatio="none"`. Axis-aligned images use x/y/width/height
@@ -1229,7 +1229,7 @@ The interpolation names are intentionally not translated into SVG
 remains viewer-dependent for SVG/PDF output, while placement, transformed
 embedding, and clip structure are tested as the vector fallback contract.
 
-## Phase 17.6.5 Vector Backend Divergence Notes
+## Vector Backend Divergence Notes
 
 These residual vector differences do not block AGG raster parity. `SVG`
 viewer-side image resampling can differ by browser or SVG consumer, and `PDF`
@@ -1246,7 +1246,7 @@ documented backend divergence, not AGG regressions. The vector fixtures should
 continue checking embedded image objects, transforms, soft masks, and clip
 structure rather than pixel-matching viewer resampling kernels.
 
-## Phase 17.6.5 Image Fixture Ledger
+## Image Fixture Ledger
 
 Fixture Refresh and Backend Notes are the image fixture ledger inputs. The
 summary records that the ledger closes on `imshow_interpolation_matrix`,
@@ -1262,7 +1262,7 @@ vector renderer-backend coverage. The ledger records that the remaining
 transformed-image parity scope is parent-level closure of Transformed Image
 Resampling.
 
-## Phase 17.6.5 Fixture Refresh
+## Fixture Refresh
 
 Image Fixture Priority and Image Triplet Generation are the fixture refresh
 inputs. The fixture refresh records that the refreshed priority triplets are
@@ -1276,7 +1276,7 @@ suites. The supporting image fixtures remain in the ledger but were not
 refreshed because their behavior did not change. The backend-specific residuals
 are deferred to the Backend Notes children.
 
-## Phase 17.6.5 Backend Notes
+## Backend Notes
 
 Raster Backend Notes and Vector Backend Notes are the backend notes inputs. The
 raster residuals are AGG clipped scalar-stage resampling and GoBasic
@@ -1289,7 +1289,7 @@ coverage and renderer-backend coverage. AGG remains the pixel-parity backend for
 refreshed image triplets, and SVG/PDF comparisons should remain structural
 rather than viewer-pixel comparisons.
 
-## Phase 17.6.5 Raster Backend Notes
+## Raster Backend Notes
 
 `AGG` remains the raster parity backend for transformed-image fixtures.
 `imshow_interpolation_matrix`, `imshow_clipped`, and `imshow_transformed` are
@@ -1305,7 +1305,7 @@ pixel centers through `nearestScaledSourceIndex`.
 The ledger records that these raster residuals are recorded in public-surface
 metadata for image interpolation and image artist coverage.
 
-## Phase 17.6.5 Vector Backend Notes
+## Vector Backend Notes
 
 `SVG` and `PDF` are structural vector backends for image fixtures. The vector
 contract records that placement, affine transforms, clip structure, embedded
@@ -1318,7 +1318,7 @@ antialiasing remain output-consumer dependent. `image_heatmap` carries the SVG
 golden family. The vector backend notes are recorded in public-surface metadata
 for renderer-backend coverage; raster pixel parity remains assigned to AGG.
 
-## Phase 17.6.5 Image Fixture Priority
+## Image Fixture Priority
 
 The smallest transformed-image fixture priority set is
 `imshow_interpolation_matrix`, `imshow_clipped`, and `imshow_transformed`.
@@ -1334,7 +1334,7 @@ triplets first, then supporting image fixtures only when their behavior changes.
 The ledger records that the priority set already has Go parity wrappers,
 Matplotlib reference scripts, golden PNGs, and Matplotlib reference PNGs.
 
-## Phase 17.6.5 Image Triplet Generation
+## Image Triplet Generation
 
 The refreshed triplets are `imshow_interpolation_matrix`, `imshow_clipped`, and
 `imshow_transformed`. The Go golden refresh was run with
@@ -1348,7 +1348,7 @@ The ledger records that the refresh produced no required source wrapper or
 Python reference script changes; the committed PNG triplets remain the
 authoritative visual fixture inputs for the next backend-notes items.
 
-## Phase 17.6.5 Interpolation Kernel Alignment
+## Interpolation Kernel Alignment
 
 `AGG` keeps the Matplotlib interpolation-name registry for raster image draws:
 `nearest` and `none` resolve to nearest-neighbor sampling, `bilinear` and
@@ -1368,7 +1368,7 @@ vector resampling. Kaiser still maps to the closest public AGG filter exposed by
 `agg_go`; SVG/PDF/PS/PGF interpolation behavior remains an output-consumer
 property to document under the vector-backend fallback tasks.
 
-## Phase 17.6.5 Transform and Extent Alignment
+## Transform and Extent Alignment
 
 `Axes.ImShow` now matches Matplotlib explicit extent handling:
 `origin='upper'` does not invert explicit `extent=(left, right, bottom, top)`
@@ -1389,7 +1389,7 @@ shape. That keeps visual clipping correct for current fixtures, but clipped
 scalar-stage resampling can still differ from upstream when only a subregion of
 a large image is visible.
 
-## Phase 17 Constrained-Layout Nesting and Outside Reservations
+## Constrained-Layout Nesting and Outside Reservations
 
 Nested `SubplotSpec.GridSpec` layouts participate in the existing two-pass,
 parent-first constrained-layout recursion. The canonical spanning mosaic
@@ -1411,7 +1411,7 @@ single-parent colorbar path remains exact for the tested nested reservation;
 multi-parent colorbars and aggregate parent spans remain outside the current
 typed API as documented below.
 
-## Phase 17.6.5 Colorbar Placement Audit
+## Colorbar Placement Audit
 
 Parent and Layout Modes and Size and Anchor Options are the placement audit
 inputs. The supported placement scope is single-parent `Figure.AddColorbar`.
@@ -1425,7 +1425,7 @@ The audit records that multi-parent placement, inset-`cax`, `panchor`, and
 incompatible location/orientation rejection remain documented residuals. The
 formatter and tick breadth starts after colorbar placement audit closure.
 
-## Phase 17.6.5 Colorbar Parent and Layout Modes
+## Colorbar Parent and Layout Modes
 
 Matplotlib `Figure.colorbar` accepts `ax` as a single axes, iterable, tuple,
 dict-values view, or numpy array. When no explicit `cax` is supplied,
@@ -1449,7 +1449,7 @@ That means single-parent direct axes, subplot, and constrained-layout placement
 are supported, while multi-parent and inset-`cax` colorbar placement remain
 unsupported placement modes.
 
-## Phase 17.6.5 Colorbar Size and Anchor Options
+## Colorbar Size and Anchor Options
 
 Matplotlib placement defaults are `fraction=0.15`, `shrink=1.0`, `aspect=20`,
 vertical `pad=0.05`, and horizontal `pad=0.15`. Matplotlib `location` also
@@ -1476,7 +1476,7 @@ values are normalized by location precedence rather than rejected, because
 `AddColorbar` does not return placement validation errors. These differences
 remain documented residuals for the colorbar placement audit.
 
-## Phase 17.6.5 Colorbar Boundaries and Extensions
+## Colorbar Boundaries and Extensions
 
 Matplotlib boundary colorbars derive `_boundaries`, `_values`, and interior
 `vmin`/`vmax` through `_process_values`. For discrete colorbars,
@@ -1502,7 +1502,7 @@ extension patches, and outline. Auto extension lengths for continuous
 (non-boundary) colorbars fall back to the 5% default and remain a documented
 residual.
 
-## Phase 17.6.5 Colorbar Tick and Label Formatting
+## Colorbar Tick and Label Formatting
 
 Matplotlib colorbars expose `ticks`, `format`, `label`, `orientation`, and
 `ticklocation`. `update_ticks` applies the long-axis major locator, minor
@@ -1529,7 +1529,7 @@ formatter APIs remain documented residuals because supported examples rely on
 fixed major ticks, default scalar formatting, norm-driven log/asinh formatting,
 and location-driven tick sides.
 
-## Phase 17.6.5 Colorbar Mutable Mappable Update Contract
+## Colorbar Mutable Mappable Update Contract
 
 Matplotlib colorbars attach to scalar mappables through
 `mappable.callbacks.connect('changed', Colorbar.update_normal)`.
@@ -1550,7 +1550,7 @@ artist paint property. Matplotlib callback registries and
 `Colorbar.update_normal` side effects remain documented residuals for the typed
 Go API.
 
-## Phase 17.6.5 Colorbar Mutable Update Tests and Omissions
+## Colorbar Mutable Update Tests and Omissions
 
 `TestFigureColorbarSyncsMutableCollectionMapping` covers post-creation
 `SetCLim` and `SetColormap` synchronization. `TestFigureColorbarSyncsMutableCollectionNormScale`
@@ -1565,7 +1565,7 @@ carries colormap, norm, vmin, and vmax, not artist alpha. Matplotlib
 callback-driven immediate `update_normal` redraw semantics remain outside the
 Go API.
 
-## Phase 17.6.5 Colorbar Fixtures and Ledger
+## Colorbar Fixtures and Ledger
 
 The colorbar fixture ledger is catalog-visible through `colorbar_composition`,
 `asinh_norm_image`, `boundarynorm_pcolormesh`, `collection_mutable_scalarmap`,
@@ -1583,7 +1583,7 @@ boundary/discrete behavior, shrink/anchor options, and extension shapes while
 leaving custom formatter objects, gridspec helpers, and multi-parent colorbars
 as documented partials.
 
-## Phase 17.6.5 Fixture Gap Inventory
+## Fixture Gap Inventory
 
 Color fixtures currently cover named colors plus diverging, qualitative, and
 cyclic scalar colormaps. Image fixtures cover heatmap, clipped, transformed,
@@ -1604,7 +1604,7 @@ multi-component colorbar contract exists. Potential weak coverage: scalar
 colormap families are represented by only three fixture rows and colorbar
 composition is the only showcase example.
 
-## Phase 17.6.5 Color/Image/Colorbar Fixture Triplets
+## Color/Image/Colorbar Fixture Triplets
 
 Committed triplets cover scalar colormap swatches, named colors, image
 heatmap/clipped/transformed/interpolation/alpha/matshow/spy paths, and the
@@ -1624,16 +1624,16 @@ boundarynorm_pcolormesh, collection_mutable_scalarmap,
 colorbar_boundary_values, colorbar_horizontal_ticks, lognorm_imshow,
 twoslope_norm_image, and colorbar_extensions.
 
-## Phase 17.6.5 Metadata and Migration Notes
+## Metadata and Migration Notes
 
 Public-surface metadata marks color conversion, scalar colormaps, norms, images,
-colorbars, and colorizer routing with Phase 17.6.5 notes. Implemented fixture
+colorbars, and colorizer routing with notes. Implemented fixture
 IDs are attached to image, colorbar, colors-cm, Normalize, BoundaryNorm,
 AsinhNorm, TwoSlopeNorm, pyplot imshow, pyplot colorbar, current-image, and
 current-mappable rows.
 
 Intentional omissions remain recorded for LightSource, bivariate colormaps, and
-multivariate colormaps. (Phase 9 superseded the earlier FuncNorm omission by
+multivariate colormaps. ( superseded the earlier FuncNorm omission by
 implementing the concrete `core.FuncNorm` type.) Migration notes
 summarize typed Go API differences for dynamic Python color inputs,
 callback-driven colorbar updates, custom colorbar formatters, gridspec and
@@ -1643,7 +1643,7 @@ colorbars.
 `docs/matplotlib-parity-status.md` is generated from `internal/examplecatalog`
 and carries the updated color/image/colorbar row notes.
 
-## Phase 17.6.5 Final Color Status Regeneration
+## Final Color Status Regeneration
 
 `docs/matplotlib-parity-status.md` was regenerated from `cmd/paritystatusdoc`
 after color, image, norm, and colorbar metadata updates. The final sweep covers
@@ -1655,7 +1655,7 @@ The catalog/doc freshness checks are `TestMatplotlibParityStatusDocIsCurrent`,
 `TestPublicSurfaceParityRowsReferenceExistingLocalArtifacts`. `17.6.5.7` and
 `17.6.5.7.4` are closed only after those checks pass.
 
-## Phase 17.6.4 mplot3d Scalar-Mappable Inventory
+## mplot3d Scalar-Mappable Inventory
 
 The 17.6.4 colormapping audit maps each public Go 3D helper to Matplotlib's
 collection type and scalar-mappable behavior:
@@ -1817,7 +1817,7 @@ Residual rendering differences (all within the band):
   Matplotlib's per-bar color array; the per-plane depth ordering, alpha, and
   edges otherwise match.
 
-## Phase 17.6.4 mplot3d Public-Surface Summary
+## mplot3d Public-Surface Summary
 
 The 17.6.4 closure brings the static Go `Axes3D` surface in line with the
 Matplotlib 3.10.9 behavior used by the parity catalog. The implemented behavior
@@ -1862,13 +1862,13 @@ differences, not fixture bugs:
   rare interpenetrating-geometry painter-order differences remain outside the
   static typed surface covered by 17.6.4.
 
-## Phase 17.6.7 Pyplot State and Migration Wrappers
+## Pyplot State and Migration Wrappers
 
 The `pyplot` package is an optional stateful convenience layer over the explicit
 `core.Figure` / `core.Axes` object-oriented API. It keeps the object model
 first-class: every wrapper delegates directly to a core method and returns the
 same artist the current axes appended (see
-`pyplot.TestPyplotWrappersShareCoreAxesPath`). Phase 17.6.7 audited the wrapper
+`pyplot.TestPyplotWrappersShareCoreAxesPath`). audited the wrapper
 surface against the vendored Matplotlib 3.10.9 `lib/matplotlib/pyplot.py` and
 `lib/matplotlib/_pylab_helpers.py` and closed it as an idiomatic equivalent: no
 new public wrappers were required because the closed object-oriented surface is
@@ -1941,7 +1941,7 @@ property-dict aliases, and`getp`/`setp`/`findobj` property strings are replaced
   formatter, and tick/grid styling path rather than implicit projection-mutating
   shortcuts.
 
-## Phase 9.7 rcParams Key Audit
+## rcParams Key Audit
 
 `style.SupportedMPLStyleKeys()` is the supported rcParams subset for
 Matplotlib `.mplstyle` and `matplotlibrc` ingestion. The list is checked against
@@ -1960,7 +1960,7 @@ v1.0. The renderer model has `render.SketchParams` plumbing for a future
 explicit sketch effect, but the port does not expose Matplotlib's global
 context-manager behavior or `Artist.set_sketch_params`-style public surface.
 
-## Phase 17.6.8 Backend, Widget, and Animation Tail
+## Backend, Widget, and Animation Tail
 
 PLAN.md task 17.6.8 closed the backend, widget, and animation public-surface
 tail. Every `backend_bases.py`, `backend_tools.py`, `widgets.py`, and
@@ -2035,4 +2035,4 @@ plotting-relevant behavior (idiomatic equivalents) from GUI-only behavior
   `TestWidgetInteractionAcrossVisualStyles`.
 - **GUI-only widget behavior (omitted).** `useblit`, live cursor/status
   integration, input-method editing, the `SubplotTool`/menu widgets, and
-  browser-demo interaction (deferred to Phase 19).
+  browser-demo interaction.

@@ -1,7 +1,7 @@
 // Package scatter_gallery is a user-facing showcase that gathers the advanced
 // scatter surface into one figure: colormapped scalar mapping, variable marker
 // size, alpha blending of overlapping markers, and multiple marker families. It
-// closes the Phase 18.1 "advanced-scatter" demo-breadth gap by promoting
+// closes the "advanced-scatter" demo-breadth gap by promoting
 // behavior that previously only existed as parity fixtures (scatter_advanced,
 // scatter_marker_types) into a single browsable gallery. The large
 // path-collection case stays represented by the dedicated large_scatter

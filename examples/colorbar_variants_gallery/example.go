@@ -83,7 +83,7 @@ func addBoundaryPanel(fig *core.Figure) {
 func addExtensionsPanel(fig *core.Figure) {
 	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.57, Y: 0.16}, Max: geom.Pt{X: 0.84, Y: 0.44}})
 	ax.SetTitle("extensions")
-	cmap := "phase18 extension"
+	cmap := "under/over extension"
 	vmin, vmax := 0.0, 1.0
 	mesh := ax.PColorMesh([][]float64{
 		{-0.35, 0.15, 0.35},
@@ -105,7 +105,7 @@ func addExtensionsPanel(fig *core.Figure) {
 func registerExtensionColormap() {
 	under := render.Color{R: 0.08, G: 0.16, B: 0.72, A: 1}
 	over := render.Color{R: 0.78, G: 0.12, B: 0.08, A: 1}
-	matcolor.RegisterColormap("phase18 extension", matcolor.LookupColormap("viridis").Copy("phase18 extension").WithUnder(under).WithOver(over))
+	matcolor.RegisterColormap("under/over extension", matcolor.LookupColormap("viridis").Copy("under/over extension").WithUnder(under).WithOver(over))
 }
 
 func logData(rows, cols int) [][]float64 {

@@ -1,5 +1,5 @@
 // Command transparent_fill_matte showcases a known AGG compositing bug
-// (matplotlib-go PLAN "Phase 21: Transparent-surface fill matte").
+// (transparent-surface fill matte).
 //
 // A semi-transparent fill (alpha < 1) drawn through the full figure pipeline
 // onto a transparent figure surface comes out matted toward the clear color's

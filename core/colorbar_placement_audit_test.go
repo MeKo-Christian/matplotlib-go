@@ -75,7 +75,7 @@ func TestColorbarParentAndLayoutModesAreDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Colorbar Parent and Layout Modes",
+		"Colorbar Parent and Layout Modes",
 		"Matplotlib `Figure.colorbar` accepts `ax` as a single axes, iterable, tuple, dict-values view, or numpy array",
 		"`make_axes` unions all parent axes positions and shrinks each parent",
 		"`make_axes_gridspec` is single-parent and replaces the parent subplotspec",
@@ -153,7 +153,7 @@ func TestColorbarSizeAndAnchorOptionsAreDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Colorbar Size and Anchor Options",
+		"Colorbar Size and Anchor Options",
 		"Matplotlib placement defaults are `fraction=0.15`, `shrink=1.0`, `aspect=20`, vertical `pad=0.05`, and horizontal `pad=0.15`",
 		"Matplotlib `location` also chooses orientation and rejects incompatible `location`/`orientation` combinations",
 		"Go records the default slot fraction with `defaultColorbarFraction=0.15`",
@@ -178,7 +178,7 @@ func TestColorbarPlacementAuditIsDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Colorbar Placement Audit",
+		"Colorbar Placement Audit",
 		"Parent and Layout Modes and Size and Anchor Options are the placement audit inputs",
 		"supported placement scope is single-parent `Figure.AddColorbar`",
 		"direct axes, subplot-backed axes, and constrained-layout parent tracking are covered",

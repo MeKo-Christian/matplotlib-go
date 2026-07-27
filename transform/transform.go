@@ -303,7 +303,8 @@ func splitAffine(t T) (nonAffine T, trailing geom.Affine, fullyAffine bool) {
 // same arithmetic as Matplotlib's BboxTransformFrom(viewLim). A wrapper that
 // returned its own coefficients would be algebraically equal but not bit-equal
 // (an inverted axis computing -scale, 1-offset instead of mapping the swapped
-// domain), and Phase 3 is chasing exactly those last-ULP differences.
+// domain), and that last ULP is exactly what the snapped/truncated raster
+// paths turn into a whole pixel.
 type AffineScale interface {
 	Scale
 	IsAffineScale() bool

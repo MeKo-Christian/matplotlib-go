@@ -1,7 +1,6 @@
 // Package fill_variants is a user-facing showcase that gathers the fill/area
 // surface into one figure: fill_between two curves, fill_betweenx, stacked
-// fills, and translucent overlapping areas. It closes the Phase 18.1
-// "fill-variants" demo-breadth gap by promoting behavior that previously only
+// fills, and translucent overlapping areas. It closes the // "fill-variants" demo-breadth gap by promoting behavior that previously only
 // existed as parity fixtures (fill_between, fill_stacked, plot_variants) into a
 // single browsable gallery.
 package fill_variants

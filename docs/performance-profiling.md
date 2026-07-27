@@ -2,7 +2,7 @@
 
 Last updated: 2026-06-14.
 
-This note records the first Phase 4.2 profiling sweep. The benchmark harness is
+This note records the first profiling sweep. The benchmark harness is
 in `benchmarks/render_benchmark_test.go`.
 
 ## Commands

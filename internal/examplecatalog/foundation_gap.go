@@ -1,6 +1,6 @@
 package examplecatalog
 
-// GapDecision records how a Phase 9A.2 foundation API gap should be handled.
+// GapDecision records how a foundational API gap should be handled.
 type GapDecision string
 
 const (
@@ -16,7 +16,7 @@ const (
 	GapDecisionIntentionalOmission GapDecision = "intentional-omission"
 )
 
-// FoundationAPIGap records one Phase 9A.2 missing or thin foundational API area.
+// FoundationAPIGap records one missing or thin foundational API area.
 type FoundationAPIGap struct {
 	ID                string
 	CoverageID        string
@@ -194,7 +194,7 @@ var foundationAPIGaps = []FoundationAPIGap{
 			"Multiline text also routes glyph paths through path effects. TextOptions.RotationMode supports Matplotlib-style anchor, xtick, and ytick rotation modes, TextVerticalAlign includes center_baseline, and text bbox patches, including multiline block bboxes, rotate with rotated text. " +
 			"The text_annotation_matrix fixture gives focused coverage for multiline text, rotated " +
 			"text, text bbox output, and structured font requests.",
-		Gap: "After Phase 12.4C, remaining text layout scope is limited to fixture-specific " +
+		Gap: "Remaining text layout scope is limited to fixture-specific " +
 			"pixel residuals and text rasterization interactions rather than known broad " +
 			"bounding-box, baseline, rotation-mode, multiline, wrapping, or bbox-patch gaps.",
 		Decision: GapDecisionImplement,
@@ -330,7 +330,7 @@ var foundationAPIGaps = []FoundationAPIGap{
 		GoFiles:         []string{"pyplot/pyplot.go", "pyplot/pyplot_registry_layout_test.go", "pyplot/pyplot_wrappers_test.go", "canvas/canvas.go"},
 		CurrentEquivalent: "Go has a pyplot package with figure/current-axes state, common plot wrappers, " +
 			"text, annotation, reference-line, span, axis-limit, and axis-scale wrappers, rc helpers, savefig, show, and pause hooks. " +
-			"Phase 17.6.7 audited the wrapper surface against vendored pyplot.py/_pylab_helpers.py: state transitions, " +
+			"The wrapper surface was audited against vendored pyplot.py/_pylab_helpers.py: state transitions, " +
 			"interactive-mode hooks, and current figure/axes behavior all delegate to the object-oriented core API, and every " +
 			"upstream row carries an explicit decision (locked by TestPyplotStateSurfaceRowsAreExplicitlyDecided).",
 		Gap: "Intentional signature divergences remain by design: setter-only limit/tick helpers, label setters that return " +
@@ -353,7 +353,7 @@ var foundationAPIGaps = []FoundationAPIGap{
 			"and draw/resize/close lifecycle semantics are mirrored idiomatically; only GUI-toolkit-specific " +
 			"behavior (live window events, cursor/status presentation, GUI tool widgets) is out of scope.",
 		Decision: GapDecisionIdiomaticEquivalent,
-		Rationale: "Phase 17.6.8 closed the backend lifecycle as a static-vs-GUI split: draw-event/resize/close " +
+		Rationale: "closed the backend lifecycle as a static-vs-GUI split: draw-event/resize/close " +
 			"routing, timer start/stop/running, navigation, and the home/back/forward/pan/zoom/save tools are " +
 			"idiomatic equivalents, while purely GUI tools (fullscreen, grid, help, copy, cursor, quit, " +
 			"subplot-config, rubberband) are explicit intentional omissions.",
@@ -383,9 +383,9 @@ var foundationAPIGaps = []FoundationAPIGap{
 		Gap: "Only GUI-only behavior remains out of scope: useblit, live cursor/status integration, " +
 			"input-method editing, the SubplotTool/menu widgets, and browser-demo interaction.",
 		Decision: GapDecisionIdiomaticEquivalent,
-		Rationale: "Phase 17.6.8 completed the widget interaction edge cases (active-state, handles, disabled, " +
+		Rationale: "completed the widget interaction edge cases (active-state, handles, disabled, " +
 			"modifiers) with style-parameterized tests; remaining GUI-only paths are documented intentional " +
-			"omissions, with browser-demo interaction deferred to Phase 19.",
+			"omissions, with browser-demo interaction deferred.",
 	},
 	{
 		ID:              "animation-playback-writers",
@@ -402,12 +402,12 @@ var foundationAPIGaps = []FoundationAPIGap{
 		Gap: "Only ImageMagick-style external output remains out of scope; " +
 			"default builds still report ErrWriterUnsupported for ffmpeg-backed MP4/WebM.",
 		Decision: GapDecisionIdiomaticEquivalent,
-		Rationale: "Phase 17.6.8 chose a pure-Go GifWriter (image/gif, no external tools) as the default writer scope; " +
-			"Phase 6.2 adds dependency-free APNG and HTML writers plus opt-in ffmpeg shellout support behind a build tag and runtime executable detection.",
+		Rationale: "chose a pure-Go GifWriter (image/gif, no external tools) as the default writer scope; " +
+			"adds dependency-free APNG and HTML writers plus opt-in ffmpeg shellout support behind a build tag and runtime executable detection.",
 	},
 }
 
-// FoundationAPIGapAudit returns the Phase 9A.2 foundational API gap decisions.
+// FoundationAPIGapAudit returns the foundational API gap decisions.
 func FoundationAPIGapAudit() []FoundationAPIGap {
 	out := make([]FoundationAPIGap, len(foundationAPIGaps))
 	copy(out, foundationAPIGaps)
@@ -418,7 +418,7 @@ func FoundationAPIGapAudit() []FoundationAPIGap {
 	return out
 }
 
-// LookupFoundationAPIGap finds a Phase 9A.2 gap by stable ID.
+// LookupFoundationAPIGap finds a foundational API gap by stable ID.
 func LookupFoundationAPIGap(id string) (FoundationAPIGap, bool) {
 	for _, gap := range FoundationAPIGapAudit() {
 		if gap.ID == id {

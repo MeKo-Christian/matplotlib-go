@@ -1,7 +1,7 @@
 // Package lines_markers_gallery is a user-facing showcase that gathers the
 // Line2D stroke and marker-styling surface into one figure: dash arrays, line
 // joins and caps, a built-in marker grid (including open-fill markers), and a
-// multi-series legend. It closes the Phase 18.1 "marker-grid" demo-breadth gap
+// multi-series legend. It closes the "marker-grid" demo-breadth gap
 // by promoting behavior that previously only existed as parity fixtures
 // (dashes, joins_caps, scatter_marker_types) into a single browsable gallery.
 package lines_markers_gallery

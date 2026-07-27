@@ -235,9 +235,11 @@ func TestPlannedBrowserRowsNameLaterFeatureGap(t *testing.T) {
 		if row.Status != BrowserDemoPlanned {
 			continue
 		}
-		text := row.Action + " " + row.Rationale
-		if !strings.Contains(text, "Phase ") {
-			t.Fatalf("%s is planned but does not name a later feature gap: %s", row.ID, text)
+		// A planned row has to say what it is waiting on, not merely that it is
+		// planned; "defer"/"follow" is that promise in prose.
+		text := strings.ToLower(row.Action + " " + row.Rationale)
+		if !strings.Contains(text, "defer") && !strings.Contains(text, "should follow") {
+			t.Fatalf("%s is planned but does not name the deferred follow-up work: %s", row.ID, row.Action+" "+row.Rationale)
 		}
 	}
 }

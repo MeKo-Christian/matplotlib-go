@@ -4,7 +4,7 @@ Phase 2.3 calls for replacing "the 83 variadic option structs and 408
 pointer-to-primitive fields with one consistent options model", where "extra
 option sets must be impossible or rejected". The previous sub-bullet delivered
 the _rejected_ half at run time (see
-[phase2-extra-option-rejection.md](phase2-extra-option-rejection.md)). This
+[extra-option-rejection.md](extra-option-rejection.md)). This
 document chooses the final representation, which delivers the _impossible_
 half, and records the pilot that proves it on one line, collection, image, and
 annotation API.

@@ -84,10 +84,7 @@ func MatplotlibParityStatusMarkdown(publicSurface []PublicSurfaceRow) string {
 		if row.Status != PublicSurfacePartial && row.Status != PublicSurfaceNotStarted {
 			continue
 		}
-		owner := row.ClosurePhase
-		if owner == "" {
-			owner = row.ClosureRationale
-		}
+		owner := row.ClosureRationale
 		openRows = append(openRows, []string{
 			markdownEscapeUpstreamID(row.UpstreamID),
 			markdownEscape(row.FeatureCoverageID),
@@ -241,10 +238,7 @@ func writeClosureSummary(b *strings.Builder, rows []PublicSurfaceParity) {
 		if row.Status != PublicSurfacePartial && row.Status != PublicSurfaceNotStarted {
 			continue
 		}
-		owner := row.ClosurePhase
-		if owner == "" {
-			owner = row.ClosureRationale
-		}
+		owner := row.ClosureRationale
 		counts[owner]++
 	}
 	owners := make([]string, 0, len(counts))

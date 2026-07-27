@@ -112,7 +112,7 @@ func TestColorConversionMigrationNotesDocumentUnsupportedInputs(t *testing.T) {
 	}
 	doc := string(data)
 	required := []string{
-		"Phase 17.6.5 Color Conversion",
+		"Color Conversion",
 		"failure category rather than exact Python",
 		"color-alpha tuples",
 		"to_rgba_array",

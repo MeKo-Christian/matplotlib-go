@@ -1,8 +1,7 @@
 package examplecatalog
 
 // DateSurfaceAudit records how upstream matplotlib.dates surfaces map to the
-// Go date/unit axis implementation. dates.py is tracked as supporting Phase 12
-// coverage rather than as a Phase 11 public-surface inventory module.
+// Go date/unit axis implementation. dates.py is tracked as supporting // coverage rather than as a public-surface inventory module.
 type DateSurfaceAudit struct {
 	UpstreamID string
 	Status     PublicSurfaceParityStatus
@@ -139,7 +138,7 @@ var dateSurfaceAuditRows = []DateSurfaceAudit{
 	},
 }
 
-// DateSurfaceAuditRows returns the supporting Phase 12 date-surface audit.
+// DateSurfaceAuditRows returns the supporting date-surface audit.
 func DateSurfaceAuditRows() []DateSurfaceAudit {
 	out := make([]DateSurfaceAudit, len(dateSurfaceAuditRows))
 	copy(out, dateSurfaceAuditRows)

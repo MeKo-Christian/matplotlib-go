@@ -4,7 +4,7 @@
 
 - `core/`, `transform/`, `render/`, `style/`, `color/`, `cycler/`: plotting primitives and systems.
 - `geom/`: public geometry types (points, rects, paths, affine).
-- `optional/`: `optional.Value[T]`, the tri-state optional field used by every option struct (see `docs/plans/phase2-options-model.md`). Plotting entry points take **exactly one** options value — a variadic tail is a bug, and `internal/optarg` no longer exists.
+- `optional/`: `optional.Value[T]`, the tri-state optional field used by every option struct (see `docs/plans/options-model.md`). Plotting entry points take **exactly one** options value — a variadic tail is a bug, and `internal/optarg` no longer exists.
 - `backends/`: renderer implementations (`agg` with native cgo FreeType, `skia`, …).
 - `canvas/`, `animation/`, `pyplot/`: canvas surface, animation support, pyplot-style convenience API.
 - `tri/`: triangulation (faithful Qhull-build-order Delaunay port).
@@ -49,11 +49,11 @@
 
 The `test/` directory is flat and catalog-driven — do not add per-case test functions.
 
-- **Source of truth:** `internal/examplecatalog.Case` carries the ID, factory, and per-case tolerances (`MaxMeanAbs`, `MaxRMSE`; zero = defaults). There is deliberately no `MinPSNR`: `imagecmp` derives PSNR from RMSE (`20*log10(255/RMSE)`), so a PSNR floor can only restate a `MaxRMSE` ceiling. Neither metric localizes a residual — see `docs/plans/phase3-tolerance-audit.md`.
+- **Source of truth:** `internal/examplecatalog.Case` carries the ID, factory, and per-case tolerances (`MaxMeanAbs`, `MaxRMSE`; zero = defaults). There is deliberately no `MinPSNR`: `imagecmp` derives PSNR from RMSE (`20*log10(255/RMSE)`), so a PSNR floor can only restate a `MaxRMSE` ceiling. Neither metric localizes a residual — see `docs/plans/tolerance-audit.md`.
 - **New parity case:** add a catalog row, drop `testdata/golden/{id}.png`, optionally drop `testdata/matplotlib_ref/{id}.png` + `test/matplotlib_ref/plots/{id}.py`. `TestGolden`, `TestMatplotlibRef`, and `TestReferenceCompare` discover it automatically. No test code edits needed.
 - **Run one case:** `CGO_ENABLED=1 go test -tags freetype ./test/ -run TestGolden/{id}` (or `TestMatplotlibRef/{id}`, `TestReferenceCompare/{id}`); regex works too.
 - **File responsibilities:** `helpers_test.go` (shared helpers), `golden_test.go` / `matplotlib_ref_test.go` / `reference_compare_test.go` (single subtest-loop each), `diagnostics_<family>_test.go` (env-gated dev probes, one file per diagnostic family — currently `alpha`, `bar_text`, `histogram_profile`, `nontext`, `rng`; add to the matching family file or start a new family), `contour_compare_test.go` and `artifact_test.go` (kept separate; bespoke).
-- **No optional-visual gating:** every golden/reference case runs unconditionally (the historical `RUN_OPTIONAL_VISUAL_TESTS` gate was removed in Phase 18; renders cost ~0.05 s each). The strict text cases route through `strictMplRefIDs` in `helpers_test.go` for tighter thresholds, not for skipping.
+- **No optional-visual gating:** every golden/reference case runs unconditionally (the historical `RUN_OPTIONAL_VISUAL_TESTS` gate has been removed; renders cost ~0.05 s each). The strict text cases route through `strictMplRefIDs` in `helpers_test.go` for tighter thresholds, not for skipping.
 - **Backend-conditional tests:** prefer a runtime skip (e.g., `agg.NativeFreetypeVersion() == ""`) over a `//go:build` constraint so the file compiles in all configurations. See `TestBarBasicTextPlacementDiagnostic`.
 - **Side-by-side harness:** `test/parity/<id>/` holds per-case Go/Python plot pairs driving the `examples/` packages (`test/parity/run.py` renders the Python side); this is separate from the `test/matplotlib_ref/plots/` reference scripts.
 

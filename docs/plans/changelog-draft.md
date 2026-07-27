@@ -47,7 +47,7 @@ It still needs release framing and a version heading before it seeds the v1.0
   Empty input, mismatched slice lengths, and extra option values are now
   rejected, and `Axes.ErrorBar` validates before the property cycle advances.
   `diag.Warnf` is reserved for artists accepted with a documented degradation;
-  the audit is in `docs/plans/phase2-warn-and-skip-inventory.md`.
+  the audit is in `docs/plans/warn-and-skip-inventory.md`.
 - Rejected extra option values across the whole variadic plotting surface. A
   call that supplies two or more option structs used to keep the first and
   discard the rest. Entry points that return an error now report a
@@ -63,7 +63,7 @@ It still needs release framing and a version heading before it seeds the v1.0
   offset of (0, 0), an explicit upper image origin against a `lower` rc — work.
   `Axes.HLines`/`Axes.VLines` take the new `core.LineCollectionOptions` rather
   than the `LineCollection` artist. See
-  `docs/plans/phase2-options-model.md`.
+  `docs/plans/options-model.md`.
 - Completed the options migration across every remaining family. All 205
   variadic `...FooOptions` tails are gone: `core`, `pyplot`, `plot3d`, and
   `widgets` entry points each take exactly one options value, so a second one is
@@ -170,7 +170,7 @@ It still needs release framing and a version heading before it seeds the v1.0
   added the two shared contour scalar-map helpers, and Phase 3.3.4 added the
   `transform.AffineScale`/`IsAffineScale` pair, bringing the freeze to 3,180.
 - Reconciled that freeze against the Phase 2.1 tiering decisions symbol by
-  symbol in `docs/plans/phase2-freeze-delta.{md,json}`. All 19 `delete` rows are
+  symbol in `docs/plans/api-freeze-delta.{md,json}`. All 19 `delete` rows are
   absent and the one `demote` row landed in `backends`; every one of the 402
   removed and 480 added names carries a category and, where it is a rename or a
   move, a replacement that the test verifies is frozen.

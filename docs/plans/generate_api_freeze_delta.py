@@ -24,9 +24,9 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-TIERING = ROOT / "docs/plans/phase2-public-api-tiering.json"
+TIERING = ROOT / "docs/plans/api-tiering.json"
 FREEZE = ROOT / "test/testdata/public_api/stable_public_api.json"
-OUTPUT = ROOT / "docs/plans/phase2-freeze-delta.json"
+OUTPUT = ROOT / "docs/plans/api-freeze-delta.json"
 
 # Packages carved out of `core` by Phase 2.2, plus the new `optional` package.
 # A baseline `core` symbol that reappears unchanged in one of these is an
@@ -647,9 +647,9 @@ def generate() -> bytes:
 
     artifact = {
         "schema_version": 1,
-        "generated_by": "docs/plans/generate_phase2_freeze_delta.py",
+        "generated_by": "docs/plans/generate_api_freeze_delta.py",
         "baseline": {
-            "path": "docs/plans/phase2-public-api-tiering.json",
+            "path": "docs/plans/api-tiering.json",
             "sha256": hashlib.sha256(tiering_bytes).hexdigest(),
             "symbol_count": len(baseline),
         },

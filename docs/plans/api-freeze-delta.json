@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "generated_by": "docs/plans/generate_phase2_freeze_delta.py",
+  "generated_by": "docs/plans/generate_api_freeze_delta.py",
   "baseline": {
-    "path": "docs/plans/phase2-public-api-tiering.json",
-    "sha256": "1864f0985ab3bd40a98415acfe46388dae1aa71d4e42d052d86eb1d5c11de794",
+    "path": "docs/plans/api-tiering.json",
+    "sha256": "c19b4fc1f8d3ece4e774e78ede2602c6b68c9307c83738595263218ad4fe1e3a",
     "symbol_count": 3102
   },
   "freeze": {

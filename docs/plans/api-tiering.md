@@ -1,8 +1,8 @@
 # Phase 2 Public API Tiering
 
 This document records the pre-v1 decision for every declaration in the
-preserved `phase2-prebreak-public-api.json` snapshot. The exhaustive,
-reviewable rows live in `phase2-public-api-tiering.json`; the adjacent
+preserved `prebreak-public-api.json` snapshot. The exhaustive,
+reviewable rows live in `api-tiering.json`; the adjacent
 generator applies the decisions below to that immutable baseline
 deterministically. The live API freeze remains
 `test/testdata/public_api/stable_public_api.json` and may therefore be
@@ -45,7 +45,7 @@ rows always name a replacement and rationale.
 Run:
 
 ```bash
-python3 docs/plans/generate_phase2_public_api_tiering.py
+python3 docs/plans/generate_api_tiering.py
 go test -run TestPublicAPITieringMatchesPreBreakSnapshot .
 ```
 
@@ -54,7 +54,7 @@ symbol coverage, the allowed dispositions, replacement/rationale rules, the
 landmark decisions above, and retention of the remaining renderer interfaces.
 The artifact preserves the Phase 2.1 baseline; later API regeneration should
 update this design record deliberately rather than silently accepting new
-symbols. `phase2-freeze-delta.md` is where that reconciliation lives: it walks
+symbols. `api-freeze-delta.md` is where that reconciliation lives: it walks
 every difference between these decisions and the live freeze, and
 `TestPublicAPIFreezeDeltaIsReconciled` keeps the walk current.
 

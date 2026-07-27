@@ -33,8 +33,7 @@ const (
 	BreadthNotApplicable BreadthStatus = "not-applicable"
 )
 
-// FeatureCoverage describes one Matplotlib feature area in the Phase 9A
-// machine-readable coverage matrix.
+// FeatureCoverage describes one Matplotlib feature area in the // machine-readable coverage matrix.
 type FeatureCoverage struct {
 	ID                      string
 	Title                   string
@@ -312,7 +311,7 @@ var featureCoverageRows = []FeatureCoverage{
 	},
 }
 
-// FeatureCoverageMatrix returns the Phase 9A feature coverage inventory.
+// FeatureCoverageMatrix returns the feature coverage inventory.
 func FeatureCoverageMatrix() []FeatureCoverage {
 	out := make([]FeatureCoverage, len(featureCoverageRows))
 	copy(out, featureCoverageRows)

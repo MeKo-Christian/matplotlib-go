@@ -99,7 +99,7 @@ func TestColorbarBoundariesAndExtensionsAreDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Colorbar Boundaries and Extensions",
+		"Colorbar Boundaries and Extensions",
 		"Matplotlib boundary colorbars derive `_boundaries`, `_values`, and interior `vmin`/`vmax` through `_process_values`",
 		"`spacing='uniform'` gives each discrete color equal space and `spacing='proportional'` sizes cells by data interval",
 		"`extend` supports `neither`, `min`, `max`, and `both`",
@@ -207,7 +207,7 @@ func TestColorbarTickAndLabelFormattingIsDocumented(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(data)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Colorbar Tick and Label Formatting",
+		"Colorbar Tick and Label Formatting",
 		"Matplotlib colorbars expose `ticks`, `format`, `label`, `orientation`, and `ticklocation`",
 		"`update_ticks` applies the long-axis major locator, minor locator, and major formatter",
 		"`set_ticks` supports labels and `minor=True` upstream",
@@ -235,8 +235,8 @@ func TestColorbarFormatterAndTickBreadthMilestoneIsClosed(t *testing.T) {
 	}
 	docText := strings.Join(strings.Fields(string(docData)), " ")
 	requiredDocs := []string{
-		"Phase 17.6.5 Colorbar Boundaries and Extensions",
-		"Phase 17.6.5 Colorbar Tick and Label Formatting",
+		"Colorbar Boundaries and Extensions",
+		"Colorbar Tick and Label Formatting",
 		"Go now supports custom `extendfrac` through `ColorbarOptions.ExtendFrac`",
 		"`extendfrac='auto'` through `ColorbarOptions.ExtendFracAuto`",
 		"custom colorbar formatter options, ticklocation independent from location, `set_ticks(labels=...)`, and minor formatter APIs remain documented residuals",

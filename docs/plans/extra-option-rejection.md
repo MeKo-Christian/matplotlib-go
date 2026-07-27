@@ -92,7 +92,7 @@ Phase 2.3 sub-bullet. When it lands, the variadic tails disappear and
 "at most one" rule is written down.
 
 **Update.** The options model has since been chosen and documented in
-[phase2-options-model.md](phase2-options-model.md), and the pilot migrated
+[options-model.md](options-model.md), and the pilot migrated
 `Axes.ImShow` (the example used above), `Axes.Stem`, `Axes.Annotate`,
 `Axes.HLines`, and `Axes.VLines` off their variadic tails. Those five now reject
 a second option value at compile time and no longer route through `optarg`. The

@@ -2,8 +2,8 @@ package style
 
 import "github.com/cwbudde/matplotlib-go/internal/diag"
 
-// This file implements the Phase 16 "minimum bar for unparsed-but-known keys"
-// (PLAN.md): an rcParam key that matplotlib 3.10.9 accepts but matplotlib-go
+// This file sets the minimum bar for unparsed-but-known rcParam keys: a key
+// that matplotlib 3.10.9 accepts but matplotlib-go
 // does not parse used to land silently in MPLStyleReport.Unsupported —
 // indistinguishable from a typo. applyMPLStyleEntry now consults
 // knownUpstreamRCParams on that fallthrough path and emits a one-shot warning,
@@ -389,7 +389,7 @@ var knownUpstreamRCParams = map[string]struct{}{
 
 // nonGoalRCParams maps rcParam keys matplotlib-go intentionally does not
 // support to the rationale reported in their one-shot warning. These are the
-// Phase 16 "document, don't parse" non-goals: parsing them would suggest the
+// the "document, don't parse" non-goals: parsing them would suggest the
 // behavior is configurable when it deliberately is not.
 var nonGoalRCParams = map[string]string{
 	"path.snap": "pixel snapping is baked into the renderers to byte-match matplotlib output; a global toggle would break golden parity",

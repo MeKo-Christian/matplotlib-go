@@ -9,7 +9,7 @@ const (
 	BrowserDemoReferenceOnly BrowserDemoCoverageStatus = "reference-only"
 )
 
-// BrowserDemoCoverage records Phase 9A.4 reconciliation between the curated
+// BrowserDemoCoverage records the reconciliation between the curated
 // browser demo catalog, Python web reference modules, and CLI-only showcases.
 type BrowserDemoCoverage struct {
 	ID              string
@@ -312,32 +312,32 @@ var browserDemoCoverageRows = []BrowserDemoCoverage{
 		ID:         "showcase-image_variants_gallery",
 		Title:      "Image Variants Browser Coverage",
 		Status:     BrowserDemoPlanned,
-		Action:     "defer to Phase 20.2 browser gallery polish for a dedicated image sampling panel",
-		Rationale:  "Interpolation, alpha, MatShow, and spy behavior is visually sensitive; Phase 20.2 should add the browser panel once gallery polish work starts.",
+		Action:     "defer to browser gallery polish for a dedicated image sampling panel",
+		Rationale:  "Interpolation, alpha, MatShow, and spy behavior is visually sensitive; a dedicated browser panel should follow once gallery polish work starts.",
 		CatalogIDs: []string{"image_variants_gallery"},
 	},
 	{
 		ID:         "showcase-mathtext_gallery",
 		Title:      "MathText Gallery Browser Coverage",
 		Status:     BrowserDemoPlanned,
-		Action:     "defer to Phase 20.2 browser gallery polish for a dedicated text/math panel",
-		Rationale:  "MathText layout is visually sensitive; Phase 20.2 should add the browser panel once gallery polish work starts.",
+		Action:     "defer to browser gallery polish for a dedicated text/math panel",
+		Rationale:  "MathText layout is visually sensitive; a dedicated browser panel should follow once gallery polish work starts.",
 		CatalogIDs: []string{"mathtext_gallery"},
 	},
 	{
 		ID:         "showcase-text_layout_gallery",
 		Title:      "Text Layout Gallery Browser Coverage",
 		Status:     BrowserDemoPlanned,
-		Action:     "defer to Phase 20.2 browser gallery polish for a dedicated text layout panel",
-		Rationale:  "Alignment, rotation, wrapping, and bbox text behavior are common browser-inspection targets; Phase 20.2 should add the browser panel once gallery polish work starts.",
+		Action:     "defer to browser gallery polish for a dedicated text layout panel",
+		Rationale:  "Alignment, rotation, wrapping, and bbox text behavior are common browser-inspection targets; a dedicated browser panel should follow once gallery polish work starts.",
 		CatalogIDs: []string{"text_layout_gallery"},
 	},
 	{
 		ID:         "showcase-ticks_scales_formatters_gallery",
 		Title:      "Ticks, Scales, and Formatters Gallery Browser Coverage",
 		Status:     BrowserDemoPlanned,
-		Action:     "defer to Phase 20.2 browser gallery polish for a dedicated ticks/scales panel",
-		Rationale:  "Locator, formatter, scale, date, category, and custom-unit behavior should be browser-inspectable; Phase 20.2 should add the browser panel once gallery polish work starts.",
+		Action:     "defer to browser gallery polish for a dedicated ticks/scales panel",
+		Rationale:  "Locator, formatter, scale, date, category, and custom-unit behavior should be browser-inspectable; a dedicated browser panel should follow once gallery polish work starts.",
 		CatalogIDs: []string{"ticks_scales_formatters_gallery"},
 	},
 	{
@@ -353,16 +353,16 @@ var browserDemoCoverageRows = []BrowserDemoCoverage{
 		ID:         "showcase-named_colors_gallery",
 		Title:      "Named Colors Browser Coverage",
 		Status:     BrowserDemoPlanned,
-		Action:     "defer to Phase 20.2 browser gallery polish for a dedicated color browser demo",
-		Rationale:  "Named color swatches are user-facing and useful as a browser-visible compatibility reference; Phase 20.2 should add the browser panel once gallery polish work starts.",
+		Action:     "defer to browser gallery polish for a dedicated color browser demo",
+		Rationale:  "Named color swatches are user-facing and useful as a browser-visible compatibility reference; a dedicated browser panel should follow once gallery polish work starts.",
 		CatalogIDs: []string{"named_colors_gallery"},
 	},
 	{
 		ID:         "showcase-colormap_families_gallery",
 		Title:      "Colormap Families Browser Coverage",
 		Status:     BrowserDemoPlanned,
-		Action:     "defer to Phase 20.2 browser gallery polish for a dedicated color browser demo",
-		Rationale:  "Colormap family strips are a browsable compatibility reference; Phase 20.2 should add the browser panel once gallery polish work starts.",
+		Action:     "defer to browser gallery polish for a dedicated color browser demo",
+		Rationale:  "Colormap family strips are a browsable compatibility reference; a dedicated browser panel should follow once gallery polish work starts.",
 		CatalogIDs: []string{"colormap_families_gallery"},
 	},
 	{
@@ -396,8 +396,8 @@ var browserDemoCoverageRows = []BrowserDemoCoverage{
 		ID:         "showcase-mixed_raster_vector",
 		Title:      "Mixed Raster/Vector Browser Coverage",
 		Status:     BrowserDemoPlanned,
-		Action:     "defer to Phase 20.2 browser gallery polish for an export-focused browser grouping",
-		Rationale:  "Mixed raster/vector output is user-facing and has SVG/PDF artifact coverage; Phase 20.2 should add the browser panel once export-gallery polish work starts.",
+		Action:     "defer to browser gallery polish for an export-focused browser grouping",
+		Rationale:  "Mixed raster/vector output is user-facing and has SVG/PDF artifact coverage; a dedicated browser panel should follow once export-gallery polish work starts.",
 		CatalogIDs: []string{"mixed_raster_vector"},
 	},
 	{
@@ -593,8 +593,8 @@ var browserDemoCoverageRows = []BrowserDemoCoverage{
 		ID:         "showcase-widgets_gallery",
 		Title:      "Widgets Gallery Browser Coverage",
 		Status:     BrowserDemoPlanned,
-		Action:     "defer to Phase 20.2 browser gallery polish for a widgets or interactive-controls browser demo",
-		Rationale:  "The widgets gallery is catalog-visible for static widget/selector coverage; Phase 20.2 should add browser event-loop and interaction coverage as a separate browser panel.",
+		Action:     "defer to browser gallery polish for a widgets or interactive-controls browser demo",
+		Rationale:  "The widgets gallery is catalog-visible for static widget/selector coverage; browser event-loop and interaction coverage should follow as a separate browser panel.",
 		CatalogIDs: []string{"widgets_gallery"},
 	},
 	{
@@ -608,7 +608,7 @@ var browserDemoCoverageRows = []BrowserDemoCoverage{
 	},
 }
 
-// BrowserDemoCoverageRows returns the Phase 9A.4 browser coverage reconciliation rows.
+// BrowserDemoCoverageRows returns the browser coverage reconciliation rows.
 func BrowserDemoCoverageRows() []BrowserDemoCoverage {
 	out := make([]BrowserDemoCoverage, len(browserDemoCoverageRows))
 	copy(out, browserDemoCoverageRows)
@@ -618,7 +618,7 @@ func BrowserDemoCoverageRows() []BrowserDemoCoverage {
 	return out
 }
 
-// LookupBrowserDemoCoverage finds a Phase 9A.4 browser coverage row by stable ID.
+// LookupBrowserDemoCoverage finds a browser coverage row by stable ID.
 func LookupBrowserDemoCoverage(id string) (BrowserDemoCoverage, bool) {
 	for _, row := range BrowserDemoCoverageRows() {
 		if row.ID == id {

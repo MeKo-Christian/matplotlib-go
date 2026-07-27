@@ -23,7 +23,7 @@
 //
 //	alpha := opt.Alpha.Or(1)
 //
-// See docs/plans/phase2-options-model.md for how Value fits into the wider
+// See the options-model design note in docs/plans/ for how Value fits into the wider
 // options model.
 package optional
 

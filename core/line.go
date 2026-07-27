@@ -215,7 +215,7 @@ type Line2D struct {
 	pickRadius     float64             // pick tolerance in pixels (0 = default)
 
 	// Persistent affine/non-affine cache for the data-coordinate draw path
-	// (Phase 13). transformedPath caches the non-affine projection of the source
+	// transformedPath caches the non-affine projection of the source
 	// points; an affine-only redraw (axes resize/pan/zoom) reuses it. cacheTransform
 	// and cachePoints track the inputs the cache was built from so it is rebuilt
 	// only when the transform identity or the source point backing changes.

@@ -60,7 +60,7 @@ func TestAxesTransformInvalidatedOnResize(t *testing.T) {
 // to dataNode matches the kind of data leg: an affine leg fires InvalidAffine,
 // while a non-affine leg (e.g. a log scale) fires InvalidNonAffine so a
 // split-aware consumer re-runs its non-affine vertex pass instead of reusing a
-// stale projection (Phase 13).
+// stale projection.
 func TestRefreshDataTransformInvalidationStage(t *testing.T) {
 	ax := &Axes{}
 	ax.ensureTransforms()
@@ -90,8 +90,7 @@ func TestRefreshDataTransformInvalidationStage(t *testing.T) {
 	}
 
 	// Re-applying the same non-affine leg must NOT re-fire: an unchanged leg lets
-	// a split-aware consumer reuse its cached projection across draws (Phase 13
-	// leg-change detection). A structurally-equal rebuilt leg counts as unchanged.
+	// a split-aware consumer reuse its cached projection across draws (// leg-change detection). A structurally-equal rebuilt leg counts as unchanged.
 	probe.ClearInvalid()
 	logLegAgain := transform.NewScaleTransform(transform.NewLog(1, 10, 10), transform.NewLog(1, 10, 10))
 	ax.refreshDataTransform(logLegAgain)
