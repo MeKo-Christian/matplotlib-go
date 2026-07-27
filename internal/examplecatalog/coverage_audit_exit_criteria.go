@@ -10,7 +10,7 @@ const (
 )
 
 // AuditExitCriterion records the current interpretation and evidence for one
-// coverage-audit exit criterion from PLAN.md.
+// coverage-audit exit criterion.
 type AuditExitCriterion struct {
 	ID             string
 	Criterion      string
@@ -51,7 +51,6 @@ var coverageAuditExitCriteria = []AuditExitCriterion{
 		Evidence: []string{
 			"internal/examplecatalog.DemoBreadthGaps",
 			"internal/examplecatalog.TestHighPriorityDemoBreadthGapsPointToThinCoverage",
-			"PLAN.md",
 		},
 		FollowUp: "Promote high- and medium-priority DemoBreadthGaps into targeted demo implementation phases.",
 	},
@@ -69,8 +68,8 @@ var coverageAuditExitCriteria = []AuditExitCriterion{
 	},
 }
 
-// CoverageAuditExitCriteria returns the current PLAN.md exit-criteria
-// interpretation for the feature/demo coverage audit.
+// CoverageAuditExitCriteria returns the current exit-criteria interpretation
+// for the feature/demo coverage audit.
 func CoverageAuditExitCriteria() []AuditExitCriterion {
 	out := make([]AuditExitCriterion, len(coverageAuditExitCriteria))
 	copy(out, coverageAuditExitCriteria)

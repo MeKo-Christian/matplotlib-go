@@ -285,8 +285,8 @@ func TestColorImageColorbarMetadataAndMigrationNotesAreDocumented(t *testing.T) 
 }
 
 func TestFinalColorStatusRegenerationIsDocumented(t *testing.T) {
-	// The per-milestone PLAN.md markers were retired when the roadmap was
-	// restructured (completed phases now live in git history); the generated
+	// The per-milestone roadmap markers were retired when the roadmap was
+	// restructured (that history lives in git now); the generated
 	// docs and their guard tests remain the guarded surface.
 	sourceRequirements := map[string][]string{
 		filepath.Join("..", "docs", "matplotlib-parity-status.md"): {

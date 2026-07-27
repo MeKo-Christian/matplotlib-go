@@ -1,4 +1,4 @@
-# Phase 2 Public API Tiering
+# Public API Tiering
 
 This document records the pre-v1 decision for every declaration in the
 preserved `prebreak-public-api.json` snapshot. The exhaustive,
@@ -10,7 +10,7 @@ regenerated without rewriting this historical decision record.
 
 The baseline contains 3,102 declarations across 24 audited packages: 3,082 are
 kept, 19 are deleted, and one is demoted. `keep` means the public capability is
-retained, although Phase 2 may move its import path. `demote` means the
+retained, although the core split may move its import path. `demote` means the
 capability remains available through a narrower consumer-owned API. `delete`
 means the old declaration has no compatibility promise. Deleted and demoted
 rows always name a replacement and rationale.
@@ -52,13 +52,13 @@ go test -run TestPublicAPITieringMatchesPreBreakSnapshot .
 The root test verifies the frozen file hash and count, exact duplicate-free
 symbol coverage, the allowed dispositions, replacement/rationale rules, the
 landmark decisions above, and retention of the remaining renderer interfaces.
-The artifact preserves the Phase 2.1 baseline; later API regeneration should
+The artifact preserves the original baseline; later API regeneration should
 update this design record deliberately rather than silently accepting new
 symbols. `api-freeze-delta.md` is where that reconciliation lives: it walks
 every difference between these decisions and the live freeze, and
 `TestPublicAPIFreezeDeltaIsReconciled` keeps the walk current.
 
-The Phase 2 API collector parses every non-test Go source file in each audited
+The API collector parses every non-test Go source file in each audited
 package, independent of build constraints. It deduplicates equivalent function
 signatures (ignoring parameter names), merges empty unavailable-backend stub
 types with their implementation type, and rejects other conflicting

@@ -2,13 +2,13 @@
 
 - **Status:** Accepted
 - **Date:** 2026-05-24
-- **Phase / Task:** Phase 9C.1B — Shared Artist Metadata Remainder
-- **Related:** PLAN.md §9C.1B; `core/rasterization.go`,
+- **Topic:** Scope of artist stale-state propagation
+- **Related:** `core/rasterization.go`,
   `core/lifecycle.go`, `transform/node.go`
 
 ## Context
 
-Phase 9C.1B added shared artist metadata that mirrors important parts of
+The shared artist metadata mirrors important parts of
 Matplotlib's `Artist` base class: visibility, alpha, labels, clipping, and
 per-artist transforms. Those metadata setters now mark the local artist stale
 through `ArtistRasterization.Stale()`.

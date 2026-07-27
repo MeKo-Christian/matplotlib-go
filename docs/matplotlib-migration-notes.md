@@ -1962,8 +1962,7 @@ context-manager behavior or `Artist.set_sketch_params`-style public surface.
 
 ## Backend, Widget, and Animation Tail
 
-PLAN.md task 17.6.8 closed the backend, widget, and animation public-surface
-tail. Every `backend_bases.py`, `backend_tools.py`, `widgets.py`, and
+The backend, widget, and animation public-surface tail is closed. Every `backend_bases.py`, `backend_tools.py`, `widgets.py`, and
 `animation.py` row now resolves to a direct/idiomatic equivalent or an explicit
 intentional omission (guarded by `TestWidgetClassesHaveExplicitRows`,
 `TestAnimationSurfaceHasExplicitRows`, `TestBackendLifecycleAndToolRowsAreExplicit`,

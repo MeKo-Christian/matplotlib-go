@@ -1015,7 +1015,7 @@
         },
         {
           "id": "var ErrNotImplemented",
-          "declaration": "var ErrNotImplemented = errors.New(\"desktop: interactive backend not yet implemented; see PLAN.md §4.2 and docs/adr/0001-desktop-interactive-backend.md\")"
+          "declaration": "var ErrNotImplemented = errors.New(\"desktop: interactive backend not yet implemented; see docs/adr/0001-desktop-interactive-backend.md\")"
         },
         {
           "id": "var ErrRendererNotConfigured",

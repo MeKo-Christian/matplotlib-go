@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Matplotlib reference plot for Phase 12.3 specialty-depth coverage."""
+"""Matplotlib reference plot for the specialty-depth coverage cases."""
 
 from __future__ import annotations
 

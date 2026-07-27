@@ -1,12 +1,12 @@
-# Phase 2.3: warn-and-skip plotting entry point inventory
+# Warn-and-skip plotting entry point inventory
 
-Phase 2.3 adopts a single error convention: a plotting call that **rejects**
+The API rework adopts a single error convention: a plotting call that **rejects**
 its input returns `(T, error)` and leaves the axes untouched, while `diag.Warnf`
 is reserved for calls that **accept** an artist with a documented degradation.
 
 This document records the audit of every `diag.Warnf` site that a plotting call
 could reach, the disposition of each, and the reasoning. It is the closing
-artifact for the PLAN.md bullet "Inventory the remaining warn-and-skip plotting
+artifact for the roadmap bullet "Inventory the remaining warn-and-skip plotting
 entry points, convert rejected input to errors, and retain warnings only where
 an artist is accepted with a documented degradation."
 
@@ -61,7 +61,7 @@ records that some requested detail was approximated.
 
 - `stemIsHorizontal` accepts an invalid orientation string where Matplotlib
   raises `ValueError`. The orientation argument is a raw-string enum, and the
-  Phase 2.3 options bullet ("Replace raw-string enums with typed constants")
+  options rework ("Replace raw-string enums with typed constants")
   makes the invalid value unrepresentable, which is a better fix than adding an
   error return now.
 - `color/colormap.go` falls back to the default colormap for an unknown name

@@ -2,14 +2,15 @@
 
 - **Status:** Accepted
 - **Date:** 2026-05-23
-- **Phase / Task:** Phase 4 §4.2 — Desktop Interactive Backend
-- **Related:** PLAN.md §4.2, §4.4; `canvas/dispatcher.go`, `canvas/scheduler.go`,
+- **Topic:** Desktop interactive backend toolkit selection
+- **Related:** `canvas/dispatcher.go`, `canvas/scheduler.go`,
   `canvas/navigation.go`, `backends/agg`.
 
 ## Context
 
-Phase 4.1 landed the event dispatcher, draw-idle scheduler, pan / zoom /
-pick helpers, and hit testing for every artist family. The headless AGG
+The interactive foundation is already in place: the event dispatcher,
+draw-idle scheduler, pan / zoom / pick helpers, and hit testing for every
+artist family. The headless AGG
 backend already produces the pixels we want to show, and `canvas.Navigation`
 already mutates view limits and asks for a redraw. What is still missing
 is a process that:
@@ -23,7 +24,7 @@ is a process that:
 4. Surfaces the standard `NavigationToolbar` actions (home, pan, zoom,
    save) without coupling the rest of matplotlib-go to one toolkit.
 
-The shortlist from PLAN.md §4.2 is **Fyne, Ebiten, Gio, or a thin SDL2
+The shortlist under consideration is **Fyne, Ebiten, Gio, or a thin SDL2
 binding**. Decision criteria, in order of weight:
 
 1. **Pure-Go preference.** The repository builds without cgo on `purego`
@@ -50,7 +51,7 @@ binding**. Decision criteria, in order of weight:
   documentation for embedding.
 - Cons: requires cgo (OpenGL via `go-gl/glfw`) on every desktop platform,
   splitting our `purego` build story; redraw cadence is driven by widget
-  invalidation rather than a tight tick loop, which fights §4.4's
+  invalidation rather than a tight tick loop, which fights the
   damage-region story; image refresh allocates / re-uploads the entire
   texture per frame.
 - Embeddability: good — figures live inside any `fyne.Container`.
@@ -59,7 +60,7 @@ binding**. Decision criteria, in order of weight:
 ### Ebiten (`github.com/hajimehoshi/ebiten/v2`)
 
 - Pros: pure Go on Linux / Windows (purego on macOS); tight `Update` /
-  `Draw` tick loop is a perfect host for §4.4's draw-idle scheduling;
+  `Draw` tick loop is a perfect host for draw-idle scheduling;
   `ebiten.NewImageFromImage` plus `screen.DrawImage` is the minimum-cost
   blit; first-class touch / gamepad / clipboard fidelity.
 - Cons: built around a single full-window game loop — it does not host
@@ -111,7 +112,7 @@ The chosen layering is:
 
 ```
 backends/desktop/        // host-agnostic Backend interface + options
-backends/desktop/gio/    // Gio adapter (deferred; see §4.2 follow-up)
+backends/desktop/gio/    // Gio adapter (deferred to a follow-up)
 canvas/toolbar.go        // NavigationToolbar abstraction (this commit)
 ```
 
@@ -127,7 +128,7 @@ alongside `gio/` without touching `canvas/` consumers.
   every refactor.
 - Pure-Go build matrix stays intact; WASM and `purego` builds continue
   to work because Gio is an opt-in import behind `backends/desktop/gio`.
-- `app.FrameEvent` is the natural call site for §4.4's draw-idle
+- `app.FrameEvent` is the natural call site for the draw-idle
   coalescing — we get the redraw scheduler for free instead of fighting
   a widget invalidation queue.
 - Multi-figure managers and embedded figures are both supported by the

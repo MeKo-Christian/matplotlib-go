@@ -2,8 +2,8 @@
 //
 // # Strategy
 //
-// Skia is developed under the backend-deepening and renderer-effects tracks in
-// PLAN.md. The chosen integration strategy is recorded by BackendStrategy:
+// Skia is developed under the backend-deepening and renderer-effects tracks.
+// The chosen integration strategy is recorded by BackendStrategy:
 //   - build tag: skia
 //   - binding: a small external C ABI wrapper around Skia
 //   - CPU mode: native raster SkSurface primitives under skiacgo, with the

@@ -8,7 +8,7 @@
 // backends/desktop/gio.
 //
 // The actual window / event-loop implementation is deferred to a
-// follow-up commit in PLAN.md §4.2; this file scaffolds the types so
+// follow-up commit; this file scaffolds the types so
 // callers can be written and unit-tested against the contract before
 // any GUI dependency lands in go.mod.
 //
@@ -112,7 +112,7 @@ var ErrNoFigure = errors.New("desktop: Options.Figure is required")
 // ErrNotImplemented is returned by the placeholder constructor in this
 // skeleton until the Gio adapter lands. Callers can use it to detect
 // "the backend is wired but the host is not yet linked in" cases.
-var ErrNotImplemented = errors.New("desktop: interactive backend not yet implemented; see PLAN.md §4.2 and docs/adr/0001-desktop-interactive-backend.md")
+var ErrNotImplemented = errors.New("desktop: interactive backend not yet implemented; see docs/adr/0001-desktop-interactive-backend.md")
 
 // Constructor builds a Backend from Options. Toolkit adapters register
 // their constructor via Register; the default selection — currently the

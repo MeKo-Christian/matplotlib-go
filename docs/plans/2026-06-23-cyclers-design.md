@@ -1,6 +1,6 @@
-# Property Cyclers & bundled stylesheets (Phase 10)
+# Property Cyclers & bundled stylesheets
 
-PLAN.md item: _"Cyclers for `linestyle`/`marker`/`linewidth`; bundle the common
+Roadmap item: _"Cyclers for `linestyle`/`marker`/`linewidth`; bundle the common
 `.mplstyle` sheets (`seaborn-_`, `fivethirtyeight`, `bmh`, `Solarize_Light2`)
 (`style/theme.go:23`)."\*
 
@@ -89,4 +89,4 @@ not overridden.
 ## Wrap-up
 
 Regenerate frozen public-API JSON (`UPDATE_PUBLIC_API_AUDIT=1`) and parity-status
-doc; `just fmt && just lint && just test`; update PLAN.md item to done.
+doc; `just fmt && just lint && just test`.

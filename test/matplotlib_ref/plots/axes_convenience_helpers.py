@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Matplotlib reference for Phase 17.6.2 convenience axes helpers."""
+"""Matplotlib reference for the convenience axes helpers."""
 
 from __future__ import annotations
 

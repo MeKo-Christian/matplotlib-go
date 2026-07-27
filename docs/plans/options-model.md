@@ -1,6 +1,6 @@
-# Phase 2.3: the options model
+# The options model
 
-Phase 2.3 calls for replacing "the 83 variadic option structs and 408
+The options rework calls for replacing "the 83 variadic option structs and 408
 pointer-to-primitive fields with one consistent options model", where "extra
 option sets must be impossible or rejected". The previous sub-bullet delivered
 the _rejected_ half at run time (see
@@ -218,7 +218,7 @@ formats, and `Colormap`/`FontKey`/`Label` are open-ended names.
 
 ## Follow-on work
 
-Two refinements are out of scope here and remain for later Phase 2 work:
+Two refinements are out of scope here and remain follow-up work:
 
 - **Magic-zero plain fields.** A handful of non-optional fields still spell
   "use the default" as their zero value where the default is non-zero —
@@ -228,5 +228,5 @@ Two refinements are out of scope here and remain for later Phase 2 work:
   enums, and all three are now closed.
 - **Artist fields.** Several artists still expose optional state as pointers
   (`Text.ParseMath`, `Text.BBox`, `ErrorBar.CapSize`). Those are exported
-  mutable artist fields, which the next Phase 2.3 bullet covers; the option
+  mutable artist fields, which `mutable-fields.md` covers; the option
   structs bridge to them with `Value.Ptr()`.

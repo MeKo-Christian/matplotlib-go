@@ -49,7 +49,7 @@ const (
 	// There is no PSNR floor here: imagecmp derives PSNR from RMSE, so a floor
 	// would only restate a MaxRMSE ceiling. The former default of 44 dB was
 	// equivalent to RMSE 1.609 and was unreachable for 65 cases; it only ever
-	// passed because the PSNR accumulator overflowed. See in PLAN.md.
+	// passed because the PSNR accumulator overflowed.
 	referenceCompareMaxMeanAbs = 2.50
 )
 

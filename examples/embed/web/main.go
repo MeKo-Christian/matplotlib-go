@@ -1,5 +1,5 @@
-// Command web is an embedding example for the WebAgg backend
-// (PLAN.md §4.3). It serves the basic_line example over HTTP on
+// Command web is an embedding example for the WebAgg backend.
+// It serves the basic_line example over HTTP on
 // :8080 and broadcasts AGG diff frames to every connected browser
 // client.
 //

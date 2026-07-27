@@ -39,7 +39,7 @@ def formatter_scalar_scientific_labels(out_dir):
 
 def scalar_scientific_formatter():
     # The Go port's core.ScalarFormatter now mirrors Matplotlib's ScalarFormatter
-    # offset / order-of-magnitude factoring (Phase 7), so the reference uses the
+    # offset / order-of-magnitude factoring, so the reference uses the
     # real ScalarFormatter rather than a per-tick FuncFormatter workaround.
     formatter = mticker.ScalarFormatter(useMathText=True)
     formatter.set_scientific(True)

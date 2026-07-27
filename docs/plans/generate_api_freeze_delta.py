@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Reconcile the live public-API freeze against the Phase 2 tiering decisions.
+"""Reconcile the live public-API freeze against the recorded tiering decisions.
 
 The tiering artifact classifies every symbol in the pre-break baseline as keep,
-demote, or delete. The live freeze is what Phase 4 tags. This script diffs the
+demote, or delete. The live freeze is what the release tags. This script diffs the
 two at (package, symbol) granularity and requires that every difference is
 accounted for by an explicit decision:
 
@@ -28,13 +28,13 @@ TIERING = ROOT / "docs/plans/api-tiering.json"
 FREEZE = ROOT / "test/testdata/public_api/stable_public_api.json"
 OUTPUT = ROOT / "docs/plans/api-freeze-delta.json"
 
-# Packages carved out of `core` by Phase 2.2, plus the new `optional` package.
+# Packages carved out of `core` by the god-package split, plus `optional`.
 # A baseline `core` symbol that reappears unchanged in one of these is an
 # accepted move and needs no hand-written row.
 SPLIT_PACKAGES = ("plot3d", "ticker", "dates", "widgets", "optional")
 
 _GETTER = "Dropped the Python-style Get prefix for the idiomatic Go noun."
-_SPLIT = "Moved to the package that owns the feature after the Phase 2.2 split."
+_SPLIT = "Moved to the package that owns the feature after the core split."
 
 # (package, id) -> (category, replacement prose, target (package, id) or None).
 #
@@ -290,7 +290,7 @@ _add(
 
 _add(
     "options-model",
-    "Folded value type or options struct from the Phase 2.3 options model. "
+    "Folded value type or options struct from the single-options model. "
     "Each one replaces struct fields, which the audit does not count as "
     "symbols, so folding trades uncounted fields for counted names.",
     "core",
@@ -303,7 +303,7 @@ _add(
 
 _add(
     "optional-package",
-    "The optional package introduced by the Phase 2.3 options model. It "
+    "The optional package introduced by the single-options model. It "
     "replaced 408 pointer-to-primitive option fields, none of which the audit "
     "counted as symbols.",
     "optional",
@@ -384,14 +384,14 @@ _add(
 
 _add(
     "shared-helper",
-    "Shared path extracted during Phase 2.3 so core and the split packages "
+    "Shared path extracted during the core split so core and the split packages "
     "resolve alpha and scalar mapping identically.",
     "render",
     "method Color.WithAlphaMultiplier",
 )
 _add(
     "shared-helper",
-    "Shared path extracted during Phase 2.3 so core and the split packages "
+    "Shared path extracted during the core split so core and the split packages "
     "resolve alpha and scalar mapping identically.",
     "core",
     "method PlotOptions.ScalarMapConfig",
@@ -400,7 +400,7 @@ _add(
 _add(
     "audit-scope",
     "Pre-existing API the baseline collector never parsed. The FFmpeg writer "
-    "sits behind //go:build ffmpeg and predates Phase 2; the final collector "
+    "sits behind //go:build ffmpeg and predates the freeze; the final collector "
     "reads every non-test source file regardless of build constraints.",
     "animation",
     "func FFmpegAvailable",
@@ -416,7 +416,7 @@ _add(
     "audit-scope",
     "Native Skia surface parsed only by the final collector, which merges the "
     "unavailable-backend stub type with its skiacgo/skiagpu implementation. The "
-    "GPU accessors are Phase 1 work, which closed alongside the baseline.",
+    "GPU accessors landed with the baseline itself.",
     "backends/skia",
     "method Renderer.BridgeInfo",
     "method Renderer.ColorType",
@@ -458,8 +458,9 @@ for _backend in ("backends/agg", "backends/gobasic", "backends/skia"):
     )
 
 _add(
-    "post-phase2",
-    "Added by Phase 2 follow-up 1, which routed the 2D and 3D contour paths "
+    "post-freeze-addition",
+    "Added after the freeze by the contour unification, which routed the 2D "
+    "and 3D contour paths "
     "through one levels-autoscaling scalar-map resolver. plot3d cannot reach "
     "core's unexported helpers, so the shared pair had to be exported.",
     "core",
@@ -468,8 +469,9 @@ _add(
 )
 
 _add(
-    "post-phase2",
-    "Added by Phase 3.3.4, which needed a Scale outside the transform package "
+    "post-freeze-addition",
+    "Added after the freeze by the affine-flattening fix, which needed a Scale "
+    "outside the transform package "
     "to declare that its forward map is affine so AsAffine can flatten the "
     "data->pixel graph into a single matrix. core.invertedScale is the first "
     "implementor; without it matshow's inverted y axis fell back to staged "
@@ -519,7 +521,7 @@ def generate() -> bytes:
                     "package": package,
                     "id": symbol,
                     "category": "tiered-delete",
-                    "note": "Deleted by the Phase 2.1 tiering decision.",
+                    "note": "Deleted by the tiering decision.",
                 }
             )
             continue
@@ -534,7 +536,7 @@ def generate() -> bytes:
                     "package": package,
                     "id": symbol,
                     "category": "tiered-demote",
-                    "note": "Demoted to the consumer-owned package by the Phase 2.1 "
+                    "note": "Demoted to the consumer-owned package by the tiering "
                     "tiering decision.",
                 }
             )

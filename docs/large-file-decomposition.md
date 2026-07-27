@@ -1,7 +1,7 @@
 # Large File Decomposition
 
-This note records the baseline for L1 in `PLAN.md`: split the largest
-source and test files into focused units without changing behavior.
+This note records the baseline for the decomposition effort: split the
+largest source and test files into focused units without changing behavior.
 
 Run the audit with `just large-file-audit`:
 

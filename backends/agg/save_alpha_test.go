@@ -12,8 +12,8 @@ import (
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
-// TestAggSavePNGSemiTransparentOverTransparent guards PLAN.md D5: a
-// semi-transparent fill over a transparent surface must save to PNG with the
+// TestAggSavePNGSemiTransparentOverTransparent guards straight-alpha PNG
+// output: a semi-transparent fill over a transparent surface must save to PNG with the
 // original straight-alpha RGB, only the alpha reduced. The AGG buffer holds
 // straight (non-premultiplied) alpha; SavePNG must not let png.Encode apply
 // premultiplied->straight conversion (which overflows when value>alpha and
@@ -129,8 +129,8 @@ func TestAggClippedFillOverWhiteTransparent(t *testing.T) {
 
 // TestAggPartialFillOverWhiteTransparent draws a semi-transparent sub-rectangle
 // over a white-transparent clear and confirms the isolated renderer keeps the
-// pure straight color. (The report-figure pipeline still mattes such fills —
-// PLAN.md D5b — but that divergence is not reproducible at this layer.)
+// pure straight color. (The report-figure pipeline still mattes such fills,
+// but that divergence is not reproducible at this layer.)
 func TestAggPartialFillOverWhiteTransparent(t *testing.T) {
 	r, err := New(600, 400, render.Color{R: 1, G: 1, B: 1, A: 0})
 	if err != nil {

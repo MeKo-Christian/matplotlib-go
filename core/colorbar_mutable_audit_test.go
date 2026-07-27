@@ -215,9 +215,9 @@ func TestColorbarFixtureLedgerIsDocumented(t *testing.T) {
 }
 
 func TestColorbarPlacementAndFormatterBreadthMilestoneIsClosed(t *testing.T) {
-	// The per-milestone PLAN.md markers were retired when the roadmap was
-	// restructured (completed phases now live in git history); the docs
-	// remain the guarded surface.
+	// The per-milestone roadmap markers were retired when the roadmap was
+	// restructured (that history lives in git now); the docs remain the
+	// guarded surface.
 	docData, err := os.ReadFile(filepath.Join("..", "docs", "matplotlib-migration-notes.md"))
 	if err != nil {
 		t.Fatalf("read migration notes: %v", err)

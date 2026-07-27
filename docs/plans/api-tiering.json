@@ -5567,7 +5567,7 @@
       "package": "core",
       "id": "method Axes.BarUnits",
       "disposition": "delete",
-      "rationale": "Unit conversion belongs in the primary plotting entry point under the Phase 2 error convention.",
+      "rationale": "Unit conversion belongs in the primary plotting entry point under the error-returning convention.",
       "replacement": "Axes.Bar with unit-capable input returning (*Bar2D, error)."
     },
     {
@@ -5709,7 +5709,7 @@
       "package": "core",
       "id": "method Axes.FillBetweenUnits",
       "disposition": "delete",
-      "rationale": "Unit conversion belongs in the primary plotting entry point under the Phase 2 error convention.",
+      "rationale": "Unit conversion belongs in the primary plotting entry point under the error-returning convention.",
       "replacement": "Axes.FillBetween with unit-capable input returning (*Fill2D, error)."
     },
     {
@@ -5983,7 +5983,7 @@
       "package": "core",
       "id": "method Axes.PlotUnits",
       "disposition": "delete",
-      "rationale": "Unit conversion belongs in the primary plotting entry point under the Phase 2 error convention.",
+      "rationale": "Unit conversion belongs in the primary plotting entry point under the error-returning convention.",
       "replacement": "Axes.Plot with unit-capable input returning (*Line2D, error)."
     },
     {
@@ -6050,7 +6050,7 @@
       "package": "core",
       "id": "method Axes.ScatterUnits",
       "disposition": "delete",
-      "rationale": "Unit conversion belongs in the primary plotting entry point under the Phase 2 error convention.",
+      "rationale": "Unit conversion belongs in the primary plotting entry point under the error-returning convention.",
       "replacement": "Axes.Scatter with unit-capable input returning (*Scatter2D, error)."
     },
     {

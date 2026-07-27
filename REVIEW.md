@@ -157,11 +157,11 @@ This is a serious, high-fidelity port, not a facade. The numerically hard cores 
 
 **Date:** 2026-07-01
 **Reference:** matplotlib 3.10.9 (`third_party/matplotlib`), FreeType 2.6.1, DejaVu Sans 2.35
-**Method:** Three parallel subagent audits — (1) defaults vs `matplotlibrc`/`rcsetup.py` + test/showcase coverage + tolerance analysis, (2) confession-marker hunt + side-by-side algorithm diffs across 12 subsystems, (3) public-API idiomaticity + code-organization critique. Findings already tracked by the 2026-06-30 review (Phases 14–18) were excluded up front. Every claim is anchored to `file:line`; the headline claims (linewidth default, colormap race, hist auto-binning, `io.Writer` absence) were independently re-verified against source.
+**Method:** Three parallel subagent audits — (1) defaults vs `matplotlibrc`/`rcsetup.py` + test/showcase coverage + tolerance analysis, (2) confession-marker hunt + side-by-side algorithm diffs across 12 subsystems, (3) public-API idiomaticity + code-organization critique. Findings already tracked by the 2026-06-30 review were excluded up front. Every claim is anchored to `file:line`; the headline claims (linewidth default, colormap race, hist auto-binning, `io.Writer` absence) were independently re-verified against source.
 
-**Verdict:** The rendering core keeps its five-star fidelity — this round found no new "facade" ring. What it found instead is (a) a small set of **wrong or dead defaults** on the most-used entry points, (b) a handful of **new algorithmic divergences** in autoscale/quiver/hist/dates/pie, (c) large rcParams families that are **not even parsed**, and (d) a public API that is a fairly literal **Python transliteration rather than idiomatic Go** — warn-and-continue instead of errors, pointer-optionals, string enums, zero `io.Writer`, and a 60k-line `core/` god-package holding half the frozen surface. Resolution is tracked as PLAN.md fold-ins to Phases 16–18 plus new Phases 19–21.
+**Verdict:** The rendering core keeps its five-star fidelity — this round found no new "facade" ring. What it found instead is (a) a small set of **wrong or dead defaults** on the most-used entry points, (b) a handful of **new algorithmic divergences** in autoscale/quiver/hist/dates/pie, (c) large rcParams families that are **not even parsed**, and (d) a public API that is a fairly literal **Python transliteration rather than idiomatic Go** — warn-and-continue instead of errors, pointer-optionals, string enums, zero `io.Writer`, and a 60k-line `core/` god-package holding half the frozen surface. The sections below group the findings by the kind of fix each needs.
 
-## 1. Default-value mismatches (Phase 19)
+## 1. Default-value mismatches
 
 - **HIGH — `lines.linewidth` is both wrong and dead.** `style/style.go:333` defaults `RC.LineWidth` to **1.25** (matplotlib: **1.5**, `matplotlibrc:116`), and `core/plot.go:87` hardcodes `lineWidth := 1.5` without ever reading `RC.LineWidth` — the only consumer is the scatter edge-width fallback (`core/scatter.go:415`). Net: `lines.linewidth` in an `.mplstyle` is a no-op for line plots.
 - **MED — hist default bins.** `core/histogram.go:285` + `core/plot.go:929` default to auto-selection (Sturges for n<1000, else Scott); matplotlib defaults to a fixed **10** (`hist.bins`, `_axes.py:7033`). Every default histogram has a different bar count.
@@ -170,7 +170,7 @@ This is a serious, high-fidelity port, not a facade. The numerically hard cores 
 - **MED gap — `plot()` has no linestyle field.** `PlotOptions` exposes only `Dashes []float64` (`core/plot.go:21`); `lineStyleToDashes` is reachable only via the prop cycle, so the most common mpl idiom (`linestyle="--"`) has no direct spelling.
 - **Verified correct (regression documentation):** DPI 100, figsize 6.4×4.8, font.size 10/title 12, major tick geometry (3.5/0.8/0.6/pad 3.5/direction out), grid `#b0b0b0` lw 0.8, `axes.axisbelow="line"` z=1.5, legend framealpha 0.8/frameon/edgecolor 0.8, `errorbar.capsize 0`, `axes.unicode_minus` (U+2212 conversion at `ticker/formatters.go:447`), and the full dash-pattern/cap/join set — dashed `[3.7,1.6]`, dashdot `[6.4,1.6,1,1.6]`, dotted `[1,1.65]`, width-scaled, solid cap projecting / dashed cap butt, join round (`core/contour_styles.go:26`, `core/line.go:339`).
 
-## 2. New algorithmic divergences (Phase 17 fold-in)
+## 2. New algorithmic divergences
 
 - **BUG — quiver default scale.** `core/vector_field_quiver.go:346-353` uses `scale = mean/(0.18·min(W,H)/√N)`; matplotlib uses `1.8·amean·sn/span` with `sn = clip(√N, 8, 25)` (`quiver.py:681`). Default arrow lengths do not match.
 - **BUG — autoscale margins in data space.** `core/axes_autoscale.go:92-93` pads `span·margin` in data coordinates; matplotlib pads in transform space and inverse-maps (`axes/_base.py:3064-3070`) — wrong padding on every log/symlog axis. Also: non-positive limits are not dropped before log autoscale (`_base.py:3017`), and zero-span expansion uses `span=1` + linear margin instead of `nonsingular(expander=0.05·|v|)`.
@@ -178,12 +178,12 @@ This is a serious, high-fidelity port, not a facade. The numerically hard cores 
 - **MISSING — spine positions.** Only boundary + data modes exist (`core/axis_types.go:57-62`); matplotlib's `set_position(('outward', pts))` and `(('axes', frac))` (`spines.py`) — the standard detached/centered-spine idioms — are absent.
 - **BUG — AutoDateLocator DAILY table.** `{1,2,4,7,14}` (`dates/date_tick.go:648`) vs matplotlib `{1,2,3,7,14,21}`; the broader rrule alignment stays a simplified `align()` (documented divergence).
 - **BUG — pie framing.** Axis window is radius-scaled (`padding := Radius*1.25`, `core/pie.go:245`); matplotlib fixes it at `±1.25 + center` regardless of radius.
-- **Hist internals (with the Phase 19 default fix):** 'auto' should be numpy's `min(fd, sturges)` bin width, not an n<1000 Sturges/Scott switch (`core/histogram.go:285-289`); FD IQR uses nearest-rank instead of interpolated percentiles (`:375`); Scott uses ddof=1 instead of numpy's ddof=0 (`:352-367`).
+- **Hist internals (assuming the default-bins fix above):** 'auto' should be numpy's `min(fd, sturges)` bin width, not an n<1000 Sturges/Scott switch (`core/histogram.go:285-289`); FD IQR uses nearest-rank instead of interpolated percentiles (`:375`); Scott uses ddof=1 instead of numpy's ddof=0 (`:352-367`).
 - **APPROXIMATE — constrained_layout edges.** Nested-mosaic grids are not modeled (`core/layoutgrid.go:239`) and outside legend/colorbar space is reserved approximately (`:448`).
 - **Doc rot:** `plot3d/contour.go:10` still claims a "placeholder wireframe contour"; the code beneath runs a real projected contour.
 - **Verified faithful (no action):** legend `loc="best"` (full `_find_best_position` candidate loop + 4-term badness), violin KDE (Scott/Silverman exact), imshow (all 18 AGG filters + the `antialiased` auto-select), `ArrowStyle`/`ConnectionStyle` registries (complete), the ~40-marker table + fillstyles (geometric-clip mechanism, equivalent output), pie defaults, hexbin (gridsize/extent/mincnt/marginals/reduce_C).
 
-## 3. rcParams not parsed at all (Phase 16 fold-in)
+## 3. rcParams not parsed at all
 
 Beyond the 51 known parsed-but-unhonored keys (`style/unhonored.go`), whole families never reach the `RC` struct — they land silently in `report.Unsupported` (`style/mplstyle.go:977`), which nothing inspects by default:
 
@@ -191,17 +191,17 @@ Beyond the 51 known parsed-but-unhonored keys (`style/unhonored.go`), whole fami
 - **MED:** patches (no `PatchRC` exists at all); `font.weight`/`style`/`variant`/`stretch` + family lists; the artist-default keys `errorbar.capsize`, `hist.bins`, `scatter.marker`, `scatter.edgecolors`; `contour.*`.
 - **LOW:** `path.snap`/`path.effects`, `pcolor.shading`, `text.hinting`/`antialiased`, `polaraxes.grid`, `axes3d.*`, `{x,y}axis.labellocation`, `pgf.*`.
 
-## 4. Zero-fixture public APIs (Phase 18 fold-in)
+## 4. Zero-fixture public APIs
 
 Implemented on `*Axes` but exercised by no parity case and no example: **`PSD`, `Specgram`, `Cohere`, `CSD`** (HIGH — the whole spectral family with real Welch/detrend/window numerics behind it); `LogLog`/`SemilogX`/`SemilogY`, `SecondaryYAxis`, `TwinY` (MED); `AxLineSlope`, single-series `BoxPlot` (LOW).
 
-## 5. Loose-tolerance / visual-QA candidates (Phase 21)
+## 5. Loose-tolerance / visual-QA candidates
 
 - **Effectively disabled gates:** `widgets_gallery` and `animation_gallery` run with `MinPSNR 10 / MaxMeanAbs 95` — 95/255 mean absolute difference passes.
 - **MaxRMSE ≥ 4 queue (~23 cases):** `skewt_basic` 5.0, `annotation_legend_offsetbox_gallery` 5.0, `text_bbox_styles` 5.0, `text_layout_gallery` 5.0, `mathtext_accents` 5.0, `projection_toolkit_gallery` 4.9, `specialty_depth` 4.8, `formatter_log_mathtext_labels` 4.8, `named_colors` 4.8, `animation_subplots_frame` 4.5, `stem_horizontal` 4.5, `mathtext_fractions` 4.5, `lognorm_imshow` 4.4, `colorbar_variants_gallery` 4.4, `stem_plot` 4.3, `errorbar_capthick` 4.2, `patch_style_matrix` 4.2, `text_annotation_matrix` 4.2, `scatter_gallery` 4.0, `animation_line_frame`/`animation_scatter_frame` 4.0, `mplot3d_stem3d` 4.0, `scale_logit_ticks` 4.0, `mathtext_inline_labels` 4.0.
 - **Dense galleries where RMSE alone is a weak gate:** `mathtext_gallery` (PSNR 16 / MeanAbs 35), `image_variants_gallery`, `triangulation_gallery`, `pcolormesh_gouraud`.
 
-## 6. API idiomaticity (Phase 20)
+## 6. API idiomaticity
 
 - **Split error convention.** Primary plot methods return the artist only and swallow invalid input via `diag.Warnf` (16 sites; `core/plot.go:263,755,821,896,1016`) — no programmatic failure detection — while the `*Units` variants return `(T, error)`. Two conventions for the same operations.
 - **Options ergonomics.** 83 `…Options` structs with **408 pointer-to-primitive optional fields** (callers declare locals just to take addresses); variadic `opts ...FooOptions` consumed first-only (a second struct is silently dropped, `core/plot.go:73`); string-typed enums (`Orientation`, `LineStyle`, `Location`, `Where`, `Colormap`, and `Interpolation *string` at `core/image.go:68`) next to the existing typed-constant pattern (`SignalSpectrumScale`).
@@ -210,7 +210,7 @@ Implemented on `*Axes` but exercised by no parity case and no example: **`PSD`, 
 - **DATA RACE.** `color/colormap.go:388` `RegisterColormap` writes the package-global `colormaps` map with no mutex while draws read it concurrently. Figure/Axes concurrency is otherwise undocumented (one concurrency comment in all of `core/`).
 - pyplot's global current-figure registry is mutex-guarded (fine), but its errors are discarded in examples (`_ = pyplot.SCA(...)`).
 
-## 7. Code organization (Phase 20)
+## 7. Code organization
 
 - **`core/` god-package:** 60,369 lines / 173 files / **1,529 exported symbols = 51% of the frozen public API**, bundling figure/axes/artists, the full 3D subsystem (98 symbols), locators/formatters/date ticks (~3,162 lines), units, the mathtext bridge, interactive widgets/selectors (~2.5k lines), contour, colorbar, legend, and layout. Split candidates: `plot3d`, `ticker`, `widgets` — all break import paths, so they must precede the v1.0 freeze.
 - **Duplication:** alpha-baking inlined ~62×, the `opts[0]` unpack dozens×, scalar-map resolution duplicated between `Scatter2D` and `Collection`.
@@ -221,7 +221,7 @@ Implemented on `*Axes` but exercised by no parity case and no example: **`PSD`, 
 
 - The verified-faithful subsystems above (kept as regression documentation).
 - A full rrule-based `AutoDateLocator` port (low parity yield; the DAILY-table fix suffices).
-- Nested-mosaic constrained_layout (Phase 17 triage item; expected outcome "documented limitation").
-- 309-param rcParams parse completeness (Phase 16 parses by parity impact; `path.snap`, `text.hinting`, `polaraxes.grid`, `axes3d.*` become documented non-goals).
+- Nested-mosaic constrained_layout (triage item; expected outcome "documented limitation").
+- 309-param rcParams parse completeness (parsing is prioritized by parity impact; `path.snap`, `text.hinting`, `polaraxes.grid`, `axes3d.*` become documented non-goals).
 - The mplot3d depth-buffered pipeline (pre-existing documented limitation; unchanged).
-- pyplot examples discarding errors (dissolves into Phase 20's error-convention change).
+- pyplot examples discarding errors (dissolves into the error-convention change above).

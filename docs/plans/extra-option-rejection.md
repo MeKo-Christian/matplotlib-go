@@ -1,6 +1,7 @@
-# Phase 2.3: rejecting extra option values
+# Rejecting extra option values
 
-Phase 2.3 requires that "extra option sets must be impossible or rejected". The
+The options model requires that "extra option sets must be impossible or
+rejected". The
 final options model delivers the _impossible_ half by removing the variadic
 tail. This document covers the intermediate safety step that keeps every current
 signature and makes the misuse _rejected_ today.
@@ -32,7 +33,7 @@ all built on the same `*TooManyError`:
 | `optarg.Optional(call, opts)` | entry points that merge options over prepared defaults, so "absent" must stay distinct from "zero" | panics with `*TooManyError`    |
 
 The split is deliberate. Rejected _input_ stays on the error channel, matching
-the convention adopted by the first Phase 2.3 bullet. An extra option value is
+the convention adopted for the error contract. An extra option value is
 not input: it cannot arrive from plot data, because it requires two option
 literals written at the call site. That makes it a caller bug, and the same bug
 the final options model will reject at compile time — so the non-error entry
@@ -87,7 +88,7 @@ list and are untouched:
 ## Follow-on work
 
 This step does not choose the final options representation; that is the next
-Phase 2.3 sub-bullet. When it lands, the variadic tails disappear and
+follow-up. When it lands, the variadic tails disappear and
 `internal/optarg` disappears with them. Until then it is the only place the
 "at most one" rule is written down.
 

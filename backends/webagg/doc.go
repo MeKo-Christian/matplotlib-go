@@ -17,6 +17,4 @@
 // in `static/`. Hosts are free to point the [Server] at a different
 // document root; the wire protocol does not depend on the bundled
 // client.
-//
-// Reference: PLAN.md §4.3 (Web Interactive Backend).
 package webagg

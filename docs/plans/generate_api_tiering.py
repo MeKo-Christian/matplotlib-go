@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the exhaustive Phase 2 public-API tiering artifact."""
+"""Generate the exhaustive public-API tiering artifact."""
 
 from __future__ import annotations
 
@@ -75,19 +75,19 @@ INTROSPECTION_DELETE = {
 
 UNITS_DELETE = {
     "method Axes.BarUnits": (
-        "Unit conversion belongs in the primary plotting entry point under the Phase 2 error convention.",
+        "Unit conversion belongs in the primary plotting entry point under the error-returning convention.",
         "Axes.Bar with unit-capable input returning (*Bar2D, error).",
     ),
     "method Axes.FillBetweenUnits": (
-        "Unit conversion belongs in the primary plotting entry point under the Phase 2 error convention.",
+        "Unit conversion belongs in the primary plotting entry point under the error-returning convention.",
         "Axes.FillBetween with unit-capable input returning (*Fill2D, error).",
     ),
     "method Axes.PlotUnits": (
-        "Unit conversion belongs in the primary plotting entry point under the Phase 2 error convention.",
+        "Unit conversion belongs in the primary plotting entry point under the error-returning convention.",
         "Axes.Plot with unit-capable input returning (*Line2D, error).",
     ),
     "method Axes.ScatterUnits": (
-        "Unit conversion belongs in the primary plotting entry point under the Phase 2 error convention.",
+        "Unit conversion belongs in the primary plotting entry point under the error-returning convention.",
         "Axes.Scatter with unit-capable input returning (*Scatter2D, error).",
     ),
 }

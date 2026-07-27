@@ -22,5 +22,4 @@ showcase examples — their bodies live only under `test/parity/<id>/plot.go`.
 A few legacy topic-named directories (`examples/lines/`, `examples/scatter/`,
 etc.) still exist as `package main` runners and as host packages for
 delegating wrappers (e.g. `examples/arrays_showcase` imports
-`examples/arrays/showcase`). Inlining and retiring those is tracked in
-`PLAN.md`.
+`examples/arrays/showcase`). Inlining and retiring those is still open.

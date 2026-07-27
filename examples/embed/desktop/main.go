@@ -1,5 +1,5 @@
 // Command desktop is an embedding example for the Gio-backed desktop
-// interactive backend (PLAN.md §4.2). It opens a window showing the
+// interactive backend. It opens a window showing the
 // basic_line example, wires the canvas to AGG, prints coordinate
 // hovers via the toolbar status line, and supports pan / zoom /
 // scroll-zoom out of the box.

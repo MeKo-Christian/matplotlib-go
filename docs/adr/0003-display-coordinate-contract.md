@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (Phase 12.4G).
+Accepted.
 
 ## Context
 

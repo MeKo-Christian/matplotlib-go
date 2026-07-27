@@ -1,7 +1,7 @@
-# Phase 4 Changelog Draft
+# Changelog Draft
 
-This fragment records the coordinated pre-v1 API breaks made during Phase 2.
-Phase 2 is closed, so the break list below is complete: it covers the package
+This fragment records the coordinated pre-v1 API breaks. That work is closed,
+so the break list below is complete: it covers the package
 split, the error convention, the options model, and the mutable-field cleanup.
 It still needs release framing and a version heading before it seeds the v1.0
 `CHANGELOG.md`; it is not a release announcement.
@@ -161,15 +161,17 @@ It still needs release framing and a version heading before it seeds the v1.0
 - Re-froze the public API after the package moves and intentional deletions.
 - Remapped parity-catalog source ownership to the new packages without changing
   render behavior or golden images.
-- Took the final Phase 2 freeze after the error, options, and mutable-field
+- Took the final API freeze after the error, options, and mutable-field
   work: `test/testdata/public_api/stable_public_api.json` held 3,176 symbols
-  across 29 packages, and that artifact is the surface Phase 3 and Phase 4 are
+  across 29 packages, and that artifact is the surface the parity pass and the
+  release are
   measured against. Regenerating it, the parity-status document, and the
   public-surface classifications produced no diff, so the committed artifacts
-  already matched the code when Phase 2 closed. The Phase 2 follow-ups then
-  added the two shared contour scalar-map helpers, and Phase 3.3.4 added the
+  already matched the code when the freeze was taken. The follow-ups then
+  added the two shared contour scalar-map helpers, and the affine-flattening
+  fix added the
   `transform.AffineScale`/`IsAffineScale` pair, bringing the freeze to 3,180.
-- Reconciled that freeze against the Phase 2.1 tiering decisions symbol by
+- Reconciled that freeze against the tiering decisions symbol by
   symbol in `docs/plans/api-freeze-delta.{md,json}`. All 19 `delete` rows are
   absent and the one `demote` row landed in `backends`; every one of the 402
   removed and 480 added names carries a category and, where it is a rename or a

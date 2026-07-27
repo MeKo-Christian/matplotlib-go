@@ -1,4 +1,4 @@
-# Phase 2.3 — exported mutable fields vs. setter duplication
+# Exported mutable fields vs. setter duplication
 
 Companion to [`options-model.md`](options-model.md). That document
 settled how options _enter_ an artist; this one settles who may _mutate_ an
