@@ -83,7 +83,7 @@ the new figure save surface is used by examples; the API is re-frozen; and all
 goldens remain byte-identical to the pre-break baseline.
 
 Completed 2026-07-26. Every golden and Matplotlib-reference fixture stayed
-byte-identical through the whole phase. The final freeze is 3,180 symbols across
+byte-identical through the whole phase. The final freeze is 3,181 symbols across
 29 packages in `test/testdata/public_api/stable_public_api.json`; that artifact
 is the surface Phases 3 and 4 are measured against, and
 `docs/plans/api-freeze-delta.md` reconciles every symbol of it against the
@@ -115,15 +115,15 @@ when" criteria above. Both are now closed.
 - [x] Reconcile the frozen-surface symbol delta against the tiering
       classification. Walked all 402 removed and 480 added names; the residue is
       empty. All 19 `delete` rows are gone and the one `demote` row landed in
-      `backends`. The growth (3,102 → 3,180) is 73 symbols of field-to-name
+      `backends`. The growth (3,102 → 3,181) is 73 symbols of field-to-name
       trades the audit only counts in one direction, 30 symbols of pre-existing
       API the baseline collector never parsed (build-tagged FFmpeg and native
       Skia), 19 helpers the package split forced open, follow-up 1's two
-      contour helpers, and Phase 3.3.4's `transform.AffineScale`/`IsAffineScale`
-      pair. Three previously unrecorded findings: `core.WidgetArtist`
+      contour helpers, 3.3.4's `transform.AffineScale`/`IsAffineScale` pair, and
+      3.3.5's `core.Figure.CanvasSize`. Three previously unrecorded findings: `core.WidgetArtist`
       and `Axes.AddWidget` were deleted while classified `keep` (now in the
       migration notes), `Renderer.Image` kept its symbol id while changing
-      meaning, and the freeze is 3,180 rather than 3,176. Recorded in
+      meaning, and the freeze is 3,181 rather than 3,176. Recorded in
       `docs/plans/api-freeze-delta.{md,json}` and enforced by
       `TestPublicAPIFreezeDeltaIsReconciled`, which pins both inputs by hash so
       the delta cannot grow silently before Phase 4 tags the surface.
@@ -222,9 +222,9 @@ mentioned (`basic_line`) carry real divergences. Findings:
       per case from post-fix measurements.
 - [ ] **3.3 Fix the four shift families.** Each is a candidate shared root
       cause; confirm against `third_party/matplotlib` 3.10.9 and fix in the core
-      library, not the fixtures. **6 of 14 fixed, and a seventh largely fixed,
-  2026-07-27**; the audit's shift families are down from 14 cases to 8 and its
-  pixel-identical count up from 21 to 26. First pass (`basic_line` and
+      library, not the fixtures. **7 of 14 fixed, and an eighth largely fixed,
+  2026-07-27**; the audit's shift families are down from 14 cases to 7 and its
+  pixel-identical count up from 21 to 27. First pass (`basic_line` and
       `basic_line_labels` are now pixel-identical to Matplotlib;
       `animation_subplots_frame` went from 178 differing pixels to 38, largest
       cluster 70 to 2). Two root causes, both the same mistake — a tolerance
@@ -330,15 +330,49 @@ mentioned (`basic_line`) carry real divergences. Findings:
         Tolerances ratcheted 1.608/25/25 to 0.1/4/4; verified the ratchet bites
         by restoring the pre-fix golden (fails at MaxDiff=241). No other golden
         moved — `-update-golden` across all 190 cases changed only this one.
-  - [ ] **3.3.5 `specgram_psd` and `quad_mesh`.** Both are mesh/image-backed
-        rather than text; group them only if the probe says so. `specgram_psd`'s
-        shift clusters are three 1-px-wide vertical strips at x=481 that `dx=+1`
-        cancels exactly — a mesh column edge, not text.
-  - [ ] **3.3.8 The remaining `mathtext_gallery` cluster** (64 px, one 10x11
-        glyph at x[638:648] y[176:187], family `+0-1` after 3.3.3). It is the
-        last shift residual in the mathtext family and did not respond to any of
-        the three fixes above, so it has a fourth cause.
-  - [ ] **3.3.6 The `+1+0` image pair**: `colormap_diverging`, `image_heatmap`.
+  - [x] **3.3.5 `specgram_psd` and `quad_mesh`.** Done 2026-07-27. The probe
+        said they are **not** one family, so they were split: `quad_mesh` is
+        fixed and pixel-identical, `specgram_psd` moved to 3.3.6.
+
+        `quad_mesh` was never a mesh case. Its entire 70-px residual is the
+        `"0"` x tick label — the glyph bitmap is byte-identical, drawn one pixel
+        left. Root cause: **matplotlib's figure pixel size is derived, not
+        given.** A figure asked for in pixels is `figsize=(px/dpi, px/dpi)`, and
+        the pixel extent is the product back: `9.8*100 == 980.0000000000001`,
+        not 980. `core.NewFigure` cast the integer directly, so `Axes.layout`
+        (`SizePx * RectFraction`) put the axes left edge at exactly 98.0 where
+        matplotlib has 98.00000000000001. The centred label origin then landed
+        on exactly 94.5 against matplotlib's 94.50000000000001, and the AGG text
+        blit rounds ties-to-even: 94 against 95. Same species as 3.3.1 and
+        3.3.4 — a tie in the port that is one ULP past the tie in matplotlib.
+
+        `NewFigure` now derives `SizePx` through `figureSizePx(w, h, rc.DPI)`.
+        Blast radius is bounded by arithmetic: only sizes that are not exact
+        multiples of the dpi are affected, and across the whole repo that is
+        980x620, 980x720 and 930x340 — 640, 360 and 620 all round-trip exactly.
+        `-update-golden` over all 190 cases moved exactly three, all **closer**
+        to matplotlib: `quad_mesh` 70 differing pixels to **0** (RMSE 1.347 to
+        0.497; family `shift -1+0` to `identical`), `mixed_collection` 538 to
+        468 with its largest cluster 70 to 10 (RMSE 1.575 to 0.956 — the same
+        tick label), `clip_path_batch` 56,880 to 56,810 (RMSE 1.430 to 0.691).
+        The audit's pixel-identical count is up 26 to 27 and its shift families
+        down 8 to 7. Tolerances ratcheted on all three; verified the
+        `quad_mesh` ratchet bites by restoring the pre-fix golden.
+
+        Two consequences worth recording. The derived size can sit an ULP
+        *below* the requested integer (402 px at 100 dpi is 401.99999999999994),
+        so truncating it to size a canvas allocates a pixel short; the new
+        `Figure.CanvasSize` rounds instead and is the one place that decision
+        lives. Matplotlib itself truncates here — `figsize=(4.02, 2)` at 100 dpi
+        really does save a 401-px PNG — but no fixture depends on that and
+        copying it would change committed image dimensions for no parity gain.
+        `CanvasSize` is one new exported symbol, so the frozen API audit and the
+        freeze-delta artifact were regenerated (3,180 to 3,181). The
+        Go-authored `usetex_golden/basic.png` also moved, by a clean +1 px on
+        every cluster: its figure is 220 wide and 220/100*100 is
+        220.00000000000003, so the centred TeX box crossed the same tie.
+  - [ ] **3.3.6 The image nearest-resample boundaries**: `colormap_diverging`,
+        `image_heatmap`, `specgram_psd`.
         In `colormap_diverging` the entire residual is one 258-px-tall column at
         an interior cell boundary, not the axes edge. A first attempt failed and
         was reverted: reproducing AGG's 1/256 fixed-point span interpolation in
@@ -347,7 +381,24 @@ mentioned (`basic_line`) carry real divergences. Findings:
         `colorbar_composition` from 2563 to 2821 differing pixels, so these two
         do not reach the raster nearest-neighbour path that was changed. Find
         the path they do take before trying again.
+
+        `specgram_psd` joined this group from 3.3.5, where the probe showed it
+        is the same defect rather than the mesh-edge case the roadmap had
+        guessed. Its 435-px residual is 4 clusters: one 353-px horizontal row at
+        y=281 spanning x[81:434] (`+0+1`) and two 1-px-wide vertical strips at
+        x=481 (`+1+0`). All three sit on *source-cell boundaries of the
+        spectrogram image*: at x=481 the port still emits the left cell's colour
+        where matplotlib has already switched to the right cell's, and
+        identically across y=281. Only 2 of the image's ~86 cell boundaries
+        flip, which is what a tie in the dest→src index map looks like rather
+        than a systematic off-by-one. (The earlier roadmap text called these
+        "three 1-px-wide vertical strips … a mesh column edge"; the dominant
+        cluster is in fact the horizontal row, and nothing here is a mesh edge.)
   - [ ] **3.3.7 `transform_coordinates`** (`+2-1`, the only two-axis shift).
+  - [ ] **3.3.8 The remaining `mathtext_gallery` cluster** (64 px, one 10x11
+        glyph at x[638:648] y[176:187], family `+0-1` after 3.3.3). It is the
+        last shift residual in the mathtext family and did not respond to any of
+        the three fixes above, so it has a fourth cause.
 - [ ] **3.4 Investigate the localized non-shift divergences.** Cases whose
       residual is confined but not a clean offset, worst first: `line2d_markers`,
       `stat_variants`, `annotation_legend_offsetbox_gallery`, `imshow_clipped`

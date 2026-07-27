@@ -146,7 +146,7 @@ func normalizeOutputFormat(format string) string {
 }
 
 func (f *Figure) newOutputRenderer(ext string) (render.Renderer, error) {
-	width, height := int(f.SizePx.X), int(f.SizePx.Y)
+	width, height := f.CanvasSize()
 	background := f.RC.FigureBackground()
 	if !f.RC.Figure.FrameOn {
 		background = render.Color{}

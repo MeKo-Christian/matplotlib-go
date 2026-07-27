@@ -185,8 +185,7 @@ func main() {
 	}
 
 	fig := plot()
-	w := int(fig.SizePx.X)
-	h := int(fig.SizePx.Y)
+	w, h := fig.CanvasSize()
 	backend, err := selectExampleBackend(ext, exampleRequiredCapabilities())
 	if err != nil {
 		log.Fatalf("renderer: %v", err)

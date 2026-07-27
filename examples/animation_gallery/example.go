@@ -153,9 +153,10 @@ func Render() image.Image {
 }
 
 func newAnimationCanvas(fig *core.Figure) (canvas.FigureCanvas, error) {
+	w, h := fig.CanvasSize()
 	cnv, _, err := backends.NewCanvas("agg", backends.Config{
-		Width:      int(fig.SizePx.X),
-		Height:     int(fig.SizePx.Y),
+		Width:      w,
+		Height:     h,
 		Background: render.Color{R: 1, G: 1, B: 1, A: 1},
 		DPI:        DPI,
 	}, fig, nil)

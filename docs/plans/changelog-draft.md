@@ -170,7 +170,9 @@ It still needs release framing and a version heading before it seeds the v1.0
   already matched the code when the freeze was taken. The follow-ups then
   added the two shared contour scalar-map helpers, and the affine-flattening
   fix added the
-  `transform.AffineScale`/`IsAffineScale` pair, bringing the freeze to 3,180.
+  `transform.AffineScale`/`IsAffineScale` pair, bringing the freeze to 3,180;
+  the figure-size fidelity fix then added `core.Figure.CanvasSize`, bringing it
+  to 3,181.
 - Reconciled that freeze against the tiering decisions symbol by
   symbol in `docs/plans/api-freeze-delta.{md,json}`. All 19 `delete` rows are
   absent and the one `demote` row landed in `backends`; every one of the 402

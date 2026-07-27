@@ -299,11 +299,11 @@ var cases = []Case{
 	{ID: "colorbar_extendfrac", Topic: "colorbar", Title: "Colorbar Extend Fraction", FixtureOnly: true, MaxMeanAbs: 2.0, MaxRMSE: 1.6},
 	{ID: "colorbar_symlog_ticks", Topic: "colorbar", Title: "SymLogNorm Colorbar", FixtureOnly: true, MaxMeanAbs: 2.0, MaxRMSE: 1.6},
 	{ID: "large_scatter", Topic: "raster", Title: "Large Scatter Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathcollectionbatch"}, MaxMeanAbs: 0.5, MaxRMSE: 2.7},
-	{ID: "mixed_collection", Topic: "raster", Title: "Mixed Path Collection", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathcollectionbatch"}, SVGGoldenFamily: "collection", GoBasicSmokeFamily: "collection", MaxMeanAbs: 0.5, MaxRMSE: 1.7},
+	{ID: "mixed_collection", Topic: "raster", Title: "Mixed Path Collection", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathcollectionbatch"}, SVGGoldenFamily: "collection", GoBasicSmokeFamily: "collection", MaxMeanAbs: 0.06, MaxRMSE: 1.2, MaxDiffPixels: 585, MaxLargestCluster: 13},
 	{ID: "mixed_raster_vector", Topic: "raster", Title: "Mixed Raster Vector Output", Description: "A polar mixed-output example with rasterized dense scatter points and vector-preserved line, text, axes, legend, SVG, and PDF artifacts.", Showcase: true, Width: 640, Height: 640, SVGGoldenFamily: "mixed_raster", MaxRMSE: 1.608},
-	{ID: "quad_mesh", Topic: "raster", Title: "Quad Mesh Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"quadmeshbatch"}, MaxMeanAbs: 1.0, MaxRMSE: 1.6, MaxDiffPixels: 88, MaxLargestCluster: 88},
+	{ID: "quad_mesh", Topic: "raster", Title: "Quad Mesh Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"quadmeshbatch"}, MaxMeanAbs: 0.31, MaxRMSE: 0.63, MaxDiffPixels: 4, MaxLargestCluster: 4},
 	{ID: "gouraud_triangles", Topic: "raster", Title: "Gouraud Triangles", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"gouraudtrianglebatch"}, SkiaParityFamily: "gouraud", MaxMeanAbs: 1.0, MaxRMSE: 0.6},
-	{ID: "clip_path_batch", Topic: "raster", Title: "Clip Path Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathclip", "quadmeshbatch"}, MaxMeanAbs: 1.0, MaxRMSE: 1.433},
+	{ID: "clip_path_batch", Topic: "raster", Title: "Clip Path Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathclip", "quadmeshbatch"}, MaxMeanAbs: 0.22, MaxRMSE: 0.87},
 }
 
 // Cases returns every cataloged parity example/fixture.

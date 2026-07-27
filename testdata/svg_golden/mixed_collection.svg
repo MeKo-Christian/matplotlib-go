@@ -23,11 +23,11 @@ preserveAspectRatio="xMidYMid meet">
   <path d="M 592.5 533.5 L 592.5 538.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
   <path d="M 757.5 533.5 L 757.5 538.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
   <path d="M 921.5 533.5 L 921.5 538.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <text x="94.820312" y="550.519878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">0</text>
-  <text x="259.460312" y="550.519878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">2</text>
-  <text x="424.100312" y="550.519878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">4</text>
-  <text x="588.740312" y="550.519878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">6</text>
-  <text x="753.380312" y="550.519878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">8</text>
+  <text x="94.820313" y="550.519878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">0</text>
+  <text x="259.460313" y="550.519878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">2</text>
+  <text x="424.100313" y="550.519878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">4</text>
+  <text x="588.740313" y="550.519878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">6</text>
+  <text x="753.380313" y="550.519878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">8</text>
   <text x="914.840625" y="550.519878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">10</text>
   <path d="M 98.5 533.5 L 93.5 533.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
   <path d="M 98.5 457.5 L 93.5 457.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
@@ -47,5 +47,5 @@ preserveAspectRatio="xMidYMid meet">
   <path d="M 98.5 533.5 L 98.5 74.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
   <path d="M 98.5 74.5 L 921.5 74.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
   <path d="M 921.5 533.5 L 921.5 74.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
-  <text x="403.935937" y="66.066667" font-size="12" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">RendererAgg mixed path collection</text>
+  <text x="403.935938" y="66.066667" font-size="12" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">RendererAgg mixed path collection</text>
 </svg>

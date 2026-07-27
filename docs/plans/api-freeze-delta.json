@@ -8,8 +8,8 @@
   },
   "freeze": {
     "path": "test/testdata/public_api/stable_public_api.json",
-    "sha256": "00edf3c73a7f92acbec317883941550ea0d4d261097241cc14dc8bb47e9f70d5",
-    "symbol_count": 3180
+    "sha256": "2dd0d5996d9dd00e7e5fae00ca87dc74800300fdad1d671e053c40fccfc08e16",
+    "symbol_count": 3181
   },
   "counts": {
     "removed": {
@@ -26,7 +26,7 @@
       "rename-target": 43,
       "renamed-draw-method": 3,
       "typed-enum": 24,
-      "post-freeze-addition": 4,
+      "post-freeze-addition": 5,
       "split-export": 19,
       "options-model": 5,
       "figure-output": 5,
@@ -4163,6 +4163,13 @@
       "id": "method DashPattern.Scaled",
       "category": "options-model",
       "note": "Folded value type or options struct from the single-options model. Each one replaces struct fields, which the audit does not count as symbols, so folding trades uncounted fields for counted names."
+    },
+    {
+      "direction": "added",
+      "package": "core",
+      "id": "method Figure.CanvasSize",
+      "category": "post-freeze-addition",
+      "note": "Added after the freeze by the figure-size fidelity fix. Figure.SizePx is now the display extent matplotlib derives (figsize*dpi), which can sit a fraction of an ULP either side of the requested integer, so truncating it to size a canvas can allocate a pixel short. CanvasSize is the one place that rounding is decided; the animation writers, the CLI and the embed examples all read it. Purely additive -- SizePx itself is unchanged."
     },
     {
       "direction": "added",

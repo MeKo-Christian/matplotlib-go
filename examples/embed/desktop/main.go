@@ -114,7 +114,7 @@ func wireHoverCoordinates(b desktop.Backend) {
 // display size and writes it to path. The toolbar Save button calls this
 // via the SaveHandler option above.
 func savePNG(fig *core.Figure, path string) error {
-	w, h := int(fig.SizePx.X), int(fig.SizePx.Y)
+	w, h := fig.CanvasSize()
 	if w <= 0 || h <= 0 {
 		w, h = basic_line.Width, basic_line.Height
 	}

@@ -48,8 +48,7 @@ func (w *HTMLWriter) Setup(c canvas.FigureCanvas, outfile string, dpi float64) e
 	w.dpi = dpi
 	w.frames = nil
 	if fig := c.Figure(); fig != nil {
-		w.w = int(fig.SizePx.X)
-		w.h = int(fig.SizePx.Y)
+		w.w, w.h = fig.CanvasSize()
 	}
 	return nil
 }

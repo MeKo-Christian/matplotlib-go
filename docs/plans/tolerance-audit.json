@@ -3889,26 +3889,25 @@
   "verdict": "ok"
  },
  {
-  "clusters": 239,
-  "diff_px": 538,
+  "clusters": 238,
+  "diff_px": 468,
   "family": "sparse-local",
   "id": "mixed_collection",
-  "largest_cluster": 70,
-  "max_diff": 246,
-  "max_mean_abs": 0.5,
-  "max_rmse": 1.7,
-  "mean_abs": 0.053,
+  "largest_cluster": 10,
+  "max_diff": 230,
+  "max_mean_abs": 0.06,
+  "max_rmse": 1.2,
+  "mean_abs": 0.043,
   "p50_amp": 2,
-  "p99_amp": 226,
-  "pct_px": 0.0885,
-  "psnr": 44.19,
-  "rmse": 1.575,
+  "p99_amp": 184,
+  "pct_px": 0.077,
+  "psnr": 48.52,
+  "rmse": 0.956,
   "shifts": {
-   "+0+0": 93,
-   "-1+0": 70
+   "+0+0": 99
   },
-  "slack": 1.08,
-  "verdict": "fragile"
+  "slack": 1.26,
+  "verdict": "ok"
  },
  {
   "clusters": 714,
@@ -3933,24 +3932,22 @@
   "verdict": "ok"
  },
  {
-  "clusters": 1,
-  "diff_px": 70,
-  "family": "shift -1+0",
+  "clusters": 0,
+  "diff_px": 0,
+  "family": "identical",
   "id": "quad_mesh",
-  "largest_cluster": 70,
-  "max_diff": 246,
-  "max_mean_abs": 1.0,
-  "max_rmse": 1.6,
-  "mean_abs": 0.257,
-  "p50_amp": 112,
-  "p99_amp": 246,
-  "pct_px": 0.0115,
-  "psnr": 45.54,
-  "rmse": 1.347,
-  "shifts": {
-   "-1+0": 70
-  },
-  "slack": 1.19,
+  "largest_cluster": 0,
+  "max_diff": 1,
+  "max_mean_abs": 0.31,
+  "max_rmse": 0.63,
+  "mean_abs": 0.247,
+  "p50_amp": 0,
+  "p99_amp": 0,
+  "pct_px": 0.0,
+  "psnr": 54.2,
+  "rmse": 0.497,
+  "shifts": {},
+  "slack": 1.27,
   "verdict": "ok"
  },
  {
@@ -3977,25 +3974,24 @@
   "verdict": "ok"
  },
  {
-  "clusters": 41,
-  "diff_px": 56880,
+  "clusters": 40,
+  "diff_px": 56810,
   "family": "dense-lowamp",
   "id": "clip_path_batch",
   "largest_cluster": 20290,
-  "max_diff": 246,
-  "max_mean_abs": 1.0,
-  "max_rmse": 1.433,
-  "mean_abs": 0.184,
+  "max_diff": 13,
+  "max_mean_abs": 0.22,
+  "max_rmse": 0.87,
+  "mean_abs": 0.174,
   "p50_amp": 2,
   "p99_amp": 12,
-  "pct_px": 9.3614,
-  "psnr": 45.02,
-  "rmse": 1.43,
+  "pct_px": 9.3499,
+  "psnr": 51.34,
+  "rmse": 0.691,
   "shifts": {
-   "+0+0": 56775,
-   "-1+0": 70
+   "+0+0": 56778
   },
-  "slack": 1.0,
-  "verdict": "fragile"
+  "slack": 1.26,
+  "verdict": "ok"
  }
 ]

@@ -405,7 +405,7 @@ func rotateClosedLoopToContourpyStart(polyline []geom.Pt, x, y []float64) []geom
 		}
 	}
 	if best < 0 {
-		// Phase 2: interior loop — contourpy's row-major cell scan starts at the
+		// interior loop — contourpy's row-major cell scan starts at the
 		// leftmost vertical-edge crossing in the bottommost row-band.
 		bestRow := 0
 		for i, p := range body {

@@ -232,7 +232,8 @@ func RenderSubplotsFrame() image.Image { return renderFrameFigure(buildSubplotsF
 
 // renderFrameFigure rasterizes a figure to an AGG image at its pixel size.
 func renderFrameFigure(fig *core.Figure) image.Image {
-	r, err := agg.New(int(fig.SizePx.X), int(fig.SizePx.Y), render.Color{R: 1, G: 1, B: 1, A: 1})
+	figW, figH := fig.CanvasSize()
+	r, err := agg.New(figW, figH, render.Color{R: 1, G: 1, B: 1, A: 1})
 	if err != nil {
 		panic(err)
 	}

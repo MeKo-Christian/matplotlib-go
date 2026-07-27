@@ -74,8 +74,7 @@ func (w *FFmpegWriter) Setup(c canvas.FigureCanvas, outfile string, dpi float64)
 
 	width, height := 0, 0
 	if fig := c.Figure(); fig != nil {
-		width = int(fig.SizePx.X)
-		height = int(fig.SizePx.Y)
+		width, height = fig.CanvasSize()
 	}
 	if width <= 0 || height <= 0 {
 		return errors.New("animation: ffmpeg writer requires a positive frame size")

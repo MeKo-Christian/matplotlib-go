@@ -169,10 +169,11 @@ func RenderWithBackend(id, backendID string, width, height int) (*image.RGBA, De
 		renderHeight = DefaultHeight
 	}
 	if fig != nil {
-		if w := int(fig.SizePx.X); w > 0 {
+		w, h := fig.CanvasSize()
+		if w > 0 {
 			renderWidth = w
 		}
-		if h := int(fig.SizePx.Y); h > 0 {
+		if h > 0 {
 			renderHeight = h
 		}
 	}

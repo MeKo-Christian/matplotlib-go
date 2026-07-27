@@ -5784,6 +5784,10 @@
           "declaration": "func (Figure) AddSubplotSpec(spec SubplotSpec, opts ...SubplotAxesOption) *Axes"
         },
         {
+          "id": "method Figure.CanvasSize",
+          "declaration": "func (Figure) CanvasSize() (width, height int)"
+        },
+        {
           "id": "method Figure.Clear",
           "declaration": "func (Figure) Clear()"
         },

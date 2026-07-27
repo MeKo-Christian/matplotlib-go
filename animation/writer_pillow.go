@@ -69,8 +69,7 @@ func (p *GifWriter) Setup(c canvas.FigureCanvas, outfile string, dpi float64) er
 	p.dpi = dpi
 	p.frames = nil
 	if fig := c.Figure(); fig != nil {
-		p.w = int(fig.SizePx.X)
-		p.h = int(fig.SizePx.Y)
+		p.w, p.h = fig.CanvasSize()
 	}
 	return nil
 }

@@ -482,6 +482,18 @@ _add(
     "func IsAffineScale",
 )
 
+_add(
+    "post-freeze-addition",
+    "Added after the freeze by the figure-size fidelity fix. Figure.SizePx is "
+    "now the display extent matplotlib derives (figsize*dpi), which can sit a "
+    "fraction of an ULP either side of the requested integer, so truncating it "
+    "to size a canvas can allocate a pixel short. CanvasSize is the one place "
+    "that rounding is decided; the animation writers, the CLI and the embed "
+    "examples all read it. Purely additive -- SizePx itself is unchanged.",
+    "core",
+    "method Figure.CanvasSize",
+)
+
 
 def load(path: Path) -> tuple[bytes, dict]:
     raw = path.read_bytes()
