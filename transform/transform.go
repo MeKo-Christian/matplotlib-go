@@ -473,9 +473,52 @@ func NewAxes2D(xs, ys Scale, axesToPixel AffineT) Axes2D {
 
 //nolint:gocritic // Axes2D is stored by value throughout draw state; keeping value receivers avoids API churn.
 func (t Axes2D) Apply(p geom.Pt) geom.Pt {
+	if a, ok := t.linearAffine(); ok {
+		return geom.Pt{X: a.ax*p.X + a.ex, Y: a.ay*p.Y + a.ey}
+	}
 	u := t.X.Fwd(p.X)
 	v := t.Y.Fwd(p.Y)
 	return t.AxesToPixel.Apply(geom.Pt{X: u, Y: v})
+}
+
+// axesLinearAffine is the data->pixel mapping of an unrotated linear axes,
+// collapsed to one multiply-add per coordinate.
+type axesLinearAffine struct{ ax, ex, ay, ey float64 }
+
+// linearAffine reproduces Matplotlib's composition of transLimits with
+// transAxes, which multiplies the two matrices *before* mapping any point:
+// `x*(w/den) + (w*(-min/den) + x0)`. Evaluating the two stages separately, as
+// `w*((x-min)/den) + x0`, is the same map in exact arithmetic but not in
+// float64 — it lands units_categories' bar edge on 267.49999999999994 where
+// Matplotlib has exactly 267.5, and the AGG path snapper (`floor(v+0.5)`) then
+// puts the edge one pixel left. The fast path is restricted to linear scales
+// and an unrotated axes affine; anything else keeps the staged evaluation.
+func (t Axes2D) linearAffine() (axesLinearAffine, bool) { //nolint:gocritic // see Apply.
+	xs, ok := t.X.(Linear)
+	if !ok {
+		return axesLinearAffine{}, false
+	}
+	ys, ok := t.Y.(Linear)
+	if !ok {
+		return axesLinearAffine{}, false
+	}
+	m := t.AxesToPixel.M
+	if m.B != 0 || m.C != 0 {
+		return axesLinearAffine{}, false
+	}
+	xden := xs.Max - xs.Min
+	yden := ys.Max - ys.Min
+	if xden == 0 || yden == 0 {
+		return axesLinearAffine{}, false
+	}
+	xScale := 1.0 / xden
+	yScale := 1.0 / yden
+	return axesLinearAffine{
+		ax: m.A * xScale,
+		ex: m.A*(-xs.Min*xScale) + m.E,
+		ay: m.D * yScale,
+		ey: m.D*(-ys.Min*yScale) + m.F,
+	}, true
 }
 
 //nolint:gocritic // Axes2D is stored by value throughout draw state; keeping value receivers avoids API churn.

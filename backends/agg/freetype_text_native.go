@@ -21,9 +21,11 @@ static int mpl_go_text_has_kerning(FT_Face face) {
 import "C"
 
 import (
+	"fmt"
 	"image"
 	"image/draw"
 	"math"
+	"os"
 	"unsafe"
 
 	agglib "github.com/cwbudde/agg_go"
@@ -127,11 +129,14 @@ func (r *Renderer) drawNativeFreetypeText(text string, face render.FontFace, ori
 
 // Matplotlib's Python AGG backend calls Python round() before draw_text_image,
 // which is ties-to-even, not Go's half-away-from-zero math.Round.
+//
+// The tie must be decided on the exact double, with no epsilon: matplotlib's
+// text origins carry the rounding noise of its transform chain, and this port
+// reproduces that noise bit-for-bit. basic_line's "0.6" y tick label arrives at
+// 149.49999999999997 in both — one ULP below the tie, because the locator emits
+// 3*0.2 == 0.6000000000000001 — and Python rounds it down. Snapping anything
+// within an epsilon of .5 up to .5 first drew that label a pixel low.
 func pythonRound(v float64) float64 {
-	half := math.Floor(v) + 0.5
-	if math.Abs(v-half) < 1e-9 {
-		v = half
-	}
 	return math.RoundToEven(v)
 }
 
@@ -154,6 +159,11 @@ func (r *Renderer) drawNativeFreetypeRunText(text string, face render.FontFace, 
 		dstX := pythonRound(origin.X + float64(run.bbox.xMin)/64.0)
 		bottomY := pythonRound(origin.Y+descent) + 1
 		dstY := bottomY - float64(maskHeight)
+		if os.Getenv("MPLGO_TEXT_PROBE") != "" {
+			fmt.Printf("TEXT %q originY=%.17g descent=%.17g ry=%.17g->%v originX=%.17g xMin=%.17g rx=%.17g h=%d\n",
+				text, origin.Y, descent, origin.Y+descent, pythonRound(origin.Y+descent),
+				origin.X, float64(run.bbox.xMin)/64.0, origin.X+float64(run.bbox.xMin)/64.0, maskHeight)
+		}
 		return r.blendAlphaMask(mask, int(dstX), int(dstY), textColor)
 	})
 }
