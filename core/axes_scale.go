@@ -261,6 +261,25 @@ func (s invertedScale) Domain() (float64, float64) {
 	return minVal, maxVal
 }
 
+// IsAffineScale reports that inverting a linear axis is still linear, letting
+// transform.AsAffine flatten the data->pixel graph into one matrix instead of
+// evaluating the data->axes and axes->pixel legs in sequence.
+//
+// This matches Matplotlib structurally as well as numerically: it has no
+// inversion wrapper at all — invert_yaxis() swaps viewLim, and transLimits is
+// BboxTransformFrom over those swapped limits. Domain() already returns the
+// swapped endpoints, so flattening through them reproduces Matplotlib's
+// arithmetic rather than negating a scale computed over the unswapped domain.
+//
+// Without this, matshow's inverted y axis fell back to the staged chain and put
+// the y=2 tick at exactly 148.5 where Matplotlib reaches 148.50000000000003.
+// The AGG marker blit truncates (floor(v + 0.5)), so that one ULP moved the
+// tick a whole pixel; the other three ticks differ in the same ULP but do not
+// straddle an integer, so only this one was visible.
+func (s invertedScale) IsAffineScale() bool {
+	return transform.IsAffineScale(s.base)
+}
+
 func toggleInvertedScale(s transform.Scale) transform.Scale {
 	if s == nil {
 		return nil

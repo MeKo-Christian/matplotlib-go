@@ -11200,6 +11200,10 @@
           "declaration": "func Frozen(t T) T"
         },
         {
+          "id": "func IsAffineScale",
+          "declaration": "func IsAffineScale(s Scale) bool"
+        },
+        {
           "id": "func MustRegisterScale",
           "declaration": "func MustRegisterScale(name string, factory ScaleFactory)"
         },
@@ -11722,6 +11726,10 @@
         {
           "id": "type AffineProvider",
           "declaration": "type AffineProvider interface{ AsAffine func() (geom.Affine, bool) }"
+        },
+        {
+          "id": "type AffineScale",
+          "declaration": "type AffineScale interface{ Scale; IsAffineScale func() bool }"
         },
         {
           "id": "type AffineT",

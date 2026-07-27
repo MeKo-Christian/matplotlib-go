@@ -165,7 +165,7 @@ var cases = []Case{
 	{ID: "imshow_bicubic", Topic: "image", Title: "Bicubic Imshow", FixtureOnly: true, Width: 256, Height: 256, MaxRMSE: 1.6},
 	{ID: "imshow_interpolation_matrix", Topic: "image", Title: "Imshow Interpolation Matrix", FixtureOnly: true, Width: 800, Height: 480, MaxRMSE: 3.3},
 	{ID: "image_alpha", Topic: "image", Title: "Image Alpha", FixtureOnly: true, MaxRMSE: 0.7},
-	{ID: "matshow_basic", Topic: "image", Title: "Matshow", FixtureOnly: true, MaxRMSE: 1.608, MaxDiffPixels: 25, MaxLargestCluster: 25},
+	{ID: "matshow_basic", Topic: "image", Title: "Matshow", FixtureOnly: true, MaxRMSE: 0.1, MaxDiffPixels: 4, MaxLargestCluster: 4},
 	{ID: "spy_marker", Topic: "image", Title: "Spy Marker Mode", FixtureOnly: true, MaxRMSE: 0.5},
 	{ID: "spy_image", Topic: "image", Title: "Spy Image Mode", FixtureOnly: true, MaxRMSE: 1.608},
 	{ID: "colormap_diverging", Topic: "colormap", Title: "Diverging Colormap", FixtureOnly: true, MaxRMSE: 1.608, MaxDiffPixels: 330, MaxLargestCluster: 330},

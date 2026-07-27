@@ -292,6 +292,51 @@ func splitAffine(t T) (nonAffine T, trailing geom.Affine, fullyAffine bool) {
 	}
 }
 
+// AffineScale is the capability interface a Scale implements to declare that its
+// forward map is affine, i.e. that it carries Domain() linearly onto [0, 1].
+// affineScaleDomain consults it for any Scale that is not the built-in Linear,
+// so a wrapper such as an inverted axis can participate in affine flattening
+// instead of forcing the whole transform graph onto the staged path.
+//
+// Declaring affineness rather than returning coefficients is deliberate: the
+// flattened axis is rebuilt from the endpoints with NewLinearAxis, which is the
+// same arithmetic as Matplotlib's BboxTransformFrom(viewLim). A wrapper that
+// returned its own coefficients would be algebraically equal but not bit-equal
+// (an inverted axis computing -scale, 1-offset instead of mapping the swapped
+// domain), and Phase 3 is chasing exactly those last-ULP differences.
+type AffineScale interface {
+	Scale
+	IsAffineScale() bool
+}
+
+// IsAffineScale reports whether s carries its domain linearly onto [0, 1], so a
+// Scale wrapper can answer the AffineScale question for the scale it wraps
+// without restating the built-in cases. A nil scale is the identity, which is
+// affine.
+func IsAffineScale(s Scale) bool {
+	_, _, ok := affineScaleDomain(s)
+	return ok
+}
+
+// affineScaleDomain reports the domain a Scale maps linearly onto [0, 1], or
+// ok=false when the scale is nonlinear (log, symlog, function scales).
+func affineScaleDomain(s Scale) (srcMin, srcMax float64, ok bool) {
+	switch v := s.(type) {
+	case nil:
+		return 0, 1, true
+	case Linear:
+		return v.Min, v.Max, true
+	case AffineScale:
+		if !v.IsAffineScale() {
+			return 0, 0, false
+		}
+		srcMin, srcMax = v.Domain()
+		return srcMin, srcMax, true
+	default:
+		return 0, 0, false
+	}
+}
+
 func affineAxis(axis AxisTransform) (scale, offset float64, ok bool) {
 	switch v := axisOrIdentity(axis).(type) {
 	case identityAxis:
@@ -302,11 +347,11 @@ func affineAxis(axis AxisTransform) (scale, offset float64, ok bool) {
 		if v.Scale == nil {
 			return 1, 0, true
 		}
-		linear, ok := v.Scale.(Linear)
+		srcMin, srcMax, ok := affineScaleDomain(v.Scale)
 		if !ok {
 			return 0, 0, false
 		}
-		axis := NewLinearAxis(linear.Min, linear.Max, 0, 1)
+		axis := NewLinearAxis(srcMin, srcMax, 0, 1)
 		return axis.Scale, axis.Offset, true
 	case OffsetAxis:
 		scale, offset, ok := affineAxis(v.Base)

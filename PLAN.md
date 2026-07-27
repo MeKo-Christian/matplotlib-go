@@ -221,9 +221,9 @@ mentioned (`basic_line`) carry real divergences. Findings:
       per case from post-fix measurements.
 - [ ] **3.3 Fix the four shift families.** Each is a candidate shared root
       cause; confirm against `third_party/matplotlib` 3.10.9 and fix in the core
-      library, not the fixtures. **5 of 14 fixed, and a sixth largely fixed,
-  2026-07-27**; the audit's shift families are down from 14 cases to 9 and its
-  pixel-identical count up from 21 to 25. First pass (`basic_line` and
+      library, not the fixtures. **6 of 14 fixed, and a seventh largely fixed,
+  2026-07-27**; the audit's shift families are down from 14 cases to 8 and its
+  pixel-identical count up from 21 to 26. First pass (`basic_line` and
       `basic_line_labels` are now pixel-identical to Matplotlib;
       `animation_subplots_frame` went from 178 differing pixels to 38, largest
       cluster 70 to 2). Two root causes, both the same mistake — a tolerance
@@ -296,11 +296,39 @@ mentioned (`basic_line`) carry real divergences. Findings:
       dependency rather than repo code; they shipped as **mathtext v0.5.1** and
       `go.mod` requires that version. No `replace` and no new build
       prerequisite — the build stays self-contained.
-  - [ ] **3.3.4 `matshow_basic`** (`+0+1`, but _not_ a text case): its whole
-        residual is one tick **line** drawn a pixel low (a 5x1 mark at y 211 vs
-        212), so the snapper path still has a divergence the composed transform
-        did not cover. Likely the tick-mark path builds its device coordinates
-        outside `transData`.
+  - [x] **3.3.4 `matshow_basic`.** Done 2026-07-27. Now **pixel-identical** to
+        matplotlib (family `identical`; 20 differing pixels to 0, RMSE 1.25 to
+        0.038, max amplitude 241 to 1 — the whole remaining residual is uniform
+        ±1 LSB colormap rounding over the image area). The guess above was wrong
+        in its cause: the tick path does go through `transData`, but for this
+        case `transData` was not the single affine 3.3.2 built. The y axis is
+        inverted (`matshow` puts the origin at the top), and `core.invertedScale`
+        wraps the linear scale rather than swapping its domain, so
+        `transform.affineAxis` — which only accepted a concrete
+        `transform.Linear` — reported the graph non-affine and
+        `ensureTransforms` fell back to the staged `Chain`. Staged, the y=2 tick
+        landed on exactly 148.5 where matplotlib reaches 148.50000000000003; the
+        AGG marker blit truncates (`floor(v + 0.5)`), so that one ULP moved the
+        tick a whole pixel. The other three ticks differ in the same ULP but do
+        not straddle an integer, which is why only one was visible.
+
+        Fixed by giving `Scale` an affine-flattening capability:
+        `transform.AffineScale` / `transform.IsAffineScale`, consulted by
+        `affineAxis` for any scale that is not the built-in `Linear`.
+        `invertedScale` implements it. The flattened axis is rebuilt from
+        `Domain()` with `NewLinearAxis`, which is matplotlib's
+        `BboxTransformFrom(viewLim)` arithmetic — matplotlib has no inversion
+        wrapper at all, `invert_yaxis()` just swaps `viewLim`, and
+        `invertedScale.Domain()` already returns the swapped endpoints. Having
+        the wrapper return its own coefficients instead (`-scale`, `1-offset`
+        over the unswapped domain) would be algebraically equal but not
+        bit-equal, which is the whole point here. An inverted *log* axis still
+        reports non-affine and keeps the staged path.
+
+        Two new exported symbols, so the frozen API audit was regenerated.
+        Tolerances ratcheted 1.608/25/25 to 0.1/4/4; verified the ratchet bites
+        by restoring the pre-fix golden (fails at MaxDiff=241). No other golden
+        moved — `-update-golden` across all 190 cases changed only this one.
   - [ ] **3.3.5 `specgram_psd` and `quad_mesh`.** Both are mesh/image-backed
         rather than text; group them only if the probe says so. `specgram_psd`'s
         shift clusters are three 1-px-wide vertical strips at x=481 that `dx=+1`
