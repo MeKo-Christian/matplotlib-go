@@ -21,11 +21,9 @@ static int mpl_go_text_has_kerning(FT_Face face) {
 import "C"
 
 import (
-	"fmt"
 	"image"
 	"image/draw"
 	"math"
-	"os"
 	"unsafe"
 
 	agglib "github.com/cwbudde/agg_go"
@@ -159,11 +157,6 @@ func (r *Renderer) drawNativeFreetypeRunText(text string, face render.FontFace, 
 		dstX := pythonRound(origin.X + float64(run.bbox.xMin)/64.0)
 		bottomY := pythonRound(origin.Y+descent) + 1
 		dstY := bottomY - float64(maskHeight)
-		if os.Getenv("MPLGO_TEXT_PROBE") != "" {
-			fmt.Printf("TEXT %q originY=%.17g descent=%.17g ry=%.17g->%v originX=%.17g xMin=%.17g rx=%.17g h=%d\n",
-				text, origin.Y, descent, origin.Y+descent, pythonRound(origin.Y+descent),
-				origin.X, float64(run.bbox.xMin)/64.0, origin.X+float64(run.bbox.xMin)/64.0, maskHeight)
-		}
 		return r.blendAlphaMask(mask, int(dstX), int(dstY), textColor)
 	})
 }

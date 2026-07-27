@@ -135,14 +135,36 @@ func TestPathPipelineSnapsWithLineWidthAwareAlignment(t *testing.T) {
 	}
 }
 
-func TestPathPipelineSnapsNearHalfPixelTransformTiesLikeMatplotlib(t *testing.T) {
-	var p geom.Path
-	p.MoveTo(geom.Pt{X: 267.49999999999994, Y: 126.2})
-	p.LineTo(geom.Pt{X: 267.49999999999994, Y: 287.8})
-
-	got := snapPath(p, &render.Paint{Snap: render.SnapAuto, Stroke: render.Color{A: 1}, LineWidth: 1})
-	if got.V[0].X != 268.5 || got.V[1].X != 268.5 {
-		t.Fatalf("near-half transform tie snapped to X vertices %v, want 268.5 like Matplotlib PathSnapper", got.V)
+// TestPathSnapMatchesMatplotlibPathSnapperExactly pins snapPath to
+// PathSnapper::vertex in matplotlib's path_converters.h, which is
+// `floor(v + 0.5) + snap_value` with no tolerance around .5.
+//
+// The near-tie input is deliberate: units_categories' bar edge used to reach
+// the snapper as 267.49999999999994 and an epsilon here rounded it up to match
+// matplotlib's 268.5. That papered over the real divergence — matplotlib's own
+// value is exactly 267.5, because it composes transLimits with transAxes into a
+// single matrix before mapping the vertex. The composition is now done the same
+// way (core.Axes.ensureTransforms), so the snapper must stay exact: an epsilon
+// would move genuinely-below-tie coordinates a pixel right.
+func TestPathSnapMatchesMatplotlibPathSnapperExactly(t *testing.T) {
+	paint := render.Paint{Snap: render.SnapAuto, Stroke: render.Color{A: 1}, LineWidth: 1}
+	cases := []struct {
+		in   float64
+		want float64
+	}{
+		{267.5, 268.5},              // matplotlib's composed value for units_categories
+		{267.49999999999994, 267.5}, // one ULP below the tie stays below
+		{267.2, 267.5},
+		{267.8, 268.5},
+	}
+	for _, c := range cases {
+		var p geom.Path
+		p.MoveTo(geom.Pt{X: c.in, Y: 126.2})
+		p.LineTo(geom.Pt{X: c.in, Y: 287.8})
+		got := snapPath(p, &paint)
+		if got.V[0].X != c.want || got.V[1].X != c.want {
+			t.Errorf("snapPath(%.17g) X = %v, want %v", c.in, []float64{got.V[0].X, got.V[1].X}, c.want)
+		}
 	}
 }
 

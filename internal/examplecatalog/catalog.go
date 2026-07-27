@@ -87,8 +87,8 @@ const (
 )
 
 var cases = []Case{
-	{ID: "basic_line", Topic: "lines", Title: "Basic Line", Description: "A minimal line plot with explicit limits, labels, and one Line2D artist.", Showcase: true, GoBasicSmokeFamily: "line", SkiaParityFamily: "line", MaxRMSE: 2.8, MaxDiffPixels: 180, MaxLargestCluster: 92},
-	{ID: "basic_line_labels", Topic: "lines", Title: "Basic Line Labels", Description: "A minimal line plot with x and y axis labels for label layout parity checks.", Showcase: true, GoBasicSmokeFamily: "line", SkiaParityFamily: "line", MaxRMSE: 2.8, MaxDiffPixels: 180, MaxLargestCluster: 92},
+	{ID: "basic_line", Topic: "lines", Title: "Basic Line", Description: "A minimal line plot with explicit limits, labels, and one Line2D artist.", Showcase: true, GoBasicSmokeFamily: "line", SkiaParityFamily: "line", MaxRMSE: 2.8, MaxDiffPixels: 16, MaxLargestCluster: 8},
+	{ID: "basic_line_labels", Topic: "lines", Title: "Basic Line Labels", Description: "A minimal line plot with x and y axis labels for label layout parity checks.", Showcase: true, GoBasicSmokeFamily: "line", SkiaParityFamily: "line", MaxRMSE: 2.8, MaxDiffPixels: 16, MaxLargestCluster: 8},
 	{ID: "joins_caps", Topic: "lines", Title: "Line Joins and Caps", MaxRMSE: 0.3},
 	{ID: "dashes", Topic: "lines", Title: "Dash Patterns", Description: "Multiple line styles showing dash arrays, cap styles, and legend labeling.", Showcase: true, MaxRMSE: 1.6},
 	{ID: "lines_markers_gallery", Topic: "lines", Title: "Line and Marker Style Gallery", Description: "A combined gallery of dash arrays, line joins and caps, a built-in marker grid with open-fill markers, and a multi-series legend.", WebDemoID: "lines", Showcase: true, Width: 840, Height: 620, MaxMeanAbs: 1.0, MaxRMSE: 2.8},
@@ -280,7 +280,7 @@ var cases = []Case{
 	{ID: "animation_line_frame", Topic: "animation", Title: "Animated Line Frame", Description: "Deterministic frame-N capture of a traveling-wave FuncAnimation line plot.", FixtureOnly: true, Width: 640, Height: 360, MaxMeanAbs: 1.5, MaxRMSE: 1.433},
 	{ID: "animation_scatter_frame", Topic: "animation", Title: "Animated Scatter Frame", Description: "Deterministic frame-N capture of an orbiting scatter/collection animation with scalar-mapped marker colors.", FixtureOnly: true, Width: 640, Height: 360, MaxMeanAbs: 1.5, MaxRMSE: 1.433},
 	{ID: "animation_imshow_frame", Topic: "animation", Title: "Animated Heatmap Frame", Description: "Deterministic frame-N capture of a ripple imshow (heatmap) animation.", FixtureOnly: true, Width: 640, Height: 360, MaxMeanAbs: 1.5, MaxRMSE: 1.433},
-	{ID: "animation_subplots_frame", Topic: "animation", Title: "Animated Subplots Frame", Description: "Deterministic frame-N capture of a two-panel line + heatmap subplot composition animation.", FixtureOnly: true, Width: 800, Height: 360, MaxMeanAbs: 1.5, MaxRMSE: 4.5, MaxDiffPixels: 230, MaxLargestCluster: 88},
+	{ID: "animation_subplots_frame", Topic: "animation", Title: "Animated Subplots Frame", Description: "Deterministic frame-N capture of a two-panel line + heatmap subplot composition animation.", FixtureOnly: true, Width: 800, Height: 360, MaxMeanAbs: 1.5, MaxRMSE: 4.5, MaxDiffPixels: 48, MaxLargestCluster: 4},
 	{ID: "axisartist_showcase", Topic: "axisartist", Title: "AxisArtist Showcase", Description: "Floating and axis-artist style axes with custom spine placement and labels.", Optional: true, WebDemoID: "axisartist", Showcase: true, GoBasicSmokeFamily: "axisartist", MaxRMSE: 2.3},
 	{ID: "axes_grid1_showcase", Topic: "axes_grid1", Title: "Axes Grid1 Showcase", Description: "Axes divider, image-grid, inset, and anchored layout helpers in one composition.", Optional: true, WebDemoID: "axes_grid1", Showcase: true, GoBasicSmokeFamily: "axes_grid1", MaxMeanAbs: 0.16, MaxRMSE: 2.0},
 	{ID: "pcolor_flat", Topic: "mesh", Title: "PColor Flat", FixtureOnly: true, MaxRMSE: 0.7},

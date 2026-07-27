@@ -238,14 +238,17 @@ def render_markdown(rows: list[Row]) -> str:
     )
     w("## Why RMSE alone is not a gate\n")
     w(
-        "`basic_line` is the smallest plot in the catalog. Its residual is 139 "
-        "pixels out of 230,400 — a single y tick label rendered one pixel low, "
-        "with glyph rasterization otherwise byte-identical. Those 139 pixels "
-        "reach a per-channel difference of 249 and still produce RMSE 2.49, "
+        "`basic_line` is the smallest plot in the catalog, and it is why this "
+        "table exists. Until Phase 3.3 its residual was 139 pixels out of "
+        "230,400 — a single y tick label rendered one pixel low, with glyph "
+        "rasterization otherwise byte-identical. Those 139 pixels reached a "
+        "per-channel difference of 249 and still produced RMSE 2.49, "
         "comfortably inside the case's 2.8 allowance. Whole-image RMSE dilutes "
         "a fully-wrong glyph by frame area, so it cannot bound a localized "
-        "placement error. The `family` column below exists to separate those "
-        "cases from genuine antialiasing washes.\n"
+        "placement error; the case now measures zero differing pixels, and "
+        "only the shape gate would have caught the regression that hid there. "
+        "The `family` column below exists to separate such cases from genuine "
+        "antialiasing washes.\n"
     )
     w("## Shift families\n")
     w(

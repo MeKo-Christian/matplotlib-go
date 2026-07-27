@@ -221,19 +221,57 @@ mentioned (`basic_line`) carry real divergences. Findings:
       per case from post-fix measurements.
 - [ ] **3.3 Fix the four shift families.** Each is a candidate shared root
       cause; confirm against `third_party/matplotlib` 3.10.9 and fix in the core
-      library, not the fixtures.
-  - `+0+1` (7 cases, text baseline rounding one pixel low; note only _some_
-    labels in a figure shift, so this is a tie-break at `.5`, not a uniform
-    offset): `basic_line`, `basic_line_labels`, `mathtext_gallery`,
-    `formatter_engineering_labels`, `matshow_basic`, `mathtext_accents`,
-    `specgram_psd`.
-  - `-1+0` (4 cases, horizontal text advance/placement): `mathtext_fractions`,
-    `formatter_scalar_scientific_labels`, `animation_subplots_frame`,
-    `quad_mesh`.
-  - `+1+0` (2 cases, image/colorbar edge column off by one — in
-    `colormap_diverging` the entire residual is one 258-px-tall column at the
-    axes edge): `colormap_diverging`, `image_heatmap`.
-  - `+2-1` (1 case): `transform_coordinates`.
+      library, not the fixtures. **3 of 14 fixed 2026-07-27** (`basic_line` and
+      `basic_line_labels` are now pixel-identical to Matplotlib;
+      `animation_subplots_frame` went from 178 differing pixels to 38, largest
+      cluster 70 to 2). Two root causes, both the same mistake — a tolerance
+      applied to a decision Matplotlib makes exactly:
+  - **The rounding tolerances were removed.** `pythonRound` snapped anything
+    within 1e-9 of `.5` onto the tie before rounding half-to-even, and
+    `snapPathCoordinate` was `floor(v + 0.5 + 1e-9)` where matplotlib's
+    `PathSnapper::vertex` is plain `floor(v + 0.5)`. Both are now exact. This is
+    only correct because the port's text origins already match matplotlib
+    bit-for-bit, including its float64 noise: `basic_line`'s "0.6" y tick label
+    arrives at 149.49999999999997 in *both* — the locator emits `3*0.2 ==
+    0.6000000000000001` in each — and Python rounds that down. The epsilon
+    rounded it up, drawing that one label a pixel low while its siblings, which
+    land on exact `.5`, stayed put. That is why only _some_ labels shifted.
+  - **`transData` is now composed the way matplotlib composes it.**
+    `core.Axes.ensureTransforms` flattens `transLimits x transAxes` into a single
+    affine before mapping any vertex (`transform.AsAffine` on the chain, which is
+    the same matrix product numpy performs), instead of evaluating the two legs
+    in sequence. Staged evaluation is the same map in exact arithmetic but not in
+    float64: `units_categories`' bar edge came out 267.49999999999994 staged
+    against exactly 267.5 composed, and the exact snapper then moved that edge a
+    pixel left. Removing the snap epsilon without this would have regressed
+    `units_categories` from 104 differing pixels to 746.
+  - All 15 goldens the two fixes moved improve against the matplotlib reference,
+    none regress: `pattern_gradient_effects` 2796 px to 697,
+    `annotation_legend_offsetbox_gallery` RMSE 3.51 to 1.43,
+    `axes_control_surface` 3.38 to 0.69, `spectrum_variants` 1.31 to 0.18.
+    `basic_line`, `basic_line_labels` and `animation_subplots_frame` had their
+    `MaxDiffPixels`/`MaxLargestCluster` ratcheted onto the new measurements so a
+    re-regression fails; the rest wait for 3.6. The PDF and SVG goldens were
+    regenerated for the last-decimal coordinate change (they are Go-authored, not
+    matplotlib references).
+  - Still open, 11 cases in three families with distinct root causes:
+    - `+0+1` (5, all text): `mathtext_gallery`, `formatter_engineering_labels`,
+      `matshow_basic`, `mathtext_accents`, `specgram_psd`. Note `matshow_basic`
+      is _not_ a text case despite the family — its whole residual is one tick
+      **line** drawn a pixel low (a 5x1 mark at y 211 vs 212), so the snapper
+      path still has a divergence the composed transform did not cover.
+    - `-1+0` (3): `mathtext_fractions`, `formatter_scalar_scientific_labels`,
+      `quad_mesh`.
+    - `+1+0` (2, image/colorbar edge column off by one — in `colormap_diverging`
+      the entire residual is one 258-px-tall column at an interior cell
+      boundary, not the axes edge): `colormap_diverging`, `image_heatmap`. A
+      first attempt at this one failed and was reverted: reproducing AGG's 1/256
+      fixed-point span interpolation in `scaleRGBANearest`
+      (`floor(round(u*256)/256)` rather than `round(u-0.5)`) left both cases
+      untouched and regressed `colorbar_composition` from 2563 to 2821 differing
+      pixels, so these two do not reach the raster nearest-neighbour path that
+      was changed. Find the path they do take before trying again.
+    - `+2-1` (1): `transform_coordinates`.
 - [ ] **3.4 Investigate the localized non-shift divergences.** Cases whose
       residual is confined but not a clean offset, worst first: `line2d_markers`,
       `stat_variants`, `annotation_legend_offsetbox_gallery`, `imshow_clipped`

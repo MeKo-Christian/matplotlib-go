@@ -24,7 +24,17 @@ func (a *Axes) ensureTransforms() {
 		if dataToAxes == nil {
 			return a.transAxes
 		}
-		return transform.Chain{A: dataToAxes, B: a.transAxes}
+		chain := transform.Chain{A: dataToAxes, B: a.transAxes}
+		// Matplotlib multiplies transLimits by transAxes into a single matrix
+		// and maps every vertex through that (transforms.py composite_transform).
+		// Evaluating the legs in sequence is the same map in exact arithmetic
+		// but not in float64: units_categories' bar edge comes out
+		// 267.49999999999994 staged against exactly 267.5 composed, and the AGG
+		// path snapper (floor(v+0.5)) then draws the edge one pixel left.
+		if m, ok := transform.AsAffine(chain); ok {
+			return transform.NewAffine(m)
+		}
+		return chain
 	}, a.axesBbox.Node(), &a.dataNode)
 }
 

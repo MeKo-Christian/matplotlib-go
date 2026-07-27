@@ -32,15 +32,30 @@ func TestBlendAlphaMaskAppliesTextAlphaAndClips(t *testing.T) {
 	}
 }
 
-func TestPythonRoundTreatsFloatingHalfTiesLikeMatplotlibTextPlacement(t *testing.T) {
-	if got := pythonRound(228.50000000000006); got != 228 {
-		t.Fatalf("pythonRound near even half tie = %v, want 228", got)
+// TestPythonRoundMatchesPythonRoundExactly pins pythonRound to Python's round():
+// ties-to-even decided on the exact double, with no epsilon around .5.
+//
+// The near-tie cases are the ones that matter. Matplotlib's text origins carry
+// the float64 noise of its transform chain and this port reproduces that noise
+// bit-for-bit, so a value one ULP off the tie must round the way Python rounds
+// it — basic_line's "0.6" y tick label arrives at 149.49999999999997 in both,
+// and matplotlib draws it at 149.
+func TestPythonRoundMatchesPythonRoundExactly(t *testing.T) {
+	cases := []struct {
+		in   float64
+		want float64
+	}{
+		{228.5, 228},              // exact tie, down to even
+		{229.5, 230},              // exact tie, up to even
+		{149.49999999999997, 149}, // one ULP below a tie
+		{228.50000000000006, 229}, // one ULP above a tie
+		{228.5001, 229},           // not a tie
+		{-228.5, -228},            // ties-to-even is symmetric
 	}
-	if got := pythonRound(229.50000000000006); got != 230 {
-		t.Fatalf("pythonRound near odd half tie = %v, want 230", got)
-	}
-	if got := pythonRound(228.5001); got != 229 {
-		t.Fatalf("pythonRound non-tie = %v, want 229", got)
+	for _, c := range cases {
+		if got := pythonRound(c.in); got != c.want {
+			t.Errorf("pythonRound(%.17g) = %v, want %v", c.in, got, c.want)
+		}
 	}
 }
 
