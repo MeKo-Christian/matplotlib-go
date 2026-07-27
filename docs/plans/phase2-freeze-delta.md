@@ -1,7 +1,7 @@
 # Phase 2 Freeze Delta Reconciliation
 
 Phase 2 was a reduction pass, yet the public API freeze grew from 3,102 symbols
-to 3,178. This document reconciles that growth: it walks the difference between
+to 3,180. This document reconciles that growth: it walks the difference between
 the Phase 2.1 tiering decisions in `phase2-public-api-tiering.json` and the live
 freeze in `test/testdata/public_api/stable_public_api.json`, symbol by symbol,
 so Phase 4 can tag a surface whose every name is accounted for.
@@ -20,8 +20,8 @@ Both directions are fully accounted for; the residue is empty.
 | --------- | ----- |
 | Baseline  | 3,102 |
 | Removed   | 402   |
-| Added     | 478   |
-| Freeze    | 3,178 |
+| Added     | 480   |
+| Freeze    | 3,180 |
 
 The two tiering decisions hold:
 
@@ -44,7 +44,7 @@ The two tiering decisions hold:
 | `unexported`    | 1     | `core.WidgetArtist`                                |
 | `tiered-demote` | 1     | The tiering `demote` decision                      |
 
-### Added (478)
+### Added (480)
 
 | Category               | Count | What it is                                                  |
 | ---------------------- | ----- | ----------------------------------------------------------- |
@@ -59,7 +59,7 @@ The two tiering decisions hold:
 | `optional-package`     | 4     | `optional.Value[T]` and its constructors                    |
 | `renamed-draw-method`  | 3     | `Renderer.Image` → `Renderer.DrawImage` on raster backends  |
 | `shared-helper`        | 2     | `Color.WithAlphaMultiplier`, `PlotOptions.ScalarMapConfig`  |
-| `post-phase2`          | 2     | Phase 2 follow-up 1's shared contour scalar-map helpers     |
+| `post-phase2`          | 4     | Phase 2 follow-up 1's contour scalar-map helpers; Phase 3.3.4's `transform.AffineScale` pair |
 
 ## Why a reduction pass grew the count
 
@@ -127,9 +127,10 @@ Three differences were real and undocumented before this walk:
   `GetImage` took the vacated name. Symbol-id comparison shows no change; the
   signature did change. Any future audit that diffs ids alone will miss this
   class of break.
-- **The freeze is 3,178, not the 3,176 recorded when Phase 2 closed.** Follow-up
-  1 added the two contour helpers. `PLAN.md` and
-  `docs/plans/phase4-changelog-draft.md` now say 3,178.
+- **The freeze is 3,180, not the 3,176 recorded when Phase 2 closed.** Follow-up
+  1 added the two contour helpers; Phase 3.3.4 added the
+  `transform.AffineScale`/`IsAffineScale` pair. `PLAN.md` and
+  `docs/plans/phase4-changelog-draft.md` now say 3,180.
 
 ## Regenerating
 

@@ -167,9 +167,10 @@ It still needs release framing and a version heading before it seeds the v1.0
   measured against. Regenerating it, the parity-status document, and the
   public-surface classifications produced no diff, so the committed artifacts
   already matched the code when Phase 2 closed. The Phase 2 follow-ups then
-  added the two shared contour scalar-map helpers, bringing the freeze to 3,178.
+  added the two shared contour scalar-map helpers, and Phase 3.3.4 added the
+  `transform.AffineScale`/`IsAffineScale` pair, bringing the freeze to 3,180.
 - Reconciled that freeze against the Phase 2.1 tiering decisions symbol by
   symbol in `docs/plans/phase2-freeze-delta.{md,json}`. All 19 `delete` rows are
   absent and the one `demote` row landed in `backends`; every one of the 402
-  removed and 478 added names carries a category and, where it is a rename or a
+  removed and 480 added names carries a category and, where it is a rename or a
   move, a replacement that the test verifies is frozen.

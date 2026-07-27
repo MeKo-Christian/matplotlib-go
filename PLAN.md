@@ -83,7 +83,7 @@ the new figure save surface is used by examples; the API is re-frozen; and all
 goldens remain byte-identical to the pre-break baseline.
 
 Completed 2026-07-26. Every golden and Matplotlib-reference fixture stayed
-byte-identical through the whole phase. The final freeze is 3,178 symbols across
+byte-identical through the whole phase. The final freeze is 3,180 symbols across
 29 packages in `test/testdata/public_api/stable_public_api.json`; that artifact
 is the surface Phases 3 and 4 are measured against, and
 `docs/plans/phase2-freeze-delta.md` reconciles every symbol of it against the
@@ -113,16 +113,17 @@ when" criteria above. Both are now closed.
       (`mplot3d_terrain`, `mplot3d_tricontour3d`), both **closer** to their
       Matplotlib references (RMSE 1.159 → 1.015 and 2.500 → 2.443).
 - [x] Reconcile the frozen-surface symbol delta against the tiering
-      classification. Walked all 402 removed and 478 added names; the residue is
+      classification. Walked all 402 removed and 480 added names; the residue is
       empty. All 19 `delete` rows are gone and the one `demote` row landed in
-      `backends`. The growth (3,102 → 3,178) is 73 symbols of field-to-name
+      `backends`. The growth (3,102 → 3,180) is 73 symbols of field-to-name
       trades the audit only counts in one direction, 30 symbols of pre-existing
       API the baseline collector never parsed (build-tagged FFmpeg and native
-      Skia), 19 helpers the package split forced open, and follow-up 1's two
-      contour helpers. Three previously unrecorded findings: `core.WidgetArtist`
+      Skia), 19 helpers the package split forced open, follow-up 1's two
+      contour helpers, and Phase 3.3.4's `transform.AffineScale`/`IsAffineScale`
+      pair. Three previously unrecorded findings: `core.WidgetArtist`
       and `Axes.AddWidget` were deleted while classified `keep` (now in the
       migration notes), `Renderer.Image` kept its symbol id while changing
-      meaning, and the freeze is 3,178 rather than 3,176. Recorded in
+      meaning, and the freeze is 3,180 rather than 3,176. Recorded in
       `docs/plans/phase2-freeze-delta.{md,json}` and enforced by
       `TestPublicAPIFreezeDeltaIsReconciled`, which pins both inputs by hash so
       the delta cannot grow silently before Phase 4 tags the surface.

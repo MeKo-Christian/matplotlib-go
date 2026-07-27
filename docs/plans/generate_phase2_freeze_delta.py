@@ -467,6 +467,19 @@ _add(
     "func ContourFillScalarMap",
 )
 
+_add(
+    "post-phase2",
+    "Added by Phase 3.3.4, which needed a Scale outside the transform package "
+    "to declare that its forward map is affine so AsAffine can flatten the "
+    "data->pixel graph into a single matrix. core.invertedScale is the first "
+    "implementor; without it matshow's inverted y axis fell back to staged "
+    "evaluation and placed one tick a pixel low. Purely additive -- the "
+    "built-in Linear path is unchanged.",
+    "transform",
+    "type AffineScale",
+    "func IsAffineScale",
+)
+
 
 def load(path: Path) -> tuple[bytes, dict]:
     raw = path.read_bytes()

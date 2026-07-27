@@ -8,8 +8,8 @@
   },
   "freeze": {
     "path": "test/testdata/public_api/stable_public_api.json",
-    "sha256": "7b15c12a893845d9670b53ddea1766f5568924f8d550bef3f96df8110f75bf0f",
-    "symbol_count": 3178
+    "sha256": "aec28e67716d375ceb9f0b85469223124d46f0264ba05b5d60734d118c711712",
+    "symbol_count": 3180
   },
   "counts": {
     "removed": {
@@ -26,7 +26,7 @@
       "rename-target": 43,
       "renamed-draw-method": 3,
       "typed-enum": 24,
-      "post-phase2": 2,
+      "post-phase2": 4,
       "split-export": 19,
       "options-model": 5,
       "figure-output": 5,
@@ -5740,6 +5740,20 @@
       "note": "Moved to the package that owns the feature after the Phase 2.2 split.",
       "source_package": "core",
       "source_id": "type SymLogLocator"
+    },
+    {
+      "direction": "added",
+      "package": "transform",
+      "id": "func IsAffineScale",
+      "category": "post-phase2",
+      "note": "Added by Phase 3.3.4, which needed a Scale outside the transform package to declare that its forward map is affine so AsAffine can flatten the data->pixel graph into a single matrix. core.invertedScale is the first implementor; without it matshow's inverted y axis fell back to staged evaluation and placed one tick a pixel low. Purely additive -- the built-in Linear path is unchanged."
+    },
+    {
+      "direction": "added",
+      "package": "transform",
+      "id": "type AffineScale",
+      "category": "post-phase2",
+      "note": "Added by Phase 3.3.4, which needed a Scale outside the transform package to declare that its forward map is affine so AsAffine can flatten the data->pixel graph into a single matrix. core.invertedScale is the first implementor; without it matshow's inverted y axis fell back to staged evaluation and placed one tick a pixel low. Purely additive -- the built-in Linear path is unchanged."
     },
     {
       "direction": "added",
