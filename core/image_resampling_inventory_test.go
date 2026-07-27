@@ -145,7 +145,7 @@ func TestTransformedImageMatplotlibComparisonIsDocumented(t *testing.T) {
 		"`data` and `rgba`",
 		"`auto` and `antialiased`",
 		"covered Go examples are `image_heatmap`, `collection_mutable_scalarmap`, `colorbar_composition`, and matrix helpers",
-		"current Go comparison points are `Image2D.Draw`, `matplotlibImageDrawRect`, `Image2D.rasterizeForRect`, and `Axes.ImShow`",
+		"current Go comparison points are `Image2D.Draw`, `matplotlibImageDrawRect`, `Image2D.rasterizeForDestination`, and `Axes.ImShow`",
 	}
 	for _, phrase := range requiredDocs {
 		if !strings.Contains(docText, phrase) {
@@ -164,7 +164,7 @@ func TestTransformedImageResamplingGapInventoryIsDocumented(t *testing.T) {
 		"Resampling Gap Inventory",
 		"Backend matrix coverage and Matplotlib pipeline comparison are the inventory inputs",
 		"`Image2D.Draw`",
-		"`Image2D.rasterizeForRect`",
+		"`Image2D.rasterizeForDestination`",
 		"`matplotlibImageDrawRect`",
 		"`Axes.ImShow`",
 		"`_ImageBase._make_image`",

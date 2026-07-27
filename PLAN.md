@@ -374,86 +374,89 @@ mentioned (`basic_line`) carry real divergences. Findings:
   - [x] **3.3.6 The image nearest-resample boundaries**: `colormap_diverging`,
         `image_heatmap`, `specgram_psd`. Done 2026-07-28. The first two are now
         **1 differing pixel** each (from 259 and 270); `specgram_psd` went 435 to
-        354, and what is left of it is not this defect.
+        354, and what is left of it is not this defect. `imshow_clipped` fell out
+        of 3.4 and is now **pixel-identical** (2298 to 0, RMSE 2.938 to 0.051),
+        and `lognorm_imshow` 1270 to 599.
 
         The reverted first attempt looked in the wrong function. These images
         never reach `backends/agg.scaleRGBANearest`: `Image2D.Draw` resamples
         the scalar grid **in `core`, in Go**, to the destination pixel size
-        (`rasterizeForRect`) and hands AGG an already-dest-sized raster tagged
-        `"nearest"`, so AGG's own pre-scale short-circuits on the size match. The
-        index math that matters is `core.scaledNearestIndex`. Leave
-        `scaleRGBANearest` alone here — it is a third, different rule serving
-        true-colour images and downscales, and it is what regressed
+        (`rasterizeForDestination`) and hands AGG an already-dest-sized raster
+        tagged `"nearest"`, so AGG's own pre-scale short-circuits on the size
+        match. Leave `scaleRGBANearest` alone here — it is a third, different
+        rule serving true-colour images and downscales, and it is what regressed
         `colorbar_composition` last time.
 
-        Root cause: `scaledNearestIndex` used `floor(u)`. Matplotlib resamples
-        through `agg::span_image_filter_*_nn`, which quantizes the source
-        coordinate to 1/256 of a cell with round-half-away-from-zero and then
-        floors it with an arithmetic shift — `floor(round(u*256)/256)`. The two
-        differ only when `u` lands within **1/512 of a cell** below a boundary:
-        AGG snaps it up and takes the cell on the right, `floor` keeps it on the
-        left. That is a tie, not an off-by-one, which is why only 2 of
-        `specgram_psd`'s ~86 cell boundaries flipped. Predicted before the fix
-        and confirmed to the pixel: flips at destination x=55 of 500 over 9
-        columns (`colormap_diverging`), x=362 of 544 over 3 (`image_heatmap`),
-        and x=401 of 496 over 21 plus y=239 of 278 over 65 (`specgram_psd`) —
-        every one a whole mis-drawn column or row at the device coordinate the
-        audit reported.
+        Three separate defects, all in `core/image.go`:
 
-        A second, coupled defect had to move with it. `origin="lower"` reflected
-        the *resulting index* (`rows-1-fp(u)`) where matplotlib reflects in the
-        frame it resamples (`fp(rows-u)`); under `floor` those agree, under the
-        boundary rule they do not, and they disagree at exactly the coordinates
+        **The column rule is a DDA, not arithmetic.** The port mapped each
+        destination column independently with `floor(u)`. AGG does not map
+        pixels independently at all: `span_interpolator_linear::begin`
+        transforms only the two *ends* of the scanline, rounds each to 1/256 of a
+        source cell with round-half-away-from-zero, and walks between them with
+        `dda2_line_interpolator` — integer arithmetic whose accumulated remainder
+        decides where each cell boundary lands. No per-pixel formula reproduces
+        it. `floor(u)` is wrong on `colormap_diverging` and `image_heatmap`;
+        `floor(round(u*256)/256)`, which is the per-pixel reading of the same
+        C++ and what a first pass at this item shipped, is wrong on
+        `asinh_norm_image`, `twoslope_norm_image` and `lognorm_imshow`. Both
+        rules agree with the DDA over most of a span and diverge at boundaries,
+        and one boundary is one whole mis-drawn column. Verified by recovering
+        the column runs from matplotlib's own resampled buffer for six fixtures:
+        the DDA matches all six, `floor` three, per-pixel rounding three.
+
+        **The row rule is the per-pixel rounding.** An axis-aligned image has the
+        same source row at both ends of a scanline, so the interpolator's y is
+        constant and reduces to the single `floor(round(u*256)/256)`. Here plain
+        `floor` really is wrong, and it is what the port used. Confirmed against
+        the same buffers. Coupled to it: `origin="lower"` reflected the
+        *resulting index* (`rows-1-fp(u)`) where matplotlib reflects in the frame
+        it resamples (`fp(rows-u)`); under `floor` those agree, under the
+        rounding rule they do not, and they disagree at exactly the coordinates
         the rule changes. The destination row is reflected first now.
 
-        `-update-golden` moved 12 goldens. Eight improve, three of them
-        decisively (`colormap_diverging` 259 to 1, RMSE 1.427 to 0.076;
-        `image_heatmap` 270 to 1, 0.969 to 0.049; `lognorm_imshow` 1270 to 875,
-        2.461 to 0.695; `colorbar_boundary_values` 374 to 76). The audit's shift
-        families are down 7 to 5 and both fixed cases leave the shift set
-        entirely. Tolerances ratcheted on the three named cases.
+        **The affine was missing its clip translation.** Matplotlib resamples
+        over `Bbox.intersection(out_bbox, clip_bbox)`, deriving both the output
+        buffer size and the affine from the *clipped* rect
+        (`Image._make_image`). The port ceiled the unclipped rect, mapped from
+        the image's own corner, and clipped the result afterwards — which samples
+        a different set of source cells, because the buffer-rounding
+        compensation is computed from a different width and the pixel grid
+        starts at a different device coordinate. `rasterizeForDestination` now
+        intersects with `ctx.Clip` first and `matplotlibResampleAffine` carries
+        the per-axis offset. Checked against matplotlib's recorded affine for
+        `imshow_clipped`: sx 128.25, ox 2.0, sy 43.3333, oy 1.0, all reproduced
+        exactly. This is the only current fixture where the term is non-zero, and
+        it takes the case to zero differing pixels.
 
-        Four cases came out worse on RMSE and two of them needed their ceiling
-        raised — **an explicit loosening, not a silent one**:
-    - `imshow_clipped` (RMSE 3.60 to 3.62, ceiling now 3.7) is the one fixture
-      whose extent exceeds its axes (extent 0-8, xlim 2-6, ylim 1-7). Matplotlib
-      clips the image bbox to the axes *before* deriving the resample affine, so
-      its affine carries a translation the port does not model at all: the port
-      ceils the unclipped rect and maps from the image's own corner. The
-      sharper boundary rule makes that missing term visible. Its largest cluster
-      did drop 2298 to 1022 — the single whole-image cluster broke up — which is
-      the same story 3.4 already records for this case. Fix it there, with the
-      clip translation, not here.
-    - `asinh_norm_image` (2.10 to 2.43, ceiling now 2.5), `colorbar_symlog_ticks`
-      and `twoslope_norm_image` all have **fewer** differing pixels than before
-      and larger amplitude on the ones that remain. Their extents match their
-      limits, so the geometry is not in question; a raster-level comparison
-      against matplotlib's own resampled buffer shows scattered colour
-      differences up to amplitude 115 across the whole image, i.e. an
-      independent norm/colormap divergence that a corrected row boundary now
-      exposes. Belongs with 3.5, not here.
+        `-update-golden` moved 14 goldens across the two passes. Every one is at
+        least as good as before 3.3.6 on both differing pixels and RMSE — there
+        is no case that had to be traded away, and no tolerance ceiling was
+        raised. Ratcheted: `imshow_clipped` (3.60 to 0.1), `lognorm_imshow` (4.4
+        to 0.65), `colorbar_symlog_ticks` (1.6 to 0.65), `twoslope_norm_image`
+        (1.1 to 0.75), `asinh_norm_image` (2.10 to 1.85),
+        `image_variants_gallery` (2.7 to 1.55), plus the three named cases.
 
         `specgram_psd`'s surviving 353-px row at device y=281 (destination row
-        239 of 278) is **not** the boundary rule — that fixed its x column. Its
-        raster was compared directly against matplotlib's own resampled buffer:
-        under the old index reflection the two agree on every one of the 278
-        rows, under the corrected one they differ at exactly this row, and yet
-        the corrected form is what every other origin-lower case needs. The
-        asymmetry is that matplotlib's `specgram` stores its array flipped
-        (`flipud` + `origin="upper"`) where the port keeps the natural order and
-        sets `ImageOriginLower`, so the two reflect in opposite frames. Resolve
-        the orientation in `core.Axes.Specgram`, not in the resampler. Tracked
-        under 3.4.
+        239 of 278) is **not** any of the three defects above. Its raster was
+        compared directly against matplotlib's own resampled buffer: under the
+        old index reflection the two agree on every one of the 278 rows, under
+        the corrected one they differ at exactly this row, and yet the corrected
+        form is what every other origin-lower case needs. The asymmetry is that
+        matplotlib's `specgram` stores its array flipped (`flipud` +
+        `origin="upper"`) where the port keeps the natural order and sets
+        `ImageOriginLower`, so the two reflect in opposite frames. Resolve the
+        orientation in `core.Axes.Specgram`, not in the resampler. Tracked under
+        3.4.
 
-        One thing measured and worth recording as a negative result: the port
-        models the source coordinate as `(dest+0.5)*src/dst`, and
-        `matplotlibResampleScale` now instead composes the scale the way
-        `Image._make_image` does — exact device extent over source count, then
-        the stretch that compensates for rounding the buffer up. On every
-        current fixture that is bit-for-bit the same number, so it changed no
-        pixel. It is kept because it is the faithful composition and because it
-        is what proves the residual above is the *translation* term, not the
-        scale.
+        Two things worth recording for whoever reads this next. The scale
+        composition in `matplotlibResampleAffine` — exact device extent over
+        source count, then the stretch compensating for rounding the buffer up —
+        is bit-for-bit the naive ratio on every current fixture and by itself
+        changed no pixel; it is kept because it is the faithful composition and
+        because the offset is derived alongside it. And the filtered
+        (non-nearest) branch now shares the reflected destination row and the
+        affine, which is a no-op for it today but stops the two paths drifting.
   - [ ] **3.3.7 `transform_coordinates`** (`+2-1`, the only two-axis shift).
   - [ ] **3.3.8 The remaining `mathtext_gallery` cluster** (64 px, one 10x11
         glyph at x[638:648] y[176:187], family `+0-1` after 3.3.3). It is the
@@ -463,9 +466,8 @@ mentioned (`basic_line`) carry real divergences. Findings:
       residual is confined but not a clean offset, worst first: `line2d_markers`,
       `specgram_psd` (one 353-px row; array-orientation asymmetry against
       matplotlib's flipud+upper `specgram`, see 3.3.6),
-      `stat_variants`, `annotation_legend_offsetbox_gallery`, `imshow_clipped`
-      (a single cluster covering the whole image area — a resampling offset in
-      the clipped-image path), `axes_control_surface`, `text_annotation_matrix`,
+      `stat_variants`, `annotation_legend_offsetbox_gallery`,
+      `axes_control_surface`, `text_annotation_matrix`,
       `legend_layout_matrix`, `transform_annotation_modes`, `patch_style_matrix`,
       `unstructured_showcase`, `mathtext_basic`, `colorbar_boundary_values`,
       `line2d_semantics`. Fix or record as an accepted difference.

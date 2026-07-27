@@ -26,9 +26,7 @@ func (i *Image2D) Draw(r render.Renderer, ctx *DrawContext) {
 	if dst.W() <= 0 || dst.H() <= 0 {
 		return
 	}
-	drawDst := matplotlibImageDrawRect(dst)
-
-	raster, ok := i.rasterizeForRect(dst, drawDst)
+	raster, drawDst, ok := i.rasterizeForDestination(ctx, dst)
 	if !ok {
 		return
 	}
@@ -124,60 +122,200 @@ func flipRGBAVertical(src *image.RGBA) *image.RGBA {
 	return dst
 }
 
-// rasterizeForRect resamples the scalar grid to the destination pixel rect.
+// rasterizeForDestination resamples the image and reports the pixel rect it is
+// to be drawn into.
 //
-// base is the image's exact (unrounded) device rect and dst the whole-pixel
-// rect it is drawn into; the difference between them is what Matplotlib's
-// buffer-rounding compensation is derived from, so both are needed.
-func (i *Image2D) rasterizeForRect(base, dst geom.Rect) (render.Image, bool) {
+// Matplotlib resamples an image over its bounding box intersected with the clip
+// box, not over the whole image (Image._make_image starts with
+// Bbox.intersection(out_bbox, clip_bbox) and derives both the output buffer size
+// and the affine from that intersection). For an image that fits inside its axes
+// the two are the same rect and this is the plain destination. For one that
+// overhangs, resampling the whole image and clipping the result afterwards
+// samples a different set of source cells: the buffer-rounding compensation is
+// computed from a different width, and the pixel grid starts at a different
+// device coordinate, so pixel centres land elsewhere in source space.
+func (i *Image2D) rasterizeForDestination(ctx *DrawContext, dst geom.Rect) (render.Image, geom.Rect, bool) {
 	if i == nil || i.rgba != nil || i.AngleDeg != 0 {
-		return i.rasterize()
+		raster, ok := i.rasterize()
+		return raster, matplotlibImageDrawRect(dst), ok
 	}
 	rows, cols := scalarImageDimensions(i.Data)
 	if rows == 0 || cols == 0 {
-		return nil, false
+		return nil, geom.Rect{}, false
 	}
-	width := int(math.Round(math.Abs(dst.W())))
-	height := int(math.Round(math.Abs(dst.H())))
-	if width <= cols || height <= rows {
-		return i.rasterize()
+
+	clipped := dst
+	if ctx != nil && ctx.Clip.W() > 0 && ctx.Clip.H() > 0 {
+		clipped = dst.Intersect(ctx.Clip)
+		if clipped.W() <= 0 || clipped.H() <= 0 {
+			return nil, geom.Rect{}, false
+		}
 	}
-	if !shouldRasterizeScalarDataStage(i.Interpolation, width, height, cols, rows) {
-		return i.rasterize()
+	drawDst := matplotlibImageDrawRect(clipped)
+
+	width := int(math.Round(math.Abs(drawDst.W())))
+	height := int(math.Round(math.Abs(drawDst.H())))
+	if width <= cols || height <= rows ||
+		!shouldRasterizeScalarDataStage(i.Interpolation, width, height, cols, rows) {
+		raster, ok := i.rasterize()
+		return raster, matplotlibImageDrawRect(dst), ok
 	}
-	return i.rasterizeToSizeAt(width, height, matplotlibResampleScale(base, cols, rows))
+
+	affine := i.matplotlibResampleAffine(dst, clipped, cols, rows, width, height)
+	raster, ok := i.rasterizeToSizeAt(width, height, affine)
+	return raster, drawDst, ok
 }
 
-// resampleScale is the device-pixels-per-source-cell of the affine Matplotlib
-// hands its image resampler, one factor per axis.
-type resampleScale struct{ x, y float64 }
+// resampleScale is the affine Matplotlib hands its image resampler, reduced to
+// one scale and one offset per axis. scale is device pixels per source cell;
+// offset is the source-space coordinate the output buffer starts at, which is
+// non-zero exactly when the clip box cuts into the image.
+type resampleScale struct {
+	x, y   float64
+	ox, oy float64
 
-// matplotlibResampleScale reproduces that affine's scale in the order
-// Matplotlib composes it (Image._make_image).
+	// columns is the source column for each destination column, precomputed
+	// once per raster because AGG derives it by stepping an integer DDA along
+	// the scanline rather than by mapping each pixel independently. A nil
+	// slice means "map each column arithmetically", which is what the callers
+	// that do not model the affine want.
+	columns []int
+}
+
+// column is the source column for a destination column, from the precomputed
+// span if there is one and by the plain per-pixel map otherwise.
+func (s resampleScale) column(index, targetWidth, sourceCols int) int {
+	if index >= 0 && index < len(s.columns) {
+		return s.columns[index]
+	}
+	return scaledNearestIndexAt(index, targetWidth, sourceCols, s.x, s.ox)
+}
+
+// matplotlibResampleAffine reproduces that affine in the order Matplotlib
+// composes it (Image._make_image).
 //
 // The naive ratio targetSize/sourceSize is the same number in exact arithmetic
 // but not in float64, and the difference decides cell boundaries: the nearest
 // rule in nearestSourceIndex snaps a coordinate that is within 1/512 of a cell
 // edge onto the edge, so a last-place difference in the scale moves a whole
 // source row or column. Matplotlib scales the exact device extent by the source
-// count and then, only when that extent is not already whole pixels, stretches
-// it to fill the rounded-up buffer. Reproducing that order inherits the same
-// rounding noise.
-func matplotlibResampleScale(base geom.Rect, cols, rows int) resampleScale {
+// count and then, only when the clipped extent is not already whole pixels,
+// stretches it to fill the rounded-up buffer. Reproducing that order inherits
+// the same rounding noise.
+//
+// base is the image's exact device rect and clipped that rect intersected with
+// the clip box. The offsets are the clip's inset expressed in source cells.
+//
+// bufWidth and bufHeight are the output buffer's size in pixels. The height is
+// needed only for origin "upper": Matplotlib flips that case in array space
+// ahead of the affine, so its offset is measured from the opposite edge.
+func (i *Image2D) matplotlibResampleAffine(base, clipped geom.Rect, cols, rows, bufWidth, bufHeight int) resampleScale {
 	baseW := math.Abs(base.W())
 	baseH := math.Abs(base.H())
-	if baseW <= 0 || baseH <= 0 || cols <= 0 || rows <= 0 {
+	clipW := math.Abs(clipped.W())
+	clipH := math.Abs(clipped.H())
+	if baseW <= 0 || baseH <= 0 || clipW <= 0 || clipH <= 0 || cols <= 0 || rows <= 0 {
 		return resampleScale{}
 	}
 	sx := baseW / float64(cols)
 	sy := baseH / float64(rows)
-	outW := math.Ceil(baseW)
-	outH := math.Ceil(baseH)
-	if baseW != outW || baseH != outH {
-		sx *= 1 + (outW-baseW)/baseW
-		sy *= 1 + (outH-baseH)/baseH
+	outW := math.Ceil(clipW)
+	outH := math.Ceil(clipH)
+	if clipW != outW || clipH != outH {
+		sx *= 1 + (outW-clipW)/clipW
+		sy *= 1 + (outH-clipH)/clipH
 	}
-	return resampleScale{x: sx, y: sy}
+
+	// Device space here is y-down, so the image's bottom edge is base.Max.Y.
+	ox := (clipped.Min.X - base.Min.X) / (baseW / float64(cols))
+	oy := (base.Max.Y - clipped.Max.Y) / (baseH / float64(rows))
+	if i == nil || i.Origin != ImageOriginLower {
+		oy = float64(rows) - float64(bufHeight)/sy - oy
+	}
+	return resampleScale{
+		x: sx, y: sy, ox: ox, oy: oy,
+		columns: aggSpanColumns(bufWidth, cols, sx, ox),
+	}
+}
+
+// aggSpanColumns is the source column AGG's nearest-neighbour image filter
+// reads for each destination column of one scanline.
+//
+// AGG does not map each pixel independently. span_interpolator_linear::begin
+// transforms only the two ends of the span, rounds both to 1/256 of a source
+// cell, and walks between them with dda2_line_interpolator — integer arithmetic
+// whose accumulated remainder decides where each cell boundary falls. Mapping
+// per pixel instead agrees with it over most of a span but not at every
+// boundary, and one boundary is one whole mis-drawn column.
+//
+// The y axis needs no equivalent: an axis-aligned image has the same source row
+// at both ends of a scanline, so the interpolator's y is constant and reduces
+// to the single rounding in nearestSourceIndex.
+func aggSpanColumns(width, sourceCols int, scale, offset float64) []int {
+	if width <= 0 || sourceCols <= 0 || scale <= 0 {
+		return nil
+	}
+	const subpixelScale = 1 << imageSubpixelShift
+	begin := aggIround((0.5/scale + offset) * subpixelScale)
+	end := aggIround((float64(width)+0.5)/scale*subpixelScale + offset*subpixelScale)
+
+	out := make([]int, width)
+	dda := newDDA2(begin, end, width)
+	for x := range out {
+		index := dda.value >> imageSubpixelShift
+		if index < 0 {
+			index = 0
+		}
+		if index >= sourceCols {
+			index = sourceCols - 1
+		}
+		out[x] = index
+		dda.next()
+	}
+	return out
+}
+
+// dda2 is agg::dda2_line_interpolator in its forward-adjusted form.
+type dda2 struct {
+	count, left, rem, mod, value int
+}
+
+func newDDA2(from, to, count int) dda2 {
+	if count <= 0 {
+		count = 1
+	}
+	delta := to - from
+	d := dda2{
+		count: count,
+		left:  delta / count, // Go and C both truncate toward zero here.
+		rem:   delta % count,
+		value: from,
+	}
+	d.mod = d.rem
+	if d.mod <= 0 {
+		d.mod += count
+		d.rem += count
+		d.left--
+	}
+	d.mod -= count
+	return d
+}
+
+func (d *dda2) next() {
+	d.mod += d.rem
+	d.value += d.left
+	if d.mod > 0 {
+		d.mod -= d.count
+		d.value++
+	}
+}
+
+// aggIround is agg::iround: round half away from zero.
+func aggIround(v float64) int {
+	if v < 0 {
+		return int(v - 0.5)
+	}
+	return int(v + 0.5)
 }
 
 func (i *Image2D) rasterizeToSize(targetWidth, targetHeight int) (render.Image, bool) {
@@ -409,28 +547,26 @@ func (i *Image2D) scaledScalarValue(dstY, dstX, targetHeight, targetWidth, rows,
 }
 
 func (i *Image2D) scaledScalarValueAt(dstY, dstX, targetHeight, targetWidth, rows, cols int, scale resampleScale) (float64, bool) {
-	if i != nil {
-		if filter, ok := scalarImageFilterForInterpolation(i.Interpolation, targetWidth, targetHeight, cols, rows); ok {
-			rowCoord := imageSourceCoord(dstY, targetHeight, rows)
-			if i.Origin == ImageOriginLower {
-				rowCoord = float64(rows-1) - rowCoord
-			}
-			colCoord := imageSourceCoord(dstX, targetWidth, cols)
-			return filteredScalarSample(i.Data, rowCoord, colCoord, filter)
-		}
-	}
 	// The raster is built top-down, so with origin "lower" the topmost
 	// destination row holds the last data row. Reflect the destination row and
 	// then map, rather than mapping and reflecting the index: under the boundary
 	// rule in scaledNearestIndex those are different answers wherever a source
 	// coordinate snaps up onto a cell edge, and only this order reproduces the
-	// affine Matplotlib hands its resampler.
+	// affine Matplotlib hands its resampler. For the filtered branch the two
+	// orders agree, so sharing this row keeps that path's output unchanged.
 	srcRow := dstY
 	if i != nil && i.Origin == ImageOriginLower {
 		srcRow = targetHeight - 1 - dstY
 	}
-	row := scaledNearestIndexAt(srcRow, targetHeight, rows, scale.y)
-	col := scaledNearestIndexAt(dstX, targetWidth, cols, scale.x)
+	if i != nil {
+		if filter, ok := scalarImageFilterForInterpolation(i.Interpolation, targetWidth, targetHeight, cols, rows); ok {
+			rowCoord := imageSourceCenter(srcRow, targetHeight, rows, scale.y, scale.oy) - 0.5
+			colCoord := imageSourceCenter(dstX, targetWidth, cols, scale.x, scale.ox) - 0.5
+			return filteredScalarSample(i.Data, rowCoord, colCoord, filter)
+		}
+	}
+	row := scaledNearestIndexAt(srcRow, targetHeight, rows, scale.y, scale.oy)
+	col := scale.column(dstX, targetWidth, cols)
 	return scalarAt(i.Data, row, col)
 }
 
@@ -472,10 +608,10 @@ func normalizedImageInterpolation(interpolation string) string {
 }
 
 func scaledNearestIndex(index, targetSize, sourceSize int) int {
-	return scaledNearestIndexAt(index, targetSize, sourceSize, 0)
+	return scaledNearestIndexAt(index, targetSize, sourceSize, 0, 0)
 }
 
-func scaledNearestIndexAt(index, targetSize, sourceSize int, scale float64) int {
+func scaledNearestIndexAt(index, targetSize, sourceSize int, scale, offset float64) int {
 	if targetSize <= 0 || sourceSize <= 0 {
 		return 0
 	}
@@ -485,7 +621,7 @@ func scaledNearestIndexAt(index, targetSize, sourceSize int, scale float64) int 
 	if index >= targetSize {
 		return sourceSize - 1
 	}
-	scaled := nearestSourceIndex(imageSourceCenter(index, targetSize, sourceSize, scale))
+	scaled := nearestSourceIndex(imageSourceCenter(index, targetSize, sourceSize, scale, offset))
 	if scaled < 0 {
 		return 0
 	}
@@ -531,20 +667,15 @@ func nearestSourceIndex(u float64) int {
 }
 
 // imageSourceCenter is the source-space coordinate of a destination pixel's
-// centre. scale is device pixels per source cell; a non-positive scale falls
-// back to the exact targetSize/sourceSize ratio.
-func imageSourceCenter(index, targetSize, sourceSize int, scale float64) float64 {
+// centre. scale is device pixels per source cell and offset the source-space
+// coordinate the output buffer starts at; a non-positive scale falls back to the
+// exact targetSize/sourceSize ratio, which is the same mapping for an image the
+// clip box does not cut.
+func imageSourceCenter(index, targetSize, sourceSize int, scale, offset float64) float64 {
 	if scale > 0 {
-		return (float64(index) + 0.5) / scale
+		return (float64(index)+0.5)/scale + offset
 	}
 	return (float64(index) + 0.5) * float64(sourceSize) / float64(targetSize)
-}
-
-func imageSourceCoord(index, targetSize, sourceSize int) float64 {
-	if targetSize <= 0 || sourceSize <= 0 {
-		return 0
-	}
-	return (float64(index)+0.5)*float64(sourceSize)/float64(targetSize) - 0.5
 }
 
 func bilinearScalarSample(data [][]float64, rowCoord, colCoord float64) (float64, bool) {

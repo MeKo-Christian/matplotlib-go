@@ -1113,7 +1113,7 @@ is closed.
 
 Backend matrix coverage and Matplotlib pipeline comparison are the inventory
 inputs for transformed image parity. The Go comparison surface is
-`Image2D.Draw`, `Image2D.rasterizeForRect`, `matplotlibImageDrawRect`, and
+`Image2D.Draw`, `Image2D.rasterizeForDestination`, `matplotlibImageDrawRect`, and
 `Axes.ImShow`; the upstream Matplotlib comparison surface is
 `AxesImage.make_image` and `_ImageBase._make_image`, with extent/origin state
 from `AxesImage.set_extent` and `AxesImage.get_extent`.
@@ -1168,7 +1168,7 @@ between those stages based on transform size.
 The covered Go examples are `image_heatmap`, `collection_mutable_scalarmap`,
 `colorbar_composition`, and matrix helpers (`MatShow`, `ImShow`, `Spy`,
 `AnnotatedHeatmap`), and current Go comparison points are `Image2D.Draw`,
-`matplotlibImageDrawRect`, `Image2D.rasterizeForRect`, and `Axes.ImShow`.
+`matplotlibImageDrawRect`, `Image2D.rasterizeForDestination`, and `Axes.ImShow`.
 
 Current inventory result: Go already records extent/origin through `Image2D`
 bounds and matrix helpers; clipping and transform routing depend on renderer
