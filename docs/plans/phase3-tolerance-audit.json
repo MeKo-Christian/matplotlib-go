@@ -987,25 +987,23 @@
   "verdict": "fragile"
  },
  {
-  "clusters": 4,
-  "diff_px": 84,
-  "family": "shift -1+0",
+  "clusters": 0,
+  "diff_px": 0,
+  "family": "identical",
   "id": "mathtext_fractions",
-  "largest_cluster": 36,
-  "max_diff": 224,
+  "largest_cluster": 0,
+  "max_diff": 0,
   "max_mean_abs": 0.0,
   "max_rmse": 4.5,
-  "mean_abs": 0.033,
-  "p50_amp": 95,
-  "p99_amp": 224,
-  "pct_px": 0.0365,
-  "psnr": 40.59,
-  "rmse": 2.382,
-  "shifts": {
-   "-1+0": 84
-  },
-  "slack": 1.89,
-  "verdict": "ok"
+  "mean_abs": 0.0,
+  "p50_amp": 0,
+  "p99_amp": 0,
+  "pct_px": 0.0,
+  "psnr": Infinity,
+  "rmse": 0.0,
+  "shifts": {},
+  "slack": null,
+  "verdict": "exact"
  },
  {
   "clusters": 0,
@@ -1069,46 +1067,44 @@
   "verdict": "ok"
  },
  {
-  "clusters": 2,
-  "diff_px": 8,
-  "family": "shift +0+1",
+  "clusters": 0,
+  "diff_px": 0,
+  "family": "identical",
   "id": "mathtext_accents",
-  "largest_cluster": 4,
-  "max_diff": 255,
+  "largest_cluster": 0,
+  "max_diff": 0,
   "max_mean_abs": 0.0,
   "max_rmse": 1.608,
-  "mean_abs": 0.005,
-  "p50_amp": 207,
-  "p99_amp": 255,
-  "pct_px": 0.0035,
-  "psnr": 47.41,
-  "rmse": 1.086,
-  "shifts": {
-   "+0+1": 8
-  },
-  "slack": 1.48,
-  "verdict": "ok"
+  "mean_abs": 0.0,
+  "p50_amp": 0,
+  "p99_amp": 0,
+  "pct_px": 0.0,
+  "psnr": Infinity,
+  "rmse": 0.0,
+  "shifts": {},
+  "slack": null,
+  "verdict": "exact"
  },
  {
-  "clusters": 5,
-  "diff_px": 162,
-  "family": "shift +0+1",
+  "clusters": 1,
+  "diff_px": 64,
+  "family": "shift +0-1",
   "id": "mathtext_gallery",
-  "largest_cluster": 86,
+  "largest_cluster": 64,
   "max_diff": 255,
   "max_mean_abs": 0.0,
   "max_rmse": 2.6,
-  "mean_abs": 0.03,
-  "p50_amp": 124,
+  "mean_abs": 0.007,
+  "p50_amp": 45,
   "p99_amp": 255,
-  "pct_px": 0.0321,
-  "psnr": 40.97,
-  "rmse": 2.281,
+  "pct_px": 0.0127,
+  "psnr": 48.45,
+  "rmse": 0.964,
   "shifts": {
-   "+0+1": 162
+   "+0-1": 64
   },
-  "slack": 1.14,
-  "verdict": "fragile"
+  "slack": 2.7,
+  "verdict": "ok"
  },
  {
   "clusters": 441,

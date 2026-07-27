@@ -28,6 +28,20 @@ import (
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
+// mathShipOffsetV is matplotlib's `off_v = oy + box.height` from _mathtext.ship,
+// where oy is the raster shift (-ymin) and box.height the expression ascent.
+//
+// ship adds this to each glyph's accumulated cur_v as a single term, and the
+// association is not free: `cur_v + (boxAscent - ymin)` and
+// `(boxAscent + cur_v) - ymin` differ in the last ULP, and to_raster blits with
+// int(), which truncates rather than rounds — so one ULP becomes one pixel
+// whenever the sum lands on an integer. \dot{x} at 26 pt is the case that
+// showed it: matplotlib reaches int(0.99999999999999645) = 0 for the dot where
+// the port reached exactly 1.0 and drew it a pixel low.
+func mathShipOffsetV(boxAscent, ymin float64) float64 {
+	return boxAscent - ymin
+}
+
 // DrawMathTextImage rasterizes a flattened mathtext expression with matplotlib's
 // _mathtext.Output.to_raster pixel placement: one shared bounding box, per-glyph
 // integer blitting (int(ox)+bitmap_left, int(oy-iceberg)) and the draw_rect_filled
@@ -98,6 +112,7 @@ func (r *Renderer) DrawMathTextImage(glyphs []render.MathGlyphPlacement, rects [
 	imageHeight := math.Ceil(parseH + math.Max(parseDescent, 0))
 	imageLeftDev := pythonRound(anchor.X)
 	imageTopDev := pythonRound(baselineDev+parseDescent) + 1 - imageHeight
+	offV := mathShipOffsetV(boxAscent, ymin)
 
 	for i := range rendered {
 		p := &rendered[i]
@@ -105,13 +120,13 @@ func (r *Renderer) DrawMathTextImage(glyphs []render.MathGlyphPlacement, rects [
 			continue
 		}
 		gx := int(imageLeftDev) + int(p.ox-xmin) + p.g.bitmapLeft
-		gy := int(imageTopDev) + int((boxAscent+p.oy-ymin)-p.g.iceberg)
+		gy := int(imageTopDev) + int((p.oy+offV)-p.g.iceberg)
 		r.blendAlphaMask(p.g.mask, gx, gy, textColor)
 	}
 
 	for _, rc := range rects {
-		y1 := boxAscent + rc.Y1 - ymin
-		y2 := boxAscent + rc.Y2 - ymin
+		y1 := rc.Y1 + offV
+		y2 := rc.Y2 + offV
 		height := int(y2-y1) - 1
 		if height < 0 {
 			height = 0
@@ -256,6 +271,7 @@ func (r *Renderer) mathTextAlphaImage(glyphs []render.MathGlyphPlacement, rects 
 		return mathTextAlphaImage{}, false
 	}
 	mask := image.NewAlpha(image.Rect(0, 0, imageWidth, imageHeight))
+	offV := mathShipOffsetV(boxAscent, ymin)
 
 	for i := range rendered {
 		p := &rendered[i]
@@ -263,13 +279,13 @@ func (r *Renderer) mathTextAlphaImage(glyphs []render.MathGlyphPlacement, rects 
 			continue
 		}
 		gx := int(p.ox-xmin) + p.g.bitmapLeft
-		gy := int((boxAscent + p.oy - ymin) - p.g.iceberg)
+		gy := int((p.oy + offV) - p.g.iceberg)
 		overAlphaMask(mask, p.g.mask, gx, gy)
 	}
 
 	for _, rc := range rects {
-		y1 := boxAscent + rc.Y1 - ymin
-		y2 := boxAscent + rc.Y2 - ymin
+		y1 := rc.Y1 + offV
+		y2 := rc.Y2 + offV
 		height := int(y2-y1) - 1
 		if height < 0 {
 			height = 0

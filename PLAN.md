@@ -221,7 +221,9 @@ mentioned (`basic_line`) carry real divergences. Findings:
       per case from post-fix measurements.
 - [ ] **3.3 Fix the four shift families.** Each is a candidate shared root
       cause; confirm against `third_party/matplotlib` 3.10.9 and fix in the core
-      library, not the fixtures. **3 of 14 fixed 2026-07-27** (`basic_line` and
+      library, not the fixtures. **5 of 14 fixed, and a sixth largely fixed,
+  2026-07-27**; the audit's shift families are down from 14 cases to 9 and its
+  pixel-identical count up from 21 to 25. First pass (`basic_line` and
       `basic_line_labels` are now pixel-identical to Matplotlib;
       `animation_subplots_frame` went from 178 differing pixels to 38, largest
       cluster 70 to 2). Two root causes, both the same mistake — a tolerance
@@ -254,24 +256,69 @@ mentioned (`basic_line`) carry real divergences. Findings:
     re-regression fails; the rest wait for 3.6. The PDF and SVG goldens were
     regenerated for the last-decimal coordinate change (they are Go-authored, not
     matplotlib references).
-  - Still open, 11 cases in three families with distinct root causes:
-    - `+0+1` (5, all text): `mathtext_gallery`, `formatter_engineering_labels`,
-      `matshow_basic`, `mathtext_accents`, `specgram_psd`. Note `matshow_basic`
-      is _not_ a text case despite the family — its whole residual is one tick
-      **line** drawn a pixel low (a 5x1 mark at y 211 vs 212), so the snapper
-      path still has a divergence the composed transform did not cover.
-    - `-1+0` (3): `mathtext_fractions`, `formatter_scalar_scientific_labels`,
-      `quad_mesh`.
-    - `+1+0` (2, image/colorbar edge column off by one — in `colormap_diverging`
-      the entire residual is one 258-px-tall column at an interior cell
-      boundary, not the axes edge): `colormap_diverging`, `image_heatmap`. A
-      first attempt at this one failed and was reverted: reproducing AGG's 1/256
-      fixed-point span interpolation in `scaleRGBANearest`
-      (`floor(round(u*256)/256)` rather than `round(u-0.5)`) left both cases
-      untouched and regressed `colorbar_composition` from 2563 to 2821 differing
-      pixels, so these two do not reach the raster nearest-neighbour path that
-      was changed. Find the path they do take before trying again.
-    - `+2-1` (1): `transform_coordinates`.
+  Subtasks:
+  - [x] **3.3.1 Remove the rounding tolerances** (`pythonRound`,
+        `snapPathCoordinate`). Done 2026-07-27, described above.
+  - [x] **3.3.2 Compose `transData` as a single affine.** Done 2026-07-27,
+        described above. Required by 3.3.1: without it `units_categories`
+        regresses from 104 differing pixels to 746.
+  - [x] **3.3.3 The mathtext cases.** Done 2026-07-27. `mathtext_fractions`
+        (84 differing pixels) and `mathtext_accents` (8) are now **pixel-identical**
+        to matplotlib and `mathtext_gallery` went 210 to 64, its residual now a
+        single cluster. Three root causes, all the same species as 3.3.1 — an
+        expression that is right in exact arithmetic but not in float64, exposed
+        because `_mathtext.Output.to_raster` blits with `int()`, which truncates
+        rather than rounds, so one ULP becomes one whole pixel whenever a
+        coordinate lands on an integer:
+    - `mathtext/sqrt.go` laid the root index out **at** the shrunk size, where
+      matplotlib measures at full size and scales the resulting box
+      (`Char.shrink` multiplies an already-measured width). A glyph re-measured
+      at 11.27pt is not 0.49x itself at 23pt — the trailing advance-minus-ink
+      kern and the 26.6 char-size quantization do not scale linearly. This put
+      every glyph after the index in `\sqrt[3]{x + 1} + \sqrt{y}` 0.035px left of
+      matplotlib, which was invisible for all of them except the one `+` whose
+      `int(ox)` crossed 112/113.
+    - `mathtext/frac.go` summed the numerator/rule/denominator stack height in
+      its own order; `Vlist.vpack` walks the children doing `x += d + p.height`,
+      carrying the previous child's depth, and `vlist_out` then places the
+      numerator at `(shift - height) + cnum.height`. Now accumulated in
+      matplotlib's order and grouping.
+    - `backends/agg/freetype_mathtext_native.go` computed the glyph row as
+      `(boxAscent + oy) - ymin`, where `ship` forms `off_v = oy + box.height`
+      **first** and adds it to the accumulated `cur_v` as one term. Factored into
+      `mathShipOffsetV`.
+
+      Note the two `formatter_*` cases the audit had grouped here are **not**
+      shift cases at all — at zero tolerance they carry 527 and 188 clusters that
+      no integer offset cancels. They belong in 3.4.
+
+      Two of the three fixes are in `github.com/cwbudde/mathtext`, a tagged
+      dependency rather than repo code; they shipped as **mathtext v0.5.1** and
+      `go.mod` requires that version. No `replace` and no new build
+      prerequisite — the build stays self-contained.
+  - [ ] **3.3.4 `matshow_basic`** (`+0+1`, but _not_ a text case): its whole
+        residual is one tick **line** drawn a pixel low (a 5x1 mark at y 211 vs
+        212), so the snapper path still has a divergence the composed transform
+        did not cover. Likely the tick-mark path builds its device coordinates
+        outside `transData`.
+  - [ ] **3.3.5 `specgram_psd` and `quad_mesh`.** Both are mesh/image-backed
+        rather than text; group them only if the probe says so. `specgram_psd`'s
+        shift clusters are three 1-px-wide vertical strips at x=481 that `dx=+1`
+        cancels exactly — a mesh column edge, not text.
+  - [ ] **3.3.8 The remaining `mathtext_gallery` cluster** (64 px, one 10x11
+        glyph at x[638:648] y[176:187], family `+0-1` after 3.3.3). It is the
+        last shift residual in the mathtext family and did not respond to any of
+        the three fixes above, so it has a fourth cause.
+  - [ ] **3.3.6 The `+1+0` image pair**: `colormap_diverging`, `image_heatmap`.
+        In `colormap_diverging` the entire residual is one 258-px-tall column at
+        an interior cell boundary, not the axes edge. A first attempt failed and
+        was reverted: reproducing AGG's 1/256 fixed-point span interpolation in
+        `scaleRGBANearest` (`floor(round(u*256)/256)` rather than
+        `round(u-0.5)`) left both cases untouched and regressed
+        `colorbar_composition` from 2563 to 2821 differing pixels, so these two
+        do not reach the raster nearest-neighbour path that was changed. Find
+        the path they do take before trying again.
+  - [ ] **3.3.7 `transform_coordinates`** (`+2-1`, the only two-axis shift).
 - [ ] **3.4 Investigate the localized non-shift divergences.** Cases whose
       residual is confined but not a clean offset, worst first: `line2d_markers`,
       `stat_variants`, `annotation_legend_offsetbox_gallery`, `imshow_clipped`
