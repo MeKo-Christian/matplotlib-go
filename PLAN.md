@@ -220,11 +220,12 @@ mentioned (`basic_line`) carry real divergences. Findings:
       the largest cluster ranges to 42,872 px (`colormap_cyclic`) against a
       median of 87, so a single default would be meaningless — 3.6 sets them
       per case from post-fix measurements.
+
 - [ ] **3.3 Fix the four shift families.** Each is a candidate shared root
       cause; confirm against `third_party/matplotlib` 3.10.9 and fix in the core
       library, not the fixtures. **10 of 14 fixed, and an eleventh largely
-  fixed, 2026-07-28**; the audit's shift families are down from 14 cases to 4
-  and its pixel-identical count up from 21 to 28. First pass (`basic_line` and
+      fixed, 2026-07-28**; the audit's shift families are down from 14 cases to 4
+      and its pixel-identical count up from 21 to 28. First pass (`basic_line` and
       `basic_line_labels` are now pixel-identical to Matplotlib;
       `animation_subplots_frame` went from 178 differing pixels to 38, largest
       cluster 70 to 2). Two root causes, both the same mistake — a tolerance
@@ -235,8 +236,8 @@ mentioned (`basic_line`) carry real divergences. Findings:
     `PathSnapper::vertex` is plain `floor(v + 0.5)`. Both are now exact. This is
     only correct because the port's text origins already match matplotlib
     bit-for-bit, including its float64 noise: `basic_line`'s "0.6" y tick label
-    arrives at 149.49999999999997 in *both* — the locator emits `3*0.2 ==
-    0.6000000000000001` in each — and Python rounds that down. The epsilon
+    arrives at 149.49999999999997 in _both_ — the locator emits `3*0.2 ==
+0.6000000000000001` in each — and Python rounds that down. The epsilon
     rounded it up, drawing that one label a pixel low while its siblings, which
     land on exact `.5`, stayed put. That is why only _some_ labels shifted.
   - **`transData` is now composed the way matplotlib composes it.**
@@ -257,7 +258,7 @@ mentioned (`basic_line`) carry real divergences. Findings:
     re-regression fails; the rest wait for 3.6. The PDF and SVG goldens were
     regenerated for the last-decimal coordinate change (they are Go-authored, not
     matplotlib references).
-  Subtasks:
+    Subtasks:
   - [x] **3.3.1 Remove the rounding tolerances** (`pythonRound`,
         `snapPathCoordinate`). Done 2026-07-27, described above.
   - [x] **3.3.2 Compose `transData` as a single affine.** Done 2026-07-27,
@@ -297,6 +298,7 @@ mentioned (`basic_line`) carry real divergences. Findings:
       dependency rather than repo code; they shipped as **mathtext v0.5.1** and
       `go.mod` requires that version. No `replace` and no new build
       prerequisite — the build stays self-contained.
+
   - [x] **3.3.4 `matshow_basic`.** Done 2026-07-27. Now **pixel-identical** to
         matplotlib (family `identical`; 20 differing pixels to 0, RMSE 1.25 to
         0.038, max amplitude 241 to 1 — the whole remaining residual is uniform
@@ -330,6 +332,7 @@ mentioned (`basic_line`) carry real divergences. Findings:
         Tolerances ratcheted 1.608/25/25 to 0.1/4/4; verified the ratchet bites
         by restoring the pre-fix golden (fails at MaxDiff=241). No other golden
         moved — `-update-golden` across all 190 cases changed only this one.
+
   - [x] **3.3.5 `specgram_psd` and `quad_mesh`.** Done 2026-07-27. The probe
         said they are **not** one family, so they were split: `quad_mesh` is
         fixed and pixel-identical, `specgram_psd` moved to 3.3.6.
@@ -371,6 +374,7 @@ mentioned (`basic_line`) carry real divergences. Findings:
         Go-authored `usetex_golden/basic.png` also moved, by a clean +1 px on
         every cluster: its figure is 220 wide and 220/100*100 is
         220.00000000000003, so the centred TeX box crossed the same tie.
+
   - [x] **3.3.6 The image nearest-resample boundaries**: `colormap_diverging`,
         `image_heatmap`, `specgram_psd`. Done 2026-07-28. The first two are now
         **1 differing pixel** each (from 259 and 270); `specgram_psd` went 435 to
@@ -457,6 +461,7 @@ mentioned (`basic_line`) carry real divergences. Findings:
         because the offset is derived alongside it. And the filtered
         (non-nearest) branch now shares the reflected destination row and the
         affine, which is a no-op for it today but stops the two paths drifting.
+
   - [x] **3.3.7 `transform_coordinates`.** Done 2026-07-28. 261 differing
         pixels to **60** (largest cluster 226 to 37, RMSE 2.34 to 0.49).
         `transform_annotation_modes` fell out of 3.4 alongside it (402 to 117,
@@ -515,10 +520,12 @@ mentioned (`basic_line`) carry real divergences. Findings:
         (`core/axis_ticklabels.go`) uses the y-up convention where its ink
         branch and every caller use y-down. It is unreachable under the AGG
         backend, so it was recorded rather than fixed blind here.
+
   - [ ] **3.3.8 The remaining `mathtext_gallery` cluster** (64 px, one 10x11
         glyph at x[638:648] y[176:187], family `+0-1` after 3.3.3). It is the
         last shift residual in the mathtext family and did not respond to any of
         the three fixes above, so it has a fourth cause.
+
 - [ ] **3.4 Investigate the localized non-shift divergences.** Cases whose
       residual is confined but not a clean offset, worst first: `line2d_markers`,
       `specgram_psd` (one 353-px row; array-orientation asymmetry against
