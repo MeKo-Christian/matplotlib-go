@@ -33,16 +33,16 @@ Cases whose largest residual clusters are cancelled by one integer offset. Each 
 | case | RMSE | MaxRMSE | slack | verdict | diff px | % frame | clusters | p50 amp | p99 amp | max diff | family |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `line2d_markers` | 3.23 | 3.30 | 1.02x | fragile | 3385 | 1.469 | 167 | 8 | 182 | 224 | dense-highamp |
-| `text_annotation_matrix` | 2.85 | 4.20 | 1.47x | ok | 2213 | 0.732 | 295 | 9 | 191 | 194 | sparse-local |
 | `imshow_transformed` | 2.82 | 2.90 | 1.03x | fragile | 11089 | 6.286 | 1652 | 2 | 93 | 132 | dense-highamp |
 | `geo_mollweide_axes` | 2.81 | 3.00 | 1.07x | fragile | 23320 | 7.712 | 64 | 5 | 18 | 244 | dense-lowamp |
-| `patch_style_matrix` | 2.68 | 4.20 | 1.57x | ok | 2923 | 0.967 | 616 | 5 | 171 | 171 | sparse-local |
+| `text_annotation_matrix` | 2.76 | 3.00 | 1.09x | fragile | 2082 | 0.689 | 309 | 9 | 191 | 194 | sparse-local |
+| `patch_style_matrix` | 2.64 | 2.90 | 1.10x | fragile | 2856 | 0.944 | 606 | 5 | 171 | 171 | sparse-local |
 | `unstructured_showcase` | 2.63 | 3.20 | 1.21x | ok | 3097 | 0.451 | 448 | 14 | 214 | 232 | sparse-local |
 | `ticks_styling_surface` | 2.62 | 3.00 | 1.14x | fragile | 7473 | 2.471 | 710 | 4 | 81 | 140 | dense-highamp |
 | `imshow_interpolation_matrix` | 2.48 | 3.30 | 1.33x | ok | 29265 | 7.621 | 3085 | 3 | 68 | 211 | dense-highamp |
-| `mathtext_basic` | 2.43 | 2.65 | 1.09x | fragile | 237 | 0.103 | 19 | 43 | 220 | 254 | sparse-local |
 | `contour_styles` | 2.43 | 2.80 | 1.15x | ok | 932 | 0.405 | 85 | 14 | 150 | 220 | sparse-local |
 | `line2d_semantics` | 2.40 | 2.60 | 1.08x | fragile | 300 | 0.130 | 64 | 29 | 229 | 229 | sparse-local |
+| `mathtext_basic` | 2.37 | 2.55 | 1.08x | fragile | 198 | 0.086 | 18 | 42 | 222 | 254 | sparse-local |
 | `stat_variants` | 2.37 | 3.40 | 1.43x | ok | 933 | 0.179 | 111 | 2 | 224 | 224 | sparse-local |
 | `text_layout_gallery` | 2.36 | 5.00 | 2.12x | ok | 1750 | 0.347 | 441 | 6 | 165 | 168 | sparse-local |
 | `projection_toolkit_gallery` | 2.35 | 4.90 | 2.09x | ok | 57200 | 4.815 | 291 | 7 | 40 | 254 | dense-highamp |
@@ -84,8 +84,8 @@ Cases whose largest residual clusters are cancelled by one integer offset. Each 
 | `axes_grid1_showcase` | 1.31 | 2.00 | 1.52x | ok | 9525 | 1.203 | 86 | 14 | 55 | 62 | dense-highamp |
 | `imshow_bicubic` | 1.27 | 1.60 | 1.26x | ok | 2644 | 4.034 | 210 | 5 | 27 | 46 | dense-lowamp |
 | `large_scatter` | 1.26 | 2.70 | 2.14x | ok | 2573 | 0.423 | 889 | 2 | 162 | 221 | sparse-local |
-| `annotation_legend_offsetbox_gallery` | 1.20 | 1.35 | 1.12x | fragile | 3483 | 0.465 | 152 | 6 | 117 | 191 | sparse-local |
 | `locator_log_minor_threshold_labels` | 1.19 | 1.28 | 1.08x | fragile | 5521 | 1.826 | 65 | 5 | 43 | 43 | dense-highamp |
+| `annotation_legend_offsetbox_gallery` | 1.17 | 1.30 | 1.11x | fragile | 3387 | 0.452 | 158 | 6 | 115 | 191 | sparse-local |
 | `mplot3d_basic` | 1.09 | 1.61 | 1.47x | ok | 5192 | 1.220 | 893 | 2 | 66 | 139 | dense-highamp |
 | `mathtext_inline_labels` | 1.08 | 1.61 | 1.49x | ok | 1013 | 0.440 | 5 | 15 | 31 | 34 | sparse-local |
 | `mplot3d_voxels` | 1.04 | 1.61 | 1.55x | ok | 3496 | 0.867 | 510 | 3 | 72 | 126 | sparse-local |
@@ -122,7 +122,6 @@ Cases whose largest residual clusters are cancelled by one integer offset. Each 
 | `colorbar_extensions` | 0.69 | 1.10 | 1.59x | ok | 20 | 0.009 | 6 | 100 | 147 | 148 | sparse-local |
 | `figure_labels_composition` | 0.69 | 1.61 | 2.33x | ok | 2777 | 0.351 | 85 | 8 | 35 | 43 | sparse-local |
 | `radar_basic` | 0.69 | 0.90 | 1.30x | ok | 8940 | 1.724 | 198 | 4 | 10 | 163 | dense-lowamp |
-| `transform_annotation_modes` | 0.67 | 0.75 | 1.13x | fragile | 117 | 0.039 | 12 | 26 | 109 | 128 | sparse-local |
 | `mplot3d_text3d` | 0.66 | 1.61 | 2.44x | ok | 2249 | 0.558 | 237 | 2 | 57 | 99 | sparse-local |
 | `patch_showcase` | 0.63 | 1.61 | 2.56x | ok | 1335 | 0.422 | 98 | 3 | 60 | 145 | sparse-local |
 | `colorbar_symlog_ticks` | 0.61 | 0.65 | 1.06x | fragile | 595 | 0.258 | 8 | 14 | 14 | 24 | sparse-local |
@@ -135,7 +134,6 @@ Cases whose largest residual clusters are cancelled by one integer offset. Each 
 | `layout_bbox_helpers` | 0.55 | 1.10 | 2.01x | ok | 1004 | 0.332 | 497 | 2 | 2 | 2 | sparse-local |
 | `axes_secondary_y_twiny` | 0.51 | 0.80 | 1.57x | ok | 549 | 0.181 | 32 | 14 | 14 | 14 | sparse-local |
 | `quad_mesh` | 0.50 | 0.63 | 1.27x | ok | 0 | 0.000 | 0 | 0 | 0 | 1 | identical |
-| `transform_coordinates` | 0.49 | 0.55 | 1.12x | fragile | 60 | 0.020 | 23 | 33 | 104 | 113 | sparse-local |
 | `boxplot_default` | 0.47 | 1.61 | 3.40x | loose | 83 | 0.036 | 23 | 13 | 128 | 128 | sparse-local |
 | `pattern_gradient_effects` | 0.45 | 1.61 | 3.57x | loose | 697 | 0.302 | 10 | 13 | 13 | 13 | sparse-local |
 | `pcolormesh_nearest` | 0.45 | 0.80 | 1.78x | ok | 1 | 0.000 | 1 | 2 | 2 | 2 | sparse-local |
@@ -147,7 +145,6 @@ Cases whose largest residual clusters are cancelled by one integer offset. Each 
 | `scatter_gallery` | 0.39 | 0.64 | 1.63x | ok | 3626 | 0.696 | 48 | 2 | 12 | 112 | sparse-local |
 | `pcolormesh_masked` | 0.38 | 0.70 | 1.85x | ok | 0 | 0.000 | 0 | 0 | 0 | 1 | identical |
 | `hist_strategies` | 0.33 | 1.61 | 4.87x | loose | 536 | 0.233 | 65 | 2 | 14 | 14 | sparse-local |
-| `annotation_composition` | 0.32 | 0.40 | 1.26x | ok | 548 | 0.073 | 11 | 6 | 58 | 101 | sparse-local |
 | `histogram_variants` | 0.32 | 1.43 | 4.52x | loose | 2525 | 0.485 | 239 | 2 | 23 | 23 | sparse-local |
 | `fill_variants` | 0.28 | 1.20 | 4.35x | loose | 1744 | 0.335 | 392 | 2 | 2 | 3 | sparse-local |
 | `boxplot_single_series` | 0.27 | 0.50 | 1.82x | ok | 27 | 0.012 | 7 | 13 | 128 | 128 | sparse-local |
@@ -159,6 +156,7 @@ Cases whose largest residual clusters are cancelled by one integer offset. Each 
 | `bar_grouped` | 0.22 | 0.50 | 2.28x | ok | 80 | 0.035 | 20 | 15 | 20 | 20 | sparse-local |
 | `hist_density` | 0.22 | 1.30 | 5.94x | loose | 124 | 0.054 | 71 | 3 | 23 | 23 | sparse-local |
 | `spy_marker` | 0.22 | 0.50 | 2.29x | ok | 876 | 0.380 | 292 | 5 | 6 | 6 | sparse-local |
+| `annotation_composition` | 0.20 | 0.26 | 1.27x | ok | 506 | 0.068 | 10 | 6 | 23 | 28 | sparse-local |
 | `multi_series_color_cycle` | 0.20 | 0.60 | 2.99x | ok | 236 | 0.102 | 143 | 2 | 2 | 3 | sparse-local |
 | `cohere_welch` | 0.20 | 0.23 | 1.15x | ok | 234 | 0.102 | 224 | 2 | 2 | 2 | sparse-local |
 | `csd_welch` | 0.20 | 0.23 | 1.16x | ok | 204 | 0.088 | 198 | 2 | 2 | 2 | sparse-local |
@@ -172,6 +170,7 @@ Cases whose largest residual clusters are cancelled by one integer offset. Each 
 | `hist_log` | 0.16 | 1.10 | 6.88x | loose | 56 | 0.024 | 30 | 6 | 23 | 23 | sparse-local |
 | `hist_basic` | 0.16 | 1.10 | 7.01x | loose | 66 | 0.029 | 40 | 5 | 23 | 23 | sparse-local |
 | `spectrum_variants` | 0.16 | 1.50 | 9.55x | loose | 120 | 0.021 | 43 | 2 | 2 | 2 | sparse-local |
+| `transform_coordinates` | 0.14 | 0.20 | 1.39x | ok | 24 | 0.008 | 23 | 8 | 33 | 33 | sparse-local |
 | `animation_subplots_frame` | 0.12 | 4.50 | 37.50x | loose | 38 | 0.013 | 34 | 2 | 2 | 2 | sparse-local |
 | `path_effects` | 0.11 | 0.30 | 2.83x | ok | 426 | 0.185 | 151 | 2 | 4 | 5 | sparse-local |
 | `animation_scatter_frame` | 0.10 | 1.43 | 14.33x | loose | 0 | 0.000 | 0 | 0 | 0 | 1 | identical |
@@ -182,6 +181,7 @@ Cases whose largest residual clusters are cancelled by one integer offset. Each 
 | `stackplot_streamgraph` | 0.07 | 0.50 | 6.85x | loose | 102 | 0.044 | 92 | 2 | 2 | 2 | sparse-local |
 | `units_custom_converter` | 0.07 | 0.10 | 1.40x | ok | 30 | 0.012 | 28 | 2 | 5 | 5 | sparse-local |
 | `axes_log_plot_wrappers` | 0.07 | 0.08 | 1.21x | ok | 20 | 0.006 | 17 | 2 | 12 | 14 | sparse-local |
+| `transform_annotation_modes` | 0.06 | 0.10 | 1.56x | ok | 19 | 0.006 | 16 | 2 | 14 | 14 | sparse-local |
 | `scale_function_defaults` | 0.06 | 0.20 | 3.26x | loose | 25 | 0.007 | 24 | 2 | 2 | 2 | sparse-local |
 | `formatter_fixed_null_labels` | 0.06 | 0.70 | 12.07x | loose | 1 | 0.000 | 1 | 8 | 8 | 8 | sparse-local |
 | `locator_fixed_index_labels` | 0.06 | 0.08 | 1.38x | ok | 18 | 0.006 | 17 | 2 | 2 | 2 | sparse-local |

@@ -140,7 +140,10 @@ type AnnotationOptions struct {
 	ArrowColor  render.Color
 	// ArrowWidth is the arrow line width in points. Unset uses 1.25.
 	ArrowWidth optional.Value[float64]
-	// ArrowHeadSize is the arrow head length in points. Unset uses 8.
+	// ArrowHeadSize is the arrow head length in points, Matplotlib's arrow
+	// mutation scale. Unset follows Matplotlib and uses this annotation's own
+	// font size, falling back to the axes rc font size when FontSize is unset
+	// too — so it is not a fixed number and tracks the text.
 	ArrowHeadSize optional.Value[float64]
 	// ArrowStyle and ConnectionStyle default to Matplotlib's "-|>" and "arc3".
 	ArrowStyle      ArrowStyle

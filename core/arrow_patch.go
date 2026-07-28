@@ -256,6 +256,13 @@ func (a *FancyArrowPatch) displayParts(ctx *DrawContext, path geom.Path) []arrow
 	if lineWidth <= 0 {
 		lineWidth = 1
 	}
+	// The head geometry consumes the line width in pixels, like the mutation
+	// scale above it: _get_path_in_displaycoord passes both
+	// get_mutation_scale() * dpi_cor and get_linewidth() * dpi_cor into the
+	// arrow style, where dpi_cor is points_to_pixels(1).
+	if ctx != nil {
+		lineWidth = pointsToPixels(ctx.RC, lineWidth)
+	}
 	aspect := 1.0
 	if a.MutationAspect > 0 {
 		aspect = a.MutationAspect

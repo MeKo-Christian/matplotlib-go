@@ -228,14 +228,20 @@ func TestFancyArrowPatchStyleMatrixCurveArrowMatchesMatplotlib(t *testing.T) {
 	if len(parts) != 2 {
 		t.Fatalf("curve arrow parts = %d, want line plus head", len(parts))
 	}
+	// The shaft tip and all three head vertices sit at _get_arrow_wedge's
+	// x1 + ddx, so they share one pull-back of pad_projected = 0.5*lw/sin_t.
+	// These values were re-derived when that term started using the line width
+	// in pixels, as _get_path_in_displaycoord passes it (get_linewidth() *
+	// dpi_cor): every point moved by the same 0.457 px along the shaft, which
+	// is exactly 0.5*1.25*(100/72 - 1)/sin_t.
 	assertPathVerticesApprox(t, parts[0].path, []geom.Pt{
 		{X: 75.130, Y: 131.762},
-		{X: 192.533, Y: 147.441},
+		{X: 192.080, Y: 147.381},
 	}, 0.02)
 	assertPathVerticesApprox(t, parts[1].path, []geom.Pt{
-		{X: 184.699, Y: 151.019},
-		{X: 192.533, Y: 147.441},
-		{X: 185.912, Y: 141.933},
+		{X: 184.246, Y: 150.959},
+		{X: 192.080, Y: 147.381},
+		{X: 185.459, Y: 141.873},
 	}, 0.02)
 }
 

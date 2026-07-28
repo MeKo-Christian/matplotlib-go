@@ -463,9 +463,9 @@ mentioned (`basic_line`) carry real divergences. Findings:
         affine, which is a no-op for it today but stops the two paths drifting.
 
   - [x] **3.3.7 `transform_coordinates`.** Done 2026-07-28. 261 differing
-        pixels to **60** (largest cluster 226 to 37, RMSE 2.34 to 0.49).
-        `transform_annotation_modes` fell out of 3.4 alongside it (402 to 117,
-        RMSE 2.68 to 0.67) and `annotation_composition` went RMSE 0.93 to 0.32.
+        pixels to **24** (largest cluster 226 to 2, RMSE 2.34 to 0.14).
+        `transform_annotation_modes` fell out of 3.4 alongside it (402 to 19,
+        RMSE 2.68 to 0.06) and `annotation_composition` went RMSE 0.93 to 0.21.
 
         The `+2-1` family label is a whole-image classification and was
         misleading: the text is byte-identical and the residual was three
@@ -516,6 +516,23 @@ mentioned (`basic_line`) carry real divergences. Findings:
         `mathtext_basic` carries PDF and SVG goldens, regenerated with
         `-update-pdf-golden -update-svg-golden`.
 
+        **The arrow head consumed its line width in points.**
+        `FancyArrowPatch.displayParts` converted the mutation scale to pixels
+        but passed `EdgeWidth` straight through, where
+        `_get_path_in_displaycoord` scales *both* by
+        `dpi_cor = points_to_pixels(1)`. The line width only feeds
+        `pad_projected = 0.5*lw/sin_t`, the amount the shaft is pulled back so a
+        projected cap does not overshoot the head — so the error was a fixed
+        fraction of a pixel at every arrow tip, invisible per-arrow and worth
+        tens of pixels across a gallery. Found by pinning the shaft against
+        matplotlib's recorded path: with this fixed, all three vertices of
+        `transform_coordinates`' shaft match to **0.01 px**. Seven goldens
+        improved, none regressed, including two more 3.4 cases —
+        `patch_style_matrix` (RMSE 2.68 to 2.64) and `text_annotation_matrix`
+        (2.85 to 2.76). `transform_coordinates` finished at **24 differing
+        pixels, largest cluster 2, RMSE 0.14**; `transform_annotation_modes` at
+        **19 / 3 / 0.06**.
+
         Left standing: `textInkRect`'s own fallback branch
         (`core/axis_ticklabels.go`) uses the y-up convention where its ink
         branch and every caller use y-down. It is unreachable under the AGG
@@ -536,7 +553,7 @@ mentioned (`basic_line`) carry real divergences. Findings:
       `unstructured_showcase`, `mathtext_basic`, `colorbar_boundary_values`,
       `line2d_semantics`. Fix or record as an accepted difference.
       (`transform_annotation_modes` left this list under 3.3.7 — 402 differing
-      pixels to 117, RMSE 2.68 to 0.67.)
+      pixels to 19, RMSE 2.68 to 0.06.)
 - [ ] **3.5 Disposition the dense residuals.** These are broad and
       low-amplitude, where RMSE _is_ the right metric; the question is only
       whether the amplitude is defensible. `geo_aitoff_axes`,

@@ -132,7 +132,7 @@ var cases = []Case{
 	{ID: "multi_series_color_cycle", Topic: "multi", Title: "Color Cycle", MaxRMSE: 0.6},
 	// MaxRMSE 3.3: MeanAbs 0.12 / PSNR ~54 dB; residual is sub-pixel text/handle edge antialiasing under the 3.10.9 reference set.
 	{ID: "legend_layout_matrix", Topic: "legend", Title: "Legend Layout Matrix", FixtureOnly: true, MaxRMSE: 3.3, MaxDiffPixels: 3300, MaxLargestCluster: 2900},
-	{ID: "text_annotation_matrix", Topic: "annotation", Title: "Text Annotation Matrix", FixtureOnly: true, MaxRMSE: 4.2, MaxDiffPixels: 2800, MaxLargestCluster: 380},
+	{ID: "text_annotation_matrix", Topic: "annotation", Title: "Text Annotation Matrix", FixtureOnly: true, MaxRMSE: 3.0, MaxDiffPixels: 2300, MaxLargestCluster: 335},
 	{ID: "hist_basic", Topic: "histogram", Title: "Histogram Counts", Description: "A deterministic histogram with count bins, labels, and default bar styling.", Showcase: true, SVGGoldenFamily: "hist", GoBasicSmokeFamily: "histogram", SkiaParityFamily: "histogram", MaxRMSE: 1.1},
 	{ID: "hist_log", Topic: "histogram", Title: "Logarithmic Histogram", Description: "A count histogram on a logarithmic y axis, matching matplotlib hist(log=True).", Showcase: true, MaxRMSE: 1.1},
 	{ID: "hist_density", Topic: "histogram", Title: "Histogram Density", MaxRMSE: 1.3},
@@ -147,7 +147,7 @@ var cases = []Case{
 	{ID: "axes_secondary_y_twiny", Topic: "axes", Title: "Twin and Secondary Y Axes", Description: "Focused visual coverage for TwinY shared-y overlays and transformed SecondaryYAxis ticks.", FixtureOnly: true, Width: 760, Height: 400, MaxMeanAbs: 0.05, MaxRMSE: 0.8},
 	{ID: "text_labels_strict", Topic: "text", Title: "Strict Text Labels", Optional: true, SVGGoldenFamily: "text_layout", GoBasicSmokeFamily: "text", SkiaParityFamily: "text", MaxRMSE: 0.3},
 	{ID: "title_strict", Topic: "text", Title: "Strict Title", MaxRMSE: 0.3},
-	{ID: "mathtext_basic", Topic: "mathtext", Title: "MathText Basic", FixtureOnly: true, SVGGoldenFamily: "mathtext", GoBasicSmokeFamily: "mathtext", SkiaParityFamily: "mathtext", MaxRMSE: 2.65, MaxDiffPixels: 260, MaxLargestCluster: 70},
+	{ID: "mathtext_basic", Topic: "mathtext", Title: "MathText Basic", FixtureOnly: true, SVGGoldenFamily: "mathtext", GoBasicSmokeFamily: "mathtext", SkiaParityFamily: "mathtext", MaxRMSE: 2.55, MaxDiffPixels: 220, MaxLargestCluster: 70},
 	{ID: "mathtext_fractions", Topic: "mathtext", Title: "MathText Fractions", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 4.5, MaxDiffPixels: 16, MaxLargestCluster: 8},
 	{ID: "mathtext_integrals", Topic: "mathtext", Title: "MathText Operators", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 0.3},
 	{ID: "mathtext_matrices", Topic: "mathtext", Title: "MathText Matrices", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 0.5},
@@ -179,8 +179,8 @@ var cases = []Case{
 	// Twinned-axes frame ratchet: twinx/twiny now keep foreground frame spines
 	// visible like Matplotlib; refreshed golden-vs-reference RMSE is 2.90.
 	{ID: "axes_control_surface", Topic: "axes", Title: "Axes, Scales, and Twins", Optional: true, WebDemoID: "axes", Description: "Minor ticks, top/right axes, aspect controls, log scale, twin axes, and secondary axes.", Showcase: true, GoBasicSmokeFamily: "axes", MaxRMSE: 3.0, MaxDiffPixels: 1300, MaxLargestCluster: 360},
-	{ID: "transform_coordinates", Topic: "axes", Title: "Transform Coordinates", Optional: true, MaxRMSE: 0.55, MaxDiffPixels: 70, MaxLargestCluster: 45},
-	{ID: "transform_annotation_modes", Topic: "axes", Title: "Annotation Coordinate Modes", FixtureOnly: true, Width: 720, Height: 420, MaxRMSE: 0.75, MaxDiffPixels: 130, MaxLargestCluster: 45},
+	{ID: "transform_coordinates", Topic: "axes", Title: "Transform Coordinates", Optional: true, MaxRMSE: 0.2, MaxDiffPixels: 30, MaxLargestCluster: 4},
+	{ID: "transform_annotation_modes", Topic: "axes", Title: "Annotation Coordinate Modes", FixtureOnly: true, Width: 720, Height: 420, MaxRMSE: 0.1, MaxDiffPixels: 25, MaxLargestCluster: 5},
 	{ID: "path_clipped_transformed", Topic: "axes", Title: "Clipped Transformed Path", FixtureOnly: true, Width: 720, Height: 420, MaxRMSE: 1.608},
 	{ID: "layout_bbox_helpers", Topic: "axes", Title: "Layout BBox Helpers", FixtureOnly: true, Width: 720, Height: 420, MaxRMSE: 1.1},
 	{ID: "formatter_engineering_labels", Topic: "axes", Title: "Engineering Formatter Labels", FixtureOnly: true, Width: 720, Height: 400, MaxRMSE: 3.0, MaxDiffPixels: 150, MaxLargestCluster: 35},
@@ -205,10 +205,10 @@ var cases = []Case{
 	{ID: "figure_labels_composition", Topic: "composition", Title: "Figure Labels", Description: "A multi-axes figure with shared figure title, x label, y label, and legend placement.", WebDemoID: "subplots", Showcase: true, MaxRMSE: 1.608},
 	{ID: "colorbar_composition", Topic: "colorbar", Title: "Colorbar Composition", Description: "A composed figure that exercises image color mapping, shared colorbars, and layout spacing.", Showcase: true, GoBasicSmokeFamily: "colorbar", MaxRMSE: 0.8},
 	{ID: "colorbar_variants_gallery", Topic: "colorbar", Title: "Colorbar Variants Gallery", Description: "LogNorm, TwoSlopeNorm, BoundaryNorm draw edges, and under/over extension colorbars with labels.", WebDemoID: "colorbars", Showcase: true, Width: 1040, Height: 720, MaxRMSE: 4.4},
-	{ID: "annotation_composition", Topic: "annotation", Title: "Annotations", Description: "Text annotations, arrows, anchored labels, and mixed coordinate placement.", Showcase: true, GoBasicSmokeFamily: "annotation", MaxRMSE: 0.4, MaxDiffPixels: 600, MaxLargestCluster: 470},
-	{ID: "annotation_legend_offsetbox_gallery", Topic: "annotation", Title: "Annotation, Legend, and Offset Box Gallery", Description: "Annotation arrows, bbox annotations, multi-column legends, proxy handles, anchored text, drawing areas, packers, image boxes, and size bars.", WebDemoID: "annotations", Showcase: true, Width: 1040, Height: 720, MaxRMSE: 1.35, MaxDiffPixels: 3600, MaxLargestCluster: 1450},
+	{ID: "annotation_composition", Topic: "annotation", Title: "Annotations", Description: "Text annotations, arrows, anchored labels, and mixed coordinate placement.", Showcase: true, GoBasicSmokeFamily: "annotation", MaxRMSE: 0.26, MaxDiffPixels: 560, MaxLargestCluster: 470},
+	{ID: "annotation_legend_offsetbox_gallery", Topic: "annotation", Title: "Annotation, Legend, and Offset Box Gallery", Description: "Annotation arrows, bbox annotations, multi-column legends, proxy handles, anchored text, drawing areas, packers, image boxes, and size bars.", WebDemoID: "annotations", Showcase: true, Width: 1040, Height: 720, MaxRMSE: 1.3, MaxDiffPixels: 3500, MaxLargestCluster: 1450},
 	{ID: "patch_showcase", Topic: "patches", Title: "Patch Showcase", Description: "Rectangles, circles, ellipses, polygons, path patches, fancy arrows, fancy boxes, hatches, alpha, fills, and strokes.", Optional: true, WebDemoID: "patches", Showcase: true, SVGGoldenFamily: "hatch_bars", GoBasicSmokeFamily: "patch_hatch", SkiaParityFamily: "patch_hatch", MaxRMSE: 1.608},
-	{ID: "patch_style_matrix", Topic: "patches", Title: "Patch Style Matrix", FixtureOnly: true, MaxRMSE: 4.2, MaxDiffPixels: 3700, MaxLargestCluster: 83},
+	{ID: "patch_style_matrix", Topic: "patches", Title: "Patch Style Matrix", FixtureOnly: true, MaxRMSE: 2.9, MaxDiffPixels: 3150, MaxLargestCluster: 75},
 	{ID: "mesh_contour_tri", Topic: "mesh", Title: "Meshes and Contours", Optional: true, WebDemoID: "mesh", Description: "PColorMesh, contour/contourf, Hist2D, triplot, tripcolor, and tricontour.", Showcase: true, GoBasicSmokeFamily: "mesh", SkiaParityFamily: "mesh", MaxRMSE: 2.6},
 	{ID: "contour_styles", Topic: "mesh", Title: "Contour Styles", Optional: true, Description: "Monochrome contour with negative_linestyles dashing and clabel format-string labels; contourf with extend and cycled hatches.", Width: 640, Height: 360, MaxRMSE: 2.8},
 	// Axis-below ratchet: showcase grids now mirror Matplotlib set_axisbelow(True);

@@ -654,25 +654,25 @@
   "verdict": "ok"
  },
  {
-  "clusters": 295,
-  "diff_px": 2213,
+  "clusters": 309,
+  "diff_px": 2082,
   "family": "sparse-local",
   "id": "text_annotation_matrix",
   "largest_cluster": 301,
   "max_diff": 194,
   "max_mean_abs": 0.0,
-  "max_rmse": 4.2,
-  "mean_abs": 0.126,
+  "max_rmse": 3.0,
+  "mean_abs": 0.12,
   "p50_amp": 9,
   "p99_amp": 191,
-  "pct_px": 0.7318,
-  "psnr": 39.04,
-  "rmse": 2.849,
+  "pct_px": 0.6885,
+  "psnr": 39.31,
+  "rmse": 2.761,
   "shifts": {
-   "+0+0": 1582
+   "+0+0": 1412
   },
-  "slack": 1.47,
-  "verdict": "ok"
+  "slack": 1.09,
+  "verdict": "fragile"
  },
  {
   "clusters": 40,
@@ -965,25 +965,25 @@
   "verdict": "exact"
  },
  {
-  "clusters": 19,
-  "diff_px": 237,
+  "clusters": 18,
+  "diff_px": 198,
   "family": "sparse-local",
   "id": "mathtext_basic",
   "largest_cluster": 64,
   "max_diff": 254,
   "max_mean_abs": 0.0,
-  "max_rmse": 2.65,
-  "mean_abs": 0.053,
-  "p50_amp": 43,
-  "p99_amp": 220,
-  "pct_px": 0.1029,
-  "psnr": 40.41,
-  "rmse": 2.432,
+  "max_rmse": 2.55,
+  "mean_abs": 0.048,
+  "p50_amp": 42,
+  "p99_amp": 222,
+  "pct_px": 0.0859,
+  "psnr": 40.64,
+  "rmse": 2.37,
   "shifts": {
-   "+0+0": 99,
+   "+0+0": 64,
    "+0+1": 119
   },
-  "slack": 1.09,
+  "slack": 1.08,
   "verdict": "fragile"
  },
  {
@@ -1590,45 +1590,45 @@
  },
  {
   "clusters": 23,
-  "diff_px": 60,
+  "diff_px": 24,
   "family": "sparse-local",
   "id": "transform_coordinates",
-  "largest_cluster": 37,
-  "max_diff": 113,
+  "largest_cluster": 2,
+  "max_diff": 33,
   "max_mean_abs": 0.0,
-  "max_rmse": 0.55,
-  "mean_abs": 0.007,
-  "p50_amp": 33,
-  "p99_amp": 104,
-  "pct_px": 0.0198,
-  "psnr": 54.34,
-  "rmse": 0.489,
+  "max_rmse": 0.2,
+  "mean_abs": 0.003,
+  "p50_amp": 8,
+  "p99_amp": 33,
+  "pct_px": 0.0079,
+  "psnr": 64.96,
+  "rmse": 0.144,
   "shifts": {
-   "+0+0": 49
+   "+0+0": 13
   },
-  "slack": 1.12,
-  "verdict": "fragile"
+  "slack": 1.39,
+  "verdict": "ok"
  },
  {
-  "clusters": 12,
-  "diff_px": 117,
+  "clusters": 16,
+  "diff_px": 19,
   "family": "sparse-local",
   "id": "transform_annotation_modes",
-  "largest_cluster": 39,
-  "max_diff": 128,
+  "largest_cluster": 3,
+  "max_diff": 14,
   "max_mean_abs": 0.0,
-  "max_rmse": 0.75,
-  "mean_abs": 0.01,
-  "p50_amp": 26,
-  "p99_amp": 109,
-  "pct_px": 0.0387,
-  "psnr": 51.67,
-  "rmse": 0.665,
+  "max_rmse": 0.1,
+  "mean_abs": 0.002,
+  "p50_amp": 2,
+  "p99_amp": 14,
+  "pct_px": 0.0063,
+  "psnr": 72.01,
+  "rmse": 0.064,
   "shifts": {
-   "+0+0": 117
+   "+0+0": 15
   },
-  "slack": 1.13,
-  "verdict": "fragile"
+  "slack": 1.56,
+  "verdict": "ok"
  },
  {
   "clusters": 409,
@@ -2122,46 +2122,46 @@
   "verdict": "ok"
  },
  {
-  "clusters": 11,
-  "diff_px": 548,
+  "clusters": 10,
+  "diff_px": 506,
   "family": "sparse-local",
   "id": "annotation_composition",
   "largest_cluster": 429,
-  "max_diff": 101,
+  "max_diff": 28,
   "max_mean_abs": 0.0,
-  "max_rmse": 0.4,
-  "mean_abs": 0.007,
+  "max_rmse": 0.26,
+  "mean_abs": 0.006,
   "p50_amp": 6,
-  "p99_amp": 58,
-  "pct_px": 0.0732,
-  "psnr": 58.08,
-  "rmse": 0.318,
+  "p99_amp": 23,
+  "pct_px": 0.0676,
+  "psnr": 61.9,
+  "rmse": 0.205,
   "shifts": {
-   "+0+0": 548
+   "+0+0": 506
   },
-  "slack": 1.26,
+  "slack": 1.27,
   "verdict": "ok"
  },
  {
-  "clusters": 152,
-  "diff_px": 3483,
+  "clusters": 158,
+  "diff_px": 3387,
   "family": "sparse-local",
   "id": "annotation_legend_offsetbox_gallery",
   "largest_cluster": 1377,
   "max_diff": 191,
   "max_mean_abs": 0.0,
-  "max_rmse": 1.35,
-  "mean_abs": 0.048,
+  "max_rmse": 1.3,
+  "mean_abs": 0.047,
   "p50_amp": 6,
-  "p99_amp": 117,
-  "pct_px": 0.4651,
-  "psnr": 46.53,
-  "rmse": 1.202,
+  "p99_amp": 115,
+  "pct_px": 0.4523,
+  "psnr": 46.78,
+  "rmse": 1.168,
   "shifts": {
-   "+0+0": 3017,
+   "+0+0": 2903,
    "-2+1": 58
   },
-  "slack": 1.12,
+  "slack": 1.11,
   "verdict": "fragile"
  },
  {
@@ -2186,25 +2186,25 @@
   "verdict": "ok"
  },
  {
-  "clusters": 616,
-  "diff_px": 2923,
+  "clusters": 606,
+  "diff_px": 2856,
   "family": "sparse-local",
   "id": "patch_style_matrix",
   "largest_cluster": 66,
   "max_diff": 171,
   "max_mean_abs": 0.0,
-  "max_rmse": 4.2,
-  "mean_abs": 0.139,
+  "max_rmse": 2.9,
+  "mean_abs": 0.135,
   "p50_amp": 5,
   "p99_amp": 171,
-  "pct_px": 0.9666,
-  "psnr": 39.57,
-  "rmse": 2.679,
+  "pct_px": 0.9444,
+  "psnr": 39.69,
+  "rmse": 2.643,
   "shifts": {
-   "+0+0": 513
+   "+0+0": 486
   },
-  "slack": 1.57,
-  "verdict": "ok"
+  "slack": 1.1,
+  "verdict": "fragile"
  },
  {
   "clusters": 317,
