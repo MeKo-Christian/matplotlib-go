@@ -863,3 +863,90 @@ func TestAxesLabelsDrawMathTextAccordingToExpressionScope(t *testing.T) {
 		t.Fatalf("missing structured ylabel runs: %v", r.texts)
 	}
 }
+
+// mathTextOriginRecorder records the origin each glyph run is asked for, so a
+// test can observe where drawMathTextLayoutRotated placed the expression.
+type mathTextOriginRecorder struct {
+	textRecordingRenderer
+	textPathOrigins []geom.Pt
+}
+
+func (r *mathTextOriginRecorder) DrawTextRotated(string, geom.Pt, float64, float64, render.Color) {}
+
+// MeasureText drops below the baseline only for text that actually has a
+// descender, unlike the flat base recorder. That is what makes matplotlib's
+// `d = max(d, lp_d)` clamp bind for an expression such as `$x$`, which is the
+// condition this file's rotated-anchor test needs to be non-vacuous.
+func (r *mathTextOriginRecorder) MeasureText(text string, size float64, fontKey string) render.TextMetrics {
+	m := r.textRecordingRenderer.MeasureText(text, size, fontKey)
+	if !strings.ContainsAny(text, "gjpqy") {
+		m.Ascent += m.Descent
+		m.Descent = 0
+	}
+	return m
+}
+
+func (r *mathTextOriginRecorder) TextPath(_ string, origin geom.Pt, _ float64, _ string) (geom.Path, bool) {
+	r.textPathOrigins = append(r.textPathOrigins, origin)
+	return patchRectPath(geom.Rect{
+		Min: geom.Pt{X: origin.X, Y: origin.Y - 4},
+		Max: geom.Pt{X: origin.X + 4, Y: origin.Y},
+	}), true
+}
+
+// TestDrawDisplayTextRotatedInvertsTheAnchorMetrics pins the round trip between
+// the two halves of rotated mathtext placement. rotatedTextBackendAnchorFromP
+// builds the anchor from measureSingleLineTextLayout, whose descent is
+// max(expression descent, "lp" descent) — matplotlib's Text._get_layout does the
+// same (`d = max(d, lp_d)`), so that clamped value is what positions the text on
+// every backend. drawMathTextLayoutRotated must invert with it. Re-deriving the
+// descent from the raw MathTextLayout instead offsets the whole expression by
+// the clamp, which for a 90 degree label is a device pixel.
+//
+// `$x$` is chosen because its ink does not descend below the baseline, so the
+// clamp binds and the two candidate descents differ; the test asserts that up
+// front rather than passing vacuously.
+func TestDrawDisplayTextRotatedInvertsTheAnchorMetrics(t *testing.T) {
+	const (
+		expr    = `$x$`
+		size    = 12.0
+		fontKey = "DejaVu Sans"
+	)
+
+	var probe mathTextOriginRecorder
+	measured := measureSingleLineTextLayout(&probe, expr, size, fontKey)
+	if measured.MathLayout == nil {
+		t.Fatalf("%s did not measure as mathtext", expr)
+	}
+	if measured.Descent <= measured.MathLayout.Descent {
+		t.Fatalf("vacuous test: the \"lp\" descent clamp does not bind for %s (measured %v, layout %v)",
+			expr, measured.Descent, measured.MathLayout.Descent)
+	}
+	runs := measured.MathLayout.Runs
+	if len(runs) != 1 {
+		t.Fatalf("expected one run for %s, got %+v", expr, runs)
+	}
+
+	p := geom.Pt{X: 100, Y: 60}
+	for _, angle := range []float64{0, math.Pi / 2, -math.Pi / 2} {
+		anchor := rotatedTextBackendAnchorFromP(p, measured, TextAlignCenter, textLayoutVAlignBottom, angle, true)
+
+		var rec mathTextOriginRecorder
+		drawDisplayTextRotated(&rec, expr, anchor, size, angle, render.Color{A: 1}, fontKey)
+		if len(rec.textPathOrigins) != 1 {
+			t.Fatalf("angle %v: expected one glyph origin, got %v", angle, rec.textPathOrigins)
+		}
+
+		// The recorder is a vector backend, so the expression is laid out at the
+		// unrotated origin and the rotation is applied afterwards as an affine
+		// about the anchor — TextPath therefore sees the pre-rotation point.
+		want := mathRunDevicePoint(geom.Pt{
+			X: anchor.X - measured.Width/2,
+			Y: anchor.Y - measured.Descent,
+		}, mathTextPtToGeom(runs[0].Offset))
+		if got := rec.textPathOrigins[0]; got != want {
+			t.Errorf("angle %v: glyph origin = %v, want %v (inverting with the layout descent %v instead of the measured %v gives the old, wrong answer)",
+				angle, got, want, measured.MathLayout.Descent, measured.Descent)
+		}
+	}
+}
