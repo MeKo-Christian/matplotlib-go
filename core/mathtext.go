@@ -3,7 +3,6 @@ package core
 import (
 	"fmt"
 	"math"
-	"os"
 	"path/filepath"
 	"reflect"
 	"strconv"
@@ -500,8 +499,15 @@ func drawDisplayTextRotatedParseMath(textRen render.RotatedTextDrawer, text stri
 
 	if parseMath {
 		if ren, ok := textRen.(render.Renderer); ok {
-			if layout, ok := layoutDisplayText(ren, text, size, fontKey); ok {
-				if drawMathTextLayoutRotated(ren, layout, anchor, angle, textColor, fontKey) {
+			// Measure through the same call the caller used to build the anchor
+			// (rotatedTextBackendAnchorFromP -> measureSingleLineTextLayout), so
+			// drawMathTextLayoutRotated inverts it with the identical width and
+			// descent. Re-deriving either from the raw layout does not cancel:
+			// the raster branch swaps in matplotlib's to_raster ink metrics, and
+			// both branches then raise the descent to "lp"'s.
+			measured := measureSingleLineTextLayoutParseMath(ren, text, size, fontKey, true, useTeX...)
+			if measured.MathLayout != nil {
+				if drawMathTextLayoutRotated(ren, measured.MathLayout, measured.Width, measured.Descent, anchor, angle, textColor, fontKey) {
 					return
 				}
 			}
@@ -658,38 +664,36 @@ func drawMathTextLayout(r render.Renderer, textRen render.TextDrawer, layout Mat
 	}
 }
 
-func drawMathTextLayoutRotated(r render.Renderer, layout MathTextLayout, anchor geom.Pt, angle float64, textColor render.Color, fontKey string) bool {
-	if math.IsNaN(angle) || math.IsInf(angle, 0) {
+// drawMathTextLayoutRotated draws a laid-out expression around an anchor that
+// rotatedTextBackendAnchorFromP built from measureSingleLineTextLayout. The
+// anchorWidth/anchorDescent that call reported must be passed back in: they are
+// not recoverable from the layout, because on a raster backend the measurement
+// swaps in matplotlib's to_raster ink metrics and both backends then raise the
+// descent to "lp"'s. Inverting with anything else leaves the origin off by the
+// difference, which for a 90° y-axis label is a device pixel.
+func drawMathTextLayoutRotated(r render.Renderer, layout *MathTextLayout, anchorWidth, anchorDescent float64, anchor geom.Pt, angle float64, textColor render.Color, fontKey string) bool {
+	if layout == nil || math.IsNaN(angle) || math.IsInf(angle, 0) {
 		return false
 	}
 	origin := geom.Pt{
-		X: anchor.X - layout.Width/2,
-		Y: anchor.Y - layout.Descent,
+		X: anchor.X - anchorWidth/2,
+		Y: anchor.Y - anchorDescent,
 	}
 	if _, rasterBackend := r.(render.RGBAExporter); rasterBackend {
 		if imgDrawer, ok := r.(render.RotatedMathTextImageDrawer); ok {
-			glyphs, rects := mathTextImagePlacements(layout, fontKey)
+			glyphs, rects := mathTextImagePlacements(*layout, fontKey)
 			cosT := math.Cos(angle)
 			sinT := math.Sin(angle)
 			drawOrigin := geom.Pt{
-				X: anchor.X - (layout.Width/2*cosT - layout.Descent*sinT),
-				Y: anchor.Y - (layout.Width/2*sinT + layout.Descent*cosT),
-			}
-			if os.Getenv("MATHDBG") != "" {
-				fmt.Printf("MATHDBG rot anchor=%v W=%v A=%v D=%v origin=%v angle=%v\n", anchor, layout.Width, layout.Ascent, layout.Descent, drawOrigin, angle)
-				for _, g := range glyphs {
-					fmt.Printf("MATHDBG glyph %q size=%v ox=%v oy=%v\n", g.Text, g.FontSize, g.Ox, g.Oy)
-				}
-				for _, rc := range rects {
-					fmt.Printf("MATHDBG rect %v %v %v %v\n", rc.X1, rc.Y1, rc.X2, rc.Y2)
-				}
+				X: anchor.X - (anchorWidth/2*cosT - anchorDescent*sinT),
+				Y: anchor.Y - (anchorWidth/2*sinT + anchorDescent*cosT),
 			}
 			if imgDrawer.DrawMathTextImageRotated(glyphs, rects, drawOrigin, layout.Ascent, layout.Descent, angle, textColor) {
 				return true
 			}
 		}
 	}
-	return drawMathTextLayoutPathTransformed(r, layout, origin, anchor, angle, textColor, fontKey)
+	return drawMathTextLayoutPathTransformed(r, *layout, origin, anchor, angle, textColor, fontKey)
 }
 
 func mathTextImagePlacements(layout MathTextLayout, fontKey string) ([]render.MathGlyphPlacement, []render.MathRectPlacement) {

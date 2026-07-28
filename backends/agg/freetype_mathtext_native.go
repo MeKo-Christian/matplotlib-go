@@ -18,11 +18,9 @@ static FT_Int32 mpl_go_math_force_autohint_load_flags(void) {
 import "C"
 
 import (
-	"fmt"
 	"image"
 	"image/draw"
 	"math"
-	"os"
 	"unsafe"
 
 	agglib "github.com/cwbudde/agg_go"
@@ -169,21 +167,12 @@ func (r *Renderer) DrawMathTextImageRotated(glyphs []render.MathGlyphPlacement, 
 	sinT := math.Sin(angle)
 	cosT := math.Cos(angle)
 	imageHeight := float64(img.mask.Bounds().Dy())
+	// RendererAgg.draw_mathtext: round(x + ox + descent*sin), round(y - oy +
+	// descent*cos), then draw_text_image at y+1. draw_text_image's rotated branch
+	// maps the image through translate(0,-h) · rotate(-angle) · translate(x,y),
+	// which is exactly the transform below.
 	x := pythonRound(origin.X + img.descent*sinT)
 	y := pythonRound(baselineDev+img.descent*cosT) + 1
-	if math.Abs(math.Abs(sinT)-1) < 1e-9 && math.Abs(cosT) < 1e-9 {
-		// Matplotlib renders rotated text images through RendererAgg::draw_text_image's
-		// scanline path. agg_go exposes transformed image drawing through an Agg2D
-		// parallelogram helper whose integer-grid coverage lands one device pixel
-		// above/left for quarter-turn grayscale text images; compensate here so the
-		// raster image origin follows draw_text_image rather than generic image draws.
-		x += 2 * math.Copysign(1, sinT)
-		y++
-	}
-	if os.Getenv("MATHDBG") != "" {
-		fmt.Printf("MATHDBG agg baselineDev=%v descent=%v imgH=%v imgW=%v x=%v y=%v\n",
-			baselineDev, img.descent, imageHeight, img.mask.Bounds().Dx(), x, y)
-	}
 	transform := agglib.NewTransformationsFromValues(
 		cosT,
 		-sinT,
