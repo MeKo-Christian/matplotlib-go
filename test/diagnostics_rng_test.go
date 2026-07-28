@@ -92,7 +92,7 @@ func loadMatplotlibRNGDebugPayload(t *testing.T) rngDebugPayload {
 		cmd = selectPythonCommand(t, "python3", script, "--emit-rng-debug")
 	}
 	if cmd == nil {
-		t.Skip("matplotlib RNG parity check skipped: uv/python3 not available")
+		t.Skip("matplotlib RNG parity check skipped: no uv/python3 with numpy and matplotlib")
 	}
 
 	out, err := cmd.CombinedOutput()
@@ -113,6 +113,10 @@ func loadMatplotlibRNGDebugPayload(t *testing.T) rngDebugPayload {
 	return payload
 }
 
+// generatorImportProbe covers the top-level imports test/matplotlib_ref/generate.py
+// needs before it can emit anything.
+const generatorImportProbe = "import numpy, matplotlib"
+
 func selectPythonCommand(t *testing.T, name, script string, args ...string) *exec.Cmd {
 	t.Helper()
 	path, err := exec.LookPath(name)
@@ -120,13 +124,22 @@ func selectPythonCommand(t *testing.T, name, script string, args ...string) *exe
 		return nil
 	}
 
-	var cmd *exec.Cmd
+	var cmd, probe *exec.Cmd
 	if name == "uv" {
 		allArgs := append([]string{"run", script}, args...)
 		cmd = exec.Command(path, allArgs...)
+		probe = exec.Command(path, "run", "python", "-c", generatorImportProbe)
 	} else {
 		allArgs := append([]string{script}, args...)
 		cmd = exec.Command(path, allArgs...)
+		probe = exec.Command(path, "-c", generatorImportProbe)
+	}
+
+	// Being on PATH is not enough. Bare CI runners ship an interpreter without
+	// the generator's dependencies, and running the script anyway turns a missing
+	// optional toolchain into an ImportError traceback instead of a skip.
+	if probe.Run() != nil {
+		return nil
 	}
 	return cmd
 }
