@@ -1,0 +1,35 @@
+name: test-workflows
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+# A broken workflow file fails with zero jobs and no useful log, so it can stay
+# red for a long time without anyone reading the run. That happened here: the
+# test.yml orchestrator called children that never declared `on: workflow_call`,
+# which actionlint reports as
+#   "workflow_call" event trigger is not found in "on:"  [workflow-call]
+# Keep this job so the next such mistake fails loudly on the commit that makes it.
+jobs:
+  test-workflows:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install actionlint
+        run: go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+
+      # actionlint additionally shells out to shellcheck for `run:` blocks; it is
+      # preinstalled on ubuntu runners.
+      - name: Run actionlint
+        run: |
+          "$(go env GOPATH)/bin/actionlint"

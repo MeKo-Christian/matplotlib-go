@@ -30,3 +30,6 @@ jobs:
 
   test-unit:
     uses: ./.github/workflows/test-unit.yml
+
+  test-workflows:
+    uses: ./.github/workflows/test-workflows.yml

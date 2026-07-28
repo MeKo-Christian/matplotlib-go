@@ -7,6 +7,17 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+# Deliberately not a child of test.yml: this is a reporting job, not a gate
+# (note continue-on-error below), and it keeps its own workflow_dispatch entry
+# point. It does need its own concurrency group, though — benchmarks and
+# profiles are the slowest thing in the repo and must not stack per push.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   benchmark-report:
     name: Render Benchmark Report
