@@ -35,6 +35,7 @@ func Plot() *core.Figure {
 		grid.Color = gridColor
 		grid.LineWidth = 0.5
 	}
+	ax.SetAxisBelow(true)
 
 	lineColor := render.Color{R: 0.14, G: 0.37, B: 0.74, A: 1}
 	pointColor := render.Color{R: 0.88, G: 0.42, B: 0.16, A: 0.92}
@@ -90,8 +91,10 @@ func Plot() *core.Figure {
 		VAlign:   core.TextVAlignBottom,
 		Coords:   core.BlendCoords(core.CoordFigure, core.CoordAxes),
 	})
+	arrowStyle, _ := core.ArrowStyleFromString("->")
 	ax.Annotate("axes note", 0.82, 0.78, core.AnnotationOptions{
 		Coords:     core.Coords(core.CoordAxes),
+		ArrowStyle: arrowStyle,
 		OffsetX:    optional.Of(-48.0),
 		OffsetY:    optional.Of(-26.0),
 		FontSize:   10,

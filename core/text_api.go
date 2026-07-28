@@ -334,7 +334,7 @@ func (a *Axes) Annotate(text string, x, y float64, opt AnnotationOptions) *Annot
 		Color:           opt.Color,
 		ArrowColor:      opt.ArrowColor,
 		ArrowWidth:      opt.ArrowWidth.Or(1.25),
-		ArrowHeadSize:   opt.ArrowHeadSize.Or(8),
+		ArrowHeadSize:   opt.ArrowHeadSize.Or(annotationDefaultHeadSize(a, opt.FontSize)),
 		ArrowStyle:      arrowStyle,
 		ConnectionStyle: connectionStyle,
 		HAlign:          annotationHAlign(opt),
@@ -391,6 +391,22 @@ func (a *Annotation) Bounds(*DrawContext) geom.Rect { return geom.Rect{} }
 
 // Z returns the annotation z-order.
 func (a *Annotation) Z() float64 { return a.z }
+
+// annotationDefaultHeadSize is Matplotlib's default arrow mutation scale, which
+// is the annotation text's own font size rather than a constant
+// (Annotation.update_positions: ms = arrowprops.get("mutation_scale",
+// self.get_size())).
+func annotationDefaultHeadSize(a *Axes, fontSize float64) float64 {
+	if fontSize > 0 {
+		return fontSize
+	}
+	if a != nil {
+		if rc := a.resolvedRC(); rc.FontSize > 0 {
+			return rc.FontSize
+		}
+	}
+	return 12
+}
 
 func annotationHAlign(opt AnnotationOptions) TextAlign {
 	return opt.HAlign

@@ -222,9 +222,9 @@ mentioned (`basic_line`) carry real divergences. Findings:
       per case from post-fix measurements.
 - [ ] **3.3 Fix the four shift families.** Each is a candidate shared root
       cause; confirm against `third_party/matplotlib` 3.10.9 and fix in the core
-      library, not the fixtures. **9 of 14 fixed, and a tenth largely fixed,
-  2026-07-28**; the audit's shift families are down from 14 cases to 5 and its
-  pixel-identical count up from 21 to 27. First pass (`basic_line` and
+      library, not the fixtures. **10 of 14 fixed, and an eleventh largely
+  fixed, 2026-07-28**; the audit's shift families are down from 14 cases to 4
+  and its pixel-identical count up from 21 to 28. First pass (`basic_line` and
       `basic_line_labels` are now pixel-identical to Matplotlib;
       `animation_subplots_frame` went from 178 differing pixels to 38, largest
       cluster 70 to 2). Two root causes, both the same mistake — a tolerance
@@ -457,7 +457,64 @@ mentioned (`basic_line`) carry real divergences. Findings:
         because the offset is derived alongside it. And the filtered
         (non-nearest) branch now shares the reflected destination row and the
         affine, which is a no-op for it today but stops the two paths drifting.
-  - [ ] **3.3.7 `transform_coordinates`** (`+2-1`, the only two-axis shift).
+  - [x] **3.3.7 `transform_coordinates`.** Done 2026-07-28. 261 differing
+        pixels to **60** (largest cluster 226 to 37, RMSE 2.34 to 0.49).
+        `transform_annotation_modes` fell out of 3.4 alongside it (402 to 117,
+        RMSE 2.68 to 0.67) and `annotation_composition` went RMSE 0.93 to 0.32.
+
+        The `+2-1` family label is a whole-image classification and was
+        misleading: the text is byte-identical and the residual was three
+        unrelated things. Localizing it first is what made this cheap.
+
+        **The arrow's `patchA` box was the glyph ink rect, not the layout rect.**
+        Matplotlib passes `Text.get_window_extent` to the annotation's
+        `FancyArrowPatch` (`Annotation.update_positions`): the arrow starts at
+        that box's centre, is clipped by it grown by `points_to_pixels(4)/2`,
+        then shrunk by 2 points at each end. `_get_layout` builds the box from
+        the advance width and `max(h, lp_h)` over `max(d, lp_d)`, measured from
+        the literal string `"lp"` — 11 above the baseline and 3 below for
+        `"axes note"` at 10 pt, against a ~9-px ink height. `core/annotation.go`
+        reproduced the whole clip/shrink structure faithfully but fed it
+        `textInkRect`, so the shaft was tilted and its tail walked several
+        pixels along the text. The layout rect is now built inline, from
+        `layout.Width/Ascent/Descent` — which `render.MeasureTextLineLayout`
+        already derives with matplotlib's own `"lp"` clamp. The multiline
+        annotation path (`measureMultilineTextBlock`) had it right all along;
+        only the single-line path diverged from its sibling. Verified against
+        matplotlib's recorded geometry for this fixture: the shaft's tail and
+        control point now match to 1e-3 px.
+
+        **The arrow's default mutation scale was a constant.** `Axes.Annotate`
+        defaulted `ArrowHeadSize` to 8; matplotlib's `mutation_scale` defaults
+        to the annotation text's *own font size*
+        (`ms = arrowprops.get("mutation_scale", self.get_size())`). Now
+        `annotationDefaultHeadSize`, resolving through the axes rc when the
+        options leave the size unset.
+
+        Two fixtures had also dropped calls their reference scripts make, which
+        no core change can compensate for. `test/parity/transform_coordinates`
+        omitted `set_axisbelow(True)`, so the grid sat at the default z=1.5 —
+        above `Scatter2D`'s patch z but below `Line2D`'s — and painted over the
+        diamond marker exactly as the pixels showed; the port's default is
+        matplotlib's and was never wrong. And `transform_coordinates`,
+        `transform_annotation_modes` and `annotation_composition` all omitted
+        `arrowstyle="->"`, taking the port's filled `-|>` default instead of the
+        reference's open caret; that, not any geometry, was the last 10x10 blob
+        at each arrow tip.
+
+        `-update-golden` moved five goldens and every one improves on both
+        differing pixels and RMSE. `annotation_composition` regressed on the
+        first pass (RMSE 0.93 to 1.17) — the head-size fix made its *wrong*
+        head bigger — and the arrowstyle fix is what turned it into a win; that
+        intermediate state is why the "every moved golden must improve" check is
+        run before ratcheting, not after. All five ratcheted; no ceiling raised.
+        `mathtext_basic` carries PDF and SVG goldens, regenerated with
+        `-update-pdf-golden -update-svg-golden`.
+
+        Left standing: `textInkRect`'s own fallback branch
+        (`core/axis_ticklabels.go`) uses the y-up convention where its ink
+        branch and every caller use y-down. It is unreachable under the AGG
+        backend, so it was recorded rather than fixed blind here.
   - [ ] **3.3.8 The remaining `mathtext_gallery` cluster** (64 px, one 10x11
         glyph at x[638:648] y[176:187], family `+0-1` after 3.3.3). It is the
         last shift residual in the mathtext family and did not respond to any of
@@ -468,9 +525,11 @@ mentioned (`basic_line`) carry real divergences. Findings:
       matplotlib's flipud+upper `specgram`, see 3.3.6),
       `stat_variants`, `annotation_legend_offsetbox_gallery`,
       `axes_control_surface`, `text_annotation_matrix`,
-      `legend_layout_matrix`, `transform_annotation_modes`, `patch_style_matrix`,
+      `legend_layout_matrix`, `patch_style_matrix`,
       `unstructured_showcase`, `mathtext_basic`, `colorbar_boundary_values`,
       `line2d_semantics`. Fix or record as an accepted difference.
+      (`transform_annotation_modes` left this list under 3.3.7 — 402 differing
+      pixels to 117, RMSE 2.68 to 0.67.)
 - [ ] **3.5 Disposition the dense residuals.** These are broad and
       low-amplitude, where RMSE _is_ the right metric; the question is only
       whether the amplitude is defensible. `geo_aitoff_axes`,

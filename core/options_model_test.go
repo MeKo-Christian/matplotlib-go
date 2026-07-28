@@ -33,9 +33,17 @@ func TestAnnotateDistinguishesExplicitZeroOffsetFromUnset(t *testing.T) {
 func TestAnnotateDistinguishesExplicitZeroArrowSizeFromUnset(t *testing.T) {
 	ax := NewFigure(400, 300).AddAxes(geom.Rect{})
 
+	// An unset head size takes the annotation's font size, which is Matplotlib's
+	// mutation_scale default; here that resolves through the axes rc.
+	rcFontSize := ax.resolvedRC().FontSize
 	defaulted := ax.Annotate("d", 0, 0, AnnotationOptions{})
-	if defaulted.ArrowWidth != 1.25 || defaulted.ArrowHeadSize != 8 {
-		t.Fatalf("unset arrow = width %v head %v, want 1.25 and 8", defaulted.ArrowWidth, defaulted.ArrowHeadSize)
+	if defaulted.ArrowWidth != 1.25 || defaulted.ArrowHeadSize != rcFontSize {
+		t.Fatalf("unset arrow = width %v head %v, want 1.25 and %v", defaulted.ArrowWidth, defaulted.ArrowHeadSize, rcFontSize)
+	}
+
+	sized := ax.Annotate("s", 0, 0, AnnotationOptions{FontSize: 14})
+	if sized.ArrowHeadSize != 14 {
+		t.Fatalf("unset arrow head for 14 pt text = %v, want the font size 14", sized.ArrowHeadSize)
 	}
 
 	pinned := ax.Annotate("p", 0, 0, AnnotationOptions{

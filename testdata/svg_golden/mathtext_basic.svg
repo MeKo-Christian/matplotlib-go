@@ -57,7 +57,7 @@ preserveAspectRatio="xMidYMid meet">
   <text x="121.272906" y="70.207375" font-size="11" font-family="mplgo-font-1" fill="rgb(0,0,0)">f</text>
   <text x="125.147906" y="72.012063" font-size="7.7" font-family="mplgo-font-1" fill="rgb(0,0,0)">n</text>
   <path d="M 251.303875 158.587683 Q 231.56697 148.735079 212.830387 139.381833" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="round" stroke-linecap="round" />
-  <path d="M 215.814365 143.355148 L 212.830387 139.381833 L 217.799426 139.37864" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="round" stroke-linecap="round" />
+  <path d="M 217.306353 145.341806 L 212.830387 139.381833 L 220.283945 139.377043" fill="none" stroke="rgb(0,0,0)" stroke-width="1.388889" stroke-linejoin="round" stroke-linecap="round" />
   <path d="M 286.61697 171.495111 L 291.965408 171.495111 L 291.965408 170.745111 L 286.61697 170.745111 Z" fill="rgb(0,0,0)" stroke="none" />
   <text x="256.56697" y="173.752924" font-size="12" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">Δ</text>
   <text x="264.770095" y="173.752924" font-size="12" font-family="mplgo-font-1" fill="rgb(0,0,0)">y</text>

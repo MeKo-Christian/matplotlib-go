@@ -66,6 +66,70 @@ func TestAnnotationCurvedArrowMatchesMatplotlibGalleryPath(t *testing.T) {
 	}
 }
 
+// Matplotlib clips the annotation arrow against the text's layout box
+// (Text.get_window_extent), not against its glyph ink. This reproduces the
+// transform_coordinates fixture, whose recorded Matplotlib geometry is
+//
+//	get_window_extent : x0=432.458 y0=249.968 x1=500.208 y1=263.968  (67.75 x 14.0)
+//	posA -> posB      : (466.333, 256.968) -> (548.208, 289.968)
+//	shaft             : (493.170, 267.785) (519.401, 278.357) (543.831, 288.204)
+//
+// which is the same y-up space the renderer receives paths in. The ink box is
+// narrower and sits higher than the layout box, so using it tilts the shaft and
+// walks its tail several pixels along the text.
+//
+// The tail and the control point are what the patch box decides, so they are
+// pinned tight. The tip carries a separate ~1 px difference in how much the
+// "->" head trims off the shaft, which this test deliberately does not claim to
+// have fixed.
+func TestAnnotationArrowClipsAgainstTextLayoutBoxNotInk(t *testing.T) {
+	fig := core.NewFigure(720, 420)
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.13, Y: 0.16}, Max: geom.Pt{X: 0.90, Y: 0.84}})
+	ax.SetXLim(0, 10)
+	ax.SetYLim(0, 10)
+
+	ink := render.Color{R: 0.10, G: 0.10, B: 0.10, A: 1}
+	ax.Annotate("axes note", 0.82, 0.78, core.AnnotationOptions{
+		Coords:     core.Coords(core.CoordAxes),
+		OffsetX:    optional.Of(-48.0),
+		OffsetY:    optional.Of(-26.0),
+		FontSize:   10,
+		Color:      ink,
+		ArrowColor: ink,
+		ArrowWidth: optional.Of(1.25),
+		HAlign:     core.TextAlignRight,
+		VAlign:     core.TextVAlignTop,
+	})
+
+	r, err := agg.New(720, 420, render.Color{R: 1, G: 1, B: 1, A: 1})
+	if err != nil {
+		t.Fatalf("new agg renderer: %v", err)
+	}
+	rec := &annotationPathRecorder{Renderer: r, stroke: ink}
+	core.DrawFigure(fig, rec)
+
+	if len(rec.curves) == 0 {
+		t.Fatalf("did not record annotation arrow shaft")
+	}
+	got := rec.curves[0]
+	want := []struct {
+		pt  geom.Pt
+		tol float64
+	}{
+		{geom.Pt{X: 493.170, Y: 267.785}, 0.01},
+		{geom.Pt{X: 519.401, Y: 278.357}, 0.01},
+		{geom.Pt{X: 543.831, Y: 288.204}, 1.05},
+	}
+	if len(got.V) != len(want) {
+		t.Fatalf("annotation arrow shaft vertices = %+v, want %d quadratic vertices", got.V, len(want))
+	}
+	for i, w := range want {
+		if distance(got.V[i], w.pt) > w.tol {
+			t.Fatalf("annotation arrow vertex %d = %+v, want Matplotlib %+v within %g; full path=%+v", i, got.V[i], w.pt, w.tol, got.V)
+		}
+	}
+}
+
 type annotationPathRecorder struct {
 	*agg.Renderer
 	stroke render.Color

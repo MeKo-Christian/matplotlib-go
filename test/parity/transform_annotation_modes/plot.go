@@ -31,6 +31,7 @@ func Plot() *core.Figure {
 	width := 2.0
 	_, _ = ax.Plot([]float64{1, 3, 5, 7, 9}, []float64{1.5, 4, 3, 7, 8.5}, core.PlotOptions{Color: optional.Of(lineColor), LineWidth: optional.Of(width)})
 	textColor := render.Color{R: 0.10, G: 0.10, B: 0.10, A: 1}
+	arrowStyle, _ := core.ArrowStyleFromString("->")
 
 	ax.Annotate("data", 3, 4, core.AnnotationOptions{
 		Coords:     core.Coords(core.CoordData),
@@ -40,6 +41,7 @@ func Plot() *core.Figure {
 		Color:      textColor,
 		ArrowColor: textColor,
 		ArrowWidth: optional.Of(1.1),
+		ArrowStyle: arrowStyle,
 	})
 	ax.Annotate("axes", 0.78, 0.74, core.AnnotationOptions{
 		Coords:     core.Coords(core.CoordAxes),
@@ -49,6 +51,7 @@ func Plot() *core.Figure {
 		Color:      textColor,
 		ArrowColor: textColor,
 		ArrowWidth: optional.Of(1.1),
+		ArrowStyle: arrowStyle,
 		HAlign:     core.TextAlignRight,
 	})
 	ax.Annotate("figure", 0.72, 0.24, core.AnnotationOptions{
@@ -59,6 +62,7 @@ func Plot() *core.Figure {
 		Color:      textColor,
 		ArrowColor: textColor,
 		ArrowWidth: optional.Of(1.1),
+		ArrowStyle: arrowStyle,
 	})
 	return fig
 }
