@@ -1086,25 +1086,23 @@
   "verdict": "exact"
  },
  {
-  "clusters": 1,
-  "diff_px": 64,
-  "family": "shift +0-1",
+  "clusters": 0,
+  "diff_px": 0,
+  "family": "identical",
   "id": "mathtext_gallery",
-  "largest_cluster": 64,
-  "max_diff": 255,
+  "largest_cluster": 0,
+  "max_diff": 1,
   "max_mean_abs": 0.0,
-  "max_rmse": 2.6,
-  "mean_abs": 0.007,
-  "p50_amp": 45,
-  "p99_amp": 255,
-  "pct_px": 0.0127,
-  "psnr": 48.45,
-  "rmse": 0.964,
-  "shifts": {
-   "+0-1": 64
-  },
-  "slack": 2.7,
-  "verdict": "ok"
+  "max_rmse": 0.1,
+  "mean_abs": 0.0,
+  "p50_amp": 0,
+  "p99_amp": 0,
+  "pct_px": 0.0,
+  "psnr": 90.07,
+  "rmse": 0.008,
+  "shifts": {},
+  "slack": 12.5,
+  "verdict": "loose"
  },
  {
   "clusters": 441,
