@@ -1,43 +1,41 @@
-name: unit
+name: test-unit
 
 on:
-  pull_request:
-  push:
-    branches: [main]
+  workflow_call:
 
+permissions:
+  contents: read
+
+# Linux only: the golden/reference parity set is calibrated against the vendored
+# FreeType 2.6.1 on Linux, so the raster goldens are not portable to macOS
+# rasterization. The Go toolchain comes from go.mod rather than a matrix pin.
 jobs:
-  test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        # Linux only: the golden/reference parity set is calibrated against the
-        # vendored FreeType 2.6.1 on Linux, so the raster goldens are not
-        # portable to macOS rasterization.
-        os: [ubuntu-latest]
-        # go.mod requires Go 1.25 (via golang.org/x/* dependencies), so the
-        # toolchain is pinned there; the runner downloads it automatically.
-        go: ["1.25"]
+  test-unit:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go }}
+          go-version-file: go.mod
+          cache: true
+
       - name: Install build dependencies
         uses: ./.github/actions/setup-cgo-deps
+
       - name: Provision matplotlib parity source
         run: bash third_party/fetch-matplotlib.sh
-      - name: Build
-        run: CGO_ENABLED=1 go build -tags freetype ./...
-      - name: Vet
-        run: CGO_ENABLED=1 go vet -tags freetype ./...
+
       - name: Test
         run: CGO_ENABLED=1 go test -tags freetype ./...
+
       - name: Upload test artifacts on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: test-artifacts-${{ matrix.os }}-go${{ matrix.go }}
+          name: test-artifacts
           path: |
             testdata/_artifacts/
             *.png

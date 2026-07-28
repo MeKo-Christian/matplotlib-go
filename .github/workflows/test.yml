@@ -1,14 +1,32 @@
-name: ci
+name: tests
 
 on:
   pull_request:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
+# Supersede in-flight runs for the same ref: the parity suite renders ~190
+# figures, so stacking runs on a busy branch is pure waste.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Every check below is an independent reusable workflow, so they fan out in
+# parallel and report as separate status checks. Children are `workflow_call`
+# only — they must not carry their own push/pull_request triggers, or they run
+# twice per commit (once here, once standalone).
 jobs:
-  lint:
+  test-build:
+    uses: ./.github/workflows/test-build.yml
+
+  test-lint:
     uses: ./.github/workflows/test-lint.yml
-  fmt:
+
+  test-fmt:
     uses: ./.github/workflows/test-fmt.yml
-  unit:
+
+  test-unit:
     uses: ./.github/workflows/test-unit.yml

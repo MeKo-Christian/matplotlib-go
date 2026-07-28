@@ -1,21 +1,28 @@
-name: lint
+name: test-lint
 
 on:
-  pull_request:
-  push:
-    branches: [main]
+  workflow_call:
+
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
-  golangci:
-    name: golangci-lint
+  test-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          go-version: "1.25"
+          go-version-file: go.mod
+          cache: true
+
       - name: Install build dependencies
         uses: ./.github/actions/setup-cgo-deps
+
       - name: golangci-lint
         # .golangci.toml is a v2 config, so use golangci-lint v2 (action v7+).
         # Its prebuilt binary is built with a Go >= the go 1.25 module target.

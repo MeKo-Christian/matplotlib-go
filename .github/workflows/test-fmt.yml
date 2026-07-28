@@ -1,20 +1,25 @@
-name: fmt
+name: test-fmt
 
 on:
-  pull_request:
-  push:
-    branches: [main]
+  workflow_call:
+
+permissions:
+  contents: read
 
 # gofumpt's output depends on the Go toolchain it is built with, so the Go
 # version and every formatter version are pinned here to keep CI deterministic
 # and aligned with the versions the tree is formatted against. Bumping any of
-# these requires reformatting the tree in the same change.
+# these requires reformatting the tree in the same change. This is deliberately
+# not go.mod's version, unlike the other checks.
 jobs:
-  formatting:
+  test-fmt:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
           go-version: "1.26"
       - name: Install formatters
