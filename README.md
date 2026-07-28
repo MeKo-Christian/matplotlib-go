@@ -3,6 +3,11 @@
 A plotting library for Go inspired by Matplotlib.  
 Renderer-agnostic at the core, with support for high-quality raster backends today and vector/GPU backends later.
 
+<p align="center">
+  <img src="testdata/golden/plot_variants.png" alt="A gallery of step, fill-between, broken-bar, and stacked-bar plots rendered by Matplotlib-Go" width="760">
+</p>
+<p align="center"><sub>Representative 2D plots rendered by Matplotlib-Go's AGG backend.</sub></p>
+
 ---
 
 ## Vision
@@ -100,6 +105,11 @@ methods. Supported chart classes include:
 - **Interactive/widget surfaces:** buttons, sliders, range sliders, text boxes,
   check/radio buttons, selectors, cursors, multi-cursors, and animation
   scaffolding for interactive backends.
+
+<p align="center">
+  <img src="testdata/golden/mplot3d_gallery.png" alt="A gallery of ten 3D plots rendered by Matplotlib-Go, including lines, scatter, surfaces, wireframes, voxels, and vector fields" width="960">
+</p>
+<p align="center"><sub>3D lines, collections, surfaces, bars, voxels, and vector fields from the catalog-driven gallery.</sub></p>
 
 The curated examples gallery shows representative plots for these classes and
 is the best way to check the current visual coverage.

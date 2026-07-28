@@ -2,7 +2,8 @@
 
 The CI workflows were repaired so the project builds and the `build`, `vet`,
 `fmt`, and `lint` jobs are green (see `.github/actions/setup-cgo-deps` and the
-`ci.yml` / `test-unit.yml` / `test-lint.yml` / `test-fmt.yml` workflows). Before
+`test.yml` orchestrator with its `test-build` / `test-unit` / `test-lint` /
+`test-fmt` reusable workflows). Before
 that fix CI had **never built** (no system cgo dependencies were installed), so
 the test suite itself was never validated on CI.
 
