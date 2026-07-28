@@ -1,7 +1,10 @@
-# Matplotlib-Go (working title)
+# Matplotlib-Go
 
-A plotting library for Go inspired by Matplotlib.  
-Renderer-agnostic at the core, with support for high-quality raster backends today and vector/GPU backends later.
+A nearly complete, Go-native plotting library inspired by Matplotlib, with broad
+2D and 3D coverage. Its renderer-agnostic core supports deterministic raster and
+vector output, optional GPU acceleration, and interactive desktop and browser
+surfaces. The remaining work is focused on final visual QA and release hardening
+for v1.0.
 
 <p align="center">
   <img src="testdata/golden/plot_variants.png" alt="A gallery of step, fill-between, broken-bar, and stacked-bar plots rendered by Matplotlib-Go" width="760">
@@ -10,22 +13,28 @@ Renderer-agnostic at the core, with support for high-quality raster backends tod
 
 ---
 
-## Vision
+## What It Is Today
 
-**North-star:**  
-Deliver a Go-native, Matplotlib-like plotting system with:
+Matplotlib-Go has moved beyond the foundational stage. The planned v1.0 surface
+is largely implemented:
 
 - **Familiar model:** `Figure → Axes → Artists` hierarchy
-- **Renderer independence:** consistent outputs across CPU raster today, with room for GPU and vector backends later
-- **Deterministic results:** identical plots across machines and CI, great for testing
-- **Beautiful text:** robust font handling, fallback fonts, and precise metrics
-- **Comprehensive export:** PNG, SVG, PDF, PS/EPS, and PGF through registered backends
-- **Go-idiomatic API:** options-based configuration, no hidden global state; optional `pyplot` shim for scripting
-- **Cross-platform interactivity:** pan/zoom, picking, animations, WASM/web backends
+- **Broad plotting surface:** 2D, 3D, statistical, image, contour, projection,
+  annotation, layout, and widget APIs
+- **Renderer independence:** high-quality AGG raster output, a pure-Go fallback,
+  SVG/PDF/PS/PGF vector backends, and opt-in Skia CPU/GPU modes
+- **Deterministic results:** pinned fonts, golden images, and catalog-driven
+  comparisons against Matplotlib 3.10.9
+- **Production-quality text:** precise metrics, font fallback, MathText, and
+  optional TeX rendering
+- **Go-idiomatic API:** explicit figures and options, a frozen pre-v1 public
+  surface, and an optional `pyplot` shim for scripting
+- **Cross-platform interactivity:** pan/zoom, picking, animations, widgets,
+  desktop canvases, and a WASM browser gallery
 
 ---
 
-## Constraints & Principles
+## Design Principles
 
 - **Backend-agnostic core:** all plot logic independent of rendering technology
 - **Determinism:** golden image tests, locked fonts, stable outputs
@@ -36,16 +45,21 @@ Deliver a Go-native, Matplotlib-like plotting system with:
 
 ---
 
-## Endgame
+## Path to v1.0
 
-When this repo is “done”, it should provide:
+Most of the original end-state goals are now implemented. The remaining release
+work is deliberately narrow:
 
-- A stable core API for 2D plotting (lines, scatter, images, text, legends, colorbars, etc.)
-- Multiple renderers (AGG, GoBasic, SVG/PDF, and opt-in Skia) with visual parity
-- A gallery of reproducible, high-quality examples
-- Deterministic test suite with image baselines
-- Documentation and guides, including
-  [Matplotlib to Go migration notes](docs/matplotlib-migration-notes.md)
+- Close or explicitly disposition the last known visual differences from
+  Matplotlib.
+- Ratchet every parity tolerance against the final rendered output.
+- Revalidate the frozen API, golden images, installation path, documentation,
+  CI, and performance baselines.
+- Tag v1.0.
+
+See [`PLAN.md`](PLAN.md) for the active release checklist and
+the [Matplotlib-to-Go migration notes](docs/matplotlib-migration-notes.md) for
+the pre-v1 API changes.
 
 ---
 
