@@ -223,9 +223,9 @@ mentioned (`basic_line`) carry real divergences. Findings:
 
 - [ ] **3.3 Fix the four shift families.** Each is a candidate shared root
       cause; confirm against `third_party/matplotlib` 3.10.9 and fix in the core
-      library, not the fixtures. **10 of 14 fixed, and an eleventh largely
-      fixed, 2026-07-28**; the audit's shift families are down from 14 cases to 4
-      and its pixel-identical count up from 21 to 28. First pass (`basic_line` and
+      library, not the fixtures. **11 of 14 fixed, and a twelfth largely
+      fixed, 2026-07-28**; the audit's shift families are down from 14 cases to 3
+      and its pixel-identical count up from 21 to 29. First pass (`basic_line` and
       `basic_line_labels` are now pixel-identical to Matplotlib;
       `animation_subplots_frame` went from 178 differing pixels to 38, largest
       cluster 70 to 2). Two root causes, both the same mistake — a tolerance
@@ -538,10 +538,64 @@ mentioned (`basic_line`) carry real divergences. Findings:
         branch and every caller use y-down. It is unreachable under the AGG
         backend, so it was recorded rather than fixed blind here.
 
-  - [ ] **3.3.8 The remaining `mathtext_gallery` cluster** (64 px, one 10x11
-        glyph at x[638:648] y[176:187], family `+0-1` after 3.3.3). It is the
-        last shift residual in the mathtext family and did not respond to any of
-        the three fixes above, so it has a fourth cause.
+  - [x] **3.3.8 The remaining `mathtext_gallery` cluster.** Done 2026-07-28.
+        Now **pixel-identical** to matplotlib (64 differing pixels to 0, RMSE
+        0.964 to 0.008, max amplitude 255 to 1, family `shift +0-1` to
+        `identical`). The audit's pixel-identical count is up to 29 and its
+        shift families down to 3 — and none of those three is mathtext.
+
+        The cluster was the upper limit `n` of `$\sum_{i=1}^{n} i^2$`, drawn one
+        pixel high. **The fourth cause is that the over/under limit stack was
+        computed in closed form.** `layoutMathLimits` had
+        `y := -(base.Ascent + gap + super.Descent)` and derived the box ascent
+        as `-y + super.Ascent`. Matplotlib builds
+        `Vlist([HCentered(super), Vbox(0,vgap), HCentered(nucleus),
+        Vbox(0,vgap), HCentered(sub)])`, takes its height from `Vlist.vpack`'s
+        literal left-to-right walk (`x += d + p.height`, carrying the previous
+        child's depth in `d`), sets
+        `shift_amount = sub.height + vgap + nucleus.depth`, and derives every
+        row baseline in `ship.vlist_out` as `cur_v = shift - vlist.height`
+        followed by one `cur_v += p.height` per row. Algebraically identical,
+        one ULP apart — the same species as 3.3.1/3.3.4/3.3.5 and the same
+        defect `layoutMathFrac` had already fixed for fractions in 3.3.3;
+        `layoutMathLimits` never got the same treatment.
+
+        What makes this one worth recording is that **the tie is structural,
+        not incidental**. `Output.to_raster` blits each glyph at
+        `int(oy - iceberg)`, which truncates, and the top limit is by
+        construction the topmost ink of the expression — so the raster bounding
+        box is derived from that very glyph, and its `int()` argument is
+        *exactly* 1.0 for any limit glyph with no ink above its iceberg. Every
+        `\sum`, `\prod` and `\lim` sits on that tie and the closed form was a
+        coin flip. At 17 pt matplotlib's walk reaches -29.427083333333336 for
+        the `n` where the closed form reached -29.427083333333332, so `int()`
+        gave 0 instead of 1; at 26 pt both land on 1.0, which is why
+        `mathtext_integrals` never showed it and stays at 0 differing pixels
+        through the fix. The nucleus baseline is no longer hardcoded `0` either
+        — the accumulation does not cancel exactly (-3.55e-15 here) and
+        matplotlib ships what it walks.
+
+        The fix is in `github.com/cwbudde/mathtext`, shipped as **v0.5.2**;
+        `go.mod` requires that version, with no `replace`. It carries a test
+        that pins the exact float64 ship coordinates at 17 and 26 pt against a
+        DejaVu Sans metrics fixture recorded from matplotlib 3.10.9 —
+        comparisons are `==`, because a tolerance cannot see this defect.
+        `layoutMathScript`'s regular sub/superscript branch is deliberately
+        untouched: the `i^2` of this same expression already matches (its
+        `int()` argument is 17.627, nowhere near a tie) and matplotlib's
+        non-overunder branch has a genuinely different structure.
+
+        `-update-golden` across all 190 cases moved exactly one golden,
+        `mathtext_gallery`, and it improves on both differing pixels and RMSE.
+        Tolerances ratcheted 2.6/80/80 to 0.1/4/4 — the same bound 3.3.4 gave
+        `matshow_basic`, whose residual is the same uniform ±1 LSB noise;
+        verified the ratchet bites by restoring the pre-fix golden (fails at
+        MaxDiff=255, RMSE 0.96). The pixel gates are what bind here (measured
+        0/0 against 4/4); at a measured RMSE of 0.008 the 0.1 ceiling reads as
+        12.5x slack in the audit and is left for 3.6 to set with the rest.
+        `mathtext_integrals` carries a Go-authored PDF golden, regenerated for
+        the last-decimal coordinate change with `-update-pdf-golden`; its
+        rendered output is unchanged.
 
 - [ ] **3.4 Investigate the localized non-shift divergences.** Cases whose
       residual is confined but not a clean offset, worst first: `line2d_markers`,
