@@ -3,7 +3,6 @@ package core
 import (
 	"fmt"
 	"math"
-	"os"
 	"path/filepath"
 	"reflect"
 	"strconv"
@@ -671,18 +670,21 @@ func drawMathTextLayoutRotated(r render.Renderer, layout MathTextLayout, anchor 
 			glyphs, rects := mathTextImagePlacements(layout, fontKey)
 			cosT := math.Cos(angle)
 			sinT := math.Sin(angle)
-			drawOrigin := geom.Pt{
-				X: anchor.X - (layout.Width/2*cosT - layout.Descent*sinT),
-				Y: anchor.Y - (layout.Width/2*sinT + layout.Descent*cosT),
+			// The caller placed the anchor with rotatedTextBackendAnchorFromP,
+			// which on a raster backend uses measureSingleLineTextLayout — and
+			// that reports matplotlib's to_raster ink-image metrics, not the
+			// advance box (see the comment there). Invert it with the SAME
+			// metrics: using layout.Width/layout.Descent here left the image
+			// half the width difference off along its baseline and a whole
+			// descent difference across it, which for a 90° y-axis label is a
+			// device pixel.
+			w, d := layout.Width, layout.Descent
+			if iw, _, id, ok := mathLayoutImageMetrics(r, layout, fontKey); ok {
+				w, d = iw, id
 			}
-			if os.Getenv("MATHDBG") != "" {
-				fmt.Printf("MATHDBG rot anchor=%v W=%v A=%v D=%v origin=%v angle=%v\n", anchor, layout.Width, layout.Ascent, layout.Descent, drawOrigin, angle)
-				for _, g := range glyphs {
-					fmt.Printf("MATHDBG glyph %q size=%v ox=%v oy=%v\n", g.Text, g.FontSize, g.Ox, g.Oy)
-				}
-				for _, rc := range rects {
-					fmt.Printf("MATHDBG rect %v %v %v %v\n", rc.X1, rc.Y1, rc.X2, rc.Y2)
-				}
+			drawOrigin := geom.Pt{
+				X: anchor.X - (w/2*cosT - d*sinT),
+				Y: anchor.Y - (w/2*sinT + d*cosT),
 			}
 			if imgDrawer.DrawMathTextImageRotated(glyphs, rects, drawOrigin, layout.Ascent, layout.Descent, angle, textColor) {
 				return true

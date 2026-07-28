@@ -604,10 +604,61 @@ mentioned (`basic_line`) carry real divergences. Findings:
       `stat_variants`, `annotation_legend_offsetbox_gallery`,
       `axes_control_surface`, `text_annotation_matrix`,
       `legend_layout_matrix`, `patch_style_matrix`,
-      `unstructured_showcase`, `mathtext_basic`, `colorbar_boundary_values`,
+      `unstructured_showcase`, `colorbar_boundary_values`,
       `line2d_semantics`. Fix or record as an accepted difference.
       (`transform_annotation_modes` left this list under 3.3.7 — 402 differing
-      pixels to 19, RMSE 2.68 to 0.06.)
+      pixels to 19, RMSE 2.68 to 0.06. `mathtext_basic` left it under 3.4.1 —
+      RMSE 2.37 to 0.14, max per-channel difference 254 to 16, i.e. nothing but
+      resample antialiasing left.)
+  - [x] **3.4.1 `mathtext_basic`: the rotated y-axis label.** Its whole residual
+        was the `amplitude $\frac{1}{\sqrt{2}}$` y-label, drawn one device pixel
+        off. Two independent defects, and each had been hiding the other.
+
+        **Glue rounding happened before the shrink.** matplotlib rounds a
+        stretched glue in `ship` (`cur_g = round(clamp(glue_set * cur_glue))`,
+        `_mathtext.vlist_out`), which runs after every enclosing `Node.shrink()`
+        has scaled `glue_set`. `layoutMathSqrt` rounded the fill glue between the
+        vinculum and the radicand while building the box, so the `\frac`
+        denominator shrink then scaled an already-rounded value: matplotlib
+        shrinks 3.9653 to 2.7757 and rounds to 3, the port rounded to 4 and
+        shrank to 2.8. The 0.2 px gap grew the `to_raster` bounding box by a
+        whole row (image 91x28 where matplotlib has 91x29, parse descent
+        11.1056 where matplotlib has 11.3056). Fixed in `mathtext` v0.5.3:
+        `mathLayoutBox` carries the unrounded glue plus the span of runs/rules it
+        positions, and `shrinkMathBox` re-rounds and patches the difference. Only
+        vertical `Vlist` glue is tracked — the horizontal `HCentered` 'ss' glue
+        in fractions and matrices is already rounded against shrunk boxes.
+
+        **The rotated draw path inverted the anchor with the wrong metrics.**
+        `rotatedTextBackendAnchorFromP` builds the anchor from
+        `measureSingleLineTextLayout`, which on a raster backend reports
+        matplotlib's `to_raster` ink-image metrics; `drawMathTextLayoutRotated`
+        undid it with the advance box instead, losing half the width difference
+        along the label's baseline and a whole descent difference across it. A
+        `x += 2*sign(sin); y++` fudge in `DrawMathTextImageRotated`, attributed
+        to an agg_go quarter-turn quirk, was compensating it. Neither is a quirk:
+        `translate(0,-h) · rotate(-angle) · translate(x,y)` from
+        `_backend_agg.h::draw_text_image` is reproduced exactly, and with the
+        right metrics the port reaches matplotlib's own `round(x + descent*sin)`
+        = 15 and `round(y + descent*cos) + 1` = 223 for this label. Both fudges
+        removed.
+
+        The two errors cancelled in `x - imageHeight`, which is why the label
+        landed on matplotlib's columns before either was fixed and one pixel off
+        after only the first. Result: 198 differing pixels to 65, none above
+        amplitude 16, RMSE 2.37 to 0.14; tolerances 2.55/220/70 to 0.30/100/40.
+        `-update-golden` over all 190 cases moved exactly one golden.
+        `mathtext_basic` also carries Go-authored PDF and SVG goldens, which
+        encode the moved radicand; regenerated with `-update-pdf-golden
+        -update-svg-golden`.
+
+        Not a bug: the label is clipped by the left figure edge. matplotlib
+        clips it identically — the rotated image is 29 px thick and spans device
+        x [-14, 15], so 14 columns fall outside the canvas, and both images carry
+        the same 44 rows of ink in column 0. The fixture's
+        `add_axes([0.10, 0.14, ...])` simply does not leave room for a
+        two-level fraction in the y-label at 640x360.
+
 - [ ] **3.5 Disposition the dense residuals.** These are broad and
       low-amplitude, where RMSE _is_ the right metric; the question is only
       whether the amplitude is defensible. `geo_aitoff_axes`,

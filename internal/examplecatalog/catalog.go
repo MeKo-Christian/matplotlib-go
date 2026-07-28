@@ -147,7 +147,7 @@ var cases = []Case{
 	{ID: "axes_secondary_y_twiny", Topic: "axes", Title: "Twin and Secondary Y Axes", Description: "Focused visual coverage for TwinY shared-y overlays and transformed SecondaryYAxis ticks.", FixtureOnly: true, Width: 760, Height: 400, MaxMeanAbs: 0.05, MaxRMSE: 0.8},
 	{ID: "text_labels_strict", Topic: "text", Title: "Strict Text Labels", Optional: true, SVGGoldenFamily: "text_layout", GoBasicSmokeFamily: "text", SkiaParityFamily: "text", MaxRMSE: 0.3},
 	{ID: "title_strict", Topic: "text", Title: "Strict Title", MaxRMSE: 0.3},
-	{ID: "mathtext_basic", Topic: "mathtext", Title: "MathText Basic", FixtureOnly: true, SVGGoldenFamily: "mathtext", GoBasicSmokeFamily: "mathtext", SkiaParityFamily: "mathtext", MaxRMSE: 2.55, MaxDiffPixels: 220, MaxLargestCluster: 70},
+	{ID: "mathtext_basic", Topic: "mathtext", Title: "MathText Basic", FixtureOnly: true, SVGGoldenFamily: "mathtext", GoBasicSmokeFamily: "mathtext", SkiaParityFamily: "mathtext", MaxRMSE: 0.3, MaxDiffPixels: 100, MaxLargestCluster: 40},
 	{ID: "mathtext_fractions", Topic: "mathtext", Title: "MathText Fractions", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 4.5, MaxDiffPixels: 16, MaxLargestCluster: 8},
 	{ID: "mathtext_integrals", Topic: "mathtext", Title: "MathText Operators", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 0.3},
 	{ID: "mathtext_matrices", Topic: "mathtext", Title: "MathText Matrices", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 0.5},

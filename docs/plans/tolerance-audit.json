@@ -965,26 +965,25 @@
   "verdict": "exact"
  },
  {
-  "clusters": 18,
-  "diff_px": 198,
+  "clusters": 7,
+  "diff_px": 65,
   "family": "sparse-local",
   "id": "mathtext_basic",
-  "largest_cluster": 64,
-  "max_diff": 254,
+  "largest_cluster": 24,
+  "max_diff": 16,
   "max_mean_abs": 0.0,
-  "max_rmse": 2.55,
-  "mean_abs": 0.048,
-  "p50_amp": 42,
-  "p99_amp": 222,
-  "pct_px": 0.0859,
-  "psnr": 40.64,
-  "rmse": 2.37,
+  "max_rmse": 0.3,
+  "mean_abs": 0.008,
+  "p50_amp": 4,
+  "p99_amp": 16,
+  "pct_px": 0.0282,
+  "psnr": 65.02,
+  "rmse": 0.143,
   "shifts": {
-   "+0+0": 64,
-   "+0+1": 119
+   "+0+0": 65
   },
-  "slack": 1.08,
-  "verdict": "fragile"
+  "slack": 2.1,
+  "verdict": "ok"
  },
  {
   "clusters": 0,
