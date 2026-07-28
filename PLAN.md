@@ -598,18 +598,30 @@ mentioned (`basic_line`) carry real divergences. Findings:
         rendered output is unchanged.
 
 - [ ] **3.4 Investigate the localized non-shift divergences.** Cases whose
-      residual is confined but not a clean offset, worst first: `line2d_markers`,
-      `specgram_psd` (one 353-px row; array-orientation asymmetry against
-      matplotlib's flipud+upper `specgram`, see 3.3.6),
-      `stat_variants`, `annotation_legend_offsetbox_gallery`,
-      `axes_control_surface`, `text_annotation_matrix`,
-      `legend_layout_matrix`, `patch_style_matrix`,
-      `unstructured_showcase`, `colorbar_boundary_values`,
-      `line2d_semantics`. Fix or record as an accepted difference.
+      residual is confined but not a clean offset. Each has been localized to a
+      named artist and given a subtask below; every one is now a hypothesis to
+      confirm or refute, not a case to go looking for.
       (`transform_annotation_modes` left this list under 3.3.7 — 402 differing
       pixels to 19, RMSE 2.68 to 0.06. `mathtext_basic` left it under 3.4.1 —
       RMSE 2.37 to 0.14, max per-channel difference 254 to 16, i.e. nothing but
       resample antialiasing left.)
+
+      **Two thresholds are quoted below and they are not interchangeable.** The
+      audit table counts every pixel differing by more than 1 LSB, which is the
+      right gate but buries structure under antialiasing haze. The localization
+      here re-runs the same 8-connected clustering at an amplitude of 32, which
+      keeps only pixels a viewer could see; `line2d_markers` is 3,385 pixels at
+      the first threshold and 505 at the second. Subtasks quote **`>1 / >32`**.
+      Where a per-cluster integer offset is given it is the `(dx, dy)` in
+      [-2, 2] that minimizes the residual **of that cluster alone** — a local
+      probe, unrelated to the audit's whole-frame `family` column.
+
+      Sequencing: 3.4.2 first. Marker path snapping is the only hypothesis here
+      that plausibly explains residuals in several other cases (bar edges,
+      patch borders, legend handles), so confirming or killing it changes what
+      the rest of the list is worth. 3.4.7 is the cheapest — an API gap with a
+      known answer. 3.4.9 is the deepest and should go last.
+
   - [x] **3.4.1 `mathtext_basic`: the rotated y-axis label.** Its whole residual
         was the `amplitude $\frac{1}{\sqrt{2}}$` y-label, drawn one device pixel
         off. Two independent defects, and each had been hiding the other.
@@ -658,6 +670,145 @@ mentioned (`basic_line`) carry real divergences. Findings:
         the same 44 rows of ink in column 0. The fixture's
         `add_axes([0.10, 0.14, ...])` simply does not leave room for a
         two-level fraction in the y-label at 640x360.
+
+  - [ ] **3.4.2 `line2d_markers`: marker paths are not snapped.** 3,385/505 px,
+        RMSE 3.227 against a 3.30 ceiling — the tightest slack in the catalog
+        (1.02x), so this case fails on any regression at all. Two distinct
+        residuals. The first is 54 clusters of 10-50 px sitting exactly on the
+        marker glyphs (x[77:92] and x[79:90] near y 78-90, 126-133, 158-177);
+        magnified, the port's unfilled square marker has a soft two-pixel edge
+        where matplotlib's is crisp and grid-aligned, and no integer offset
+        cancels it — it is an antialiasing difference, not a placement one.
+        matplotlib draws markers through `RendererAgg.draw_markers` with the
+        gc's snap state, and `SNAP_AUTO` snaps any path whose segments are all
+        axis-aligned, which a square marker is. Check whether the port routes
+        marker paths through `snapPath` at all; `drawMathTextLayout` already
+        does this for mathtext rules, so the machinery exists.
+        The second is one 211-px vertical line at x=64 (the left spine) with
+        p50 amplitude 33, which a local `(dx,dy)=(-1,-1)` cancels to a single
+        pixel. Confirm whether that is the spine or a marker column before
+        assuming the two share a cause.
+
+  - [ ] **3.4.3 `line2d_semantics`: dash phase along the polyline.** 300/138 px,
+        RMSE 2.403 against 2.60 (1.08x). 16 clusters, each a single ~4x5 dash
+        segment of a red dashed line, and the best local offsets are
+        `(+2,-1)` and `(-2,+1)` — displacement _along_ the line, not across it.
+        So the dashes are the right length and the right line, drawn at the
+        wrong phase. matplotlib carries the dash offset continuously across
+        every segment of a polyline (`GraphicsContextBase.set_dashes` seeds it
+        once and AGG's `conv_dash` accumulates over the vertex stream); a port
+        that restarts the pattern per segment, or that rounds the accumulated
+        offset per segment, drifts exactly like this. Check where the dash
+        offset is reset relative to the segment loop.
+
+  - [ ] **3.4.4 `specgram_psd`: one image row, and the 3.3.6 note is stale.**
+        354/211 px, RMSE 1.003 against 1.05 (1.05x — the tightest slack after
+        `line2d_markers`). **The entire residual is device row 281**, in four
+        x-segments; the colour band boundary that matplotlib puts at row 281 the
+        port puts at row 282, and rows 44-280 and 282-319 are identical. This is
+        a nearest-neighbour source-row index landing on an exact .5 tie in the
+        image resample — the same `int()`-at-a-tie species as all of 3.3 — and
+        **not** the "array-orientation asymmetry against matplotlib's
+        flipud+upper `specgram`" the old 3.4 entry claimed; a genuine
+        orientation error could not leave 275 of 276 rows byte-identical.
+        The audit's `shift +0+1` classification is likewise an artifact: any
+        one-row residual is trivially cancelled by a one-row roll. Fix the tie,
+        then drop `specgram_psd` from the audit's shift-family list.
+
+  - [ ] **3.4.5 `stat_variants`: the stacked bar's right edge.** 933/176 px,
+        RMSE 2.37 against 3.40 (1.43x, `ok`). All three clusters are a 2-px-wide
+        vertical strip at x[759:761] spanning y 415-557, which is the shared
+        right edge of the rightmost stacked bar across its green, orange and
+        blue segments; `dx=+1` cancels the largest of them. Every other edge in
+        the figure matches. So it is the last bar's right edge only — a width or
+        right-edge rounding difference at the end of the bar sequence, not a bar
+        placement error. Check `bar` edge rounding against matplotlib's
+        `Rectangle` path snapping, and whether 3.4.2's snapping finding covers
+        it.
+
+  - [ ] **3.4.6 `patch_style_matrix`: bracket arrow heads are too narrow.**
+        2,856/373 px, RMSE 2.643 against 2.90 (1.10x). The four largest clusters
+        are 11-13 px wide, 2 px tall, in mirrored pairs at y[273:275] and
+        y[308:310], and their best local offsets are `dx=+2` on the left end and
+        `dx=-2` on the right — i.e. the same bar, too short at both ends.
+        Magnified they are the cap bars of bracket-style arrows (`-|`, `|-|`),
+        about 4 px narrower in the port than in matplotlib. Check
+        `ArrowStyle`'s bracket `widthA`/`widthB` against
+        `matplotlib.patches.ArrowStyle.BracketA` — note those are in _points_
+        scaled by `mutation_scale`, which is exactly the units mistake 3.3.7
+        found in the arrow head's line width. The remaining 161 clusters are
+        small and scattered; re-measure after the cap bars are fixed rather than
+        theorizing about them now.
+
+  - [ ] **3.4.7 `annotation_legend_offsetbox_gallery`: `AnnotationBbox` cannot
+        express an arrow style.** 3,387/372 px, RMSE 1.168 against 1.30 (1.11x).
+        The largest cluster, y[219:229] x[717:728], is the offset box's
+        connecting arrow: the port draws a solid filled triangular head where
+        matplotlib draws an open caret. Same defect 3.3.7 fixed elsewhere, but
+        this one is not a fixture omission — `test/parity/…/plot.py` passes
+        `arrowprops={"arrowstyle": "->"}` and `core.AnnotationBboxOptions` has
+        no `ArrowStyle` field at all, only `Arrow: true`. Adding one is a public
+        API change: regenerate the frozen audit
+        (`UPDATE_PUBLIC_API_AUDIT=1 go test -tags freetype -run TestStablePublicAPIMatchesFrozenAudit .`)
+        and the parity-status doc, and record it in
+        `docs/plans/api-freeze-delta.md` — Phase 4 measures against that
+        artifact. Two further clusters, 40-42 px vertical runs at x[715:716] and
+        x[970:972] that `dx=-1` cancels exactly, are legend frame edges and are
+        a separate question.
+
+  - [ ] **3.4.8 `text_annotation_matrix`: text-bbox borders.** 2,082/487 px,
+        RMSE 2.761 against 3.00 (1.09x). The residual concentrates on
+        `FancyBboxPatch` borders behind annotation text — the largest cluster is
+        a 24x3 horizontal strip at y[85:88] x[110:134], the bottom edge of an
+        olive-bordered box — plus two arrow heads at x[447:463] that local
+        offsets of `(-1,0)` and `(-2,+1)` only partly cancel. Split it: settle
+        the box borders first (they are the bulk and likely share a cause with
+        3.4.2/3.4.5), then re-measure the arrows against whatever 3.4.6 and
+        3.4.7 conclude before opening a third arrow investigation.
+
+  - [ ] **3.4.9 `unstructured_showcase`: inline contour labels sit at different
+        points along the contours.** 3,097/1,074 px, RMSE 2.634 against 3.20
+        (1.21x, `ok`). The six largest clusters are 78-136 px blobs in
+        x[584:693] y[144:378] and **no integer offset improves any of them**.
+        Magnified, the reason is plain: the port and matplotlib label the same
+        contour lines with the same glyphs at _different positions along the
+        path_ — where the port writes "0.9" matplotlib writes "0.6", and the
+        1.2 label sits a third of the way further along. This is
+        `ContourLabeler.labels`' location search (`locate_label`, the
+        path-length/spacing heuristic and the break inserted for the label gap),
+        not text rendering. Expect this to be the largest piece of work in 3.4
+        and the least likely to reduce to a rounding fix; if the search cannot
+        be made faithful, record it as an accepted difference with the
+        reasoning, which is a legitimate outcome for this phase.
+
+  - [ ] **3.4.10 `legend_layout_matrix`: scatter handle geometry.** 2,517/233 px,
+        RMSE 2.03 against 3.30 (1.63x, `ok`). The four largest clusters, 31-48 px
+        each, are all inside y[94:113] x[80:118] — one legend entry's
+        three-circle scatter handle. `dx=+1` partly cancels each, and magnified
+        the port's circles are slightly smaller and closer together than
+        matplotlib's. Check the legend handle's marker sizing against
+        `HandlerPathCollection` (`_default_update_prop` scales by
+        `legend.markerscale`, and the sample x positions come from
+        `handlelength`/`scatterpoints`, all in points).
+
+  - [ ] **3.4.11 `colorbar_boundary_values`: the two extreme ticks.** 76/63 px,
+        RMSE 1.555 against 3.10 (1.99x, `ok`) — the smallest residual in this
+        group. All four clusters are at the colorbar's first and last tick:
+        13-14 px vertical runs at x[501:502] y[43:56] and y[307:321], and 12-24
+        px horizontal runs at x[503:515] on rows 56 and 307-309. Interior ticks
+        are identical. So it is specifically the boundary ticks of a
+        `BoundaryNorm` colorbar — check `Colorbar._ticker`'s handling of the
+        extend regions and whether the first/last tick is drawn at the boundary
+        or at the segment centre.
+
+  - [ ] **3.4.12 `axes_control_surface`: accept and ratchet.** 893/29 px, RMSE
+        0.594 against a 3.00 ceiling — already flagged `loose` at 5.05x slack,
+        and the only case in this group whose gate is nowhere near binding. At
+        amplitude 32 just 29 pixels survive, in 15 clusters of 2 px each,
+        evenly spaced ~38.5 px apart along y[76:78] — the top ends of the major
+        tick marks, one pixel of antialiasing apiece. Unless 3.4.2's snapping
+        work changes it for free, the disposition here is "accepted difference",
+        and the real action is 3.6 tightening the ceiling to its measured value.
 
 - [ ] **3.5 Disposition the dense residuals.** These are broad and
       low-amplitude, where RMSE _is_ the right metric; the question is only
