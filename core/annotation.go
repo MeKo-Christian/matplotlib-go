@@ -39,12 +39,16 @@ func (a *Annotation) drawAnnotationOverlay(r render.Renderer, ctx *DrawContext) 
 	}
 	layout := measureSingleLineTextLayoutParseMath(r, a.Content, fontSize, fontKey, parseMath, ctx.RC.UseTeX)
 	origin := alignedSingleLineOrigin(anchor, layout, a.HAlign, layoutVerticalAlign(a.VAlign, false))
-	box, ok := textInkRect(origin, layout)
-	if !ok {
-		box = geom.Rect{
-			Min: geom.Pt{X: origin.X, Y: origin.Y - layout.Ascent},
-			Max: geom.Pt{X: origin.X + layout.Width, Y: origin.Y + layout.Descent},
-		}
+	// The arrow starts from, and is clipped by, the text's layout box, not its
+	// glyph ink: Matplotlib passes Text.get_window_extent to the arrow patch,
+	// and _get_layout builds that from the advance width and a line height of
+	// max(h, lp_h) over max(d, lp_d) measured from the string "lp". Ink bounds
+	// are shorter and sit higher, which moves both ends of the shaft.
+	// layout.Width/Ascent/Descent already carry exactly those quantities, and
+	// the multiline path below derives its box the same way.
+	box := geom.Rect{
+		Min: geom.Pt{X: origin.X, Y: origin.Y - layout.Descent},
+		Max: geom.Pt{X: origin.X + layout.Width, Y: origin.Y + layout.Ascent},
 	}
 	if bbox, ok := textBBoxRect(origin, layout, a.BBox, ctx, fontSize); ok {
 		box = bbox

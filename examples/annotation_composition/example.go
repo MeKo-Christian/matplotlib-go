@@ -47,12 +47,14 @@ func Plot() *core.Figure {
 
 	peakX := math.Pi / 2
 	peakY := math.Sin(peakX)*math.Exp(-0.015*peakX) + 0.2*math.Cos(0.5*peakX)
+	arrowStyle, _ := core.ArrowStyleFromString("->")
 	ax.Annotate("Peak\n= 0.42", peakX, peakY, core.AnnotationOptions{
 		OffsetX:    optional.Of(48.0),
 		OffsetY:    optional.Of(-42.0),
 		FontSize:   12,
 		ArrowColor: render.Color{R: 0, G: 0, B: 0, A: 1},
 		ArrowWidth: optional.Of(1.0),
+		ArrowStyle: arrowStyle,
 	})
 	ax.Text(0.20, 0.90, "m∫T  φ x =  λ/4", core.TextOptions{
 		Coords:   core.Coords(core.CoordAxes),

@@ -140,7 +140,10 @@ type AnnotationOptions struct {
 	ArrowColor  render.Color
 	// ArrowWidth is the arrow line width in points. Unset uses 1.25.
 	ArrowWidth optional.Value[float64]
-	// ArrowHeadSize is the arrow head length in points. Unset uses 8.
+	// ArrowHeadSize is the arrow head length in points, Matplotlib's arrow
+	// mutation scale. Unset follows Matplotlib and uses this annotation's own
+	// font size, falling back to the axes rc font size when FontSize is unset
+	// too — so it is not a fixed number and tracks the text.
 	ArrowHeadSize optional.Value[float64]
 	// ArrowStyle and ConnectionStyle default to Matplotlib's "-|>" and "arc3".
 	ArrowStyle      ArrowStyle
@@ -334,7 +337,7 @@ func (a *Axes) Annotate(text string, x, y float64, opt AnnotationOptions) *Annot
 		Color:           opt.Color,
 		ArrowColor:      opt.ArrowColor,
 		ArrowWidth:      opt.ArrowWidth.Or(1.25),
-		ArrowHeadSize:   opt.ArrowHeadSize.Or(8),
+		ArrowHeadSize:   opt.ArrowHeadSize.Or(annotationDefaultHeadSize(a, opt.FontSize)),
 		ArrowStyle:      arrowStyle,
 		ConnectionStyle: connectionStyle,
 		HAlign:          annotationHAlign(opt),
@@ -391,6 +394,22 @@ func (a *Annotation) Bounds(*DrawContext) geom.Rect { return geom.Rect{} }
 
 // Z returns the annotation z-order.
 func (a *Annotation) Z() float64 { return a.z }
+
+// annotationDefaultHeadSize is Matplotlib's default arrow mutation scale, which
+// is the annotation text's own font size rather than a constant
+// (Annotation.update_positions: ms = arrowprops.get("mutation_scale",
+// self.get_size())).
+func annotationDefaultHeadSize(a *Axes, fontSize float64) float64 {
+	if fontSize > 0 {
+		return fontSize
+	}
+	if a != nil {
+		if rc := a.resolvedRC(); rc.FontSize > 0 {
+			return rc.FontSize
+		}
+	}
+	return 12
+}
 
 func annotationHAlign(opt AnnotationOptions) TextAlign {
 	return opt.HAlign
