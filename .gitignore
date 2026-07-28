@@ -7,6 +7,8 @@ testdata/_artifacts/
 !testdata/usetex_golden/*.png
 !backends/agg/testdata/pattern_gradient_golden/*.png
 !backends/agg/testdata/path_effects_golden/*.png
+# Generated documentation graphics are committed alongside their source.
+!docs/images/*.png
 
 # Temporary files
 *.tmp

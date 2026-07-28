@@ -18,9 +18,11 @@ static FT_Int32 mpl_go_math_force_autohint_load_flags(void) {
 import "C"
 
 import (
+	"fmt"
 	"image"
 	"image/draw"
 	"math"
+	"os"
 	"unsafe"
 
 	agglib "github.com/cwbudde/agg_go"
@@ -177,6 +179,10 @@ func (r *Renderer) DrawMathTextImageRotated(glyphs []render.MathGlyphPlacement, 
 		// raster image origin follows draw_text_image rather than generic image draws.
 		x += 2 * math.Copysign(1, sinT)
 		y++
+	}
+	if os.Getenv("MATHDBG") != "" {
+		fmt.Printf("MATHDBG agg baselineDev=%v descent=%v imgH=%v imgW=%v x=%v y=%v\n",
+			baselineDev, img.descent, imageHeight, img.mask.Bounds().Dx(), x, y)
 	}
 	transform := agglib.NewTransformationsFromValues(
 		cosT,

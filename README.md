@@ -7,9 +7,9 @@ surfaces. The remaining work is focused on final visual QA and release hardening
 for v1.0.
 
 <p align="center">
-  <img src="testdata/golden/plot_variants.png" alt="A gallery of step, fill-between, broken-bar, and stacked-bar plots rendered by Matplotlib-Go" width="760">
+  <img src="docs/images/plot2d_gallery.png" alt="A gallery of ten 2D plots rendered by Matplotlib-Go, including lines, scatter, bars, histograms, filled curves, heatmaps, contours, box plots, vector fields, and pie charts" width="960">
 </p>
-<p align="center"><sub>Representative 2D plots rendered by Matplotlib-Go's AGG backend.</sub></p>
+<p align="center"><sub>Representative 2D plot families rendered by Matplotlib-Go's AGG backend.</sub></p>
 
 ---
 

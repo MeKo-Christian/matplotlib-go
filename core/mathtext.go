@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"math"
+	"os"
 	"path/filepath"
 	"reflect"
 	"strconv"
@@ -673,6 +674,15 @@ func drawMathTextLayoutRotated(r render.Renderer, layout MathTextLayout, anchor 
 			drawOrigin := geom.Pt{
 				X: anchor.X - (layout.Width/2*cosT - layout.Descent*sinT),
 				Y: anchor.Y - (layout.Width/2*sinT + layout.Descent*cosT),
+			}
+			if os.Getenv("MATHDBG") != "" {
+				fmt.Printf("MATHDBG rot anchor=%v W=%v A=%v D=%v origin=%v angle=%v\n", anchor, layout.Width, layout.Ascent, layout.Descent, drawOrigin, angle)
+				for _, g := range glyphs {
+					fmt.Printf("MATHDBG glyph %q size=%v ox=%v oy=%v\n", g.Text, g.FontSize, g.Ox, g.Oy)
+				}
+				for _, rc := range rects {
+					fmt.Printf("MATHDBG rect %v %v %v %v\n", rc.X1, rc.Y1, rc.X2, rc.Y2)
+				}
 			}
 			if imgDrawer.DrawMathTextImageRotated(glyphs, rects, drawOrigin, layout.Ascent, layout.Descent, angle, textColor) {
 				return true
