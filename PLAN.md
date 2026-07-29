@@ -874,17 +874,57 @@ mentioned (`basic_line`) carry real divergences. Findings:
         drift from the three golden-updating commits since it was last written
         at `7c614276`, so its diff is much wider than this change.
 
-  - [ ] **3.4.5 `stat_variants`: the stacked bar's right edge.** 933/176 px,
-        RMSE 2.37 against 3.40 (1.43x, `ok`). All three clusters are a 2-px-wide
-        vertical strip at x[759:761] spanning y 415-557, which is the shared
-        right edge of the rightmost stacked bar across its green, orange and
-        blue segments; `dx=+1` cancels the largest of them. Every other edge in
-        the figure matches. So it is the last bar's right edge only — a width or
-        right-edge rounding difference at the end of the bar sequence, not a bar
-        placement error. Check `bar` edge rounding against matplotlib's
-        `Rectangle` path snapping. 3.4.2 does **not** cover it: marker snapping
-        turned out to be correct already, so there is no shared snapping defect
-        to inherit and this bar edge has to be measured on its own.
+  - [x] **3.4.5 `stat_variants`: two abutting bar edges, not one.** Done
+        2026-07-29. 176 pixels above amplitude 32 to **0**, 933 differing pixels
+        to 653, RMSE 2.37 to **0.28**, max per-channel difference 224 to 17.
+        Snapping was not the defect — the entry this replaces read the residual
+        as "the last bar's right edge" and asked about `Rectangle` path
+        snapping; the localization was off by an artist and the snapper was
+        already correct.
+
+        **Matplotlib draws that boundary in two pixel columns and the port drew
+        one.** Every >32 pixel was in columns 759 and 760, rows 415-557: the
+        shared boundary at data `x = 5` between the two rightmost bars of the
+        Stacked Multi-Hist axes. Above the shorter bar's top only one edge
+        exists, and matplotlib puts it at column 759 where the port put 760;
+        below it matplotlib has *both* columns dark and the port only 760.
+
+        **A `Rectangle`'s bbox transform is folded into `transData` before any
+        vertex is mapped.** Its vertices are `Path.unit_rectangle()` mapped by
+        `BboxTransformTo(bbox) + transData`, and `Transform.get_affine()`
+        collapses that pair into one matrix (a single `np.dot`). So with
+        `a = 55.3`, `b = 482.99999999999994` the bar ending at `x = 5` reaches
+        its right edge as `(a*w) + (a*x0 + b) = 759.4999999999999` while the bar
+        starting there reaches its left edge as `a*x0 + b = 759.5`. Those
+        straddle `PathSnapper::vertex`' exact `floor(v + 0.5)`, and at linewidth
+        0.7 pt (0.972 px, `round → 1`, odd → `snapValue` 0.5) they land at 759.5
+        and 760.5 — one crisp column each. The port computed both edges in data
+        space (`x ± width/2`, exactly `5.0` either way) and applied
+        `DataToPixel` to the corner points, so both became `a*5 + b` and
+        collapsed onto one column. Same species as 3.3.2: identical in exact
+        arithmetic, not in float64, because the legs were evaluated in sequence
+        instead of composed. It is also why *only* this edge diverged — of the
+        six bin boundaries only `x = 5` maps onto an exact `.5` device tie.
+
+        Fixed by `rectPatchCorners` in `core/bar.go`, which builds the bbox
+        affine `{A: w, D: h, E: x0, F: y0}`, composes it with the data affine
+        when the data leg is affine, and maps the unit rect's corners;
+        `Bar2D.createVerticalBarPath`/`createHorizontalBarPath` and `Hist2D`'s
+        bar branch route through it, the latter spelling out matplotlib's
+        `hist` → `bar(bins[:-1] + 0.5*totwidth, …, align='center')` round trip
+        rather than shortcutting to `edges[i]`. Signed widths/heights are kept
+        as matplotlib keeps them; the device rect is still normalized
+        afterwards, so winding is unchanged.
+        `TestAbuttingBarEdgesKeepMatplotlibsULPSplit` pins both device values.
+
+        `-update-golden` over all 190 cases moved **exactly one** golden, as
+        expected — only an edge landing on a `.5` tie can move.
+        Tolerances ratcheted 0.35/3.4/1400/530 to 0.1/0.36/820/530.
+
+        What remains is 653 pixels at amplitude ≤17, spread over the axes
+        interiors and rows 256/451: ±1-2 LSB rounding when the translucent
+        fills (α 0.76/0.8) composite. That is a dense residual for 3.5/3.6, not
+        geometry.
 
   - [ ] **3.4.6 `patch_style_matrix`: bracket arrow heads are too narrow.**
         2,856/373 px, RMSE 2.643 against 2.90 (1.10x). The four largest clusters
@@ -898,7 +938,10 @@ mentioned (`basic_line`) carry real divergences. Findings:
         scaled by `mutation_scale`, which is exactly the units mistake 3.3.7
         found in the arrow head's line width. The remaining 161 clusters are
         small and scattered; re-measure after the cap bars are fixed rather than
-        theorizing about them now.
+        theorizing about them now — and note 3.4.5's finding that generic
+        patches do not compose their local affine into the data leg the way
+        matplotlib's `get_affine()` does, which can move a patch edge a whole
+        pixel.
 
   - [ ] **3.4.7 `annotation_legend_offsetbox_gallery`: `AnnotationBbox` cannot
         express an arrow style.** 2,026/289 px, RMSE 1.075 against 1.25 (1.16x)
@@ -930,7 +973,13 @@ mentioned (`basic_line`) carry real divergences. Findings:
         forces `snap=True` on the legend's `FancyBboxPatch`, so check what snap
         state these annotation `FancyBboxPatch`es carry), then re-measure the
         arrows against whatever 3.4.6 and 3.4.7 conclude before opening a third
-        arrow investigation.
+        arrow investigation. **Check the affine composition too:** 3.4.5 found
+        that generic patches still evaluate their local-to-data affine and the
+        data-to-pixel leg in sequence (`buildCachedDisplayPath`,
+        `core/patch_paths.go`) where matplotlib collapses the pair into one
+        matrix first. Bars were fixed there; every `Patch` still has it, and it
+        moves a box border by a whole pixel whenever an edge lands on a `.5`
+        device tie.
 
   - [ ] **3.4.9 `unstructured_showcase`: inline contour labels sit at different
         points along the contours.** 3,097/1,074 px, RMSE 2.634 against 3.20

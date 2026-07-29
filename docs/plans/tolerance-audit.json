@@ -2373,26 +2373,25 @@
   "verdict": "ok"
  },
  {
-  "clusters": 111,
-  "diff_px": 933,
+  "clusters": 114,
+  "diff_px": 653,
   "family": "sparse-local",
   "id": "stat_variants",
   "largest_cluster": 424,
-  "max_diff": 224,
+  "max_diff": 17,
   "max_mean_abs": 0.35,
   "max_rmse": 3.4,
-  "mean_abs": 0.11,
+  "mean_abs": 0.075,
   "p50_amp": 2,
-  "p99_amp": 224,
-  "pct_px": 0.1791,
-  "psnr": 40.64,
-  "rmse": 2.37,
+  "p99_amp": 15,
+  "pct_px": 0.1254,
+  "psnr": 59.13,
+  "rmse": 0.282,
   "shifts": {
-   "+0+0": 537,
-   "+1+0": 286
+   "+0+0": 539
   },
-  "slack": 1.43,
-  "verdict": "ok"
+  "slack": 12.06,
+  "verdict": "loose"
  },
  {
   "clusters": 333,

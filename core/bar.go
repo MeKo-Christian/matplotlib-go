@@ -3,6 +3,7 @@ package core
 import (
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/transform"
 )
 
 // BarOrientation specifies the direction of bars.
@@ -119,22 +120,35 @@ func (b *Bar2D) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 }
 
-func (b *Bar2D) createVerticalBarPath(x, height, width, baseline float64, ctx *DrawContext) geom.Path {
-	// Calculate rectangle corners in data space
-	halfWidth := width / 2
-	left := x - halfWidth
-	right := x + halfWidth
-	bottom := baseline
-	top := baseline + height
-
-	// Handle negative heights (bars extending below baseline)
-	if height < 0 {
-		bottom = baseline + height
-		top = baseline
+// rectPatchCorners maps the two opposite corners of a rectangle patch the way
+// Matplotlib maps one. A Rectangle's vertices are Path.unit_rectangle() mapped
+// by BboxTransformTo(Bbox.from_bounds(x0, y0, w, h)) + transData, and
+// Transform.get_affine() collapses that pair into a single matrix (one np.dot)
+// before any vertex is transformed. Evaluating the two legs in sequence is the
+// same map in exact arithmetic but not in float64, and PathSnapper::vertex is
+// floor(v+0.5) with no tolerance, so one ULP becomes one whole pixel whenever an
+// edge lands on a .5 device tie: two bars abutting at the same data coordinate
+// reach it as (a*w)+(a*x0+b) and a*x0+b, which straddle the tie.
+//
+// The returned points are the images of unit (0,0) and (1,1); w and h keep their
+// sign, as Matplotlib keeps them, and callers normalize the device rect.
+func rectPatchCorners(ctx *DrawContext, x0, y0, w, h float64) (geom.Pt, geom.Pt) {
+	bbox := geom.Affine{A: w, D: h, E: x0, F: y0}
+	if dataAffine, ok := transform.AsAffine(ctx.TransData()); ok {
+		m := dataAffine.Mul(bbox)
+		return m.Apply(geom.Pt{}), m.Apply(geom.Pt{X: 1, Y: 1})
 	}
+	// Non-affine data leg (a log or projected scale): Matplotlib applies the
+	// bbox transform in data space and the non-affine tail per vertex.
+	lo := bbox.Apply(geom.Pt{})
+	hi := bbox.Apply(geom.Pt{X: 1, Y: 1})
+	return ctx.DataToPixel.Apply(lo), ctx.DataToPixel.Apply(hi)
+}
 
-	px0 := ctx.DataToPixel.Apply(geom.Pt{X: left, Y: bottom})
-	px1 := ctx.DataToPixel.Apply(geom.Pt{X: right, Y: top})
+func (b *Bar2D) createVerticalBarPath(x, height, width, baseline float64, ctx *DrawContext) geom.Path {
+	// Matplotlib's Axes.bar builds Rectangle(xy=(x - width/2, baseline),
+	// width=width, height=height) and keeps a negative height signed.
+	px0, px1 := rectPatchCorners(ctx, x-width/2, baseline, width, height)
 	rect, ok := rectFromPoints(px0, px1)
 	if !ok {
 		return geom.Path{}
@@ -147,20 +161,10 @@ func (b *Bar2D) createHorizontalBarPath(y, height, width, baseline float64, ctx 
 	// y is the y-position (center)
 	// height is the length (width) of the bar
 	// width is the thickness (height) of the bar
-	halfWidth := width / 2
-	left := baseline
-	right := baseline + height
-	bottom := y - halfWidth
-	top := y + halfWidth
-
-	// Handle negative heights (bars extending left from baseline)
-	if height < 0 {
-		left = baseline + height
-		right = baseline
-	}
-
-	px0 := ctx.DataToPixel.Apply(geom.Pt{X: left, Y: bottom})
-	px1 := ctx.DataToPixel.Apply(geom.Pt{X: right, Y: top})
+	//
+	// Matplotlib's Axes.barh builds Rectangle(xy=(baseline, y - width/2),
+	// width=height, height=width) and keeps a negative length signed.
+	px0, px1 := rectPatchCorners(ctx, baseline, y-width/2, height, width)
 	rect, ok := rectFromPoints(px0, px1)
 	if !ok {
 		return geom.Path{}

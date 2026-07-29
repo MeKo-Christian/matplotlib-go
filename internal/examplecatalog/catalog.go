@@ -228,7 +228,7 @@ var cases = []Case{
 	{ID: "specgram_psd", Topic: "signal", Title: "PSD Spectrogram", Description: "Direct Specgram coverage for an overlapping-window chirp rendered in decibels.", FixtureOnly: true, Width: 640, Height: 360, MaxMeanAbs: 0.01, MaxRMSE: 0.1, MaxDiffPixels: 8, MaxLargestCluster: 4},
 	{ID: "cohere_welch", Topic: "signal", Title: "Welch Coherence", Description: "Direct Cohere coverage for partially shared deterministic signals.", FixtureOnly: true, Width: 640, Height: 360, MaxMeanAbs: 0.05, MaxRMSE: 0.227},
 	{ID: "csd_welch", Topic: "signal", Title: "Welch Cross-Spectral Density", Description: "Direct CSD coverage with overlapping Hann-windowed, mean-detrended segments and zero padding.", FixtureOnly: true, Width: 640, Height: 360, MaxMeanAbs: 0.05, MaxRMSE: 0.227},
-	{ID: "stat_variants", Topic: "statistics", Title: "Statistical Views", Optional: true, WebDemoID: "statistics", Description: "Box plots, violin plots, empirical CDFs, and stack plots.", Showcase: true, GoBasicSmokeFamily: "statistics", MaxMeanAbs: 0.35, MaxRMSE: 3.4, MaxDiffPixels: 1400, MaxLargestCluster: 530},
+	{ID: "stat_variants", Topic: "statistics", Title: "Statistical Views", Optional: true, WebDemoID: "statistics", Description: "Box plots, violin plots, empirical CDFs, and stack plots.", Showcase: true, GoBasicSmokeFamily: "statistics", MaxMeanAbs: 0.1, MaxRMSE: 0.36, MaxDiffPixels: 820, MaxLargestCluster: 530},
 	{ID: "specialty_depth", Topic: "statistics", Title: "Specialty Depth", FixtureOnly: true, MaxRMSE: 1.608},
 	{ID: "stem_plot", Topic: "specialty", Title: "Stem Plot", Optional: true, MaxRMSE: 1.608},
 	// "misc artist kwargs" parity fixtures.

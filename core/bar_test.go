@@ -7,6 +7,8 @@ import (
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/style"
+	"github.com/cwbudde/matplotlib-go/transform"
 )
 
 func TestBar2D_Draw_Vertical(t *testing.T) {
@@ -567,5 +569,91 @@ func TestBarWithoutErrorDataHasNoErrorBar(t *testing.T) {
 	}
 	if c := bar.Container(); c.Errorbar != nil {
 		t.Fatal("container should have a nil Errorbar when no error data was given")
+	}
+}
+
+// barEdgeTestContext reproduces the data->pixel affine of the "Stacked
+// Multi-Hist" axes in the stat_variants parity case: a == 55.3,
+// b == 482.99999999999994, which is where an abutting bar edge lands on an exact
+// .5 device tie.
+func barEdgeTestContext() *DrawContext {
+	return &DrawContext{
+		DataToPixel: Transform2D{
+			DataToAxes:  transform.NewAffine(geom.Identity()),
+			AxesToPixel: transform.NewAffine(geom.Affine{A: 55.3, D: 1, E: 482.99999999999994}),
+		},
+		RC:   style.Default,
+		Clip: geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 840, Y: 620}},
+	}
+}
+
+func pathXExtent(p geom.Path) (float64, float64) {
+	lo, hi := math.Inf(1), math.Inf(-1)
+	for _, v := range p.V {
+		lo = math.Min(lo, v.X)
+		hi = math.Max(hi, v.X)
+	}
+	return lo, hi
+}
+
+// TestAbuttingBarEdgesKeepMatplotlibsULPSplit pins the fix for PLAN.md 3.4.5.
+// Matplotlib collapses BboxTransformTo(bbox) + transData into one matrix before
+// mapping the unit rectangle, so the right edge of the bar ending at data x == 5
+// is (a*w)+(a*4+b) == 759.4999999999999 while the left edge of the bar starting
+// there is a*5+b == 759.5. Those straddle PathSnapper's floor(v+0.5) tie and are
+// drawn in different pixel columns. Mapping the corners in data space instead
+// gives both edges a*5+b and collapses the two columns into one.
+func TestAbuttingBarEdgesKeepMatplotlibsULPSplit(t *testing.T) {
+	const (
+		wantLeftBarRight = 759.4999999999999
+		wantRightBarLeft = 759.5
+	)
+
+	ctx := barEdgeTestContext()
+
+	bar := &Bar2D{
+		X:           []float64{4.5, 5.5},
+		Heights:     []float64{4, 3},
+		Width:       1,
+		Color:       render.Color{R: 0, G: 0, B: 1, A: 1},
+		Orientation: BarVertical,
+	}
+	rec := &recordingRenderer{}
+	bar.Draw(rec, ctx)
+	if len(rec.pathCalls) != 2 {
+		t.Fatalf("Bar2D drew %d paths, want 2", len(rec.pathCalls))
+	}
+	_, gotRight := pathXExtent(rec.pathCalls[0].path)
+	gotLeft, _ := pathXExtent(rec.pathCalls[1].path)
+	if gotRight != wantLeftBarRight {
+		t.Errorf("bar[4,5] right edge = %v, want %v", gotRight, wantLeftBarRight)
+	}
+	if gotLeft != wantRightBarLeft {
+		t.Errorf("bar[5,6] left edge = %v, want %v", gotLeft, wantRightBarLeft)
+	}
+	if gotRight == gotLeft {
+		t.Errorf("abutting bar edges collapsed onto %v; matplotlib keeps them one ULP apart", gotRight)
+	}
+
+	// Hist2D reaches Axes.bar through the same expression in Matplotlib and must
+	// land on the same two values.
+	hist := &Hist2D{
+		Data:     []float64{4.1, 4.2, 4.8, 5.2},
+		BinEdges: []float64{4, 5, 6},
+		HistType: HistTypeBar,
+		Color:    render.Color{R: 0, G: 0, B: 1, A: 1},
+	}
+	recH := &recordingRenderer{}
+	hist.Draw(recH, ctx)
+	if len(recH.pathCalls) != 2 {
+		t.Fatalf("Hist2D drew %d paths, want 2", len(recH.pathCalls))
+	}
+	_, gotRight = pathXExtent(recH.pathCalls[0].path)
+	gotLeft, _ = pathXExtent(recH.pathCalls[1].path)
+	if gotRight != wantLeftBarRight {
+		t.Errorf("hist bin[4,5] right edge = %v, want %v", gotRight, wantLeftBarRight)
+	}
+	if gotLeft != wantRightBarLeft {
+		t.Errorf("hist bin[5,6] left edge = %v, want %v", gotLeft, wantRightBarLeft)
 	}
 }

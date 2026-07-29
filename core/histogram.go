@@ -459,12 +459,19 @@ func (h *Hist2D) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 
 	for i, count := range h.counts {
-		left := h.edges[i]
-		right := h.edges[i+1]
 		baseline := h.baselineAt(i)
 
-		px0 := ctx.DataToPixel.Apply(geom.Pt{X: left, Y: baseline})
-		px1 := ctx.DataToPixel.Apply(geom.Pt{X: right, Y: baseline + count})
+		// Matplotlib's Axes.hist hands the bins to Axes.bar as centers with an
+		// explicit width (`bar(bins[:-1] + boffset, height, width,
+		// align='center')`, with dr == 1 for the stacked/single case and
+		// boffset == 0.5 * totwidth for align='mid'), and bar then takes
+		// x - width/2 back off. Spelled out in that order rather than shortcut
+		// to edges[i] because the two only agree in exact arithmetic.
+		totwidth := h.edges[i+1] - h.edges[i]
+		width := totwidth
+		center := h.edges[i] + 0.5*totwidth
+
+		px0, px1 := rectPatchCorners(ctx, center-width/2, baseline, width, count)
 		rect, ok := rectFromPoints(px0, px1)
 		if !ok {
 			continue
