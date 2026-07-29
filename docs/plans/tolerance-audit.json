@@ -2154,27 +2154,25 @@
   "verdict": "ok"
  },
  {
-  "clusters": 457,
-  "diff_px": 2473,
+  "clusters": 453,
+  "diff_px": 2381,
   "family": "sparse-local",
   "id": "patch_style_matrix",
   "largest_cluster": 53,
-  "max_diff": 171,
+  "max_diff": 128,
   "max_mean_abs": 0.0,
-  "max_rmse": 2.9,
-  "mean_abs": 0.104,
+  "max_rmse": 2.0,
+  "mean_abs": 0.076,
   "p50_amp": 6,
-  "p99_amp": 171,
-  "pct_px": 0.8178,
-  "psnr": 39.7,
-  "rmse": 2.64,
+  "p99_amp": 93,
+  "pct_px": 0.7874,
+  "psnr": 43.44,
+  "rmse": 1.717,
   "shifts": {
-   "+0+0": 300,
-   "+2+0": 48,
-   "-2+0": 44
+   "+0+0": 372
   },
-  "slack": 1.1,
-  "verdict": "fragile"
+  "slack": 1.16,
+  "verdict": "ok"
  },
  {
   "clusters": 290,

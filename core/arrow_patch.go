@@ -938,12 +938,14 @@ func bracketPath(anchor, toward geom.Pt, width, length, angleDeg float64) geom.P
 	}
 	ux, uy := dx/dist, dy/dist
 	px, py := -uy, ux
-	half := width / 2
+	// matplotlib feeds the bracket width straight into `get_normal_points` as
+	// its *distance* argument (`patches._Curve._get_bracket`), so each arm sits
+	// a full `width` off the line and the bar spans `2*width`.
 	out := geom.Pt{X: ux * length, Y: uy * length}
-	p1 := geom.Pt{X: anchor.X + px*half + out.X, Y: anchor.Y + py*half + out.Y}
-	p2 := geom.Pt{X: anchor.X + px*half, Y: anchor.Y + py*half}
-	p3 := geom.Pt{X: anchor.X - px*half, Y: anchor.Y - py*half}
-	p4 := geom.Pt{X: anchor.X - px*half + out.X, Y: anchor.Y - py*half + out.Y}
+	p1 := geom.Pt{X: anchor.X + px*width + out.X, Y: anchor.Y + py*width + out.Y}
+	p2 := geom.Pt{X: anchor.X + px*width, Y: anchor.Y + py*width}
+	p3 := geom.Pt{X: anchor.X - px*width, Y: anchor.Y - py*width}
+	p4 := geom.Pt{X: anchor.X - px*width + out.X, Y: anchor.Y - py*width + out.Y}
 	path := geom.Path{}
 	path.MoveTo(p1)
 	path.LineTo(p2)

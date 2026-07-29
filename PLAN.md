@@ -929,22 +929,36 @@ mentioned (`basic_line`) carry real divergences. Findings:
         case to 79 differing pixels and RMSE 0.067. Tolerances ratcheted again
         there, to 0.01/0.0838/99/68.
 
-  - [ ] **3.4.6 `patch_style_matrix`: bracket arrow heads are too narrow.**
-        2,856/373 px, RMSE 2.643 against 2.90 (1.10x). The four largest clusters
-        are 11-13 px wide, 2 px tall, in mirrored pairs at y[273:275] and
-        y[308:310], and their best local offsets are `dx=+2` on the left end and
-        `dx=-2` on the right — i.e. the same bar, too short at both ends.
-        Magnified they are the cap bars of bracket-style arrows (`-|`, `|-|`),
-        about 4 px narrower in the port than in matplotlib. Check
-        `ArrowStyle`'s bracket `widthA`/`widthB` against
-        `matplotlib.patches.ArrowStyle.BracketA` — note those are in _points_
-        scaled by `mutation_scale`, which is exactly the units mistake 3.3.7
-        found in the arrow head's line width. The remaining 161 clusters are
-        small and scattered; re-measure after the cap bars are fixed rather than
-        theorizing about them now — and note 3.4.5's finding that generic
-        patches do not compose their local affine into the data leg the way
-        matplotlib's `get_affine()` does, which can move a patch edge a whole
-        pixel.
+  - [x] **3.4.6 `patch_style_matrix`: the bracket bar was drawn at half width.**
+        Done 2026-07-29. The entry this replaces localized the residual to the
+        cap bars of the `|-|` arrow and guessed a points-vs-pixels units mistake
+        of the kind 3.3.7 found. The localization was right and the diagnosis
+        was wrong: the units were already correct and the error was a factor of
+        two in the geometry.
+
+        **`width` is a half-extent, not a full one.**
+        `patches._Curve._get_bracket` passes the bracket width straight into
+        `bezier.get_normal_points(x0, y0, cos_t, sin_t, width)`, whose last
+        argument is the *distance* each of the two returned points sits off the
+        line. So matplotlib's bar spans `2 * widthA * scaleA`, and `bracketPath`
+        (`core/arrow_patch.go`) halved it instead. Confirmed against the vendored
+        3.10.9 directly: `ArrowStyle("|-|").transmute` on a path through the
+        origin at `mutation_size=15` returns bar endpoints at x = ±15, where the
+        port produced ±7.5. The fixture's `mutation_scale=15` therefore lost
+        7.5 px at each end of both bars — far more than the "about 4 px" the old
+        entry quoted, which was an artifact of the local offset probe being
+        clamped to [-2, 2].
+
+        The bars are the only thing that moved. Result: 2,473/373 px to
+        2,381/281 px, RMSE 2.640 to 1.717; every cluster above amplitude 32 is
+        now 4 px or smaller (the largest was 13). Tolerances ratcheted
+        2.90/3150/75 to 2.00/2450/70 — the RMSE and pixel gates both bite
+        against the pre-fix golden (2.640 > 2.00, 2,473 > 2,450). What is left
+        is 161 scattered specks at amplitude >32, none of them structural, in
+        the hatch and wedge-arrow band at x[549:643] y[154:216]; the largest
+        cluster at the audit's own >1 threshold is unchanged at 53 px.
+        `TestArrowStyleBracketScaleOverridesMutationSize` encoded the halved
+        bound and was corrected against matplotlib's output.
 
   - [ ] **3.4.7 `annotation_legend_offsetbox_gallery`: `AnnotationBbox` cannot
         express an arrow style.** 2,026/289 px, RMSE 1.075 against 1.25 (1.16x)

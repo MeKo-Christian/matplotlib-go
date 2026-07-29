@@ -526,9 +526,11 @@ func TestArrowStyleBracketScaleOverridesMutationSize(t *testing.T) {
 	if !ok {
 		t.Fatal("bracket has no bounds")
 	}
+	// matplotlib offsets each arm a full `width` off the line, so widthA=2 at
+	// scaleA=3 spans y in [-6, 6], not [-3, 3].
 	want := geom.Rect{
-		Min: geom.Pt{X: -3, Y: -3},
-		Max: geom.Pt{X: 0, Y: 3},
+		Min: geom.Pt{X: -3, Y: -6},
+		Max: geom.Pt{X: 0, Y: 6},
 	}
 	if !approxRect(bounds, want, 1e-9) {
 		t.Fatalf("scaled bracket bounds = %+v, want %+v", bounds, want)
