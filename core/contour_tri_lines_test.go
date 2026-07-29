@@ -152,6 +152,45 @@ func TestTriContourPolylinesMatchMatplotlibTraversal(t *testing.T) {
 	}
 }
 
+// TestTriContourCorrectsClockwiseTriangles covers Triangulation::correct_triangles:
+// Matplotlib silently rewinds caller-supplied clockwise triangles before tracing,
+// and without that the neighbour/boundary walk traces the line backwards. Both
+// meshes below describe the same geometry, differing only in winding, and both
+// must yield Matplotlib's vertex order.
+func TestTriContourCorrectsClockwiseTriangles(t *testing.T) {
+	// Two triangles of a rotated grid, wound clockwise — the shape
+	// plot3d's zdir="x"/"y" contour projection produces.
+	x := []float64{0, 0, 1, 1}
+	y := []float64{0, 1, 1, 2}
+	values := []float64{0, 1, 0, 1}
+	want := []geom.Pt{{X: 0, Y: 0.5}, {X: 0.5, Y: 1}, {X: 1, Y: 1.5}}
+
+	for _, tc := range []struct {
+		name      string
+		triangles [][3]int
+	}{
+		{"clockwise", [][3]int{{0, 1, 3}, {0, 3, 2}}},
+		{"anticlockwise", [][3]int{{0, 3, 1}, {0, 2, 3}}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tri := Triangulation{X: x, Y: y, Triangles: tc.triangles}
+			polylines, _ := triContourPolylines(tri, values, []float64{0.5})
+			if len(polylines) != 1 {
+				t.Fatalf("got %d polylines, want 1: %v", len(polylines), polylines)
+			}
+			got := polylines[0]
+			if len(got) != len(want) {
+				t.Fatalf("got %d vertices, want %d: %v", len(got), len(want), got)
+			}
+			for i, pt := range want {
+				if math.Abs(got[i].X-pt.X) > 1e-12 || math.Abs(got[i].Y-pt.Y) > 1e-12 {
+					t.Errorf("vertex %d = (%g, %g), want (%g, %g)", i, got[i].X, got[i].Y, pt.X, pt.Y)
+				}
+			}
+		})
+	}
+}
+
 // TestTriContourLabelsLandOnMatplotlibVertices asserts the label anchor each
 // contour line yields, which is locate_label's answer for these short lines:
 // the vertex at index len/2. These are matplotlib's labelXYs mapped back to

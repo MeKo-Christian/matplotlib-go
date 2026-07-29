@@ -1096,6 +1096,19 @@ mentioned (`basic_line`) carry real divergences. Findings:
         stitching path — `create_filled_contour`/`follow_boundary` are not
         ported, and no case here needs them.
 
+        One piece of the port was not obvious from the contour source and only
+        surfaced when `plot3d`'s tests went red: `Triangulation::correct_triangles`
+        silently rewinds clockwise triangles to anticlockwise on construction,
+        for every caller-supplied (non-Delaunay) triangle list. The traversal
+        reads vertices in order throughout — neighbour edges, boundary walk,
+        exit-edge table — so clockwise input traces lines backwards.
+        `plot3d`'s `rotatedContourTriangulation` emits exactly that for
+        `zdir != "z"`. Ported as `correctTriangleOrientations`, covered by
+        `TestTriContourCorrectsClockwiseTriangles`. Two `plot3d` expectations
+        (`TestAxes3DTriContourProjectsLinesAtContourLevels`,
+        `TestAxes3DContourSupportsMatplotlibZDirJuggling`) had recorded the old
+        arbitrary direction and were corrected against matplotlib.
+
         Second, smaller defect, the 3.4.3 lesson landing again: the Go fixture
         used `LabelLines: true` with the default `ScalarFormatter`, which emits
         a **U+2212 minus sign**, while the Python fixture passes `fmt="%.3g"`
