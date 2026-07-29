@@ -79,6 +79,7 @@ func addAnnotationLegendPanel(ax *core.Axes) {
 		ArrowWidth:      optional.Of(1.2),
 		BBox:            optional.Of(galleryBox(10, 0.28, render.Color{R: 0.92, G: 0.97, B: 1.00, A: 0.90}, blue)),
 	})
+	boxArrow, _ := core.ArrowStyleFromString("->")
 	ax.AnnotationBbox("offset box", 5.65, -0.25, core.AnnotationBboxOptions{
 		BoxPosition: optional.Of(geom.Pt{X: 6.75, Y: 0.55}),
 		Padding:     pt(3),
@@ -86,6 +87,7 @@ func addAnnotationLegendPanel(ax *core.Axes) {
 		EdgeColor:   render.Color{R: 0.42, G: 0.25, B: 0.60, A: 1},
 		FontSize:    10,
 		Arrow:       true,
+		ArrowStyle:  boxArrow,
 		ArrowColor:  render.Color{R: 0.42, G: 0.25, B: 0.60, A: 1},
 	})
 

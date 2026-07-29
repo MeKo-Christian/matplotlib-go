@@ -138,7 +138,10 @@ var cases = []Case{
 	// MaxRMSE 1.90: MeanAbs 0.03 / PSNR ~44 dB. The frame and handle-edge residual
 	// is gone; the scatter handle's circle geometry (see PLAN.md) is what is left.
 	{ID: "legend_layout_matrix", Topic: "legend", Title: "Legend Layout Matrix", FixtureOnly: true, MaxRMSE: 1.9, MaxDiffPixels: 700, MaxLargestCluster: 420},
-	{ID: "text_annotation_matrix", Topic: "annotation", Title: "Text Annotation Matrix", FixtureOnly: true, MaxRMSE: 3.0, MaxDiffPixels: 2300, MaxLargestCluster: 335},
+	// MaxRMSE 2.95: MeanAbs 0.07 / RMSE 2.70. The AnnotationBbox arrow heads are
+	// scaled correctly now; the FancyBboxPatch borders behind the annotation text
+	// are what is left (see PLAN.md).
+	{ID: "text_annotation_matrix", Topic: "annotation", Title: "Text Annotation Matrix", FixtureOnly: true, MaxRMSE: 2.95, MaxDiffPixels: 1800, MaxLargestCluster: 330},
 	{ID: "hist_basic", Topic: "histogram", Title: "Histogram Counts", Description: "A deterministic histogram with count bins, labels, and default bar styling.", Showcase: true, SVGGoldenFamily: "hist", GoBasicSmokeFamily: "histogram", SkiaParityFamily: "histogram", MaxRMSE: 1.1},
 	{ID: "hist_log", Topic: "histogram", Title: "Logarithmic Histogram", Description: "A count histogram on a logarithmic y axis, matching matplotlib hist(log=True).", Showcase: true, MaxRMSE: 1.1},
 	{ID: "hist_density", Topic: "histogram", Title: "Histogram Density", MaxRMSE: 1.3},
@@ -213,7 +216,10 @@ var cases = []Case{
 	{ID: "colorbar_composition", Topic: "colorbar", Title: "Colorbar Composition", Description: "A composed figure that exercises image color mapping, shared colorbars, and layout spacing.", Showcase: true, GoBasicSmokeFamily: "colorbar", MaxRMSE: 0.8},
 	{ID: "colorbar_variants_gallery", Topic: "colorbar", Title: "Colorbar Variants Gallery", Description: "LogNorm, TwoSlopeNorm, BoundaryNorm draw edges, and under/over extension colorbars with labels.", WebDemoID: "colorbars", Showcase: true, Width: 1040, Height: 720, MaxRMSE: 4.4},
 	{ID: "annotation_composition", Topic: "annotation", Title: "Annotations", Description: "Text annotations, arrows, anchored labels, and mixed coordinate placement.", Showcase: true, GoBasicSmokeFamily: "annotation", MaxRMSE: 0.05, MaxDiffPixels: 8, MaxLargestCluster: 4},
-	{ID: "annotation_legend_offsetbox_gallery", Topic: "annotation", Title: "Annotation, Legend, and Offset Box Gallery", Description: "Annotation arrows, bbox annotations, multi-column legends, proxy handles, anchored text, drawing areas, packers, image boxes, and size bars.", WebDemoID: "annotations", Showcase: true, Width: 1040, Height: 720, MaxRMSE: 1.25, MaxDiffPixels: 2300, MaxLargestCluster: 550},
+	// MaxRMSE 0.95: MeanAbs 0.02 / RMSE 0.85. The offset box's connecting arrow is
+	// pixel-identical now; the residual is anchored-text and legend-label glyph
+	// antialiasing (see PLAN.md).
+	{ID: "annotation_legend_offsetbox_gallery", Topic: "annotation", Title: "Annotation, Legend, and Offset Box Gallery", Description: "Annotation arrows, bbox annotations, multi-column legends, proxy handles, anchored text, drawing areas, packers, image boxes, and size bars.", WebDemoID: "annotations", Showcase: true, Width: 1040, Height: 720, MaxRMSE: 0.95, MaxDiffPixels: 1450, MaxLargestCluster: 480},
 	{ID: "patch_showcase", Topic: "patches", Title: "Patch Showcase", Description: "Rectangles, circles, ellipses, polygons, path patches, fancy arrows, fancy boxes, hatches, alpha, fills, and strokes.", Optional: true, WebDemoID: "patches", Showcase: true, SVGGoldenFamily: "hatch_bars", GoBasicSmokeFamily: "patch_hatch", SkiaParityFamily: "patch_hatch", MaxRMSE: 1.608},
 	{ID: "patch_style_matrix", Topic: "patches", Title: "Patch Style Matrix", FixtureOnly: true, MaxRMSE: 2.0, MaxDiffPixels: 2450, MaxLargestCluster: 70},
 	{ID: "mesh_contour_tri", Topic: "mesh", Title: "Meshes and Contours", Optional: true, WebDemoID: "mesh", Description: "PColorMesh, contour/contourf, Hist2D, triplot, tripcolor, and tricontour.", Showcase: true, GoBasicSmokeFamily: "mesh", SkiaParityFamily: "mesh", MaxRMSE: 2.6},

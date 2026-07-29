@@ -98,7 +98,7 @@ func (a *Axes) AnnotationBbox(text string, x, y float64, opt AnnotationBboxOptio
 	cfg.ArrowStyle = defaultArrowStyle
 	cfg.ConnectionStyle = defaultConnectionStyle
 	cfg.ArrowWidth = 1.0 // points; converted at the arrow patch sink
-	cfg.ArrowHeadSize = 8
+	cfg.ArrowHeadSize = annotationBboxDefaultHeadSize(a)
 
 	cfg.XYCoords = opt.XYCoords
 	cfg.BoxCoords = opt.BoxCoords
@@ -173,6 +173,21 @@ func (a *Axes) AnnotationBbox(text string, x, y float64, opt AnnotationBboxOptio
 	}
 	a.Add(artist)
 	return artist
+}
+
+// annotationBboxDefaultHeadSize is Matplotlib's default arrow mutation scale for
+// an annotation box, which is the box's own font size rather than a constant
+// (offsetbox.AnnotationBbox.update_positions). That font size is independent of
+// the offset box content's font size and defaults to
+// rcParams["legend.fontsize"]. It is in points here; arrowProxy applies the
+// points-to-pixels conversions.
+func annotationBboxDefaultHeadSize(a *Axes) float64 {
+	if a != nil {
+		if rc := a.resolvedRC(); rc.LegendFontSize > 0 {
+			return rc.LegendFontSize
+		}
+	}
+	return 10
 }
 
 // Draw is a no-op because annotation boxes render outside the axes clip.
@@ -267,27 +282,38 @@ func (a *AnnotationBbox) contentSize(layout singleLineTextLayout, ctx *DrawConte
 }
 
 func (a *AnnotationBbox) drawArrow(r render.Renderer, ctx *DrawContext, start, target geom.Pt) {
-	annotation := Annotation{
-		Color:           a.TextColor,
-		ArrowColor:      a.ArrowColor,
-		ArrowWidth:      a.ArrowWidth,
-		ArrowHeadSize:   a.ArrowHeadSize,
-		ArrowStyle:      a.ArrowStyle,
-		ConnectionStyle: a.ConnectionStyle,
-	}
-	annotation.drawArrow(r, ctx, start, target)
+	proxy := a.arrowProxy(ctx)
+	proxy.drawArrow(r, ctx, start, target)
 }
 
 func (a *AnnotationBbox) drawArrowFromBox(r render.Renderer, ctx *DrawContext, box geom.Rect, target geom.Pt) {
-	annotation := Annotation{
+	proxy := a.arrowProxy(ctx)
+	proxy.drawArrowFromPatchBox(r, ctx, box, box, target)
+}
+
+// arrowProxy borrows Annotation's arrow machinery for the connecting arrow.
+//
+// The mutation scale is converted twice on purpose:
+// offsetbox.AnnotationBbox.update_positions already stores it in *pixels*
+// (renderer.points_to_pixels of either the box font size or an explicit
+// arrowprops["mutation_scale"]), and FancyArrowPatch then multiplies by
+// dpi_cor = points_to_pixels(1) again when it transmutes the arrow style. The
+// annotation arrow proper has no such second conversion
+// (text.Annotation.update_positions sets the scale in points), so the extra
+// factor belongs here rather than in the shared arrow path.
+func (a *AnnotationBbox) arrowProxy(ctx *DrawContext) Annotation {
+	headSize := a.ArrowHeadSize
+	if ctx != nil {
+		headSize = pointsToPixels(ctx.RC, headSize)
+	}
+	return Annotation{
 		Color:           a.TextColor,
 		ArrowColor:      a.ArrowColor,
 		ArrowWidth:      a.ArrowWidth,
-		ArrowHeadSize:   a.ArrowHeadSize,
+		ArrowHeadSize:   headSize,
 		ArrowStyle:      a.ArrowStyle,
 		ConnectionStyle: a.ConnectionStyle,
 	}
-	annotation.drawArrowFromPatchBox(r, ctx, box, box, target)
 }
 
 func annotationTextBoxSize(layout singleLineTextLayout) geom.Pt {

@@ -623,9 +623,11 @@ mentioned (`basic_line`) carry real divergences. Findings:
       other cases (bar edges, patch borders, legend handles). **It killed that
       hypothesis** — marker snapping was already correct and the residual was
       two legend defects instead — so 3.4.5, 3.4.8 and 3.4.12 no longer have a
-      shared cause waiting for them and must be measured on their own. 3.4.7 is
-      the cheapest — an API gap with a known answer. 3.4.9 is the deepest and
-      should go last.
+      shared cause waiting for them and must be measured on their own. 3.4.7
+      went next as the cheapest, on the theory that it was an API gap with a
+      known answer; **that premise was stale too** — the field it wanted already
+      existed, and the case was a fixture omission plus a double-converted
+      mutation scale. 3.4.9 is the deepest and should go last.
 
       **Check the Go fixture against its Python counterpart before blaming the
       core.** 3.4.3's dominant residual was neither a port bug nor a hypothesis
@@ -960,27 +962,51 @@ mentioned (`basic_line`) carry real divergences. Findings:
         `TestArrowStyleBracketScaleOverridesMutationSize` encoded the halved
         bound and was corrected against matplotlib's output.
 
-  - [ ] **3.4.7 `annotation_legend_offsetbox_gallery`: `AnnotationBbox` cannot
-        express an arrow style.** 2,026/289 px, RMSE 1.075 against 1.25 (1.16x)
-        — re-measured after 3.4.2.
-        The largest cluster, y[219:229] x[717:728], is the offset box's
-        connecting arrow: the port draws a solid filled triangular head where
-        matplotlib draws an open caret. Same defect 3.3.7 fixed elsewhere, but
-        this one is not a fixture omission — `test/parity/…/plot.py` passes
-        `arrowprops={"arrowstyle": "->"}` and `core.AnnotationBboxOptions` has
-        no `ArrowStyle` field at all, only `Arrow: true`. Adding one is a public
-        API change: regenerate the frozen audit
-        (`UPDATE_PUBLIC_API_AUDIT=1 go test -tags freetype -run TestStablePublicAPIMatchesFrozenAudit .`)
-        and the parity-status doc, and record it in
-        `docs/plans/api-freeze-delta.md` — Phase 4 measures against that
-        artifact. The two further clusters this entry used to list — 40-42 px
-        vertical runs at x[715:716] and x[970:972] that `dx=-1` cancelled
-        exactly — were legend frame edges, and 3.4.2 closed them: the frame is
-        now snapped the way matplotlib's `snap=True` `legendPatch` is. The
-        connecting arrow is what remains.
+  - [x] **3.4.7 `annotation_legend_offsetbox_gallery`: a fixture omission and a
+        double-converted mutation scale.** 2,026/289 px, RMSE 1.075 to
+        1,287/244 px, RMSE 0.85; the arrow cluster at y[219:229] x[717:728] is
+        now pixel-identical (max per-channel difference 1). Tolerances ratcheted
+        to RMSE 0.95 / 1,450 px / 480 px.
 
-  - [ ] **3.4.8 `text_annotation_matrix`: text-bbox borders.** 2,082/487 px,
-        RMSE 2.761 against 3.00 (1.09x). The residual concentrates on
+        **The "no `ArrowStyle` field" premise was stale.** This entry claimed
+        `core.AnnotationBboxOptions` could not express an arrow style and that
+        closing it needed a public API change, a frozen-audit regen and an
+        `api-freeze-delta.md` record. `ArrowStyle` and `ConnectionStyle` were
+        already there; nothing on the exported surface moved.
+
+        **The filled head was a fixture omission after all.** `plot.py` passes
+        `arrowprops={"arrowstyle": "->"}`; the Go example set `Arrow: true` and
+        never set `ArrowStyle`, so it fell through to the port's default `-|>`.
+        Exactly the divergence 3.4.3 warns about — read the two sources side by
+        side before blaming the core.
+
+        **The core defect was the mutation scale, and it is double-converted.**
+        `Axes.AnnotationBbox` hardcoded `ArrowHeadSize = 8`. matplotlib takes it
+        from the annotation box's own font size, which is independent of the
+        offset box content's font size and defaults to
+        `rcParams["legend.fontsize"]` — but `offsetbox.AnnotationBbox.update_positions`
+        stores `renderer.points_to_pixels(self.get_fontsize())`, i.e. a value
+        already in **pixels**, into a slot `FancyArrowPatch` then multiplies by
+        `dpi_cor = points_to_pixels(1)` a second time. At 100 dpi the reference
+        arrow transmutes at mutation scale **19.29**, not 13.89. Fixing only the
+        `8 → 10` default still left both caret arms ~2 px short, because the
+        port converted once. `AnnotationBbox.arrowProxy` now applies the extra
+        factor; `text.Annotation.update_positions` has no such second
+        conversion, so it stays out of the shared arrow path. Verified by
+        printing the transmuted head vertices on both sides — they agree to
+        1e-4 once the scale matches.
+
+        The two further clusters this entry used to list — 40-42 px vertical
+        runs at x[715:716] and x[970:972] that `dx=-1` cancelled exactly — were
+        legend frame edges, and 3.4.2 closed them. What remains on this case is
+        text antialiasing: the largest cluster is now 434 px at y[609:629]
+        x[133:156] (bottom-panel anchored text), all of it below amplitude 32
+        except 18 px.
+
+  - [ ] **3.4.8 `text_annotation_matrix`: text-bbox borders.** 1,625/490 px,
+        RMSE 2.70 against 2.95 (1.09x) — re-measured after 3.4.7, which fixed
+        the AnnotationBbox arrow mutation scale and took this case from
+        2,082/487 px and RMSE 2.761. The residual concentrates on
         `FancyBboxPatch` borders behind annotation text — the largest cluster is
         a 24x3 horizontal strip at y[85:88] x[110:134], the bottom edge of an
         olive-bordered box — plus two arrow heads at x[447:463] that local
@@ -989,8 +1015,12 @@ mentioned (`basic_line`) carry real divergences. Findings:
         that this used to assume is gone, but 3.4.2 did find that matplotlib
         forces `snap=True` on the legend's `FancyBboxPatch`, so check what snap
         state these annotation `FancyBboxPatch`es carry), then re-measure the
-        arrows against whatever 3.4.6 and 3.4.7 conclude before opening a third
-        arrow investigation. **Check the affine composition too:** 3.4.5 found
+        arrows. **Read the two fixtures side by side first:**
+        `test/parity/text_annotation_matrix/plot.py` passes
+        `"linewidth": 1.25` on the `TextArea` box's `arrowprops` where
+        `plot.go` leaves `ArrowWidth` at the 1.0 default — 3.4.7's fixture
+        omission again, and it must be settled before opening a third arrow
+        investigation. **Check the affine composition too:** 3.4.5 found
         that generic patches still evaluate their local-to-data affine and the
         data-to-pixel leg in sequence (`buildCachedDisplayPath`,
         `core/patch_paths.go`) where matplotlib collapses the pair into one
