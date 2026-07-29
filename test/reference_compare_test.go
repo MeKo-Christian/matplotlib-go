@@ -16,7 +16,6 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/test/imagecmp"
-	"github.com/cwbudde/matplotlib-go/test/parity"
 )
 
 // TestReferenceCompare iterates every catalog case that has both a golden
@@ -31,6 +30,7 @@ func TestReferenceCompare(t *testing.T) {
 			continue
 		}
 		t.Run(c.ID, func(t *testing.T) {
+			t.Parallel()
 			runReferenceCompareTest(t, &c)
 		})
 	}
@@ -43,6 +43,7 @@ func TestAGGNativeReferenceCompare(t *testing.T) {
 			continue
 		}
 		t.Run(c.ID, func(t *testing.T) {
+			t.Parallel()
 			runReferenceCompareTest(t, &c)
 		})
 	}
@@ -52,7 +53,7 @@ func TestAGGNativeReferenceCompare(t *testing.T) {
 // chromatic-bounding-box check: the rendered colorbar's main image area
 // must align with matplotlib's within a 2-pixel tolerance.
 func TestColorbarCompositionImageOriginMatchesMatplotlibRef(t *testing.T) {
-	got, _, err := parity.Render("colorbar_composition")
+	got, err := renderCase("colorbar_composition")
 	if err != nil {
 		t.Fatalf("render parity example colorbar_composition: %v", err)
 	}

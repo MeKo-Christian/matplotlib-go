@@ -25,6 +25,7 @@ func TestGolden(t *testing.T) {
 			continue
 		}
 		t.Run(c.ID, func(t *testing.T) {
+			t.Parallel()
 			runGoldenTest(t, c.ID)
 		})
 	}
@@ -37,6 +38,7 @@ func TestAGGNativeGolden(t *testing.T) {
 			continue
 		}
 		t.Run(c.ID, func(t *testing.T) {
+			t.Parallel()
 			runGoldenTest(t, c.ID)
 		})
 	}

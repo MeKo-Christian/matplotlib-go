@@ -81,6 +81,39 @@ var strictMplRefIDs = map[string]bool{
 }
 
 // ----------------------------------------------------------------------------
+// Render memoization
+// ----------------------------------------------------------------------------
+
+// renderedCases memoizes parity.Render by case ID. TestGolden,
+// TestMatplotlibRef, and TestReferenceCompare each need the live render of the
+// same catalog case, so rendering per call would rasterize every case three
+// times over. Renders are deterministic by construction (no unseeded
+// randomness), so one image can serve all three drivers.
+//
+// The value is a *renderedCase whose sync.Once collapses concurrent first
+// requests for the same ID into a single render — the drivers run their
+// subtests in parallel, so several may arrive at once.
+var renderedCases sync.Map // case ID -> *renderedCase
+
+type renderedCase struct {
+	once sync.Once
+	img  image.Image
+	err  error
+}
+
+// renderCase returns the live render for a catalog case, rendering it at most
+// once per test binary. Callers must treat the image as read-only: it is shared
+// across every test that asks for the same ID.
+func renderCase(id string) (image.Image, error) {
+	entry, _ := renderedCases.LoadOrStore(id, &renderedCase{})
+	rc := entry.(*renderedCase)
+	rc.once.Do(func() {
+		rc.img, _, rc.err = parity.Render(id)
+	})
+	return rc.img, rc.err
+}
+
+// ----------------------------------------------------------------------------
 // Golden image driver
 // ----------------------------------------------------------------------------
 
@@ -88,7 +121,7 @@ var strictMplRefIDs = map[string]bool{
 // against the committed golden PNG. With -update-golden the golden image is
 // rewritten and the test skipped.
 func runGoldenTest(t *testing.T, testName string) {
-	img, _, err := parity.Render(testName)
+	img, err := renderCase(testName)
 	if err != nil {
 		t.Fatalf("Failed to render parity example %s: %v", testName, err)
 	}
@@ -266,7 +299,7 @@ func runMplTest(t *testing.T, name string) {
 	t.Helper()
 	ensureRefs(t)
 
-	got, _, err := parity.Render(name)
+	got, err := renderCase(name)
 	if err != nil {
 		t.Fatalf("render parity example %s: %v", name, err)
 	}
@@ -323,7 +356,7 @@ func matplotlibRefExists(id string) bool {
 func runReferenceCompareTest(t *testing.T, c *examplecatalog.Case) {
 	t.Helper()
 
-	got, _, err := parity.Render(c.ID)
+	got, err := renderCase(c.ID)
 	if err != nil {
 		t.Fatalf("render parity example %s: %v", c.ID, err)
 	}

@@ -25,7 +25,6 @@ import (
 	"testing"
 
 	"github.com/cwbudde/matplotlib-go/test/imagecmp"
-	"github.com/cwbudde/matplotlib-go/test/parity"
 )
 
 // TestMatplotlibRef compares every catalog case that has a committed
@@ -39,6 +38,7 @@ func TestMatplotlibRef(t *testing.T) {
 			continue
 		}
 		t.Run(c.ID, func(t *testing.T) {
+			t.Parallel()
 			if strictMplRefIDs[c.ID] {
 				runStrictMatplotlibRef(t, c.ID)
 				return
@@ -56,6 +56,7 @@ func TestAGGNativeMatplotlibRef(t *testing.T) {
 			continue
 		}
 		t.Run(c.ID, func(t *testing.T) {
+			t.Parallel()
 			runMplTest(t, c.ID)
 		})
 	}
@@ -79,7 +80,7 @@ func runStrictMatplotlibRef(t *testing.T, name string) {
 		titleMaxMeanAbs      = 2.00
 	)
 
-	got, _, err := parity.Render(name)
+	got, err := renderCase(name)
 	if err != nil {
 		t.Fatalf("render parity example %s: %v", name, err)
 	}
