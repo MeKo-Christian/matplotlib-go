@@ -20,6 +20,7 @@ type Paint struct {
 	Stroke            Color
 	Fill              Color
 	Dashes            []float64 // on/off pairs, in user space units
+	DashOffset        float64   // dash phase, in user space units; Matplotlib's gc dash offset
 	Antialias         AntialiasMode
 	Snap              SnapMode // path snapping policy; zero preserves existing unsnapped behavior
 	Simplify          bool     // simplify line-only paths before rasterization

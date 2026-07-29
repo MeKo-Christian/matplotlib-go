@@ -228,15 +228,14 @@ func (s *aggSurface) ClearDashes() {
 	s.painter.RemoveAllDashes()
 }
 
-func (s *aggSurface) SetDashPattern(pattern []float64) {
+// SetDashPattern installs an on/off dash sequence and its phase. AGG builds the
+// dash pipeline lazily on the first AddDash, so DashStart has to come last.
+func (s *aggSurface) SetDashPattern(pattern []float64, offset float64) {
 	s.ClearDashes()
-	for i := 0; i < len(pattern)-1; i += 2 {
-		gapLen := pattern[i]
-		if i+1 < len(pattern) {
-			gapLen = pattern[i+1]
-		}
-		s.painter.AddDash(pattern[i], gapLen)
+	for i := 0; i+1 < len(pattern); i += 2 {
+		s.painter.AddDash(pattern[i], pattern[i+1])
 	}
+	s.painter.DashStart(offset)
 }
 
 func (s *aggSurface) GetImage() *agglib.Image {

@@ -19,7 +19,7 @@ func strokeToPath(p geom.Path, paint *render.Paint) geom.Path {
 
 	// Handle dashes first if present
 	if len(paint.Dashes) > 0 {
-		p = applyDashes(p, paint.Dashes)
+		p = applyDashes(p, paint.Dashes, paint.DashOffset)
 	}
 
 	// Convert each subpath to stroke polygons
@@ -487,8 +487,9 @@ func calculateCap(seg segment, isStart bool, halfWidth float64, capStyle render.
 	return result
 }
 
-// applyDashes decomposes a path into dashed segments.
-func applyDashes(p geom.Path, dashes []float64) geom.Path {
+// applyDashes decomposes a path into dashed segments, starting the pattern at
+// the given phase. Like AGG, the phase restarts at every subpath.
+func applyDashes(p geom.Path, dashes []float64, offset float64) geom.Path {
 	if len(dashes) == 0 || len(dashes)%2 != 0 {
 		return p // Invalid dash pattern
 	}
@@ -497,15 +498,41 @@ func applyDashes(p geom.Path, dashes []float64) geom.Path {
 	subpaths := splitIntoSubpaths(p)
 
 	for _, subpath := range subpaths {
-		dashedSubpath := applyDashesToSubpath(subpath, dashes)
+		dashedSubpath := applyDashesToSubpath(subpath, dashes, offset)
 		result = appendPath(result, dashedSubpath)
 	}
 
 	return result
 }
 
+// dashPhaseStart walks a dash phase through the pattern, mirroring AGG's
+// vcgen_dash::calc_dash_start. It returns the index the pattern resumes at and
+// how much of that entry is left; even indices are "on".
+func dashPhaseStart(dashes []float64, offset float64) (index int, remaining float64) {
+	total := 0.0
+	for _, d := range dashes {
+		total += d
+	}
+	if total <= 0 {
+		return 0, dashes[0]
+	}
+	offset = math.Mod(offset, total)
+	if offset < 0 {
+		offset += total
+	}
+	for offset > 0 {
+		if offset >= dashes[index] {
+			offset -= dashes[index]
+			index = (index + 1) % len(dashes)
+			continue
+		}
+		return index, dashes[index] - offset
+	}
+	return index, dashes[index]
+}
+
 // applyDashesToSubpath applies dash pattern to a single subpath with improved precision.
-func applyDashesToSubpath(p geom.Path, dashes []float64) geom.Path {
+func applyDashesToSubpath(p geom.Path, dashes []float64, offset float64) geom.Path {
 	segments := pathToSegments(p)
 	if len(segments) == 0 {
 		return geom.Path{}
@@ -518,9 +545,8 @@ func applyDashesToSubpath(p geom.Path, dashes []float64) geom.Path {
 	}
 
 	var result geom.Path
-	dashIndex := 0
-	dashRemaining := quantizedDashes[0]
-	isDrawing := true // First dash is always "on"
+	dashIndex, dashRemaining := dashPhaseStart(quantizedDashes, quantize(offset))
+	isDrawing := dashIndex%2 == 0
 	const epsilon = 1e-10
 
 	for _, seg := range segments {

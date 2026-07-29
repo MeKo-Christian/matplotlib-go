@@ -286,7 +286,7 @@ func TestApplyDashes_SimpleLine(t *testing.T) {
 
 	dashes := []float64{5, 2} // 5 on, 2 off
 
-	dashedPath := applyDashes(path, dashes)
+	dashedPath := applyDashes(path, dashes, 0)
 
 	// Should have multiple MoveTo commands for separate dash segments
 	if len(dashedPath.C) == 0 {
@@ -315,7 +315,7 @@ func TestApplyDashes_InvalidPattern(t *testing.T) {
 	// Invalid dash pattern (odd number of elements)
 	dashes := []float64{5, 2, 3}
 
-	dashedPath := applyDashes(path, dashes)
+	dashedPath := applyDashes(path, dashes, 0)
 
 	// Should return original path unchanged
 	if len(dashedPath.C) != len(path.C) {
@@ -442,7 +442,7 @@ func TestDashPatternPrecision(t *testing.T) {
 	}
 
 	dashes := []float64{1.0, 1.0} // 1 on, 1 off
-	dashedPath := applyDashesToSubpath(path, dashes)
+	dashedPath := applyDashesToSubpath(path, dashes, 0)
 
 	// Count the number of dash segments
 	dashCount := 0

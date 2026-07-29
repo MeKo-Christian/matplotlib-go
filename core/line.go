@@ -447,12 +447,17 @@ func (l *Line2D) Draw(r render.Renderer, ctx *DrawContext) {
 	}
 	paint.Sketch = l.Sketch
 	if gap, ok := l.GapColor.Get(); ok && gap.A > 0 && l.W > 0 && len(dashes) >= 2 {
-		if gapPath := dashGapPath(p, dashes); len(gapPath.C) > 0 {
-			gapPaint := paint
-			gapPaint.Stroke = l.ApplyArtistAlpha(gap)
-			gapPaint.Dashes = nil
-			r.Path(gapPath, &gapPaint)
-		}
+		// Matplotlib fills the gaps by stroking the same path a second time with
+		// the inverse dash pattern (Line2D.draw via _get_inverse_dash_pattern),
+		// not by building a separate gap polyline. Both passes then run through
+		// the one dash converter and interlock exactly; two independent dashers
+		// disagree by a fraction of a pixel and leave slivers at the boundaries.
+		gapDashes, gapOffset := inverseDashPattern(dashes, paint.DashOffset)
+		gapPaint := paint
+		gapPaint.Stroke = l.ApplyArtistAlpha(gap)
+		gapPaint.Dashes = gapDashes
+		gapPaint.DashOffset = gapOffset
+		r.Path(p, &gapPaint)
 	}
 	r.Path(p, &paint)
 	l.drawMarkers(r, ctx)
@@ -897,89 +902,19 @@ func finitePoint(pt geom.Pt) bool {
 	return !math.IsNaN(pt.X) && !math.IsInf(pt.X, 0) && !math.IsNaN(pt.Y) && !math.IsInf(pt.Y, 0)
 }
 
-func dashGapPath(path geom.Path, dashes []float64) geom.Path {
-	if len(path.C) == 0 || len(dashes) < 2 {
-		return geom.Path{}
+// inverseDashPattern returns the dash sequence and phase that paint a pattern's
+// gaps, mirroring Matplotlib's _get_inverse_dash_pattern (lines.py): move the
+// last entry to the front, and advance the offset past it so that new first
+// entry is skipped.
+func inverseDashPattern(dashes []float64, offset float64) ([]float64, float64) {
+	if len(dashes) < 2 {
+		return nil, offset
 	}
-	pattern := make([]float64, 0, len(dashes))
-	for _, d := range dashes {
-		if d > 0 {
-			pattern = append(pattern, d)
-		}
-	}
-	if len(pattern) < 2 {
-		return geom.Path{}
-	}
-	if len(pattern)%2 == 1 {
-		pattern = append(pattern, pattern...)
-	}
-
-	var out geom.Path
-	var cur geom.Pt
-	haveCur := false
-	dashIndex := 0
-	dashRemaining := pattern[0]
-	vi := 0
-	const epsilon = 1e-10
-
-	for _, cmd := range path.C {
-		switch cmd {
-		case geom.MoveTo:
-			if vi >= len(path.V) {
-				return out
-			}
-			cur = path.V[vi]
-			vi++
-			haveCur = true
-			dashIndex = 0
-			dashRemaining = pattern[0]
-		case geom.LineTo:
-			if vi >= len(path.V) {
-				return out
-			}
-			next := path.V[vi]
-			vi++
-			if !haveCur {
-				cur = next
-				haveCur = true
-				continue
-			}
-			segLen := pointDistance(cur, next)
-			if segLen <= epsilon {
-				cur = next
-				continue
-			}
-			consumed := 0.0
-			for consumed < segLen-epsilon {
-				available := segLen - consumed
-				step := math.Min(available, dashRemaining)
-				if dashIndex%2 == 1 && step > epsilon {
-					t0 := consumed / segLen
-					t1 := (consumed + step) / segLen
-					start := interpolateLinePoint(cur, next, t0)
-					end := interpolateLinePoint(cur, next, t1)
-					out.MoveTo(start)
-					out.LineTo(end)
-				}
-				consumed += step
-				dashRemaining -= step
-				if dashRemaining <= epsilon {
-					dashIndex = (dashIndex + 1) % len(pattern)
-					dashRemaining = pattern[dashIndex]
-				}
-			}
-			cur = next
-		case geom.QuadTo:
-			vi += 2
-			haveCur = false
-		case geom.CubicTo:
-			vi += 3
-			haveCur = false
-		case geom.ClosePath:
-			haveCur = false
-		}
-	}
-	return out
+	last := dashes[len(dashes)-1]
+	gaps := make([]float64, 0, len(dashes))
+	gaps = append(gaps, last)
+	gaps = append(gaps, dashes[:len(dashes)-1]...)
+	return gaps, offset + last
 }
 
 func pointDistance(a, b geom.Pt) float64 {

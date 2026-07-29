@@ -575,3 +575,44 @@ func maxByteDiff(values ...uint8) uint8 {
 	}
 	return out
 }
+
+// TestPathDashOffsetShiftsPattern renders one horizontal dashed line twice and
+// checks that a dash offset moves the pattern along the line. Without it the
+// Matplotlib gapcolor pass, which paints the gaps by re-stroking the same path
+// with the rotated pattern, cannot be expressed at all.
+func TestPathDashOffsetShiftsPattern(t *testing.T) {
+	inkColumns := func(offset float64) map[int]bool {
+		r := mustNew(t, 60, 20)
+		var p geom.Path
+		p.MoveTo(geom.Pt{X: 0, Y: 10})
+		p.LineTo(geom.Pt{X: 60, Y: 10})
+		r.Path(p, &render.Paint{
+			LineWidth:  2,
+			Stroke:     render.Color{A: 1},
+			LineCap:    render.CapButt,
+			Dashes:     []float64{10, 10},
+			DashOffset: offset,
+		})
+		img := r.Image()
+		cols := map[int]bool{}
+		for x := 0; x < 60; x++ {
+			cr, _, _, _ := img.At(x, 10).RGBA()
+			if cr>>8 < 128 {
+				cols[x] = true
+			}
+		}
+		return cols
+	}
+
+	base := inkColumns(0)
+	shifted := inkColumns(10)
+	if len(base) == 0 || len(shifted) == 0 {
+		t.Fatalf("expected dashed ink, got %d and %d columns", len(base), len(shifted))
+	}
+	// A half-period offset inverts the pattern: every on run becomes a gap.
+	for x := range base {
+		if shifted[x] {
+			t.Fatalf("column %d is inked at both offset 0 and offset 10; dash offset was ignored", x)
+		}
+	}
+}

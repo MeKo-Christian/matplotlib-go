@@ -141,7 +141,7 @@ func (r *Renderer) drawPathDirect(p geom.Path, paint *render.Paint) {
 		// Handle dashes
 		r.ctx.ClearDashes()
 		if len(paint.Dashes) >= 2 {
-			r.ctx.SetDashPattern(paint.Dashes)
+			r.ctx.SetDashPattern(paint.Dashes, paint.DashOffset)
 		}
 
 		for _, path := range chunkStrokePath(p, paint.MaxChunkVertices) {

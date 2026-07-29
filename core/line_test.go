@@ -554,15 +554,41 @@ func TestLine2DGapColorDrawsInverseDashPass(t *testing.T) {
 	if got, want := r.pathCalls[0].paint.Stroke, (render.Color{R: 1, A: 0.5}); got != want {
 		t.Fatalf("gap stroke = %+v, want %+v", got, want)
 	}
-	if got := r.pathCalls[0].paint.Dashes; len(got) != 0 {
-		t.Fatalf("gap pass should draw extracted gap path without dashes, got %v", got)
+
+	px := 100.0 / 72.0
+	wantLine := []float64{8 * px, 4 * px, 2 * px, 6 * px}
+	if got := r.pathCalls[1].paint.Dashes; !floatSliceApprox(got, wantLine, 1e-9) {
+		t.Fatalf("line dashes = %v, want %v", got, wantLine)
 	}
-	if got := r.pathCalls[0].path.C; len(got) == 0 || got[0] != geom.MoveTo {
-		t.Fatalf("gap path commands = %v, want extracted path", got)
+	if got := r.pathCalls[1].paint.DashOffset; got != 0 {
+		t.Fatalf("line dash offset = %v, want 0", got)
 	}
-	if got, want := r.pathCalls[1].paint.Dashes, []float64{8 * 100.0 / 72.0, 4 * 100.0 / 72.0, 2 * 100.0 / 72.0, 6 * 100.0 / 72.0}; len(got) != len(want) || !floatApprox(got[0], want[0], 1e-9) || !floatApprox(got[1], want[1], 1e-9) || !floatApprox(got[2], want[2], 1e-9) || !floatApprox(got[3], want[3], 1e-9) {
-		t.Fatalf("line dashes = %v, want %v", got, want)
+
+	// Matplotlib's _get_inverse_dash_pattern (lines.py): move the last entry to
+	// the front and skip it via the offset, so the gap pass runs through the same
+	// dash converter as the line pass and the two interlock exactly.
+	wantGaps := []float64{6 * px, 8 * px, 4 * px, 2 * px}
+	if got := r.pathCalls[0].paint.Dashes; !floatSliceApprox(got, wantGaps, 1e-9) {
+		t.Fatalf("gap dashes = %v, want inverse pattern %v", got, wantGaps)
 	}
+	if got, want := r.pathCalls[0].paint.DashOffset, 6*px; !floatApprox(got, want, 1e-9) {
+		t.Fatalf("gap dash offset = %v, want %v (the rotated first entry)", got, want)
+	}
+	if got, want := len(r.pathCalls[0].path.C), len(r.pathCalls[1].path.C); got != want {
+		t.Fatalf("gap pass path commands = %d, want the same path as the line pass (%d)", got, want)
+	}
+}
+
+func floatSliceApprox(got, want []float64, tol float64) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	for i := range got {
+		if !floatApprox(got[i], want[i], tol) {
+			return false
+		}
+	}
+	return true
 }
 
 func TestLine2DMarkEverySpecForms(t *testing.T) {

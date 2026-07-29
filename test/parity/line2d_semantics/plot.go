@@ -32,6 +32,7 @@ func Plot() *core.Figure {
 		core.PlotOptions{
 			Color:     optional.Of(render.Color{R: 0.10, G: 0.26, B: 0.78, A: 1}),
 			LineWidth: optional.Of(3.0),
+			LineCap:   optional.Of(render.CapButt),
 			Label:     "set_data",
 		},
 	)
@@ -51,8 +52,10 @@ func Plot() *core.Figure {
 			{X: 4.3, Y: 3.25},
 			{X: 5.2, Y: 3.65},
 		},
-		W:   3,
-		Col: render.Color{R: 0.84, G: 0.15, B: 0.16, A: 1},
+		W:          3,
+		Col:        render.Color{R: 0.84, G: 0.15, B: 0.16, A: 1},
+		LineCap:    render.CapButt,
+		LineCapSet: true,
 	}
 	ax.Add(invalid)
 
@@ -74,6 +77,7 @@ func Plot() *core.Figure {
 	lineA, _ := ax.Plot(x, y1, core.PlotOptions{
 		Color:      optional.Of(render.Color{R: 0.58, G: 0.40, B: 0.74, A: 1}),
 		LineWidth:  optional.Of(1.5),
+		LineCap:    optional.Of(render.CapButt),
 		Marker:     optional.Of(markerA),
 		MarkerSize: optional.Of(8.0),
 	})
@@ -84,6 +88,7 @@ func Plot() *core.Figure {
 	lineB, _ := ax.Plot(x, y2, core.PlotOptions{
 		Color:      optional.Of(render.Color{R: 0.55, G: 0.34, B: 0.29, A: 1}),
 		LineWidth:  optional.Of(1.5),
+		LineCap:    optional.Of(render.CapButt),
 		Marker:     optional.Of(markerB),
 		MarkerSize: optional.Of(7.0),
 	})

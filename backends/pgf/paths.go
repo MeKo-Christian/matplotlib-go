@@ -187,7 +187,7 @@ func writeLineState(w *strings.Builder, paint *render.Paint) {
 			}
 			fmt.Fprintf(w, "{%spt}", shortFloat(d))
 		}
-		w.WriteString("}{0pt}\n")
+		fmt.Fprintf(w, "}{%spt}\n", shortFloat(paint.DashOffset))
 	} else {
 		w.WriteString("\\pgfsetdash{}{0pt}\n")
 	}

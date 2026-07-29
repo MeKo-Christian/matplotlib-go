@@ -291,6 +291,9 @@ func writeStrokeAttrs(b *strings.Builder, paint render.Paint) {
 	}
 	if len(paint.Dashes) >= 2 {
 		writeAttr(b, "stroke-dasharray", dashedArray(paint.Dashes))
+		if paint.DashOffset != 0 {
+			writeFloatAttr(b, "stroke-dashoffset", paint.DashOffset)
+		}
 	}
 }
 

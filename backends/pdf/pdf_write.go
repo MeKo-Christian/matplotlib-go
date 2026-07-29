@@ -212,7 +212,7 @@ func writeLineState(w *bytes.Buffer, paint *render.Paint) {
 			}
 			w.WriteString(shortFloat(d))
 		}
-		w.WriteString("] 0 d\n")
+		fmt.Fprintf(w, "] %s d\n", shortFloat(paint.DashOffset))
 	} else {
 		w.WriteString("[] 0 d\n")
 	}
