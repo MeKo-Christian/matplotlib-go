@@ -130,7 +130,6 @@ func TestContourLinesSplitIsTracked(t *testing.T) {
 		"type contourBoundarySide uint8",
 		"func orientStructuredOpenBoundaryPolyline(polyline []geom.Pt, x, y []float64) []geom.Pt",
 		"func contourCellSegmentsForLevel(points [4]geom.Pt, values [4]float64, level float64) [][]geom.Pt",
-		"func contourSegmentsForLevel(tri Triangulation, values []float64, level float64) [][]geom.Pt",
 		"func triangleContourSegment(points [3]geom.Pt, values [3]float64, level float64) ([]geom.Pt, bool)",
 		"func stitchContourSegments(segments [][]geom.Pt) [][]geom.Pt",
 		"func rotateClosedContourPolylineToMatplotlibStart(polyline []geom.Pt) []geom.Pt",

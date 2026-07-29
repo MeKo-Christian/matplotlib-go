@@ -85,10 +85,31 @@ func newTriContourMesh(tr Triangulation, values []float64) (*triContourMesh, boo
 		}
 	}
 
+	tr.Triangles = correctTriangleOrientations(tr)
 	mesh := &triContourMesh{tri: tr, values: values}
 	mesh.neighbors = triContourNeighbors(tr)
 	mesh.calculateBoundaries()
 	return mesh, true
+}
+
+// correctTriangleOrientations ports Triangulation::correct_triangles, which
+// Matplotlib runs on every non-Delaunay (i.e. caller-supplied) triangle list:
+// a clockwise triangle has its last two vertices swapped. Everything below
+// assumes anticlockwise winding — neighbour edges, boundary traversal and the
+// exit-edge table all read vertices in order — so a clockwise input would
+// otherwise trace contour lines backwards.
+//
+//nolint:gocritic // Triangulation is a read-only value type throughout the contour API.
+func correctTriangleOrientations(tr Triangulation) [][3]int {
+	corrected := append([][3]int(nil), tr.Triangles...)
+	for i, triangle := range corrected {
+		p0, p1, p2 := tr.Point(triangle[0]), tr.Point(triangle[1]), tr.Point(triangle[2])
+		crossZ := (p1.X-p0.X)*(p2.Y-p0.Y) - (p1.Y-p0.Y)*(p2.X-p0.X)
+		if crossZ < 0 {
+			corrected[i][1], corrected[i][2] = triangle[2], triangle[1]
+		}
+	}
+	return corrected
 }
 
 // triContourNeighbors mirrors Triangulation::calculate_neighbors: masked

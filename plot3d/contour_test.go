@@ -143,9 +143,12 @@ func TestAxes3DTriContourProjectsLinesAtContourLevels(t *testing.T) {
 	if got, want := len(contour.Segments), 1; got != want {
 		t.Fatalf("tricontour segments = %d, want %d", got, want)
 	}
+	// Matplotlib's TriContourGenerator seeds this line at the boundary edge
+	// where the level is crossed downwards — the (0,1)->(0,0) edge — so the
+	// line runs from the y axis to the x axis, not the other way round.
 	want := []Pt{
-		ax.ProjectPoint(0.5, 0, 0.5),
 		ax.ProjectPoint(0, 0.5, 0.5),
+		ax.ProjectPoint(0.5, 0, 0.5),
 	}
 	if !pointsEqual(contour.Segments[0], want, 1e-12) {
 		t.Fatalf("tricontour segment = %+v, want projected contour level %+v", contour.Segments[0], want)
