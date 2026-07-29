@@ -77,12 +77,16 @@ func Plot() *core.Figure {
 	})
 	contourColor := render.Color{R: 0.08, G: 0.12, B: 0.18, A: 0.95}
 	contourWidth := 1.15
-	colorAx.TriContour(tri, values, core.ContourOptions{
+	contourSet := colorAx.TriContour(tri, values, core.ContourOptions{
 		Color:      optional.Of(contourColor),
 		LineWidth:  optional.Of(contourWidth),
 		LevelCount: 6,
-		LabelLines: true,
-		LabelColor: optional.Of(contourColor),
+	})
+	colorAx.Clabel(contourSet, core.ClabelOptions{
+		Inline:       optional.Of(true),
+		FormatString: "%.3g",
+		FontSize:     optional.Of(10.0),
+		Colors:       []render.Color{contourColor},
 	})
 
 	fillAx := fig.AddAxes(geom.Rect{

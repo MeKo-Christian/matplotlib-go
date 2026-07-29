@@ -629,8 +629,11 @@ mentioned (`basic_line`) carry real divergences. Findings:
       existed, and the case was a fixture omission plus a double-converted
       mutation scale. 3.4.8 followed and was the same shape a third time: a
       fixture omission plus an artist in the wrong draw pass, not the
-      `FancyBboxPatch` snap state or the affine composition it named. 3.4.9 is
-      the deepest and should go last.
+      `FancyBboxPatch` snap state or the affine composition it named. 3.4.9 was
+      predicted to be the deepest and was taken last; **that premise was stale a
+      fourth time** — it named `locate_label`'s spacing heuristic, which never
+      runs on this fixture, and the real cause was the tri-contour generator
+      feeding it vertices in the wrong order.
 
       **Check the Go fixture against its Python counterpart before blaming the
       core.** 3.4.3's dominant residual was neither a port bug nor a hypothesis
@@ -1052,20 +1055,64 @@ mentioned (`basic_line`) carry real divergences. Findings:
         it against; it needs its own case before it can be changed with
         evidence.
 
-  - [ ] **3.4.9 `unstructured_showcase`: inline contour labels sit at different
-        points along the contours.** 3,097/1,074 px, RMSE 2.634 against 3.20
-        (1.21x, `ok`). The six largest clusters are 78-136 px blobs in
-        x[584:693] y[144:378] and **no integer offset improves any of them**.
-        Magnified, the reason is plain: the port and matplotlib label the same
-        contour lines with the same glyphs at _different positions along the
-        path_ — where the port writes "0.9" matplotlib writes "0.6", and the
-        1.2 label sits a third of the way further along. This is
-        `ContourLabeler.labels`' location search (`locate_label`, the
-        path-length/spacing heuristic and the break inserted for the label gap),
-        not text rendering. Expect this to be the largest piece of work in 3.4
-        and the least likely to reduce to a rounding fix; if the search cannot
-        be made faithful, record it as an accepted difference with the
-        reasoning, which is a legitimate outcome for this phase.
+  - [x] **3.4.9 `unstructured_showcase`: the tri-contour generator, not the
+        label search.** 3,097/1,074 px and RMSE 2.634 down to **1,747/350 px and
+        RMSE 1.11**; the largest cluster went 490 to 178 px, and every label now
+        sits on matplotlib's point with matplotlib's rotation. The remaining
+        residual is glyph and line antialiasing in 133 clusters of which the
+        largest at amplitude 32 is 44 px.
+
+        **`locate_label` was never involved, and this was not the deepest item
+        in 3.4.** The entry above blamed the "path-length/spacing heuristic",
+        but measuring matplotlib 3.10.9 on this fixture shows the heuristic
+        never runs: every connected component here has 4-6 vertices against a
+        label width of 9-27 px, so `n_blocks = ceil(ctr_size / labelwidth)` is
+        **1** for all ten of them. With one block, `block_size = ctr_size`, the
+        `too_close` loop has a single candidate it always takes, and the
+        returned index collapses to `ctr_size // 2` — the middle *vertex*. Every
+        one of matplotlib's ten labels sits exactly on
+        `component.vertices[len//2]`.
+
+        So the placement index is a vertex index, and the port's
+        `locate_label`/`print_label`/`_split_path_and_get_label_rotation` were
+        already faithful (`core/contour_labels.go`). What diverged was the
+        **input**: `contourPolylines` built tri-contour lines by marching each
+        triangle independently and greedily gluing the loose segments back
+        together, so the start vertex, direction and per-level order were
+        artifacts of triangle iteration order. Trace the same line backwards and
+        `len//2` picks a different vertex — which is exactly the reported
+        symptom of same glyphs at different points along the path.
+
+        Fixed by porting `TriContourGenerator` (`third_party/matplotlib/src/tri/_tri.cpp`)
+        into `core/contour_tri_lines.go`: mask-aware `calculate_neighbors`,
+        `calculate_boundaries`, `find_boundary_lines`, `find_interior_lines`,
+        `follow_interior`, `get_exit_edge` and `interp`, emitting open lines
+        seeded from mesh boundaries before closed interior loops. Vertex lists
+        now match matplotlib's to 1e-12, pinned by
+        `core/contour_tri_lines_test.go` against a dump from the installed
+        3.10.9. The structured-grid path already solved the same problem its own
+        way (`rotateClosedLoopToContourpyStart`); the tri path had never been
+        given the equivalent treatment. Filled tri contours still use the
+        stitching path — `create_filled_contour`/`follow_boundary` are not
+        ported, and no case here needs them.
+
+        Second, smaller defect, the 3.4.3 lesson landing again: the Go fixture
+        used `LabelLines: true` with the default `ScalarFormatter`, which emits
+        a **U+2212 minus sign**, while the Python fixture passes `fmt="%.3g"`
+        and gets an ASCII hyphen. Different glyph, different measured label
+        width. `examples/unstructured_showcase/example.go` now mirrors the
+        Python and calls `Clabel` with `FormatString: "%.3g"`.
+
+        Side effect: `triangulation_gallery` improved on the same fix (RMSE
+        2.602 to 2.225, largest cluster 327 to 236) with no fixture change.
+        `mplot3d_tricontour3d` is unchanged. Tolerances for this case ratcheted
+        to `MaxRMSE: 1.3, MaxDiffPixels: 2000, MaxLargestCluster: 210`.
+
+        Latent divergence found and **not** fixed here: `tri.Triangulation.Neighbors()`
+        (`tri/triangulation.go:127`) deliberately ignores the mask, while
+        matplotlib's `calculate_neighbors` skips masked triangles. The contour
+        port computes its own mask-aware neighbours; `tri/analyzer.go` still
+        uses the mask-blind version and was left alone.
 
   - [ ] **3.4.10 `legend_layout_matrix`: scatter handle geometry.** 585/198 px,
         RMSE 1.657 against 1.90 (1.15x) — re-measured after 3.4.2, which removed

@@ -7,20 +7,14 @@ import (
 	"github.com/cwbudde/matplotlib-go/geom"
 )
 
+// contourPolylines traces unfilled contour lines over an unstructured mesh.
+// It delegates to the TriContourGenerator port in contour_tri_lines.go, which
+// reproduces Matplotlib's traversal order, start vertex and winding — inline
+// label placement indexes into the vertex list, so those details are visible
+// in the output.
+//nolint:gocritic // Triangulation is a read-only value type throughout the contour API.
 func contourPolylines(tri Triangulation, values, levels []float64) ([][]geom.Pt, []float64) {
-	var polylines [][]geom.Pt
-	var polylineLevels []float64
-	for _, level := range levels {
-		segments := contourSegmentsForLevel(tri, values, level)
-		for _, polyline := range stitchContourSegments(segments) {
-			if len(polyline) < 2 {
-				continue
-			}
-			polylines = append(polylines, polyline)
-			polylineLevels = append(polylineLevels, level)
-		}
-	}
-	return polylines, polylineLevels
+	return triContourPolylines(tri, values, levels)
 }
 
 func contourGridPolylines(x, y []float64, data [][]float64, levels []float64) ([][]geom.Pt, []float64) {
@@ -282,24 +276,6 @@ func contourCellSegmentsForLevel(points [4]geom.Pt, values [4]float64, level flo
 		return [][]geom.Pt{{hits[0], hits[1]}, {hits[2], hits[3]}}
 	}
 	return nil
-}
-
-func contourSegmentsForLevel(tri Triangulation, values []float64, level float64) [][]geom.Pt {
-	segments := make([][]geom.Pt, 0, len(tri.Triangles))
-	for triIdx, triangle := range tri.Triangles {
-		if tri.Masked(triIdx) {
-			continue
-		}
-		segment, ok := triangleContourSegment(
-			[3]geom.Pt{tri.Point(triangle[0]), tri.Point(triangle[1]), tri.Point(triangle[2])},
-			[3]float64{values[triangle[0]], values[triangle[1]], values[triangle[2]]},
-			level,
-		)
-		if ok {
-			segments = append(segments, segment)
-		}
-	}
-	return segments
 }
 
 func triangleContourSegment(points [3]geom.Pt, values [3]float64, level float64) ([]geom.Pt, bool) {
