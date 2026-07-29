@@ -251,7 +251,9 @@ func TestClipPathPreservesStraightAlphaFillColor(t *testing.T) {
 	_ = r.End()
 
 	got := r.Image().RGBAAt(50, 50)
-	want := color.RGBA{R: 222, G: 233, B: 251, A: 255}
+	// Same value as the unclipped fill in TestPathFillUsesStraightAlphaColor,
+	// verified against Matplotlib 3.10.9.
+	want := color.RGBA{R: 222, G: 232, B: 251, A: 255}
 	if got != want {
 		t.Fatalf("clipped straight-alpha fill pixel = %+v, want %+v", got, want)
 	}

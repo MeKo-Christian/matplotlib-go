@@ -67,7 +67,8 @@ func TestPathFillUsesStraightAlphaColor(t *testing.T) {
 	_ = r.End()
 
 	got := r.Image().RGBAAt(50, 50)
-	want := color.RGBA{R: 222, G: 233, B: 251, A: 255}
+	// Verified against Matplotlib 3.10.9 rendering the same fill over white.
+	want := color.RGBA{R: 222, G: 232, B: 251, A: 255}
 	if got != want {
 		t.Fatalf("straight-alpha fill pixel = %+v, want %+v", got, want)
 	}

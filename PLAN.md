@@ -921,10 +921,13 @@ mentioned (`basic_line`) carry real divergences. Findings:
         expected — only an edge landing on a `.5` tie can move.
         Tolerances ratcheted 0.35/3.4/1400/530 to 0.1/0.36/820/530.
 
-        What remains is 653 pixels at amplitude ≤17, spread over the axes
-        interiors and rows 256/451: ±1-2 LSB rounding when the translucent
-        fills (α 0.76/0.8) composite. That is a dense residual for 3.5/3.6, not
-        geometry.
+        What remained was 653 pixels at amplitude ≤17, spread over the axes
+        interiors and rows 256/451, attributed here to "±1-2 LSB rounding when
+        the translucent fills composite" and handed to 3.5. That was the right
+        mechanism but badly undersized: 3.5.1 traced it to a single blender
+        formula mismatch worth 4.6M pixels suite-wide and fixed it, taking this
+        case to 79 differing pixels and RMSE 0.067. Tolerances ratcheted again
+        there, to 0.01/0.0838/99/68.
 
   - [ ] **3.4.6 `patch_style_matrix`: bracket arrow heads are too narrow.**
         2,856/373 px, RMSE 2.643 against 2.90 (1.10x). The four largest clusters
@@ -1038,6 +1041,73 @@ mentioned (`basic_line`) carry real divergences. Findings:
       `imshow_interpolation_matrix`, `imshow_transformed`, `clip_path_batch`,
       `pcolormesh_gouraud`, `skewt_basic`, `projection_toolkit_gallery`,
       `image_variants_gallery`, `ticks_styling_surface`, `widgets_gallery`.
+  - [x] **3.5.1 The whole-suite off-by-one: the AGG plain blender.** Done
+        2026-07-29. Not a case, a mechanism, and the largest single parity item
+        left in Phase 3. Across all 190 reference cases **4,613,539 pixels
+        differed by exactly 1** against 618,008 differing by more — deterministic,
+        not noise.
+
+        Matplotlib does not use stock AGG for compositing. `_backend_agg.h:113`
+        builds its pixel format from `fixed_blender_rgba_plain`
+        (`src/agg_workaround.h:52`), which exists "to workaround a bug in Agg SVN
+        where the blending of RGBA32 pixels does not preserve enough precision".
+        It keeps the composite in one fixed-point expression —
+        `a = ((alpha + a) << 8) - alpha * a`, then
+        `p[R] = (((cr << 8) - r) * alpha + (r << 8)) / a` — where stock
+        `agg24-svn` (`extern/agg24-svn/include/agg_pixfmt_rgba.h:243`) routes it
+        through multiply → `lerp` → demultiply and picks up `lerp`'s
+        round-to-nearest term. `agg_go`'s `BlenderRGBA8Plain` is a faithful port
+        of the SVN one, so the port rounded where matplotlib truncates, and the
+        two also disagree on the real value because matplotlib divides by the
+        *unshifted* combined alpha. Confirmed bit-exactly on the three dominant
+        `stat_variants` fills before any code changed: step-filled blue
+        `(107,158,230) α140` → port `(174,202,241)` vs reference `(173,201,241)`,
+        stacked orange `(219,107,48) α204` → `(226,137,89)` vs `(226,136,89)`,
+        stackplot blue `(51,140,191) α194` → `(100,168,206)` vs `(100,167,206)`.
+
+        Fixed in `agg_go` by adding `BlenderRGBA8PlainFixed` beside the SVN one
+        rather than replacing it — the SVN port is correct for what it ports, and
+        other users depend on that fidelity. `Agg2D` selects it through
+        `SetHighPrecisionPlainBlend`, exposed as
+        `agg.NewContextForImageWithOptions`; `newAggSurface`
+        (`backends/agg/surface.go`) opts in. The blender deliberately does not
+        implement `PremulSrc`, so the pixfmt's standard fast paths cannot
+        substitute lerp math for it, and it carries its own opaque + full-cover
+        short-circuit because C++ AGG's `copy_or_blend_pix` never reaches
+        `blend_pix` in that case and the formula is off by one without it.
+        `TestTranslucentFillMatchesMatplotlibBlender` and
+        `TestOpaqueFillIsCopiedNotBlended` pin the values, all read out of
+        Matplotlib 3.10.9 rendering the same fills.
+
+        Suite-wide: amplitude-1 pixels 4,613,539 → 2,933,607, amplitude>1
+        618,008 → 507,176, byte-identical cases **4 → 25**, 166 cases improved
+        against 19 that regressed (total RMSE gain 5.89 against 0.41 lost), and
+        no case's peak amplitude grew by more than 2. The 19 regressions are all
+        ±1 wobble on pre-existing defects, not new ones: in `polar_axes` and the
+        `geo_*` cases the affected pixels are antialiased grid lines where the
+        port is already 8-10 units off, so a corrected 1-LSB step can land either
+        way. 48 cases ratcheted onto the new measurements at 1.25x headroom,
+        which took the audit's `loose` verdicts from 44 to 26.
+
+        **Two findings for 3.5's remaining list.** First, none of the dense
+        residuals listed above were resolved by this — measured before and after,
+        they are separate defects and stay on the list. Second, the 2.9M
+        amplitude-1 pixels that survive are *not* leftovers of this bug: they sit
+        in the paths deliberately left out of scope (the image blit, which
+        `internal/agg2d/image.go` routes through the premultiplied pixfmt where
+        matplotlib uses the plain fixed blender; `compositeClipSurface` in
+        `backends/agg/agg_clip.go`; `blendAlphaMask` in
+        `backends/agg/freetype_alpha_native.go`) — and at least one is a
+        different bug entirely. `quad_mesh` did not move a single pixel and is
+        the clean example: its 331,560 differing pixels are **opaque** viridis
+        fills where the port reads one *below* the reference
+        (`(52,97,141)` vs `(51,96,141)`), so no blender is involved. That is a
+        colormap/float→uint8 quantization mismatch and wants its own subtask.
+
+        The agg_go side shipped as **v0.4.0** and `go.mod` depends on the tag,
+        so there is no `replace` directive — the goldens were re-verified
+        byte-identical against the published module.
+
 - [ ] **3.6 Ratchet every tolerance and enforce the ratchet.** Set each case's
       bound from its post-fix measured value plus stated headroom, in both
       directions: tighten the 44 loose cases (worst offenders

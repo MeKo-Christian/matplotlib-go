@@ -58,7 +58,15 @@ type aggSurface struct {
 func newAggSurface(w, h int) *aggSurface {
 	stride := w * 4
 	img := agglib.NewImage(make([]uint8, h*stride), w, h, stride)
-	textContext := agglib.NewContextForImage(img)
+	// Matplotlib does not use stock AGG for compositing: _backend_agg.h builds
+	// its pixel format from fixed_blender_rgba_plain (src/agg_workaround.h),
+	// which restores AGG 2.4's high-precision plain blend because the agg24-svn
+	// rewrite routes it through multiply -> lerp -> demultiply and loses an LSB.
+	// Without this the port is one off matplotlib on most channels of every
+	// translucent fill.
+	textContext := agglib.NewContextForImageWithOptions(img, agglib.ContextOptions{
+		HighPrecisionPlainBlend: true,
+	})
 	painter := textContext.GetAgg2D()
 	painter.FillColor(agglib.Black)
 	painter.LineColor(agglib.Black)
