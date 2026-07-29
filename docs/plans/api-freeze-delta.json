@@ -8,7 +8,7 @@
   },
   "freeze": {
     "path": "test/testdata/public_api/stable_public_api.json",
-    "sha256": "2dd0d5996d9dd00e7e5fae00ca87dc74800300fdad1d671e053c40fccfc08e16",
+    "sha256": "8d5181e0be33038f7e32068b138704bdc077efde7e12423a42ad5c474c9f181d",
     "symbol_count": 3181
   },
   "counts": {

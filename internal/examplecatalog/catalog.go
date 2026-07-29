@@ -92,7 +92,10 @@ var cases = []Case{
 	{ID: "joins_caps", Topic: "lines", Title: "Line Joins and Caps", MaxRMSE: 0.3},
 	{ID: "dashes", Topic: "lines", Title: "Dash Patterns", Description: "Multiple line styles showing dash arrays, cap styles, and legend labeling.", Showcase: true, MaxRMSE: 1.6},
 	{ID: "lines_markers_gallery", Topic: "lines", Title: "Line and Marker Style Gallery", Description: "A combined gallery of dash arrays, line joins and caps, a built-in marker grid with open-fill markers, and a multi-series legend.", WebDemoID: "lines", Showcase: true, Width: 840, Height: 620, MaxMeanAbs: 1.0, MaxRMSE: 2.8},
-	{ID: "line2d_semantics", Topic: "lines", Title: "Line2D Semantics", FixtureOnly: true, MaxRMSE: 2.6, MaxDiffPixels: 380, MaxLargestCluster: 23},
+	// MaxRMSE 0.20: max per-channel difference 13, so nothing survives above
+	// antialiasing amplitude; the 71 differing pixels are 22 clusters of at most
+	// 5 px along line and dash edges.
+	{ID: "line2d_semantics", Topic: "lines", Title: "Line2D Semantics", FixtureOnly: true, MaxRMSE: 0.2, MaxDiffPixels: 85, MaxLargestCluster: 8},
 	// MaxRMSE 1.85: MeanAbs 0.03 / PSNR ~44 dB. The in-plot markers and the left
 	// spine are byte-exact; what remains is 2-px antialiasing specks at the ends
 	// of the legend handle lines.

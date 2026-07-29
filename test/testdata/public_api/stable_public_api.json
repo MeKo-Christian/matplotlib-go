@@ -10211,7 +10211,7 @@
         },
         {
           "id": "type Paint",
-          "declaration": "type Paint struct{ LineWidth float64; LineJoin LineJoin; LineCap LineCap; MiterLimit float64; Stroke Color; Fill Color; Dashes []float64; Antialias AntialiasMode; Snap SnapMode; Simplify bool; SimplifyThreshold float64; MaxChunkVertices int; Hatch string; HatchColor Color; HatchLineWidth float64; HatchSpacing float64; FillPattern PatternFill; FillGradient GradientFill; PathEffects []PathEffect; CompositeMode CompositeMode; Rasterization Rasterization; Sketch SketchParams; ForceAlpha bool; Alpha float64; ClipPathTransform geom.Affine; HasClipPathTrans bool }"
+          "declaration": "type Paint struct{ LineWidth float64; LineJoin LineJoin; LineCap LineCap; MiterLimit float64; Stroke Color; Fill Color; Dashes []float64; DashOffset float64; Antialias AntialiasMode; Snap SnapMode; Simplify bool; SimplifyThreshold float64; MaxChunkVertices int; Hatch string; HatchColor Color; HatchLineWidth float64; HatchSpacing float64; FillPattern PatternFill; FillGradient GradientFill; PathEffects []PathEffect; CompositeMode CompositeMode; Rasterization Rasterization; Sketch SketchParams; ForceAlpha bool; Alpha float64; ClipPathTransform geom.Affine; HasClipPathTrans bool }"
         },
         {
           "id": "type PathCollectionBatch",

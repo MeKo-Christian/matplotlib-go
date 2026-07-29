@@ -625,6 +625,14 @@ mentioned (`basic_line`) carry real divergences. Findings:
       the cheapest — an API gap with a known answer. 3.4.9 is the deepest and
       should go last.
 
+      **Check the Go fixture against its Python counterpart before blaming the
+      core.** 3.4.3's dominant residual was neither a port bug nor a hypothesis
+      worth testing: the Go fixture simply never passed a kwarg the Python
+      fixture did, and the port's default was matplotlib's own correct default.
+      Nothing in the harness compares the two sources, so a divergence like that
+      is invisible until the pixels are localized to a named artist and the two
+      files are read side by side. Do that first for every remaining subtask.
+
   - [x] **3.4.1 `mathtext_basic`: the rotated y-axis label.** Its whole residual
         was the `amplitude $\frac{1}{\sqrt{2}}$` y-label, drawn one device pixel
         off. Two independent defects, and each had been hiding the other.
@@ -741,17 +749,72 @@ mentioned (`basic_line`) carry real divergences. Findings:
         `SnapAuto`, since matplotlib draws the shadow through a separate
         `Shadow` artist and there is no evidence it snaps.
 
-  - [ ] **3.4.3 `line2d_semantics`: dash phase along the polyline.** 300/138 px,
-        RMSE 2.403 against 2.60 (1.08x). 16 clusters, each a single ~4x5 dash
-        segment of a red dashed line, and the best local offsets are
-        `(+2,-1)` and `(-2,+1)` — displacement _along_ the line, not across it.
-        So the dashes are the right length and the right line, drawn at the
-        wrong phase. matplotlib carries the dash offset continuously across
-        every segment of a polyline (`GraphicsContextBase.set_dashes` seeds it
-        once and AGG's `conv_dash` accumulates over the vertex stream); a port
-        that restarts the pattern per segment, or that rounds the accumulated
-        offset per segment, drifts exactly like this. Check where the dash
-        offset is reset relative to the segment loop.
+  - [x] **3.4.3 `line2d_semantics`: butt caps and a second dasher, not dash
+        phase.** Done 2026-07-29. The entry this replaces called the residual a
+        phase drift and asked where the dash offset is reset relative to the
+        segment loop. **There is no such loop.** `agg_go`'s `vcgen_dash` is
+        already phase-continuous: it accumulates `currDashStart` across every
+        vertex of a polyline, and `ConvAdaptorVCGen` restarts the generator per
+        **subpath**, exactly as AGG does. The old entry also mislocalized the
+        artist — it described "a red dashed line", and this fixture has none;
+        the red artist is solid, broken by `NaN` and `inf`. Two unrelated causes.
+
+        **10 of the 16 clusters were line endpoints, and the Go fixture was
+        wrong.** Each sat on a polyline end, ink in the port where matplotlib
+        had background, with a width that scaled with linewidth — a projecting
+        cap. The Python fixture passes `solid_capstyle="butt"` to all four
+        `ax.plot` calls; the Go fixture passed no cap at all and took the rc
+        default `SolidCap: CapSquare`, which is matplotlib's own correct
+        `lines.solid_capstyle: projecting` default. So the port was right and
+        the fixture silently disagreed with its Python counterpart. The red
+        line's three subpaths give exactly six ends and all six were present,
+        which is what identified it. `PlotOptions.LineCap` already expressed
+        this, so there was no API gap; the dashed `gapcolor` line needed no
+        change, since a dashed stroke already selects `CapButt`.
+
+        **The other 6 were gapcolor gaps, dashed by a second, disagreeing
+        dasher.** All six were single columns at dash boundaries of the
+        `gapcolor` line — and the other six boundaries matched. matplotlib
+        (`lines.py`) paints the gaps by stroking the *same path* a second time
+        through the *same* `conv_dash`, with `_get_inverse_dash_pattern`: rotate
+        the sequence (`dashes[-1:] + dashes[:-1]`) and advance the dash offset
+        by `dashes[-1]` so the new first entry is skipped. The two passes then
+        interlock by construction. The port instead built an explicit gap
+        polyline in core (`dashGapPath`) and stroked it undashed, so its float
+        boundaries drifted from `vcgen_dash`'s and left white slivers — at
+        x=420 the port read `[134 183 147]`, green over white with no orange,
+        where matplotlib read `[129 156 101]`.
+
+        The port could not express matplotlib's approach because **dash offset
+        did not exist anywhere in the codebase**: no phase field on
+        `render.Paint`, PDF/PS/PGF hardcoding the phase operand to `0`, SVG
+        never emitting `stroke-dashoffset`, and the AGG backend never calling
+        `DashStart` even though `agg_go` has supported it all along. Added
+        `render.Paint.DashOffset` (one new field on the frozen API) and plumbed
+        it through agg, svg, pdf, ps, pgf and gobasic — the last one also being
+        the Skia CPU fallback. `dashGapPath` is deleted; `inverseDashPattern`
+        replaces it in ~12 lines. `backends/agg/` gained its first dash
+        rendering test.
+
+        Result: 300/138 px to 71/0, RMSE 2.775 to 0.171, max per-channel
+        difference 13 — **nothing survives above antialiasing amplitude**, and
+        the >32 cluster count went 16 to 0. Tolerances 2.6/380/23 to
+        0.20/85/8. `-update-golden` moved exactly one golden: `GapColor` has a
+        single fixture and every other paint carries offset 0.
+
+        Not fixed, and recorded here rather than silently left:
+
+        - **Dash phase does reset at AGG chunk boundaries.** `chunkStrokePath`
+          issues one `Stroke()` per 32768-vertex chunk and `ConvAdaptorVCGen`
+          restarts the generator per stroke, so a dashed polyline past that size
+          gets a visible phase discontinuity. This is the bug the old 3.4.3
+          entry was describing — it is real, just not what this case hit. No
+          catalog case reaches that vertex count; latent.
+        - **`linestyle=(offset, (on, off))` is still unsupported.**
+          `core.DashPattern` carries no offset, so only the paint-level phase
+          added here exists. A Line2D cannot yet be given a user dash phase.
+        - **`SetDashPattern` drops an odd trailing dash element** where
+          matplotlib cycles it with on/off swapped.
 
   - [ ] **3.4.4 `specgram_psd`: one image row, and the 3.3.6 note is stale.**
         354/211 px, RMSE 1.003 against 1.05 (1.05x — the tightest slack after
