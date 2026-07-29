@@ -490,8 +490,13 @@ func calculateCap(seg segment, isStart bool, halfWidth float64, capStyle render.
 // applyDashes decomposes a path into dashed segments, starting the pattern at
 // the given phase. Like AGG, the phase restarts at every subpath.
 func applyDashes(p geom.Path, dashes []float64, offset float64) geom.Path {
-	if len(dashes) == 0 || len(dashes)%2 != 0 {
-		return p // Invalid dash pattern
+	// An odd-length pattern is not invalid — it alternates on/off forever, so
+	// its second pass is the inverse of its first. Walking it twice turns that
+	// into the even (on, off) pairing this dasher works in; drawing it solid
+	// instead, as this used to, dropped the dashes altogether.
+	dashes = render.NormalizeDashes(dashes)
+	if len(dashes) == 0 {
+		return p
 	}
 
 	var result geom.Path

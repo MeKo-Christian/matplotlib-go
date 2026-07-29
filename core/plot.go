@@ -18,13 +18,17 @@ const defaultAutoScaleMargin = 0.05
 
 // PlotOptions holds optional parameters for plotting functions.
 type PlotOptions struct {
-	Color           optional.Value[render.Color] // unset uses automatic color cycling
-	EdgeColor       optional.Value[render.Color]
-	LineWidth       optional.Value[float64] // unset uses the cycled or rc width
-	LineCap         optional.Value[render.LineCap]
-	LineJoin        optional.Value[render.LineJoin]
-	EdgeWidth       optional.Value[float64]
-	Dashes          []float64     // dash pattern in pixels; overrides LineStyle
+	Color     optional.Value[render.Color] // unset uses automatic color cycling
+	EdgeColor optional.Value[render.Color]
+	LineWidth optional.Value[float64] // unset uses the cycled or rc width
+	LineCap   optional.Value[render.LineCap]
+	LineJoin  optional.Value[render.LineJoin]
+	EdgeWidth optional.Value[float64]
+	Dashes    []float64 // dash pattern in pixels; overrides LineStyle
+	// DashOffset is the dash phase in pixels — the offset of Matplotlib's
+	// linestyle=(offset, (on, off, ...)) tuple. It applies to Dashes and to a
+	// pattern resolved from LineStyle alike.
+	DashOffset      float64
 	LineStyle       LineStyle     // typed matplotlib linestyle ("-", "--", "-.", ":", "none"); "" = unset
 	DrawStyle       LineDrawStyle // zero value connects points directly
 	Marker          optional.Value[MarkerType]
@@ -171,7 +175,7 @@ func (a *Axes) plot(x, y []float64, opt PlotOptions) *Line2D {
 		XY:                points,
 		W:                 lineWidth,
 		Col:               color,
-		Dashes:            PixelDashes(dashes...),
+		Dashes:            PixelDashes(dashes...).WithOffset(opt.DashOffset),
 		DrawStyle:         opt.DrawStyle,
 		Label:             opt.Label,
 		DashCap:           rcLines.DashCap,

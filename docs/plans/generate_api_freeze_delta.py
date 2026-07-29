@@ -494,6 +494,35 @@ _add(
     "method Figure.CanvasSize",
 )
 
+_add(
+    "post-freeze-addition",
+    "Added after the freeze by dash-phase support. Matplotlib's dash offset -- "
+    "the first element of linestyle=(offset, (on, off)) -- had no expression "
+    "anywhere in the port, which also made the gapcolor pass impossible to draw "
+    "the way Line2D.draw draws it. DashPattern.Offset carries the phase, "
+    "WithOffset and ScaledOffset read it (scaled by the line width, like "
+    "lines._scale_dashes), and SetLineStyleDashes is the tuple-linestyle "
+    "setter. Purely additive -- the existing pattern constructors are "
+    "unchanged.",
+    "core",
+    "method DashPattern.WithOffset",
+    "method DashPattern.ScaledOffset",
+    "method Line2D.SetLineStyleDashes",
+)
+
+_add(
+    "post-freeze-addition",
+    "Added after the freeze by dash-phase support. A dash sequence of odd "
+    "length alternates on/off forever, so its second pass inverts its first; "
+    "backends that pair the entries up as (on, off) -- AGG and gobasic -- have "
+    "to walk it twice, exactly as matplotlib's Dashes caster does. The pair "
+    "lives in render because it is part of how a Paint's Dashes and DashOffset "
+    "are to be read, not a detail of any one backend.",
+    "render",
+    "func NormalizeDashes",
+    "func NormalizeDashOffset",
+)
+
 
 def load(path: Path) -> tuple[bytes, dict]:
     raw = path.read_bytes()

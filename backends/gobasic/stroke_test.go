@@ -306,20 +306,30 @@ func TestApplyDashes_SimpleLine(t *testing.T) {
 	}
 }
 
-func TestApplyDashes_InvalidPattern(t *testing.T) {
+// TestApplyDashes_OddPatternCyclesInverted checks that an odd-length dash
+// sequence is walked twice rather than treated as invalid. It alternates on/off
+// forever, so its second pass inverts the first: [5, 2, 3] is [5, 2, 3, 5, 2, 3]
+// paired up. This dasher used to return the path solid instead.
+func TestApplyDashes_OddPatternCyclesInverted(t *testing.T) {
 	path := geom.Path{
 		C: []geom.Cmd{geom.MoveTo, geom.LineTo},
-		V: []geom.Pt{{X: 0, Y: 0}, {X: 10, Y: 0}},
+		V: []geom.Pt{{X: 0, Y: 0}, {X: 40, Y: 0}},
 	}
 
-	// Invalid dash pattern (odd number of elements)
-	dashes := []float64{5, 2, 3}
+	odd := applyDashes(path, []float64{5, 2, 3}, 0)
+	doubled := applyDashes(path, []float64{5, 2, 3, 5, 2, 3}, 0)
 
-	dashedPath := applyDashes(path, dashes, 0)
-
-	// Should return original path unchanged
-	if len(dashedPath.C) != len(path.C) {
-		t.Errorf("Expected original path to be returned for invalid dash pattern")
+	if len(odd.C) <= len(path.C) {
+		t.Fatalf("odd-length pattern left the path solid: %d commands", len(odd.C))
+	}
+	if len(odd.C) != len(doubled.C) || len(odd.V) != len(doubled.V) {
+		t.Fatalf("odd pattern produced %d/%d commands/vertices, doubled produced %d/%d",
+			len(odd.C), len(odd.V), len(doubled.C), len(doubled.V))
+	}
+	for i := range odd.V {
+		if odd.V[i] != doubled.V[i] {
+			t.Fatalf("vertex %d: odd %v, doubled %v", i, odd.V[i], doubled.V[i])
+		}
 	}
 }
 

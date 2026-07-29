@@ -579,6 +579,59 @@ func TestLine2DGapColorDrawsInverseDashPass(t *testing.T) {
 	}
 }
 
+// TestLine2DDashOffsetScalesLikeMatplotlib covers the tuple linestyle form
+// set_linestyle((offset, (on, off, ...))): the offset is scaled by the line
+// width alongside the lengths (lines._scale_dashes) and folded into one pattern
+// cycle (lines._get_dash_pattern).
+func TestLine2DDashOffsetScalesLikeMatplotlib(t *testing.T) {
+	px := 100.0 / 72.0
+	ctx := &DrawContext{
+		DataToPixel: Transform2D{
+			XScale:      transform.NewLinear(0, 1),
+			YScale:      transform.NewLinear(0, 1),
+			AxesToPixel: transform.NewAffine(geom.Affine{A: 100, D: 100}),
+		},
+		RC: style.Default,
+	}
+	newLine := func() *Line2D {
+		return &Line2D{
+			XY:  []geom.Pt{{X: 0, Y: 0}, {X: 1, Y: 0}},
+			W:   2,
+			Col: render.Color{B: 1, A: 1},
+		}
+	}
+
+	line := newLine()
+	line.SetLineStyleDashes(1, 4, 2)
+	r := &recordingRenderer{}
+	line.Draw(r, ctx)
+	if len(r.pathCalls) != 1 {
+		t.Fatalf("path calls = %d, want 1", len(r.pathCalls))
+	}
+	// Lengths and offset are both in points scaled by the 2pt line width.
+	if got, want := r.pathCalls[0].paint.DashOffset, 2*px; !floatApprox(got, want, 1e-9) {
+		t.Fatalf("dash offset = %v, want %v", got, want)
+	}
+
+	// An offset of one full cycle is the same as no offset at all.
+	cycled := newLine()
+	cycled.SetLineStyleDashes(6, 4, 2)
+	rc := &recordingRenderer{}
+	cycled.Draw(rc, ctx)
+	if got := rc.pathCalls[0].paint.DashOffset; !floatApprox(got, 0, 1e-9) {
+		t.Fatalf("whole-cycle dash offset = %v, want 0", got)
+	}
+
+	// A pixel-units pattern is not width-scaled, matching PixelDashes.
+	pixels := newLine()
+	pixels.Dashes = PixelDashes(4, 2).WithOffset(1)
+	rp := &recordingRenderer{}
+	pixels.Draw(rp, ctx)
+	if got := rp.pathCalls[0].paint.DashOffset; !floatApprox(got, 1, 1e-9) {
+		t.Fatalf("pixel-units dash offset = %v, want 1", got)
+	}
+}
+
 func floatSliceApprox(got, want []float64, tol float64) bool {
 	if len(got) != len(want) {
 		return false

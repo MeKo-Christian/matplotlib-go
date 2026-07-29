@@ -138,19 +138,28 @@ func (r *Renderer) drawPathDirect(p geom.Path, paint *render.Paint) {
 			r.ctx.SetMiterLimit(paint.MiterLimit)
 		}
 
-		// Handle dashes
+		// Handle dashes. AGG pairs the sequence up as (on, off), so an
+		// odd-length pattern has to be walked twice to cycle the way it is
+		// defined to; Matplotlib's Dashes caster does the same.
+		dashes := render.NormalizeDashes(paint.Dashes)
 		r.ctx.ClearDashes()
-		if len(paint.Dashes) >= 2 {
-			r.ctx.SetDashPattern(paint.Dashes, paint.DashOffset)
+		if len(dashes) >= 2 {
+			r.ctx.SetDashPattern(dashes, render.NormalizeDashOffset(dashes, paint.DashOffset))
 		}
 
-		for _, path := range chunkStrokePath(p, paint.MaxChunkVertices) {
-			r.buildPath(path)
+		for _, chunk := range chunkStrokePath(p, paint.MaxChunkVertices) {
+			// Each chunk is a separate Stroke, and AGG restarts the dash
+			// generator per stroke, so a chunk that resumes mid-polyline has to
+			// re-enter the pattern where the previous chunk left off.
+			if len(dashes) >= 2 && chunk.DashPhase != 0 {
+				r.ctx.SetDashPattern(dashes, render.NormalizeDashOffset(dashes, paint.DashOffset+chunk.DashPhase))
+			}
+			r.buildPath(chunk.Path)
 			r.ctx.Stroke()
 		}
 
 		// Clean up dashes
-		if len(paint.Dashes) >= 2 {
+		if len(dashes) >= 2 {
 			r.ctx.ClearDashes()
 		}
 	}

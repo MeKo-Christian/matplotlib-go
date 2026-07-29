@@ -145,3 +145,55 @@ func TestImageData_AlphaClamped(t *testing.T) {
 		t.Fatalf("SetAlpha(-0.2) = %v, want 0", got)
 	}
 }
+
+func TestNormalizeDashes(t *testing.T) {
+	cases := []struct {
+		name  string
+		in    []float64
+		want  []float64
+		alias bool
+	}{
+		{name: "even is passed through", in: []float64{4, 2}, want: []float64{4, 2}, alias: true},
+		{name: "odd is walked twice", in: []float64{1, 2, 3}, want: []float64{1, 2, 3, 1, 2, 3}},
+		{name: "single entry", in: []float64{5}, want: []float64{5, 5}},
+		{name: "empty", in: nil, want: nil, alias: true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := NormalizeDashes(tc.in)
+			if len(got) != len(tc.want) {
+				t.Fatalf("NormalizeDashes(%v) = %v, want %v", tc.in, got, tc.want)
+			}
+			for i := range got {
+				if got[i] != tc.want[i] {
+					t.Fatalf("NormalizeDashes(%v) = %v, want %v", tc.in, got, tc.want)
+				}
+			}
+		})
+	}
+}
+
+func TestNormalizeDashOffset(t *testing.T) {
+	cases := []struct {
+		name   string
+		dashes []float64
+		offset float64
+		want   float64
+	}{
+		{name: "already in range", dashes: []float64{4, 2}, offset: 5, want: 5},
+		{name: "whole cycle folds to zero", dashes: []float64{4, 2}, offset: 6, want: 0},
+		{name: "wraps", dashes: []float64{4, 2}, offset: 7, want: 1},
+		{name: "negative wraps forward", dashes: []float64{4, 2}, offset: -1, want: 5},
+		// The cycle of an odd pattern is the doubled sequence, not the sum of
+		// the entries as written.
+		{name: "odd pattern cycles twice", dashes: []float64{1, 2, 3}, offset: 6, want: 6},
+		{name: "degenerate pattern", dashes: []float64{0, 0}, offset: 3, want: 0},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := NormalizeDashOffset(tc.dashes, tc.offset); got != tc.want {
+				t.Fatalf("NormalizeDashOffset(%v, %v) = %v, want %v", tc.dashes, tc.offset, got, tc.want)
+			}
+		})
+	}
+}

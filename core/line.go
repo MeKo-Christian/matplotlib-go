@@ -72,6 +72,11 @@ const (
 type DashPattern struct {
 	Lengths []float64
 	Units   DashUnits
+	// Offset is the dash phase, in the same units as Lengths — the first
+	// element of Matplotlib's linestyle=(offset, (on, off, ...)) tuple. It is
+	// scaled alongside Lengths, so a Matplotlib-units pattern offsets by points
+	// scaled by the stroke width, exactly as lines._scale_dashes does.
+	Offset float64
 }
 
 // PixelDashes returns a dash pattern whose on/off lengths are renderer pixels,
@@ -86,10 +91,30 @@ func MatplotlibDashes(lengths ...float64) DashPattern {
 	return DashPattern{Lengths: append([]float64(nil), lengths...), Units: DashUnitsMatplotlib}
 }
 
+// WithOffset returns the pattern with its dash phase set, mirroring the offset
+// in Matplotlib's linestyle=(offset, (on, off, ...)) tuple form.
+func (d DashPattern) WithOffset(offset float64) DashPattern {
+	d.Offset = offset
+	return d
+}
+
 // Scaled returns the dash lengths in renderer pixels for the given stroke width,
 // or nil for a solid line.
 func (d DashPattern) Scaled(lineWidth float64) []float64 {
 	return lineDashesForPaint(d.Lengths, lineWidth, d.Units)
+}
+
+// ScaledOffset returns the dash phase in renderer pixels for the given stroke
+// width, folded into one pattern cycle the way _get_dash_pattern normalizes it.
+func (d DashPattern) ScaledOffset(lineWidth float64) float64 {
+	if len(d.Lengths) == 0 || d.Offset == 0 {
+		return 0
+	}
+	offset := d.Offset
+	if d.Units == DashUnitsMatplotlib {
+		offset *= lineWidth
+	}
+	return render.NormalizeDashOffset(d.Scaled(lineWidth), offset)
 }
 
 // MarkEveryMode identifies a marker subsampling strategy for Line2D.
@@ -290,6 +315,14 @@ func (l *Line2D) SetDashes(seq ...float64) {
 	l.SetStale(true)
 }
 
+// SetLineStyleDashes sets the dash sequence and its phase, porting Matplotlib's
+// tuple linestyle form set_linestyle((offset, (on, off, ...))). Lengths and
+// offset are both in Line2D.set_dashes units.
+func (l *Line2D) SetLineStyleDashes(offset float64, seq ...float64) {
+	l.SetDashes(seq...)
+	l.Dashes.Offset = offset
+}
+
 // SetGapColor sets the color used to paint dashed-line gaps.
 func (l *Line2D) SetGapColor(color render.Color) {
 	if l == nil {
@@ -431,6 +464,7 @@ func (l *Line2D) Draw(r render.Renderer, ctx *DrawContext) {
 		MiterLimit:  10.0, // Standard miter limit
 		Stroke:      l.ApplyArtistAlpha(l.Col),
 		Dashes:      dashes,
+		DashOffset:  l.Dashes.ScaledOffset(widthPx),
 		PathEffects: linePathEffects(ctx, l.PathEffects),
 		Snap:        render.SnapAuto,
 		Simplify:    ctx != nil && ctx.RC.PathSimplify,

@@ -802,19 +802,38 @@ mentioned (`basic_line`) carry real divergences. Findings:
         0.20/85/8. `-update-golden` moved exactly one golden: `GapColor` has a
         single fixture and every other paint carries offset 0.
 
-        Not fixed, and recorded here rather than silently left:
+        Three further dash defects surfaced while measuring this case. None of
+        them moved a golden — no catalog case reaches any of them — but all
+        three are now fixed rather than carried:
 
-        - **Dash phase does reset at AGG chunk boundaries.** `chunkStrokePath`
-          issues one `Stroke()` per 32768-vertex chunk and `ConvAdaptorVCGen`
-          restarts the generator per stroke, so a dashed polyline past that size
-          gets a visible phase discontinuity. This is the bug the old 3.4.3
-          entry was describing — it is real, just not what this case hit. No
-          catalog case reaches that vertex count; latent.
-        - **`linestyle=(offset, (on, off))` is still unsupported.**
-          `core.DashPattern` carries no offset, so only the paint-level phase
-          added here exists. A Line2D cannot yet be given a user dash phase.
-        - **`SetDashPattern` drops an odd trailing dash element** where
-          matplotlib cycles it with on/off swapped.
+        - **Dash phase reset at AGG chunk boundaries.** `chunkStrokePath` issues
+          one `Stroke()` per 32768-vertex chunk and `ConvAdaptorVCGen` restarts
+          the generator per stroke, so a dashed polyline past that size snapped
+          back to the start of the pattern at every boundary. This is the bug
+          the old 3.4.3 entry was describing — real, just not what this case
+          hit. Chunking is an implementation detail of the port, not of
+          matplotlib, so it must be invisible: `chunkStrokePath` now returns a
+          `pathChunk` carrying the arc length since the last *genuine* MoveTo,
+          and the draw loop re-enters the pattern there. A chunk that opens on a
+          MoveTo present in the source path still reports phase 0, because AGG
+          is supposed to restart at a real subpath.
+        - **`linestyle=(offset, (on, off))` was unsupported.** `DashPattern`
+          gained `Offset`, in the same units as `Lengths` and scaled with them
+          (`lines._scale_dashes` scales the offset by the line width too), plus
+          `WithOffset`/`ScaledOffset` and the `Line2D.SetLineStyleDashes`
+          setter; `PlotOptions.DashOffset` is the `ax.Plot` spelling. The phase
+          is folded into one cycle at the point it reaches the paint, matching
+          `_get_dash_pattern`'s `offset %= dsum`.
+        - **Odd-length dash patterns were mishandled two different ways.** AGG's
+          `SetDashPattern` dropped the unpaired trailing entry (`[10, 5, 20]`
+          collapsed to a 15px `[10, 5]` cycle) and gobasic — which is also the
+          Skia CPU fallback — rejected odd lengths outright and drew the line
+          solid. An odd sequence alternates on/off forever, so its second pass
+          inverts its first; matplotlib's `Dashes` caster walks it twice "in
+          accordance with the pdf/ps/svg specs", and those specs cycle odd
+          arrays that way of their own accord. `render.NormalizeDashes` does the
+          doubling for the two backends that build explicit `(on, off)` pairs.
+          SVG, PDF, PS and PGF emit the array as given and needed no change.
 
   - [ ] **3.4.4 `specgram_psd`: one image row, and the 3.3.6 note is stale.**
         354/211 px, RMSE 1.003 against 1.05 (1.05x — the tightest slack after

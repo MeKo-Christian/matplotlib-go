@@ -3,6 +3,7 @@ package render
 import (
 	"errors"
 	"image"
+	"math"
 
 	"github.com/cwbudde/matplotlib-go/geom"
 )
@@ -57,6 +58,59 @@ const (
 	CompositeDarken
 	CompositeLighten
 )
+
+// NormalizeDashes returns a dash sequence with an even number of entries, so
+// that consumers which pair the entries up as (on, off) reproduce the cycling a
+// dash pattern is defined to have.
+//
+// An odd-length pattern alternates on/off forever, which means the second pass
+// through it is the inverse of the first: [1, 2, 3] paints 1 on, 2 off, 3 on,
+// 1 off, 2 on, 3 off, and only then repeats. Matplotlib gets this by walking an
+// odd sequence twice when it hands the dashes to AGG (the Dashes type caster in
+// src/_backend_agg_basic_types.h, "in accordance with the pdf/ps/svg specs"),
+// and the PDF, PostScript and SVG specs cycle odd arrays the same way of their
+// own accord. Backends that build explicit (on, off) pairs need this; backends
+// that emit the array into one of those formats do not.
+//
+// The result aliases the input when the length is already even.
+func NormalizeDashes(dashes []float64) []float64 {
+	if len(dashes)%2 == 0 {
+		return dashes
+	}
+	doubled := make([]float64, 0, 2*len(dashes))
+	doubled = append(doubled, dashes...)
+	doubled = append(doubled, dashes...)
+	return doubled
+}
+
+// dashPatternLength returns the summed length of one full cycle of a dash
+// pattern, or 0 for a pattern that paints nothing.
+func dashPatternLength(dashes []float64) float64 {
+	total := 0.0
+	for _, d := range dashes {
+		total += d
+	}
+	if total <= 0 {
+		return 0
+	}
+	return total
+}
+
+// NormalizeDashOffset folds a dash phase into [0, cycle) for the given pattern,
+// matching Matplotlib's `offset %= dsum` in lines._get_dash_pattern. Keeping the
+// phase small matters beyond tidiness: AGG's calc_dash_start walks the pattern
+// one entry at a time, so an unreduced offset costs a loop iteration per dash.
+func NormalizeDashOffset(dashes []float64, offset float64) float64 {
+	total := dashPatternLength(NormalizeDashes(dashes))
+	if total <= 0 {
+		return 0
+	}
+	offset = math.Mod(offset, total)
+	if offset < 0 {
+		offset += total
+	}
+	return offset
+}
 
 // PatternFill describes a renderer-neutral tiled path pattern.
 //

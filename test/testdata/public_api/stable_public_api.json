@@ -5632,6 +5632,14 @@
           "declaration": "func (DashPattern) Scaled(lineWidth float64) []float64"
         },
         {
+          "id": "method DashPattern.ScaledOffset",
+          "declaration": "func (DashPattern) ScaledOffset(lineWidth float64) float64"
+        },
+        {
+          "id": "method DashPattern.WithOffset",
+          "declaration": "func (DashPattern) WithOffset(offset float64) DashPattern"
+        },
+        {
           "id": "method DrawContext.AffineTransformFor",
           "declaration": "func (DrawContext) AffineTransformFor(spec CoordinateSpec) (geom.Affine, bool)"
         },
@@ -6126,6 +6134,10 @@
         {
           "id": "method Line2D.SetGapColor",
           "declaration": "func (Line2D) SetGapColor(color render.Color)"
+        },
+        {
+          "id": "method Line2D.SetLineStyleDashes",
+          "declaration": "func (Line2D) SetLineStyleDashes(offset float64, seq ...float64)"
         },
         {
           "id": "method Line2D.SetMarkEverySpec",
@@ -7197,7 +7209,7 @@
         },
         {
           "id": "type DashPattern",
-          "declaration": "type DashPattern struct{ Lengths []float64; Units DashUnits }"
+          "declaration": "type DashPattern struct{ Lengths []float64; Units DashUnits; Offset float64 }"
         },
         {
           "id": "type DashUnits",
@@ -7585,7 +7597,7 @@
         },
         {
           "id": "type PlotOptions",
-          "declaration": "type PlotOptions struct{ Color optional.Value[render.Color]; EdgeColor optional.Value[render.Color]; LineWidth optional.Value[float64]; LineCap optional.Value[render.LineCap]; LineJoin optional.Value[render.LineJoin]; EdgeWidth optional.Value[float64]; Dashes []float64; LineStyle LineStyle; DrawStyle LineDrawStyle; Marker optional.Value[MarkerType]; MarkerStyle optional.Value[MarkerStyle]; MarkerPath optional.Value[geom.Path]; MarkerSize optional.Value[float64]; MarkerFaceColor optional.Value[render.Color]; MarkerEdgeColor optional.Value[render.Color]; MarkerFaceSpec optional.Value[MarkerColorSpec]; MarkerEdgeSpec optional.Value[MarkerColorSpec]; MarkerFaceAlt MarkerColorSpec; MarkerEdgeWidth optional.Value[float64]; MarkEvery int; MarkEverySpec MarkEverySpec; Label string; Alpha optional.Value[float64]; LevelCount int; Levels []float64; ZDir string; Offset optional.Value[float64]; RStride optional.Value[int]; CStride optional.Value[int]; RCount optional.Value[int]; CCount optional.Value[int]; FaceColors []render.Color; Shade optional.Value[bool]; Antialiased optional.Value[bool]; Colormap optional.Value[string]; Norm ScalarNormalizer; VMin optional.Value[float64]; VMax optional.Value[float64]; AxLimClip bool }"
+          "declaration": "type PlotOptions struct{ Color optional.Value[render.Color]; EdgeColor optional.Value[render.Color]; LineWidth optional.Value[float64]; LineCap optional.Value[render.LineCap]; LineJoin optional.Value[render.LineJoin]; EdgeWidth optional.Value[float64]; Dashes []float64; DashOffset float64; LineStyle LineStyle; DrawStyle LineDrawStyle; Marker optional.Value[MarkerType]; MarkerStyle optional.Value[MarkerStyle]; MarkerPath optional.Value[geom.Path]; MarkerSize optional.Value[float64]; MarkerFaceColor optional.Value[render.Color]; MarkerEdgeColor optional.Value[render.Color]; MarkerFaceSpec optional.Value[MarkerColorSpec]; MarkerEdgeSpec optional.Value[MarkerColorSpec]; MarkerFaceAlt MarkerColorSpec; MarkerEdgeWidth optional.Value[float64]; MarkEvery int; MarkEverySpec MarkEverySpec; Label string; Alpha optional.Value[float64]; LevelCount int; Levels []float64; ZDir string; Offset optional.Value[float64]; RStride optional.Value[int]; CStride optional.Value[int]; RCount optional.Value[int]; CCount optional.Value[int]; FaceColors []render.Color; Shade optional.Value[bool]; Antialiased optional.Value[bool]; Colormap optional.Value[string]; Norm ScalarNormalizer; VMin optional.Value[float64]; VMax optional.Value[float64]; AxLimClip bool }"
         },
         {
           "id": "type PlotOrientation",
@@ -9604,6 +9616,14 @@
         {
           "id": "func NormalPathEffect",
           "declaration": "func NormalPathEffect() PathEffect"
+        },
+        {
+          "id": "func NormalizeDashOffset",
+          "declaration": "func NormalizeDashOffset(dashes []float64, offset float64) float64"
+        },
+        {
+          "id": "func NormalizeDashes",
+          "declaration": "func NormalizeDashes(dashes []float64) []float64"
         },
         {
           "id": "func ParseFontProperties",

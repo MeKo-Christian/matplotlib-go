@@ -251,6 +251,7 @@ func (p *Patch) strokePaint(rc *style.RC, color render.Color, edgeWidth float64)
 		LineJoin:    p.LineJoin,
 		LineCap:     p.LineCap,
 		Dashes:      p.Dashes.Scaled(widthPx),
+		DashOffset:  p.Dashes.ScaledOffset(widthPx),
 		PathEffects: devicePathEffects(*rc, p.PathEffects),
 		Snap:        render.SnapAuto,
 		Sketch:      p.Sketch,
@@ -299,6 +300,7 @@ func (p *Patch) drawStyledPath(r render.Renderer, rc *style.RC, fillPath, stroke
 				paint.LineJoin = p.LineJoin
 				paint.LineCap = p.LineCap
 				paint.Dashes = p.Dashes.Scaled(edgeWidthPx)
+				paint.DashOffset = p.Dashes.ScaledOffset(edgeWidthPx)
 			}
 		}
 		if faceColor.A > 0 || combinedStroke || (nativeHatch && p.Hatch != "") {

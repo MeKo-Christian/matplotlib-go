@@ -268,8 +268,42 @@ func TestPathPipelineChunksLargeOpenLinePaths(t *testing.T) {
 	if len(chunks) != 2 {
 		t.Fatalf("expected two chunks, got %d: %v", len(chunks), chunks)
 	}
-	if chunks[1].V[0] != chunks[0].V[len(chunks[0].V)-1] {
-		t.Fatalf("second chunk should restart at previous endpoint, got %v then %v", chunks[0].V, chunks[1].V)
+	first, second := chunks[0].Path, chunks[1].Path
+	if second.V[0] != first.V[len(first.V)-1] {
+		t.Fatalf("second chunk should restart at previous endpoint, got %v then %v", first.V, second.V)
+	}
+	// The split is artificial, so the dash pattern has to carry across it: the
+	// second chunk resumes at the arc length already covered by the first.
+	if chunks[0].DashPhase != 0 {
+		t.Fatalf("first chunk should start at phase 0, got %v", chunks[0].DashPhase)
+	}
+	if want := second.V[0].X; chunks[1].DashPhase != want {
+		t.Fatalf("second chunk dash phase = %v, want %v", chunks[1].DashPhase, want)
+	}
+}
+
+func TestPathChunkDashPhaseResetsAtGenuineSubpaths(t *testing.T) {
+	// A real MoveTo restarts the pattern in AGG, so a chunk that opens on one
+	// must report phase 0 even though earlier subpaths covered ground.
+	var p geom.Path
+	p.MoveTo(geom.Pt{})
+	for i := 1; i < 5; i++ {
+		p.LineTo(geom.Pt{X: float64(i)})
+	}
+	p.MoveTo(geom.Pt{X: 100})
+	for i := 1; i < 5; i++ {
+		p.LineTo(geom.Pt{X: 100 + float64(i)})
+	}
+
+	chunks := chunkStrokePath(p, 5)
+	if len(chunks) != 2 {
+		t.Fatalf("expected two chunks, got %d", len(chunks))
+	}
+	if chunks[1].Path.V[0].X != 100 {
+		t.Fatalf("second chunk should open on the second subpath, got %v", chunks[1].Path.V[0])
+	}
+	if chunks[1].DashPhase != 0 {
+		t.Fatalf("a chunk opening on a genuine MoveTo should have phase 0, got %v", chunks[1].DashPhase)
 	}
 }
 
@@ -614,5 +648,89 @@ func TestPathDashOffsetShiftsPattern(t *testing.T) {
 		if shifted[x] {
 			t.Fatalf("column %d is inked at both offset 0 and offset 10; dash offset was ignored", x)
 		}
+	}
+}
+
+// dashedLineColumns renders one long horizontal dashed line and returns the
+// inked columns along it, so tests can compare rasterizations that should agree.
+func dashedLineColumns(t *testing.T, width int, paint *render.Paint) map[int]bool {
+	t.Helper()
+	r := mustNew(t, width, 20)
+	var p geom.Path
+	p.MoveTo(geom.Pt{X: 0, Y: 10})
+	for x := 1; x <= width; x++ {
+		p.LineTo(geom.Pt{X: float64(x), Y: 10})
+	}
+	paint.LineWidth = 2
+	paint.Stroke = render.Color{A: 1}
+	paint.LineCap = render.CapButt
+	r.Path(p, paint)
+
+	img := r.Image()
+	cols := map[int]bool{}
+	for x := 0; x < width; x++ {
+		cr, _, _, _ := img.At(x, 10).RGBA()
+		if cr>>8 < 128 {
+			cols[x] = true
+		}
+	}
+	return cols
+}
+
+// TestPathDashPhaseSurvivesChunkBoundaries checks that splitting a long polyline
+// into several Stroke calls does not restart the dash pattern. AGG's dash
+// generator resets per stroke, so a chunked path has to re-enter the pattern at
+// the arc length the previous chunk ended on.
+func TestPathDashPhaseSurvivesChunkBoundaries(t *testing.T) {
+	const width = 200
+	dashes := []float64{7, 5} // a cycle that does not divide the chunk length
+
+	whole := dashedLineColumns(t, width, &render.Paint{Dashes: dashes})
+	chunked := dashedLineColumns(t, width, &render.Paint{Dashes: dashes, MaxChunkVertices: 16})
+
+	if len(whole) == 0 {
+		t.Fatal("expected dashed ink")
+	}
+	for x := 0; x < width; x++ {
+		if whole[x] != chunked[x] {
+			t.Fatalf("column %d: unchunked inked=%v, chunked inked=%v; dash phase restarted at a chunk boundary",
+				x, whole[x], chunked[x])
+		}
+	}
+}
+
+// TestPathOddDashPatternCyclesInverted checks that an odd-length dash pattern
+// alternates on/off across its second pass rather than repeating the first.
+// Matplotlib walks such a sequence twice before handing it to AGG (the Dashes
+// caster in src/_backend_agg_basic_types.h), and the pdf/ps/svg specs cycle odd
+// arrays the same way.
+func TestPathOddDashPatternCyclesInverted(t *testing.T) {
+	const width = 200
+	// [10, 5, 20] paints 10 on, 5 off, 20 on, 10 off, 5 on, 20 off, and only
+	// then repeats — the same thing as the even pattern spelled out twice. The
+	// old code dropped the unpaired trailing entry instead, collapsing this to
+	// a 15px [10, 5] cycle.
+	odd := dashedLineColumns(t, width, &render.Paint{Dashes: []float64{10, 5, 20}})
+	doubled := dashedLineColumns(t, width, &render.Paint{Dashes: []float64{10, 5, 20, 10, 5, 20}})
+	truncated := dashedLineColumns(t, width, &render.Paint{Dashes: []float64{10, 5}})
+
+	if len(odd) == 0 {
+		t.Fatal("odd-length dash pattern rendered nothing")
+	}
+	for x := 0; x < width; x++ {
+		if odd[x] != doubled[x] {
+			t.Fatalf("column %d: [10 5 20] inked=%v, [10 5 20 10 5 20] inked=%v; odd pattern did not cycle inverted",
+				x, odd[x], doubled[x])
+		}
+	}
+	same := true
+	for x := 0; x < width; x++ {
+		if odd[x] != truncated[x] {
+			same = false
+			break
+		}
+	}
+	if same {
+		t.Fatal("[10 5 20] rendered as [10 5]; the unpaired entry was dropped rather than cycled")
 	}
 }

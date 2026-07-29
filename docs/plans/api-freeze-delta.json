@@ -8,8 +8,8 @@
   },
   "freeze": {
     "path": "test/testdata/public_api/stable_public_api.json",
-    "sha256": "8d5181e0be33038f7e32068b138704bdc077efde7e12423a42ad5c474c9f181d",
-    "symbol_count": 3181
+    "sha256": "e96b88fde8d8b8c54722461cdc16fd8b1f8cfbc064b41e7295309d999947663e",
+    "symbol_count": 3186
   },
   "counts": {
     "removed": {
@@ -26,7 +26,7 @@
       "rename-target": 43,
       "renamed-draw-method": 3,
       "typed-enum": 24,
-      "post-freeze-addition": 5,
+      "post-freeze-addition": 10,
       "split-export": 19,
       "options-model": 5,
       "figure-output": 5,
@@ -4167,6 +4167,20 @@
     {
       "direction": "added",
       "package": "core",
+      "id": "method DashPattern.ScaledOffset",
+      "category": "post-freeze-addition",
+      "note": "Added after the freeze by dash-phase support. Matplotlib's dash offset -- the first element of linestyle=(offset, (on, off)) -- had no expression anywhere in the port, which also made the gapcolor pass impossible to draw the way Line2D.draw draws it. DashPattern.Offset carries the phase, WithOffset and ScaledOffset read it (scaled by the line width, like lines._scale_dashes), and SetLineStyleDashes is the tuple-linestyle setter. Purely additive -- the existing pattern constructors are unchanged."
+    },
+    {
+      "direction": "added",
+      "package": "core",
+      "id": "method DashPattern.WithOffset",
+      "category": "post-freeze-addition",
+      "note": "Added after the freeze by dash-phase support. Matplotlib's dash offset -- the first element of linestyle=(offset, (on, off)) -- had no expression anywhere in the port, which also made the gapcolor pass impossible to draw the way Line2D.draw draws it. DashPattern.Offset carries the phase, WithOffset and ScaledOffset read it (scaled by the line width, like lines._scale_dashes), and SetLineStyleDashes is the tuple-linestyle setter. Purely additive -- the existing pattern constructors are unchanged."
+    },
+    {
+      "direction": "added",
+      "package": "core",
       "id": "method Figure.CanvasSize",
       "category": "post-freeze-addition",
       "note": "Added after the freeze by the figure-size fidelity fix. Figure.SizePx is now the display extent matplotlib derives (figsize*dpi), which can sit a fraction of an ULP either side of the requested integer, so truncating it to size a canvas can allocate a pixel short. CanvasSize is the one place that rounding is decided; the animation writers, the CLI and the embed examples all read it. Purely additive -- SizePx itself is unchanged."
@@ -4212,6 +4226,13 @@
       "id": "method Figure.WriteTo",
       "category": "figure-output",
       "note": "The Figure.Save/WriteTo/Image output surface and its renderer registry."
+    },
+    {
+      "direction": "added",
+      "package": "core",
+      "id": "method Line2D.SetLineStyleDashes",
+      "category": "post-freeze-addition",
+      "note": "Added after the freeze by dash-phase support. Matplotlib's dash offset -- the first element of linestyle=(offset, (on, off)) -- had no expression anywhere in the port, which also made the gapcolor pass impossible to draw the way Line2D.draw draws it. DashPattern.Offset carries the phase, WithOffset and ScaledOffset read it (scaled by the line width, like lines._scale_dashes), and SetLineStyleDashes is the tuple-linestyle setter. Purely additive -- the existing pattern constructors are unchanged."
     },
     {
       "direction": "added",
@@ -5144,6 +5165,20 @@
       "id": "func CurrentFigManager",
       "category": "rename-target",
       "note": "Replacement for a renamed or relocated baseline symbol."
+    },
+    {
+      "direction": "added",
+      "package": "render",
+      "id": "func NormalizeDashOffset",
+      "category": "post-freeze-addition",
+      "note": "Added after the freeze by dash-phase support. A dash sequence of odd length alternates on/off forever, so its second pass inverts its first; backends that pair the entries up as (on, off) -- AGG and gobasic -- have to walk it twice, exactly as matplotlib's Dashes caster does. The pair lives in render because it is part of how a Paint's Dashes and DashOffset are to be read, not a detail of any one backend."
+    },
+    {
+      "direction": "added",
+      "package": "render",
+      "id": "func NormalizeDashes",
+      "category": "post-freeze-addition",
+      "note": "Added after the freeze by dash-phase support. A dash sequence of odd length alternates on/off forever, so its second pass inverts its first; backends that pair the entries up as (on, off) -- AGG and gobasic -- have to walk it twice, exactly as matplotlib's Dashes caster does. The pair lives in render because it is part of how a Paint's Dashes and DashOffset are to be read, not a detail of any one backend."
     },
     {
       "direction": "added",
