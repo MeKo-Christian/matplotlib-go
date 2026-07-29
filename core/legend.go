@@ -300,13 +300,16 @@ func (l *Legend) draw(r render.Renderer, ctx *DrawContext) {
 				Snap:      render.SnapAuto,
 			})
 		}
+		// Matplotlib builds the legend's FancyBboxPatch with a literal snap=True
+		// (legend.py, Legend.__init__), i.e. SNAP_TRUE — the frame is snapped even
+		// though its rounded corners are curves, which SNAP_AUTO would reject.
 		r.Path(boxPath, &render.Paint{
 			Fill:      l.BackgroundColor,
 			Stroke:    l.BorderColor,
 			LineWidth: l.BorderWidth,
 			LineJoin:  render.JoinMiter,
 			LineCap:   render.CapButt,
-			Snap:      render.SnapAuto,
+			Snap:      render.SnapOn,
 		})
 	}
 

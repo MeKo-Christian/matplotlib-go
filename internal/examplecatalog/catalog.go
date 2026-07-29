@@ -93,8 +93,10 @@ var cases = []Case{
 	{ID: "dashes", Topic: "lines", Title: "Dash Patterns", Description: "Multiple line styles showing dash arrays, cap styles, and legend labeling.", Showcase: true, MaxRMSE: 1.6},
 	{ID: "lines_markers_gallery", Topic: "lines", Title: "Line and Marker Style Gallery", Description: "A combined gallery of dash arrays, line joins and caps, a built-in marker grid with open-fill markers, and a multi-series legend.", WebDemoID: "lines", Showcase: true, Width: 840, Height: 620, MaxMeanAbs: 1.0, MaxRMSE: 2.8},
 	{ID: "line2d_semantics", Topic: "lines", Title: "Line2D Semantics", FixtureOnly: true, MaxRMSE: 2.6, MaxDiffPixels: 380, MaxLargestCluster: 23},
-	// MaxRMSE 3.3: MeanAbs 0.14 / PSNR ~52 dB; residual is sub-pixel marker-edge antialiasing under the 3.10.9 reference set.
-	{ID: "line2d_markers", Topic: "lines", Title: "Line2D Markers", FixtureOnly: true, SkiaParityFamily: "markers", MaxRMSE: 3.3, MaxDiffPixels: 4300, MaxLargestCluster: 2600},
+	// MaxRMSE 1.85: MeanAbs 0.03 / PSNR ~44 dB. The in-plot markers and the left
+	// spine are byte-exact; what remains is 2-px antialiasing specks at the ends
+	// of the legend handle lines.
+	{ID: "line2d_markers", Topic: "lines", Title: "Line2D Markers", FixtureOnly: true, SkiaParityFamily: "markers", MaxRMSE: 1.85, MaxDiffPixels: 800, MaxLargestCluster: 120},
 	{ID: "path_effects", Topic: "effects", Title: "Path Effects", FixtureOnly: true, MaxRMSE: 0.3, SkiaParityFamily: "effects"},
 	{ID: "pattern_gradient_effects", Topic: "effects", Title: "Pattern and Gradient Effects", FixtureOnly: true, MaxMeanAbs: 1.0, MaxRMSE: 1.608, SkiaParityFamily: "effects"},
 	// PSNR ~64 dB / MeanAbs ~0.01 / RMSE ~0.5: the sketch wiggle is RNG-, phase-
@@ -130,8 +132,9 @@ var cases = []Case{
 	{ID: "errorbar_basic", Topic: "errorbar", Title: "Error Bars", Description: "Symmetric and asymmetric error bars with caps, marker styling, and legend output.", WebDemoID: "errorbars", Showcase: true, SVGGoldenFamily: "errorbar", GoBasicSmokeFamily: "errorbar", SkiaParityFamily: "errorbar", MaxMeanAbs: 0.06, MaxRMSE: 0.16},
 	{ID: "multi_series_basic", Topic: "multi", Title: "Multiple Series", Description: "Several labeled lines sharing one axes, demonstrating color cycling and legends.", Showcase: true, SkiaParityFamily: "line", MaxRMSE: 0.8},
 	{ID: "multi_series_color_cycle", Topic: "multi", Title: "Color Cycle", MaxRMSE: 0.6},
-	// MaxRMSE 3.3: MeanAbs 0.12 / PSNR ~54 dB; residual is sub-pixel text/handle edge antialiasing under the 3.10.9 reference set.
-	{ID: "legend_layout_matrix", Topic: "legend", Title: "Legend Layout Matrix", FixtureOnly: true, MaxRMSE: 3.3, MaxDiffPixels: 3300, MaxLargestCluster: 2900},
+	// MaxRMSE 1.90: MeanAbs 0.03 / PSNR ~44 dB. The frame and handle-edge residual
+	// is gone; the scatter handle's circle geometry (see PLAN.md) is what is left.
+	{ID: "legend_layout_matrix", Topic: "legend", Title: "Legend Layout Matrix", FixtureOnly: true, MaxRMSE: 1.9, MaxDiffPixels: 700, MaxLargestCluster: 420},
 	{ID: "text_annotation_matrix", Topic: "annotation", Title: "Text Annotation Matrix", FixtureOnly: true, MaxRMSE: 3.0, MaxDiffPixels: 2300, MaxLargestCluster: 335},
 	{ID: "hist_basic", Topic: "histogram", Title: "Histogram Counts", Description: "A deterministic histogram with count bins, labels, and default bar styling.", Showcase: true, SVGGoldenFamily: "hist", GoBasicSmokeFamily: "histogram", SkiaParityFamily: "histogram", MaxRMSE: 1.1},
 	{ID: "hist_log", Topic: "histogram", Title: "Logarithmic Histogram", Description: "A count histogram on a logarithmic y axis, matching matplotlib hist(log=True).", Showcase: true, MaxRMSE: 1.1},
@@ -151,7 +154,8 @@ var cases = []Case{
 	{ID: "mathtext_fractions", Topic: "mathtext", Title: "MathText Fractions", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 4.5, MaxDiffPixels: 16, MaxLargestCluster: 8},
 	{ID: "mathtext_integrals", Topic: "mathtext", Title: "MathText Operators", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 0.3},
 	{ID: "mathtext_matrices", Topic: "mathtext", Title: "MathText Matrices", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 0.5},
-	{ID: "mathtext_inline_labels", Topic: "mathtext", Title: "MathText Inline Labels", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 1.608},
+	// MaxRMSE 0.20: the legend frame was this case's whole residual; 4 pixels differ.
+	{ID: "mathtext_inline_labels", Topic: "mathtext", Title: "MathText Inline Labels", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 0.2},
 	{ID: "mathtext_accents", Topic: "mathtext", Title: "MathText Accents", FixtureOnly: true, SkiaParityFamily: "mathtext", MaxRMSE: 1.608, MaxDiffPixels: 16, MaxLargestCluster: 8},
 	{ID: "mathtext_gallery", Topic: "mathtext", Title: "MathText Gallery", Description: "Fractions, roots, operators, fences, matrices, and inline MathText labels in one browsable figure.", Showcase: true, Width: 900, Height: 560, MaxRMSE: 0.1, MaxDiffPixels: 4, MaxLargestCluster: 4},
 	{ID: "text_layout_gallery", Topic: "text", Title: "Text Layout Gallery", Description: "Alignment, rotation, multiline layout, wrapping, and text bbox styling in one gallery.", Showcase: true, Width: 900, Height: 560, MaxMeanAbs: 1.0, MaxRMSE: 5.0},
@@ -205,8 +209,8 @@ var cases = []Case{
 	{ID: "figure_labels_composition", Topic: "composition", Title: "Figure Labels", Description: "A multi-axes figure with shared figure title, x label, y label, and legend placement.", WebDemoID: "subplots", Showcase: true, MaxRMSE: 1.608},
 	{ID: "colorbar_composition", Topic: "colorbar", Title: "Colorbar Composition", Description: "A composed figure that exercises image color mapping, shared colorbars, and layout spacing.", Showcase: true, GoBasicSmokeFamily: "colorbar", MaxRMSE: 0.8},
 	{ID: "colorbar_variants_gallery", Topic: "colorbar", Title: "Colorbar Variants Gallery", Description: "LogNorm, TwoSlopeNorm, BoundaryNorm draw edges, and under/over extension colorbars with labels.", WebDemoID: "colorbars", Showcase: true, Width: 1040, Height: 720, MaxRMSE: 4.4},
-	{ID: "annotation_composition", Topic: "annotation", Title: "Annotations", Description: "Text annotations, arrows, anchored labels, and mixed coordinate placement.", Showcase: true, GoBasicSmokeFamily: "annotation", MaxRMSE: 0.26, MaxDiffPixels: 560, MaxLargestCluster: 470},
-	{ID: "annotation_legend_offsetbox_gallery", Topic: "annotation", Title: "Annotation, Legend, and Offset Box Gallery", Description: "Annotation arrows, bbox annotations, multi-column legends, proxy handles, anchored text, drawing areas, packers, image boxes, and size bars.", WebDemoID: "annotations", Showcase: true, Width: 1040, Height: 720, MaxRMSE: 1.3, MaxDiffPixels: 3500, MaxLargestCluster: 1450},
+	{ID: "annotation_composition", Topic: "annotation", Title: "Annotations", Description: "Text annotations, arrows, anchored labels, and mixed coordinate placement.", Showcase: true, GoBasicSmokeFamily: "annotation", MaxRMSE: 0.1, MaxDiffPixels: 40, MaxLargestCluster: 20},
+	{ID: "annotation_legend_offsetbox_gallery", Topic: "annotation", Title: "Annotation, Legend, and Offset Box Gallery", Description: "Annotation arrows, bbox annotations, multi-column legends, proxy handles, anchored text, drawing areas, packers, image boxes, and size bars.", WebDemoID: "annotations", Showcase: true, Width: 1040, Height: 720, MaxRMSE: 1.25, MaxDiffPixels: 2300, MaxLargestCluster: 550},
 	{ID: "patch_showcase", Topic: "patches", Title: "Patch Showcase", Description: "Rectangles, circles, ellipses, polygons, path patches, fancy arrows, fancy boxes, hatches, alpha, fills, and strokes.", Optional: true, WebDemoID: "patches", Showcase: true, SVGGoldenFamily: "hatch_bars", GoBasicSmokeFamily: "patch_hatch", SkiaParityFamily: "patch_hatch", MaxRMSE: 1.608},
 	{ID: "patch_style_matrix", Topic: "patches", Title: "Patch Style Matrix", FixtureOnly: true, MaxRMSE: 2.9, MaxDiffPixels: 3150, MaxLargestCluster: 75},
 	{ID: "mesh_contour_tri", Topic: "mesh", Title: "Meshes and Contours", Optional: true, WebDemoID: "mesh", Description: "PColorMesh, contour/contourf, Hist2D, triplot, tripcolor, and tricontour.", Showcase: true, GoBasicSmokeFamily: "mesh", SkiaParityFamily: "mesh", MaxRMSE: 2.6},
@@ -276,7 +280,7 @@ var cases = []Case{
 	{ID: "triangulation_gallery", Topic: "unstructured", Title: "Triangulation Gallery", Description: "A focused triangulation gallery covering triplot, tripcolor, tricontour, tricontourf, and masked pcolormesh behavior.", Optional: true, WebDemoID: "triangulation", Width: 1320, Height: 760, Showcase: true, MaxRMSE: 2.9},
 	{ID: "arrays_showcase", Topic: "arrays", Title: "Matrix Helpers", Optional: true, WebDemoID: "matrix", Description: "MatShow, sparsity spy plots, annotated heatmaps, and colorbars.", Width: 1240, Height: 620, Showcase: true, GoBasicSmokeFamily: "matrix", MaxRMSE: 3.1},
 	{ID: "widgets_gallery", Topic: "widgets", Title: "Widgets and Selectors", Description: "Buttons, sliders, range sliders, text boxes, check and radio buttons, selectors, cursor, and multi-cursor helpers.", Optional: true, Width: 1100, Height: 760, Showcase: true, GoBasicSmokeFamily: "widgets", MaxRMSE: 5.0},
-	{ID: "animation_gallery", Topic: "animation", Title: "Animation Playback", Description: "FuncAnimation and ArtistAnimation setup with repeat, repeat-delay, blit, and explicit unsupported writer behavior.", Optional: true, WebDemoID: "animation", Width: 1000, Height: 560, Showcase: true, GoBasicSmokeFamily: "animation", MaxRMSE: 1.5},
+	{ID: "animation_gallery", Topic: "animation", Title: "Animation Playback", Description: "FuncAnimation and ArtistAnimation setup with repeat, repeat-delay, blit, and explicit unsupported writer behavior.", Optional: true, WebDemoID: "animation", Width: 1000, Height: 560, Showcase: true, GoBasicSmokeFamily: "animation", MaxRMSE: 0.2},
 	{ID: "animation_line_frame", Topic: "animation", Title: "Animated Line Frame", Description: "Deterministic frame-N capture of a traveling-wave FuncAnimation line plot.", FixtureOnly: true, Width: 640, Height: 360, MaxMeanAbs: 1.5, MaxRMSE: 1.433},
 	{ID: "animation_scatter_frame", Topic: "animation", Title: "Animated Scatter Frame", Description: "Deterministic frame-N capture of an orbiting scatter/collection animation with scalar-mapped marker colors.", FixtureOnly: true, Width: 640, Height: 360, MaxMeanAbs: 1.5, MaxRMSE: 1.433},
 	{ID: "animation_imshow_frame", Topic: "animation", Title: "Animated Heatmap Frame", Description: "Deterministic frame-N capture of a ripple imshow (heatmap) animation.", FixtureOnly: true, Width: 640, Height: 360, MaxMeanAbs: 1.5, MaxRMSE: 1.433},

@@ -616,11 +616,14 @@ mentioned (`basic_line`) carry real divergences. Findings:
       [-2, 2] that minimizes the residual **of that cluster alone** — a local
       probe, unrelated to the audit's whole-frame `family` column.
 
-      Sequencing: 3.4.2 first. Marker path snapping is the only hypothesis here
-      that plausibly explains residuals in several other cases (bar edges,
-      patch borders, legend handles), so confirming or killing it changes what
-      the rest of the list is worth. 3.4.7 is the cheapest — an API gap with a
-      known answer. 3.4.9 is the deepest and should go last.
+      Sequencing: 3.4.2 went first, on the theory that marker path snapping was
+      the only hypothesis here that plausibly explained residuals in several
+      other cases (bar edges, patch borders, legend handles). **It killed that
+      hypothesis** — marker snapping was already correct and the residual was
+      two legend defects instead — so 3.4.5, 3.4.8 and 3.4.12 no longer have a
+      shared cause waiting for them and must be measured on their own. 3.4.7 is
+      the cheapest — an API gap with a known answer. 3.4.9 is the deepest and
+      should go last.
 
   - [x] **3.4.1 `mathtext_basic`: the rotated y-axis label.** Its whole residual
         was the `amplitude $\frac{1}{\sqrt{2}}$` y-label, drawn one device pixel
@@ -671,23 +674,72 @@ mentioned (`basic_line`) carry real divergences. Findings:
         `add_axes([0.10, 0.14, ...])` simply does not leave room for a
         two-level fraction in the y-label at 640x360.
 
-  - [ ] **3.4.2 `line2d_markers`: marker paths are not snapped.** 3,385/505 px,
-        RMSE 3.227 against a 3.30 ceiling — the tightest slack in the catalog
-        (1.02x), so this case fails on any regression at all. Two distinct
-        residuals. The first is 54 clusters of 10-50 px sitting exactly on the
-        marker glyphs (x[77:92] and x[79:90] near y 78-90, 126-133, 158-177);
-        magnified, the port's unfilled square marker has a soft two-pixel edge
-        where matplotlib's is crisp and grid-aligned, and no integer offset
-        cancels it — it is an antialiasing difference, not a placement one.
-        matplotlib draws markers through `RendererAgg.draw_markers` with the
-        gc's snap state, and `SNAP_AUTO` snaps any path whose segments are all
-        axis-aligned, which a square marker is. Check whether the port routes
-        marker paths through `snapPath` at all; `drawMathTextLayout` already
-        does this for mathtext rules, so the machinery exists.
-        The second is one 211-px vertical line at x=64 (the left spine) with
-        p50 amplitude 33, which a local `(dx,dy)=(-1,-1)` cancels to a single
-        pixel. Confirm whether that is the spine or a marker column before
-        assuming the two share a cause.
+  - [x] **3.4.2 `line2d_markers`: two legend defects, not marker snapping.**
+        Done 2026-07-28. The entry this replaces localized the residual to the
+        marker glyphs and "the left spine" and asked whether the port routes
+        marker paths through `snapPath` at all. Both were wrong, and the
+        localization was off by an artist in each case.
+
+        **Marker snapping was never missing.** `Line2D` markers reach
+        `agg.DrawMarkers`, which sets `SnapAuto` whenever `MarkerItem.SnapSet`
+        is false, and the axis-aligned square passes `shouldSnapPath`. The
+        in-plot square marker already agreed with matplotlib to the last LSB
+        (`75` where matplotlib writes `76`). The left spine was likewise already
+        byte-exact — it is at device x **58**, where both images read
+        `[241 0 241]`; x=64 is the legend frame's left edge. So the "marker path
+        snapping" hypothesis that 3.4.5, 3.4.8 and 3.4.12 were all deferring to
+        does not exist. Every >32-amplitude pixel was inside the legend.
+
+        **The legend's marker edge width was passed in points.**
+        `drawMarkerSample` computes `markerEdgeWidthPx` and the half-fill branch
+        used it, but the main branch passed the raw points value. One wrong unit
+        produced both visible symptoms, because `snapPath` keys its half-pixel
+        offset off `round(linewidth)%2` exactly as `PathSnapper` does: at 1.4 pt
+        / DPI 100 the port stroked 1.4 px and rounded to 1 (odd → `snapValue`
+        0.5), where matplotlib strokes 1.944 px and rounds to 2 (even → 0.0).
+        Hence a 3-px soft band centred on x=78.5 against matplotlib's crisp 2-px
+        band centred on 78.0. Coverage sums pin it: 0.201+1.0+0.201 = 1.402
+        against 0.973+0.973 = 1.946. The half-fill entries, already correct,
+        were the ones with 3-8 px clusters instead of 38-51.
+
+        **The legend frame was not snapped.** `legend.py` builds the
+        `legendPatch` with a literal `snap=True`, i.e. `SNAP_TRUE`, which snaps
+        the rounded box *despite* its curves — `SNAP_AUTO` would reject them,
+        and `SnapAuto` is what the port passed. The port's layout was already
+        right: instrumenting matplotlib gives the identical pre-snap patch,
+        device x `[64.5444, 223.4194]`, y `[96.2444, 309.8556]`. Applying
+        `floor(v+0.5)+0.5` to `devPath`'s `(x, height - y)` reproduces
+        matplotlib's measured edges exactly — 65.5 / 223.5 / 50.5 / 264.5 — and
+        the port was rendering the raw unsnapped 64.57 / 223.4 / 50.09 / 263.82.
+
+        Result: 3,385/505 px to 673/52, RMSE 3.227 to 1.594; the legend square
+        handle now lands on matplotlib's columns and the frame's left edge is
+        byte-identical. Tolerances 3.3/4300/2600 to 1.85/800/120. What is left
+        is 2-px antialiasing specks at the ends of the legend handle lines.
+
+        Both fixes are global to legends, so `-update-golden` moved 12 goldens
+        plus `mixed_raster_vector`'s Go-authored PDF and SVG goldens (the SVG
+        diff is the marker edge width, `0.45` to `0.625` = 0.45·100/72, which is
+        the bug stated in one number). Every case with a matplotlib reference
+        improved on differing-pixel count; `mathtext_inline_labels` (1,013 px to
+        4), `animation_gallery` (1,142 to 73) and `annotation_composition` (506
+        to 8) were almost entirely legend frame, and their ceilings were
+        ratcheted with the rest. `large_scatter` is the one case whose RMSE rose
+        (1.262 to 1.314) while its pixel count fell 2,573 to 1,773 and its
+        largest cluster 806 to 144: its legend handle now has matplotlib's
+        two-transition-pixel edge instead of one, which sharpens a pre-existing
+        1-px handle placement offset of the 3.4.10 family rather than adding a
+        new defect.
+
+        Not fixed, and worth its own subtask: `markerSnapMode` /
+        `markerSnapThreshold` in `core/scatter.go` is a marker-size threshold
+        table with **no matplotlib counterpart** — matplotlib decides purely on
+        geometry under `SNAP_AUTO`. It is also dead on AGG, because
+        `drawLegendMarkerPath` never sets `MarkerItem.SnapSet` and `DrawMarkers`
+        therefore overrides it with `SnapAuto`; it still steers the non-AGG
+        fallback. Also left alone: the legend *shadow* paint still passes
+        `SnapAuto`, since matplotlib draws the shadow through a separate
+        `Shadow` artist and there is no evidence it snaps.
 
   - [ ] **3.4.3 `line2d_semantics`: dash phase along the polyline.** 300/138 px,
         RMSE 2.403 against 2.60 (1.08x). 16 clusters, each a single ~4x5 dash
@@ -723,8 +775,9 @@ mentioned (`basic_line`) carry real divergences. Findings:
         the figure matches. So it is the last bar's right edge only — a width or
         right-edge rounding difference at the end of the bar sequence, not a bar
         placement error. Check `bar` edge rounding against matplotlib's
-        `Rectangle` path snapping, and whether 3.4.2's snapping finding covers
-        it.
+        `Rectangle` path snapping. 3.4.2 does **not** cover it: marker snapping
+        turned out to be correct already, so there is no shared snapping defect
+        to inherit and this bar edge has to be measured on its own.
 
   - [ ] **3.4.6 `patch_style_matrix`: bracket arrow heads are too narrow.**
         2,856/373 px, RMSE 2.643 against 2.90 (1.10x). The four largest clusters
@@ -741,7 +794,8 @@ mentioned (`basic_line`) carry real divergences. Findings:
         theorizing about them now.
 
   - [ ] **3.4.7 `annotation_legend_offsetbox_gallery`: `AnnotationBbox` cannot
-        express an arrow style.** 3,387/372 px, RMSE 1.168 against 1.30 (1.11x).
+        express an arrow style.** 2,026/289 px, RMSE 1.075 against 1.25 (1.16x)
+        — re-measured after 3.4.2.
         The largest cluster, y[219:229] x[717:728], is the offset box's
         connecting arrow: the port draws a solid filled triangular head where
         matplotlib draws an open caret. Same defect 3.3.7 fixed elsewhere, but
@@ -752,9 +806,11 @@ mentioned (`basic_line`) carry real divergences. Findings:
         (`UPDATE_PUBLIC_API_AUDIT=1 go test -tags freetype -run TestStablePublicAPIMatchesFrozenAudit .`)
         and the parity-status doc, and record it in
         `docs/plans/api-freeze-delta.md` — Phase 4 measures against that
-        artifact. Two further clusters, 40-42 px vertical runs at x[715:716] and
-        x[970:972] that `dx=-1` cancels exactly, are legend frame edges and are
-        a separate question.
+        artifact. The two further clusters this entry used to list — 40-42 px
+        vertical runs at x[715:716] and x[970:972] that `dx=-1` cancelled
+        exactly — were legend frame edges, and 3.4.2 closed them: the frame is
+        now snapped the way matplotlib's `snap=True` `legendPatch` is. The
+        connecting arrow is what remains.
 
   - [ ] **3.4.8 `text_annotation_matrix`: text-bbox borders.** 2,082/487 px,
         RMSE 2.761 against 3.00 (1.09x). The residual concentrates on
@@ -762,9 +818,12 @@ mentioned (`basic_line`) carry real divergences. Findings:
         a 24x3 horizontal strip at y[85:88] x[110:134], the bottom edge of an
         olive-bordered box — plus two arrow heads at x[447:463] that local
         offsets of `(-1,0)` and `(-2,+1)` only partly cancel. Split it: settle
-        the box borders first (they are the bulk and likely share a cause with
-        3.4.2/3.4.5), then re-measure the arrows against whatever 3.4.6 and
-        3.4.7 conclude before opening a third arrow investigation.
+        the box borders first (they are the bulk; the shared cause with 3.4.2
+        that this used to assume is gone, but 3.4.2 did find that matplotlib
+        forces `snap=True` on the legend's `FancyBboxPatch`, so check what snap
+        state these annotation `FancyBboxPatch`es carry), then re-measure the
+        arrows against whatever 3.4.6 and 3.4.7 conclude before opening a third
+        arrow investigation.
 
   - [ ] **3.4.9 `unstructured_showcase`: inline contour labels sit at different
         points along the contours.** 3,097/1,074 px, RMSE 2.634 against 3.20
@@ -781,10 +840,12 @@ mentioned (`basic_line`) carry real divergences. Findings:
         be made faithful, record it as an accepted difference with the
         reasoning, which is a legitimate outcome for this phase.
 
-  - [ ] **3.4.10 `legend_layout_matrix`: scatter handle geometry.** 2,517/233 px,
-        RMSE 2.03 against 3.30 (1.63x, `ok`). The four largest clusters, 31-48 px
-        each, are all inside y[94:113] x[80:118] — one legend entry's
-        three-circle scatter handle. `dx=+1` partly cancels each, and magnified
+  - [ ] **3.4.10 `legend_layout_matrix`: scatter handle geometry.** 585/198 px,
+        RMSE 1.657 against 1.90 (1.15x) — re-measured after 3.4.2, which removed
+        the frame and handle-edge residual and left this as the whole case: the
+        four largest clusters, now 32-50 px each, are all inside y[94:113]
+        x[80:118] — one legend entry's three-circle scatter handle, and they are
+        4 of the 14 clusters left. `dx=+1` partly cancels each, and magnified
         the port's circles are slightly smaller and closer together than
         matplotlib's. Check the legend handle's marker sizing against
         `HandlerPathCollection` (`_default_update_prop` scales by
@@ -806,9 +867,10 @@ mentioned (`basic_line`) carry real divergences. Findings:
         and the only case in this group whose gate is nowhere near binding. At
         amplitude 32 just 29 pixels survive, in 15 clusters of 2 px each,
         evenly spaced ~38.5 px apart along y[76:78] — the top ends of the major
-        tick marks, one pixel of antialiasing apiece. Unless 3.4.2's snapping
-        work changes it for free, the disposition here is "accepted difference",
-        and the real action is 3.6 tightening the ceiling to its measured value.
+        tick marks, one pixel of antialiasing apiece. 3.4.2 did not change it —
+        its fixes were legend-local and this case's residual is on tick marks —
+        so the disposition here is "accepted difference", and the real action is
+        3.6 tightening the ceiling to its measured value.
 
 - [ ] **3.5 Disposition the dense residuals.** These are broad and
       low-amplitude, where RMSE _is_ the right metric; the question is only

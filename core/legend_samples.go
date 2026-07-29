@@ -287,7 +287,7 @@ func (l *Legend) drawMarkerSample(r render.Renderer, rc *style.RC, entry *legend
 	drawLegendMarkerPath(r, markerPath, center, markerScale, entry.markerSnap, render.Paint{
 		Fill:      fill,
 		Stroke:    edge,
-		LineWidth: entry.markerEdgeWidth,
+		LineWidth: markerEdgeWidthPx,
 		LineJoin:  lineJoin,
 		LineCap:   lineCap,
 	})

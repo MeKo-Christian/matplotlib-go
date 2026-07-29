@@ -134,7 +134,7 @@ func TestLegendFrameOnFalseSkipsFrameOnly(t *testing.T) {
 	}
 }
 
-func TestLegendFrameUsesMatplotlibSnapAuto(t *testing.T) {
+func TestLegendFrameUsesMatplotlibSnapOn(t *testing.T) {
 	fig := NewFigure(400, 300)
 	ax := fig.AddAxes(geom.Rect{
 		Min: geom.Pt{X: 0.1, Y: 0.1},
@@ -148,8 +148,8 @@ func TestLegendFrameUsesMatplotlibSnapAuto(t *testing.T) {
 
 	for i, paint := range r.paints {
 		if paint.Fill == legend.BackgroundColor && paint.Stroke == legend.BorderColor && paint.LineWidth == legend.BorderWidth {
-			if paint.Snap != render.SnapAuto {
-				t.Fatalf("legend frame paint %d snap = %v, want Matplotlib SnapAuto", i, paint.Snap)
+			if paint.Snap != render.SnapOn {
+				t.Fatalf("legend frame paint %d snap = %v, want Matplotlib SNAP_TRUE (legend.py builds the legendPatch with snap=True)", i, paint.Snap)
 			}
 			return
 		}
