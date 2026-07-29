@@ -8,8 +8,8 @@
   },
   "freeze": {
     "path": "test/testdata/public_api/stable_public_api.json",
-    "sha256": "e96b88fde8d8b8c54722461cdc16fd8b1f8cfbc064b41e7295309d999947663e",
-    "symbol_count": 3186
+    "sha256": "196f4274cd0f2b7139402a51bcb7844fff3bc4518d899c28f647efe9db754025",
+    "symbol_count": 3190
   },
   "counts": {
     "removed": {
@@ -26,7 +26,7 @@
       "rename-target": 43,
       "renamed-draw-method": 3,
       "typed-enum": 24,
-      "post-freeze-addition": 10,
+      "post-freeze-addition": 14,
       "split-export": 19,
       "options-model": 5,
       "figure-output": 5,
@@ -4079,6 +4079,34 @@
       "id": "func ResolveContourScalarMap",
       "category": "post-freeze-addition",
       "note": "Added after the freeze by the contour unification, which routed the 2D and 3D contour paths through one levels-autoscaling scalar-map resolver. plot3d cannot reach core's unexported helpers, so the shared pair had to be exported."
+    },
+    {
+      "direction": "added",
+      "package": "core",
+      "id": "method AnchoredDrawingArea.DrawOverlay",
+      "category": "post-freeze-addition",
+      "note": "Added after the freeze when the anchored offset boxes moved into the unclipped overlay pass. Matplotlib never clips an AnchoredOffsetbox to the axes and orders it against Text purely by zorder (5 against 3); the port's clipped pass ran before the overlay pass, so an anchored box was painted under every Text bbox regardless of its z. These four join the OverlayArtist implementations that Legend, Table and AnnotationBbox already had. Purely additive -- each type keeps its Draw method, now a no-op, so the Artist interface is still satisfied."
+    },
+    {
+      "direction": "added",
+      "package": "core",
+      "id": "method AnchoredPacker.DrawOverlay",
+      "category": "post-freeze-addition",
+      "note": "Added after the freeze when the anchored offset boxes moved into the unclipped overlay pass. Matplotlib never clips an AnchoredOffsetbox to the axes and orders it against Text purely by zorder (5 against 3); the port's clipped pass ran before the overlay pass, so an anchored box was painted under every Text bbox regardless of its z. These four join the OverlayArtist implementations that Legend, Table and AnnotationBbox already had. Purely additive -- each type keeps its Draw method, now a no-op, so the Artist interface is still satisfied."
+    },
+    {
+      "direction": "added",
+      "package": "core",
+      "id": "method AnchoredSizeBar.DrawOverlay",
+      "category": "post-freeze-addition",
+      "note": "Added after the freeze when the anchored offset boxes moved into the unclipped overlay pass. Matplotlib never clips an AnchoredOffsetbox to the axes and orders it against Text purely by zorder (5 against 3); the port's clipped pass ran before the overlay pass, so an anchored box was painted under every Text bbox regardless of its z. These four join the OverlayArtist implementations that Legend, Table and AnnotationBbox already had. Purely additive -- each type keeps its Draw method, now a no-op, so the Artist interface is still satisfied."
+    },
+    {
+      "direction": "added",
+      "package": "core",
+      "id": "method AnchoredTextBox.DrawOverlay",
+      "category": "post-freeze-addition",
+      "note": "Added after the freeze when the anchored offset boxes moved into the unclipped overlay pass. Matplotlib never clips an AnchoredOffsetbox to the axes and orders it against Text purely by zorder (5 against 3); the port's clipped pass ran before the overlay pass, so an anchored box was painted under every Text bbox regardless of its z. These four join the OverlayArtist implementations that Legend, Table and AnnotationBbox already had. Purely additive -- each type keeps its Draw method, now a no-op, so the Artist interface is still satisfied."
     },
     {
       "direction": "added",

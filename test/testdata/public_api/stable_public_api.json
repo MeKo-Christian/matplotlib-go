@@ -4261,7 +4261,11 @@
         },
         {
           "id": "method AnchoredDrawingArea.Draw",
-          "declaration": "func (AnchoredDrawingArea) Draw(r render.Renderer, ctx *DrawContext)"
+          "declaration": "func (AnchoredDrawingArea) Draw(render.Renderer, *DrawContext)"
+        },
+        {
+          "id": "method AnchoredDrawingArea.DrawOverlay",
+          "declaration": "func (AnchoredDrawingArea) DrawOverlay(r render.Renderer, ctx *DrawContext)"
         },
         {
           "id": "method AnchoredDrawingArea.Z",
@@ -4285,7 +4289,11 @@
         },
         {
           "id": "method AnchoredPacker.Draw",
-          "declaration": "func (AnchoredPacker) Draw(r render.Renderer, ctx *DrawContext)"
+          "declaration": "func (AnchoredPacker) Draw(render.Renderer, *DrawContext)"
+        },
+        {
+          "id": "method AnchoredPacker.DrawOverlay",
+          "declaration": "func (AnchoredPacker) DrawOverlay(r render.Renderer, ctx *DrawContext)"
         },
         {
           "id": "method AnchoredPacker.Z",
@@ -4297,7 +4305,11 @@
         },
         {
           "id": "method AnchoredSizeBar.Draw",
-          "declaration": "func (AnchoredSizeBar) Draw(r render.Renderer, ctx *DrawContext)"
+          "declaration": "func (AnchoredSizeBar) Draw(render.Renderer, *DrawContext)"
+        },
+        {
+          "id": "method AnchoredSizeBar.DrawOverlay",
+          "declaration": "func (AnchoredSizeBar) DrawOverlay(r render.Renderer, ctx *DrawContext)"
         },
         {
           "id": "method AnchoredSizeBar.Z",
@@ -4309,7 +4321,11 @@
         },
         {
           "id": "method AnchoredTextBox.Draw",
-          "declaration": "func (AnchoredTextBox) Draw(r render.Renderer, ctx *DrawContext)"
+          "declaration": "func (AnchoredTextBox) Draw(render.Renderer, *DrawContext)"
+        },
+        {
+          "id": "method AnchoredTextBox.DrawOverlay",
+          "declaration": "func (AnchoredTextBox) DrawOverlay(r render.Renderer, ctx *DrawContext)"
         },
         {
           "id": "method AnchoredTextBox.Z",

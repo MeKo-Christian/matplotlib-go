@@ -138,10 +138,10 @@ var cases = []Case{
 	// MaxRMSE 1.90: MeanAbs 0.03 / PSNR ~44 dB. The frame and handle-edge residual
 	// is gone; the scatter handle's circle geometry (see PLAN.md) is what is left.
 	{ID: "legend_layout_matrix", Topic: "legend", Title: "Legend Layout Matrix", FixtureOnly: true, MaxRMSE: 1.9, MaxDiffPixels: 700, MaxLargestCluster: 420},
-	// MaxRMSE 2.95: MeanAbs 0.07 / RMSE 2.70. The AnnotationBbox arrow heads are
-	// scaled correctly now; the FancyBboxPatch borders behind the annotation text
-	// are what is left (see PLAN.md).
-	{ID: "text_annotation_matrix", Topic: "annotation", Title: "Text Annotation Matrix", FixtureOnly: true, MaxRMSE: 2.95, MaxDiffPixels: 1800, MaxLargestCluster: 330},
+	// MaxRMSE 0.98: MeanAbs 0.03 / RMSE 0.90. The anchored offset boxes now draw
+	// unclipped and z-ordered against the text bboxes, so the box borders match;
+	// the residual is glyph and marker antialiasing (see PLAN.md).
+	{ID: "text_annotation_matrix", Topic: "annotation", Title: "Text Annotation Matrix", FixtureOnly: true, MaxRMSE: 0.98, MaxDiffPixels: 1160, MaxLargestCluster: 330},
 	{ID: "hist_basic", Topic: "histogram", Title: "Histogram Counts", Description: "A deterministic histogram with count bins, labels, and default bar styling.", Showcase: true, SVGGoldenFamily: "hist", GoBasicSmokeFamily: "histogram", SkiaParityFamily: "histogram", MaxRMSE: 1.1},
 	{ID: "hist_log", Topic: "histogram", Title: "Logarithmic Histogram", Description: "A count histogram on a logarithmic y axis, matching matplotlib hist(log=True).", Showcase: true, MaxRMSE: 1.1},
 	{ID: "hist_density", Topic: "histogram", Title: "Histogram Density", MaxRMSE: 1.3},

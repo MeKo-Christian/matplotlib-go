@@ -115,7 +115,7 @@ func TestAnchoredTextBoxDrawsMultilineContentTopDown(t *testing.T) {
 	ctx := createTestDrawContext()
 	r := &textRecordingRenderer{}
 
-	box.Draw(r, ctx)
+	box.DrawOverlay(r, ctx)
 
 	if len(r.texts) != 2 {
 		t.Fatalf("anchored multiline text draws = %d, want 2: %v", len(r.texts), r.texts)
@@ -187,7 +187,7 @@ func TestAnchoredSizeBarDrawsDataScaledBarAndLabel(t *testing.T) {
 
 	ctx := createTestDrawContext()
 	r := &textRecordingRenderer{}
-	bar.Draw(r, ctx)
+	bar.DrawOverlay(r, ctx)
 
 	if !containsTextString(r.texts, "2 units") {
 		t.Fatalf("anchored size bar label not drawn, got %v", r.texts)
@@ -234,7 +234,7 @@ func TestAnchoredDrawingAreaDrawsLocalPath(t *testing.T) {
 	ctx := createTestDrawContext()
 	scale := pointsToPixels(ctx.RC, 1)
 	r := &recordingRenderer{}
-	area.Draw(r, ctx)
+	area.DrawOverlay(r, ctx)
 
 	if !recordedPaintExists(r.pathCalls, frameFill, frameEdge, pointsToPixels(ctx.RC, 1)) {
 		t.Fatalf("anchored drawing area frame paint not found in %+v", r.pathCalls)
@@ -275,7 +275,7 @@ func TestAnchoredDrawingAreaScalesLocalCoordinatesByDPI(t *testing.T) {
 	ctx := createTestDrawContext()
 	ctx.RC = style.Apply(ctx.RC, style.WithDPI(144))
 	r := &recordingRenderer{}
-	area.Draw(r, ctx)
+	area.DrawOverlay(r, ctx)
 
 	child := recordedStrokePath(r.pathCalls, stroke)
 	if len(child.V) != 2 {
@@ -307,7 +307,7 @@ func TestAnchoredDrawingAreaCanClipChildren(t *testing.T) {
 	ctx := createTestDrawContext()
 	scale := pointsToPixels(ctx.RC, 1)
 	r := &clipRecordingRenderer{}
-	area.Draw(r, ctx)
+	area.DrawOverlay(r, ctx)
 
 	// Display space is y-up: the UpperLeft content box sits near the top (495).
 	wantClip := geom.Rect{Min: geom.Pt{X: 5, Y: 495 - 20*scale}, Max: geom.Pt{X: 5 + 40*scale, Y: 495}}
@@ -337,7 +337,7 @@ func TestAnchoredDrawingAreaFrameUsesMatplotlibSnapAuto(t *testing.T) {
 	ctx := createTestDrawContext()
 	r := &recordingRenderer{}
 
-	area.Draw(r, ctx)
+	area.DrawOverlay(r, ctx)
 
 	if len(r.pathCalls) == 0 || len(r.pathCalls[0].path.V) < 4 {
 		t.Fatalf("expected frame path, got %+v", r.pathCalls)
@@ -380,7 +380,7 @@ func TestAnchoredPackerPacksDrawingAreaAndTextHorizontally(t *testing.T) {
 	ctx := createTestDrawContext()
 	scale := pointsToPixels(ctx.RC, 1)
 	r := &textRecordingRenderer{}
-	packer.Draw(r, ctx)
+	packer.DrawOverlay(r, ctx)
 
 	if !containsTextString(r.texts, "Go") {
 		t.Fatalf("packed text not drawn, got %v", r.texts)
@@ -453,7 +453,7 @@ func TestAnchoredPackerPacksChildrenVertically(t *testing.T) {
 	ctx := createTestDrawContext()
 	scale := pointsToPixels(ctx.RC, 1)
 	r := &recordingRenderer{}
-	packer.Draw(r, ctx)
+	packer.DrawOverlay(r, ctx)
 
 	top := recordedStrokePath(r.pathCalls, topStroke)
 	bottom := recordedStrokePath(r.pathCalls, bottomStroke)
@@ -490,7 +490,7 @@ func TestAnchoredPackerPacksImageChildren(t *testing.T) {
 	ctx := createTestDrawContext()
 	scale := pointsToPixels(ctx.RC, 1)
 	r := &textRecordingRenderer{}
-	packer.Draw(r, ctx)
+	packer.DrawOverlay(r, ctx)
 
 	if len(r.imageDsts) != 1 {
 		t.Fatalf("packed image destinations = %+v, want one", r.imageDsts)
@@ -529,7 +529,7 @@ func TestAnchoredPackerImageAndDrawingAreaScaleByDPI(t *testing.T) {
 	ctx := createTestDrawContext()
 	ctx.RC = style.Apply(ctx.RC, style.WithDPI(144))
 	r := &textRecordingRenderer{}
-	packer.Draw(r, ctx)
+	packer.DrawOverlay(r, ctx)
 
 	// Display space is y-up: Align Start aligns to the top edge (500, inset 0).
 	wantImageDst := geom.Rect{Min: geom.Pt{X: 0, Y: 500 - 12}, Max: geom.Pt{X: 16, Y: 500}}
@@ -559,7 +559,7 @@ func TestAnchoredPackerImageDefaultsToMatplotlibAntialiasedInterpolation(t *test
 	packer.AddImage(img, 1)
 
 	r := &bboxImageInterpolationRenderer{}
-	packer.Draw(r, createTestDrawContext())
+	packer.DrawOverlay(r, createTestDrawContext())
 
 	if !r.called {
 		t.Fatal("DrawBboxImage was not called")
@@ -581,7 +581,7 @@ func TestAnchoredPackerImagePreservesExplicitInterpolation(t *testing.T) {
 	packer.AddImage(img, 1)
 
 	r := &bboxImageInterpolationRenderer{}
-	packer.Draw(r, createTestDrawContext())
+	packer.DrawOverlay(r, createTestDrawContext())
 
 	if !r.called {
 		t.Fatal("DrawBboxImage was not called")

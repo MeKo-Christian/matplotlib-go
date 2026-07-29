@@ -523,6 +523,23 @@ _add(
     "func NormalizeDashOffset",
 )
 
+_add(
+    "post-freeze-addition",
+    "Added after the freeze when the anchored offset boxes moved into the "
+    "unclipped overlay pass. Matplotlib never clips an AnchoredOffsetbox to "
+    "the axes and orders it against Text purely by zorder (5 against 3); the "
+    "port's clipped pass ran before the overlay pass, so an anchored box was "
+    "painted under every Text bbox regardless of its z. These four join the "
+    "OverlayArtist implementations that Legend, Table and AnnotationBbox "
+    "already had. Purely additive -- each type keeps its Draw method, now a "
+    "no-op, so the Artist interface is still satisfied.",
+    "core",
+    "method AnchoredDrawingArea.DrawOverlay",
+    "method AnchoredPacker.DrawOverlay",
+    "method AnchoredSizeBar.DrawOverlay",
+    "method AnchoredTextBox.DrawOverlay",
+)
+
 
 def load(path: Path) -> tuple[bytes, dict]:
     raw = path.read_bytes()

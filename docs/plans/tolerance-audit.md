@@ -34,7 +34,6 @@ Cases whose largest residual clusters are cancelled by one integer offset. Each 
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `geo_mollweide_axes` | 2.87 | 3.00 | 1.05x | fragile | 23251 | 7.689 | 69 | 6 | 18 | 244 | dense-lowamp |
 | `imshow_transformed` | 2.82 | 2.90 | 1.03x | fragile | 11089 | 6.286 | 1652 | 2 | 93 | 132 | dense-highamp |
-| `text_annotation_matrix` | 2.70 | 2.95 | 1.09x | fragile | 1625 | 0.537 | 86 | 16 | 191 | 194 | sparse-local |
 | `unstructured_showcase` | 2.63 | 3.20 | 1.22x | ok | 2555 | 0.372 | 117 | 23 | 215 | 232 | sparse-local |
 | `ticks_styling_surface` | 2.59 | 3.00 | 1.16x | ok | 7366 | 2.436 | 684 | 4 | 80 | 140 | dense-highamp |
 | `imshow_interpolation_matrix` | 2.48 | 3.30 | 1.33x | ok | 29011 | 7.555 | 3006 | 3 | 69 | 211 | dense-highamp |
@@ -91,6 +90,7 @@ Cases whose largest residual clusters are cancelled by one integer offset. Each 
 | `mplot3d_stem3d` | 0.90 | 1.61 | 1.78x | ok | 2730 | 0.677 | 91 | 4 | 67 | 126 | sparse-local |
 | `colorbar_horizontal_ticks` | 0.90 | 1.20 | 1.33x | ok | 1120 | 0.486 | 5 | 14 | 14 | 24 | sparse-local |
 | `mplot3d_wire3d` | 0.90 | 1.50 | 1.66x | ok | 2800 | 0.694 | 164 | 4 | 66 | 163 | sparse-local |
+| `text_annotation_matrix` | 0.90 | 0.98 | 1.09x | fragile | 1051 | 0.348 | 87 | 9 | 53 | 125 | sparse-local |
 | `mplot3d_bar3d` | 0.89 | 1.61 | 1.81x | ok | 1809 | 0.449 | 93 | 4 | 76 | 126 | sparse-local |
 | `mplot3d_plot3d` | 0.89 | 1.40 | 1.57x | ok | 2774 | 0.688 | 101 | 4 | 72 | 126 | sparse-local |
 | `mplot3d_fill_between3d` | 0.89 | 1.61 | 1.81x | ok | 2558 | 0.634 | 95 | 3 | 74 | 126 | sparse-local |

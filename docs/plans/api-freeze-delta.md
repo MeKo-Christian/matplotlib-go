@@ -1,7 +1,7 @@
 # API Freeze Delta Reconciliation
 
 The API-reduction pass was meant to shrink the surface, yet the public API
-freeze grew from 3,102 symbols to 3,181. This document reconciles that growth:
+freeze grew from 3,102 symbols to 3,190. This document reconciles that growth:
 it walks the difference between the tiering decisions in `api-tiering.json` and
 the live freeze in `test/testdata/public_api/stable_public_api.json`, symbol by
 symbol, so the release can tag a surface whose every name is accounted for.
@@ -20,8 +20,8 @@ Both directions are fully accounted for; the residue is empty.
 | --------- | ----- |
 | Baseline  | 3,102 |
 | Removed   | 402   |
-| Added     | 481   |
-| Freeze    | 3,181 |
+| Added     | 490   |
+| Freeze    | 3,190 |
 
 The two tiering decisions hold:
 
@@ -44,22 +44,22 @@ The two tiering decisions hold:
 | `unexported`    | 1     | `core.WidgetArtist`                            |
 | `tiered-demote` | 1     | The tiering `demote` decision                  |
 
-### Added (481)
+### Added (490)
 
-| Category               | Count | What it is                                                                                     |
-| ---------------------- | ----- | ---------------------------------------------------------------------------------------------- |
-| `moved`                | 330   | The receiving half of the package split                                                        |
-| `rename-target`        | 43    | The receiving half of a rename or relocation                                                   |
-| `audit-scope`          | 30    | Pre-existing API the baseline collector never parsed                                           |
-| `typed-enum`           | 24    | Typed option enums and their constants                                                         |
-| `split-export`         | 19    | Formerly package-private helpers the split forced open                                         |
-| `encapsulation-reader` | 11    | Readers added when a field was unexported                                                      |
-| `options-model`        | 5     | Folded value types (`DashPattern`, `LineCollectionOptions`)                                    |
-| `figure-output`        | 5     | `Figure.Save`/`WriteTo`/`Image` and its renderer registry                                      |
-| `optional-package`     | 4     | `optional.Value[T]` and its constructors                                                       |
-| `renamed-draw-method`  | 3     | `Renderer.Image` → `Renderer.DrawImage` on raster backends                                     |
-| `shared-helper`        | 2     | `Color.WithAlphaMultiplier`, `PlotOptions.ScalarMapConfig`                                     |
-| `post-freeze-addition` | 5     | The contour scalar-map helpers, the `transform.AffineScale` pair, and `core.Figure.CanvasSize` |
+| Category               | Count | What it is                                                                                                                                                                                           |
+| ---------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `moved`                | 330   | The receiving half of the package split                                                                                                                                                              |
+| `rename-target`        | 43    | The receiving half of a rename or relocation                                                                                                                                                         |
+| `audit-scope`          | 30    | Pre-existing API the baseline collector never parsed                                                                                                                                                 |
+| `typed-enum`           | 24    | Typed option enums and their constants                                                                                                                                                               |
+| `split-export`         | 19    | Formerly package-private helpers the split forced open                                                                                                                                               |
+| `encapsulation-reader` | 11    | Readers added when a field was unexported                                                                                                                                                            |
+| `options-model`        | 5     | Folded value types (`DashPattern`, `LineCollectionOptions`)                                                                                                                                          |
+| `figure-output`        | 5     | `Figure.Save`/`WriteTo`/`Image` and its renderer registry                                                                                                                                            |
+| `optional-package`     | 4     | `optional.Value[T]` and its constructors                                                                                                                                                             |
+| `renamed-draw-method`  | 3     | `Renderer.Image` → `Renderer.DrawImage` on raster backends                                                                                                                                           |
+| `shared-helper`        | 2     | `Color.WithAlphaMultiplier`, `PlotOptions.ScalarMapConfig`                                                                                                                                           |
+| `post-freeze-addition` | 14    | The contour scalar-map helpers, the `transform.AffineScale` pair, `core.Figure.CanvasSize`, the dash-phase pattern and normalization helpers, and the four anchored-offset-box `DrawOverlay` methods |
 
 ## Why a reduction pass grew the count
 
@@ -131,11 +131,16 @@ Three differences were real and undocumented before this walk:
   `GetImage` took the vacated name. Symbol-id comparison shows no change; the
   signature did change. Any future audit that diffs ids alone will miss this
   class of break.
-- **The freeze is 3,181, not the 3,176 recorded when the pass closed.** The
+- **The freeze is 3,190, not the 3,176 recorded when the pass closed.** The
   contour unification added the two contour helpers; the affine-flattening fix
   added the `transform.AffineScale`/`IsAffineScale` pair; the figure-size
-  fidelity fix added `core.Figure.CanvasSize`. The roadmap and
-  `docs/plans/changelog-draft.md` now say 3,181.
+  fidelity fix added `core.Figure.CanvasSize`; dash-phase support added
+  `DashPattern.WithOffset`/`ScaledOffset`, `Line2D.SetLineStyleDashes`, and
+  `render.NormalizeDashes`/`NormalizeDashOffset`; and moving the anchored
+  offset boxes into the unclipped overlay pass added their four `DrawOverlay`
+  methods. Every one is purely additive. The roadmap and
+  `docs/plans/changelog-draft.md` quote 3,181, the figure as of the phase that
+  closed the reduction pass; this file tracks the live freeze.
 
 ## Regenerating
 

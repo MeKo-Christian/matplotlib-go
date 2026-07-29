@@ -636,22 +636,22 @@
   "verdict": "ok"
  },
  {
-  "clusters": 86,
-  "diff_px": 1625,
+  "clusters": 87,
+  "diff_px": 1051,
   "family": "sparse-local",
   "id": "text_annotation_matrix",
   "largest_cluster": 294,
-  "max_diff": 194,
+  "max_diff": 125,
   "max_mean_abs": 0.0,
-  "max_rmse": 2.95,
-  "mean_abs": 0.098,
-  "p50_amp": 16,
-  "p99_amp": 191,
-  "pct_px": 0.5374,
-  "psnr": 39.51,
-  "rmse": 2.698,
+  "max_rmse": 0.98,
+  "mean_abs": 0.033,
+  "p50_amp": 9,
+  "p99_amp": 53,
+  "pct_px": 0.3476,
+  "psnr": 49.05,
+  "rmse": 0.9,
   "shifts": {
-   "+0+0": 1245
+   "+0+0": 695
   },
   "slack": 1.09,
   "verdict": "fragile"

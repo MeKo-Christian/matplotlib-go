@@ -627,7 +627,10 @@ mentioned (`basic_line`) carry real divergences. Findings:
       went next as the cheapest, on the theory that it was an API gap with a
       known answer; **that premise was stale too** — the field it wanted already
       existed, and the case was a fixture omission plus a double-converted
-      mutation scale. 3.4.9 is the deepest and should go last.
+      mutation scale. 3.4.8 followed and was the same shape a third time: a
+      fixture omission plus an artist in the wrong draw pass, not the
+      `FancyBboxPatch` snap state or the affine composition it named. 3.4.9 is
+      the deepest and should go last.
 
       **Check the Go fixture against its Python counterpart before blaming the
       core.** 3.4.3's dominant residual was neither a port bug nor a hypothesis
@@ -1003,30 +1006,51 @@ mentioned (`basic_line`) carry real divergences. Findings:
         x[133:156] (bottom-panel anchored text), all of it below amplitude 32
         except 18 px.
 
-  - [ ] **3.4.8 `text_annotation_matrix`: text-bbox borders.** 1,625/490 px,
-        RMSE 2.70 against 2.95 (1.09x) — re-measured after 3.4.7, which fixed
-        the AnnotationBbox arrow mutation scale and took this case from
-        2,082/487 px and RMSE 2.761. The residual concentrates on
-        `FancyBboxPatch` borders behind annotation text — the largest cluster is
-        a 24x3 horizontal strip at y[85:88] x[110:134], the bottom edge of an
-        olive-bordered box — plus two arrow heads at x[447:463] that local
-        offsets of `(-1,0)` and `(-2,+1)` only partly cancel. Split it: settle
-        the box borders first (they are the bulk; the shared cause with 3.4.2
-        that this used to assume is gone, but 3.4.2 did find that matplotlib
-        forces `snap=True` on the legend's `FancyBboxPatch`, so check what snap
-        state these annotation `FancyBboxPatch`es carry), then re-measure the
-        arrows. **Read the two fixtures side by side first:**
+  - [x] **3.4.8 `text_annotation_matrix`: text-bbox borders — closed.**
+        1,051/133 px, RMSE **0.90** against a ratcheted 0.98, down from
+        1,625/490 px and RMSE 2.70. Neither the `FancyBboxPatch` snap state nor
+        the affine composition this entry pointed at was involved; the two
+        causes were:
+
+        **The fixture omission this entry already flagged, twice over.**
         `test/parity/text_annotation_matrix/plot.py` passes
-        `"linewidth": 1.25` on the `TextArea` box's `arrowprops` where
-        `plot.go` leaves `ArrowWidth` at the 1.0 default — 3.4.7's fixture
-        omission again, and it must be settled before opening a third arrow
-        investigation. **Check the affine composition too:** 3.4.5 found
-        that generic patches still evaluate their local-to-data affine and the
-        data-to-pixel leg in sequence (`buildCachedDisplayPath`,
-        `core/patch_paths.go`) where matplotlib collapses the pair into one
-        matrix first. Bars were fixed there; every `Patch` still has it, and it
-        moves a box border by a whole pixel whenever an edge lands on a `.5`
-        device tie.
+        `arrowprops={"arrowstyle": "-|>", "linewidth": 1.25}` on *both*
+        `AnnotationBbox`es; `plot.go` set neither, falling through to
+        `ArrowWidth` 1.0 and to `Axes.AnnotationBbox`'s default arrow style.
+        Adding both to the Go fixture removed the two arrow-head clusters at
+        x[447:463] outright (67 and 65 px, gone) and took the case to
+        1,125/202 px, RMSE 1.41. That is 3.4.7's lesson landing a second time:
+        read the Python fixture before reading the core.
+
+        **Anchored offset boxes were painted under every `Text` bbox.** The
+        largest cluster was a 24x3 strip at y[85:88] x[110:134] where the
+        `AnchoredText` box's bottom edge crosses the "bold italic bbox" text
+        box's top edge. Matplotlib orders the two purely by zorder —
+        `AnchoredOffsetbox.zorder = 5` against `Text.zorder = 3` — and never
+        clips an offset box to the axes. The port draws in two passes, clipped
+        artists then unclipped `OverlayArtist`s, and `Text` was an overlay
+        (z 500) while `AnchoredTextBox` was not (z 950), so the pass split
+        overrode z and the blue box border won where the olive one should.
+        `AnchoredTextBox`, `AnchoredDrawingArea`, `AnchoredPacker` and
+        `AnchoredSizeBar` now implement `DrawOverlay` with a no-op `Draw`, the
+        way `Legend`, `Table` and `AnnotationBbox` already did. Purely
+        additive on the exported surface (four new methods; the frozen audit,
+        `docs/plans/api-freeze-delta.*` and the tolerance audit were
+        regenerated), and no other golden moved.
+
+        What is left is subpixel antialiasing on sloped polygon edges: the
+        `AnchoredDrawingArea` triangle at y[62:90] x[605:654] and the
+        `HPacker` diamond at y[332:355] x[72:96], 27 px and smaller, max
+        amplitude 53. Magnified they are the same shape in the same place;
+        only the edge coverage differs.
+
+        Recorded, not fixed: `Axes.AnnotationBbox` still defaults to
+        `-|>` with `HeadWidth` forced to 0.36 (`core/annotation_box.go`),
+        where matplotlib's bare-`arrowprops` default is `simple` and its `-|>`
+        carries `head_width=0.2`. No fixture reaches that default any more —
+        all three call sites now name a style — so there is nothing to measure
+        it against; it needs its own case before it can be changed with
+        evidence.
 
   - [ ] **3.4.9 `unstructured_showcase`: inline contour labels sit at different
         points along the contours.** 3,097/1,074 px, RMSE 2.634 against 3.20
