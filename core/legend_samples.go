@@ -46,7 +46,7 @@ func (l *Legend) drawSampleWithFontPixels(r render.Renderer, rc *style.RC, entry
 		patch.drawStyledPath(r, rc, pixelRectPath(patchRect), geom.Path{})
 	case legendEntryMarker:
 		for _, pt := range l.markerSampleCentersForHandle(sample, center, sampleIsHandleBox) {
-			l.drawMarkerSample(r, rc, entry, pt, l.markerSampleScale(*entry, 5), true)
+			l.drawMarkerSample(r, rc, entry, pt, l.markerSampleScale(*entry, 5), legendMarkerCollection)
 		}
 	default:
 		lineWidth := entry.lineWidth
@@ -77,7 +77,7 @@ func (l *Legend) drawSampleWithFontPixels(r render.Renderer, rc *style.RC, entry
 		})
 		if entry.lineMarkerSet {
 			for _, pt := range lineMarkerCenters {
-				l.drawMarkerSample(r, rc, entry, pt, l.markerSampleScale(*entry, 5), false)
+				l.drawMarkerSample(r, rc, entry, pt, l.markerSampleScale(*entry, 5), legendMarkerStamp)
 			}
 		}
 	}
@@ -147,7 +147,7 @@ func (l *Legend) drawErrorBarSample(r render.Renderer, rc *style.RC, entry *lege
 	}
 	if entry.lineMarkerSet {
 		for _, pt := range l.lineMarkerSampleCenters(sample, center, fontPx) {
-			l.drawMarkerSample(r, rc, entry, pt, l.markerSampleScale(*entry, 5), false)
+			l.drawMarkerSample(r, rc, entry, pt, l.markerSampleScale(*entry, 5), legendMarkerStamp)
 		}
 	}
 }
@@ -176,33 +176,36 @@ func (l *Legend) markerSampleCentersForHandle(sample geom.Rect, center geom.Pt, 
 	if points <= 0 {
 		return nil
 	}
-	if points <= 1 {
-		return []geom.Pt{center}
+	// Matplotlib's HandlerPathCollection uses Legend._scatteryoffsets
+	// [3/8, 4/8, 2.5/8], tiled and truncated to scatterpoints, as fractions of
+	// the handle box height measured from its bottom edge
+	// (HandlerNpointsYoffsets.get_ydata). A single sample point takes 3/8, not
+	// the box centre.
+	offsets := [...]float64{3.0 / 8.0, 4.0 / 8.0, 2.5 / 8.0}
+	handleHeight := sample.H()
+	if !sampleIsHandleBox {
+		handleHeight *= 0.7
+	}
+	sampleY := func(i int) float64 {
+		return center.Y - handleHeight/2 + offsets[i%len(offsets)]*handleHeight
+	}
+
+	// HandlerNpoints.get_xdata centres a lone sample in the handle box and
+	// otherwise spreads scatterpoints over linspace(pad, width-pad), with
+	// pad = 0.3*fontsize = 0.15*width at the default handlelength of 2.
+	if points == 1 {
+		return []geom.Pt{{X: center.X, Y: sampleY(0)}}
 	}
 	centers := make([]geom.Pt, points)
 	pad := sample.W() * 0.15
 	if pad < 0 {
 		pad = 0
 	}
-	step := 0.0
-	if points > 1 {
-		step = (sample.W() - 2*pad) / float64(points-1)
-	}
+	step := (sample.W() - 2*pad) / float64(points-1)
 	for i := 0; i < points; i++ {
-		y := center.Y
-		if points > 1 {
-			// Matplotlib's HandlerPathCollection uses Legend._scatteryoffsets
-			// [3/8, 4/8, 2.5/8] within a default 0.7-fontsize handle box.
-			offsets := [...]float64{3.0 / 8.0, 4.0 / 8.0, 2.5 / 8.0}
-			handleHeight := sample.H()
-			if !sampleIsHandleBox {
-				handleHeight *= 0.7
-			}
-			y = center.Y - handleHeight/2 + offsets[i%len(offsets)]*handleHeight
-		}
 		centers[i] = geom.Pt{
 			X: sample.Min.X + pad + step*float64(i),
-			Y: y,
+			Y: sampleY(i),
 		}
 	}
 	return centers
@@ -234,12 +237,31 @@ func (l *Legend) lineMarkerSampleCenters(sample geom.Rect, center geom.Pt, fontP
 	return centers
 }
 
-func (l *Legend) drawMarkerSample(r render.Renderer, rc *style.RC, entry *legendEntry, center geom.Pt, radius float64, offsetCenter bool) {
-	if offsetCenter {
-		center.X += 0.5
-		center.Y += 0.5
-	}
+// legendMarkerRoute names the Matplotlib draw call a legend handle's markers
+// imitate. The two differ in how they place an offset, so the choice is worth
+// one pixel: `draw_markers` (`_backend_agg.h`) rasterizes the marker once and
+// stamps it at `floor(offset)` after a `translate(0.5, height+0.5)`, while
+// `_draw_path_collection_generic` translates the path by the raw offset and
+// flips with `translate(0, height)`, keeping the subpixel part.
+type legendMarkerRoute uint8
+
+const (
+	// legendMarkerStamp mirrors draw_markers, used for Line2D-derived handles
+	// (HandlerLine2D, HandlerErrorbar).
+	legendMarkerStamp legendMarkerRoute = iota
+	// legendMarkerCollection mirrors draw_path_collection, used for the
+	// collection handles HandlerPathCollection builds from a scatter.
+	legendMarkerCollection
+)
+
+func (l *Legend) drawMarkerSample(r render.Renderer, rc *style.RC, entry *legendEntry, center geom.Pt, radius float64, route legendMarkerRoute) {
 	markerEdgeWidthPx := pointsToPixels(*rc, entry.markerEdgeWidth)
+	snap := entry.markerSnap
+	if route == legendMarkerCollection {
+		// Collections carry Artist.get_snap() == None, i.e. SNAP_AUTO; the
+		// marker-size threshold table has no Matplotlib counterpart.
+		snap = render.SnapAuto
+	}
 	lineJoin := entry.markerLineJoin
 	if lineJoin == 0 {
 		lineJoin = render.JoinRound
@@ -258,7 +280,7 @@ func (l *Legend) drawMarkerSample(r render.Renderer, rc *style.RC, entry *legend
 		}
 	}
 	if entry.markerHasAlt {
-		drawLegendMarkerPath(r, markerPath, center, markerScale, entry.markerSnap, render.Paint{
+		drawLegendMarkerPath(r, markerPath, center, markerScale, snap, route, render.Paint{
 			Fill:      entry.markerFill,
 			Stroke:    entry.markerEdge,
 			LineWidth: markerEdgeWidthPx,
@@ -266,7 +288,7 @@ func (l *Legend) drawMarkerSample(r render.Renderer, rc *style.RC, entry *legend
 			LineCap:   lineCap,
 		})
 		if len(entry.markerAltPath.C) > 0 {
-			drawLegendMarkerPath(r, entry.markerAltPath, center, radius, entry.markerSnap, render.Paint{
+			drawLegendMarkerPath(r, entry.markerAltPath, center, radius, snap, route, render.Paint{
 				Fill:      entry.markerAltFill,
 				Stroke:    entry.markerEdge,
 				LineWidth: markerEdgeWidthPx,
@@ -284,7 +306,7 @@ func (l *Legend) drawMarkerSample(r render.Renderer, rc *style.RC, entry *legend
 		}
 		fill.A = 0
 	}
-	drawLegendMarkerPath(r, markerPath, center, markerScale, entry.markerSnap, render.Paint{
+	drawLegendMarkerPath(r, markerPath, center, markerScale, snap, route, render.Paint{
 		Fill:      fill,
 		Stroke:    edge,
 		LineWidth: markerEdgeWidthPx,
@@ -293,12 +315,12 @@ func (l *Legend) drawMarkerSample(r render.Renderer, rc *style.RC, entry *legend
 	})
 }
 
-func drawLegendMarkerPath(r render.Renderer, markerPath geom.Path, center geom.Pt, scale float64, snap render.SnapMode, paint render.Paint) {
+func drawLegendMarkerPath(r render.Renderer, markerPath geom.Path, center geom.Pt, scale float64, snap render.SnapMode, route legendMarkerRoute, paint render.Paint) {
 	if len(markerPath.C) == 0 || scale <= 0 {
 		return
 	}
 	paint.Snap = snap
-	if drawer, ok := r.(render.MarkerDrawer); ok {
+	if drawer, ok := r.(render.MarkerDrawer); ok && route == legendMarkerStamp {
 		if drawer.DrawMarkers(render.MarkerBatch{
 			Marker: markerPath,
 			Items: []render.MarkerItem{{

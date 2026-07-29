@@ -522,7 +522,11 @@ func TestLegendMarkerSampleScaleAndScatterPoints(t *testing.T) {
 	if !(pathCenterX(scaled.paths[0]) < pathCenterX(scaled.paths[1]) && pathCenterX(scaled.paths[1]) < pathCenterX(scaled.paths[2])) {
 		t.Fatalf("scatter sample marker centers should advance left-to-right: %+v", scaled.paths)
 	}
-	wantCenters := []float64{19.5, 40.5, 61.5}
+	// HandlerNpoints.get_xdata: linspace(pad, width-pad, scatterpoints) with
+	// pad = 0.3*fontsize = 0.15*width at the default handlelength of 2. No
+	// half-pixel offset — HandlerPathCollection places the handle through
+	// draw_path_collection, which keeps the subpixel part of every offset.
+	wantCenters := []float64{19, 40, 61}
 	for i, want := range wantCenters {
 		if got := pathCenterX(scaled.paths[i]); !floatApprox(got, want, 1e-9) {
 			t.Fatalf("scatter sample marker %d center x = %g, want Matplotlib padded position %g", i, got, want)
