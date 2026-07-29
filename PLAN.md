@@ -446,12 +446,14 @@ mentioned (`basic_line`) carry real divergences. Findings:
         compared directly against matplotlib's own resampled buffer: under the
         old index reflection the two agree on every one of the 278 rows, under
         the corrected one they differ at exactly this row, and yet the corrected
-        form is what every other origin-lower case needs. The asymmetry is that
-        matplotlib's `specgram` stores its array flipped (`flipud` +
-        `origin="upper"`) where the port keeps the natural order and sets
-        `ImageOriginLower`, so the two reflect in opposite frames. Resolve the
-        orientation in `core.Axes.Specgram`, not in the resampler. Tracked under
-        3.4.
+        form is what every other origin-lower case needs. matplotlib's
+        `specgram` stores its array flipped (`flipud` + `origin="upper"`) where
+        the port kept the natural order and set `ImageOriginLower`, so the two
+        reflected in opposite frames. Fixing it in `core.Axes.Specgram` rather
+        than in the resampler was the right call, but calling it an
+        "orientation asymmetry" was not: the two orientations are the same
+        picture, and the row moved for the float reason 3.4.4 gives. Closed
+        under 3.4.4.
 
         Two things worth recording for whoever reads this next. The scale
         composition in `matplotlibResampleAffine` — exact device extent over
@@ -835,19 +837,42 @@ mentioned (`basic_line`) carry real divergences. Findings:
           doubling for the two backends that build explicit `(on, off)` pairs.
           SVG, PDF, PS and PGF emit the array as given and needed no change.
 
-  - [ ] **3.4.4 `specgram_psd`: one image row, and the 3.3.6 note is stale.**
-        354/211 px, RMSE 1.003 against 1.05 (1.05x — the tightest slack after
-        `line2d_markers`). **The entire residual is device row 281**, in four
-        x-segments; the colour band boundary that matplotlib puts at row 281 the
-        port puts at row 282, and rows 44-280 and 282-319 are identical. This is
-        a nearest-neighbour source-row index landing on an exact .5 tie in the
-        image resample — the same `int()`-at-a-tie species as all of 3.3 — and
-        **not** the "array-orientation asymmetry against matplotlib's
-        flipud+upper `specgram`" the old 3.4 entry claimed; a genuine
-        orientation error could not leave 275 of 276 rows byte-identical.
-        The audit's `shift +0+1` classification is likewise an artifact: any
-        one-row residual is trivially cancelled by a one-row roll. Fix the tie,
-        then drop `specgram_psd` from the audit's shift-family list.
+  - [x] **3.4.4 `specgram_psd`: one image row, and the 3.3.6 note is stale.**
+        Done 2026-07-29. 354 differing pixels to **1**, RMSE 1.003 to **0.056**.
+        The whole residual was device row 281 — one contiguous run x[81:434];
+        the colour band boundary matplotlib puts at row 281 the port put at row
+        282, with rows 44-280 and 282-319 byte-identical. What survives is a
+        single pixel at the axes' bottom edge differing by 2.
+
+        **The two orientations were never in disagreement about the picture.**
+        matplotlib's `specgram` hands `imshow` a flipped array with
+        `origin="upper"` (`Axes.specgram`: `Z = np.flipud(Z)`, then
+        `origin='upper'`, extent left as `(xmin, xmax, freqs[0], freqs[-1])`);
+        `Axes.Specgram` kept the natural row order and set `ImageOriginLower`.
+        Those are the same image in exact arithmetic, which is why 275 of 276
+        rows already matched and why the old 3.4 entry was right to reject
+        "orientation error" as the diagnosis. They are not the same in float64:
+        origin-lower reflects the *destination* row and uses `oy` as given,
+        while origin-upper leaves the destination row alone and folds the flip
+        into the offset (`oy = rows - bufHeight/sy - oy`). Different groupings
+        of the same algebra, and `nearestSourceIndex` quantizes to 1/256 of a
+        cell with `agg::iround` and floors — so a coordinate within 1/512 of a
+        cell edge snaps the other way, moving one whole source row. The same
+        `int()`-at-a-tie species as all of 3.3.
+
+        Fixed by mirroring matplotlib in `core.Axes.Specgram`: reverse the row
+        order of the array handed to `Image` and pass `ImageOriginUpper`, which
+        puts the port on matplotlib's float path instead of an equivalent one.
+        `SpecgramResult.Spectrum` stays in natural order, as matplotlib returns
+        the unflipped `spec`. Nothing in the resampler changed, so no other case
+        moved — the full suite is green and no audit row regressed.
+
+        Tolerances ratcheted 0.035/1.05/400/400 to 0.01/0.1/8/4. The audit's
+        `shift +0+1` classification was an artifact — any one-row residual is
+        trivially cancelled by a one-row roll — and `specgram_psd` now reads
+        `sparse-local`, verdict `ok`. Regenerating the audit also absorbed the
+        drift from the three golden-updating commits since it was last written
+        at `7c614276`, so its diff is much wider than this change.
 
   - [ ] **3.4.5 `stat_variants`: the stacked bar's right edge.** 933/176 px,
         RMSE 2.37 against 3.40 (1.43x, `ok`). All three clusters are a 2-px-wide

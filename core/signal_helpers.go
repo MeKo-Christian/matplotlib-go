@@ -127,7 +127,14 @@ func (a *Axes) Specgram(samples []float64, opt SpecgramOptions) *SpecgramResult 
 
 	xMin, xMax := centersExtent(times, float64(nfft-noverlap)/(2*fs))
 	yMin, yMax := freqs[0], freqs[len(freqs)-1]
-	img := a.Image(spectrum, ImageOptions{
+	// Matplotlib hands the spectrogram to imshow flipped, with origin "upper"
+	// (Axes.specgram: `Z = np.flipud(Z)` then `origin='upper'`), and keeps the
+	// extent as (xmin, xmax, freqs[0], freqs[-1]) either way. Flipping the rows
+	// and reflecting the axis are the same picture in exact arithmetic but not
+	// in float64: the two take different branches through the nearest-neighbour
+	// resample, and a source row within 1/512 of a cell edge snaps the other way.
+	// Only the result stays in natural order, as matplotlib returns `spec`.
+	img := a.Image(reverseRows(spectrum), ImageOptions{
 		Colormap: cfg.Colormap,
 		VMin:     cfg.VMin,
 		VMax:     cfg.VMax,
@@ -136,7 +143,7 @@ func (a *Axes) Specgram(samples []float64, opt SpecgramOptions) *SpecgramResult 
 		XMax:     optional.Of(xMax),
 		YMin:     optional.Of(yMin),
 		YMax:     optional.Of(yMax),
-		Origin:   ImageOriginLower,
+		Origin:   ImageOriginUpper,
 		Label:    cfg.Label,
 	})
 	if img == nil {
@@ -997,6 +1004,16 @@ func scaleSpectrumDB(data [][]float64) [][]float64 {
 			}
 			out[row][col] = 10 * math.Log10(value)
 		}
+	}
+	return out
+}
+
+// reverseRows returns the row-reversed view of data as a new outer slice. The
+// rows themselves are shared: nothing downstream writes to them.
+func reverseRows(data [][]float64) [][]float64 {
+	out := make([][]float64, len(data))
+	for row := range data {
+		out[len(data)-1-row] = data[row]
 	}
 	return out
 }
