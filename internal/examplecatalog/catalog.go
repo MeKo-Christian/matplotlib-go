@@ -135,9 +135,11 @@ var cases = []Case{
 	{ID: "errorbar_basic", Topic: "errorbar", Title: "Error Bars", Description: "Symmetric and asymmetric error bars with caps, marker styling, and legend output.", WebDemoID: "errorbars", Showcase: true, SVGGoldenFamily: "errorbar", GoBasicSmokeFamily: "errorbar", SkiaParityFamily: "errorbar", MaxMeanAbs: 0.01, MaxRMSE: 0.05},
 	{ID: "multi_series_basic", Topic: "multi", Title: "Multiple Series", Description: "Several labeled lines sharing one axes, demonstrating color cycling and legends.", Showcase: true, SkiaParityFamily: "line", MaxRMSE: 0.8},
 	{ID: "multi_series_color_cycle", Topic: "multi", Title: "Color Cycle", MaxRMSE: 0.6},
-	// MaxRMSE 1.90: MeanAbs 0.03 / PSNR ~44 dB. The frame and handle-edge residual
-	// is gone; the scatter handle's circle geometry (see PLAN.md) is what is left.
-	{ID: "legend_layout_matrix", Topic: "legend", Title: "Legend Layout Matrix", FixtureOnly: true, MaxRMSE: 1.9, MaxDiffPixels: 700, MaxLargestCluster: 420},
+	// MaxRMSE 0.90: MeanAbs 0.01 / RMSE 0.72, 205 differing pixels in 26 clusters
+	// of at most 62 px. The scatter handle now goes through Matplotlib's
+	// collection draw path (see PLAN.md); what is left is text and hatch
+	// antialiasing outside the handles.
+	{ID: "legend_layout_matrix", Topic: "legend", Title: "Legend Layout Matrix", FixtureOnly: true, MaxRMSE: 0.9, MaxDiffPixels: 260, MaxLargestCluster: 80},
 	// MaxRMSE 0.98: MeanAbs 0.03 / RMSE 0.90. The anchored offset boxes now draw
 	// unclipped and z-ordered against the text bboxes, so the box borders match;
 	// the residual is glyph and marker antialiasing (see PLAN.md).
@@ -311,9 +313,13 @@ var cases = []Case{
 	{ID: "colorbar_extensions", Topic: "colorbar", Title: "Colorbar Extensions", FixtureOnly: true, MaxRMSE: 1.1},
 	{ID: "colorbar_extendfrac", Topic: "colorbar", Title: "Colorbar Extend Fraction", FixtureOnly: true, MaxMeanAbs: 2.0, MaxRMSE: 1.6},
 	{ID: "colorbar_symlog_ticks", Topic: "colorbar", Title: "SymLogNorm Colorbar", FixtureOnly: true, MaxMeanAbs: 2.0, MaxRMSE: 0.65},
-	{ID: "large_scatter", Topic: "raster", Title: "Large Scatter Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathcollectionbatch"}, MaxMeanAbs: 0.5, MaxRMSE: 2.7},
+	// Byte-identical to the Matplotlib reference since the legend's lone scatter
+	// sample picked up _scatteryoffsets (see PLAN.md).
+	{ID: "large_scatter", Topic: "raster", Title: "Large Scatter Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathcollectionbatch"}, MaxMeanAbs: 0.05, MaxRMSE: 0.05},
 	{ID: "mixed_collection", Topic: "raster", Title: "Mixed Path Collection", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathcollectionbatch"}, SVGGoldenFamily: "collection", GoBasicSmokeFamily: "collection", MaxMeanAbs: 0.06, MaxRMSE: 1.2, MaxDiffPixels: 585, MaxLargestCluster: 13},
-	{ID: "mixed_raster_vector", Topic: "raster", Title: "Mixed Raster Vector Output", Description: "A polar mixed-output example with rasterized dense scatter points and vector-preserved line, text, axes, legend, SVG, and PDF artifacts.", Showcase: true, Width: 640, Height: 640, SVGGoldenFamily: "mixed_raster", MaxRMSE: 1.608},
+	// MaxRMSE 1.15: MeanAbs 0.13 / RMSE 0.91. The residual is the rasterized
+	// dense scatter's resample haze — only 4 pixels differ by more than 32.
+	{ID: "mixed_raster_vector", Topic: "raster", Title: "Mixed Raster Vector Output", Description: "A polar mixed-output example with rasterized dense scatter points and vector-preserved line, text, axes, legend, SVG, and PDF artifacts.", Showcase: true, Width: 640, Height: 640, SVGGoldenFamily: "mixed_raster", MaxRMSE: 1.15},
 	{ID: "quad_mesh", Topic: "raster", Title: "Quad Mesh Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"quadmeshbatch"}, MaxMeanAbs: 0.31, MaxRMSE: 0.63, MaxDiffPixels: 4, MaxLargestCluster: 4},
 	{ID: "gouraud_triangles", Topic: "raster", Title: "Gouraud Triangles", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"gouraudtrianglebatch"}, SkiaParityFamily: "gouraud", MaxMeanAbs: 1.0, MaxRMSE: 0.6},
 	{ID: "clip_path_batch", Topic: "raster", Title: "Clip Path Batch", FixtureOnly: true, NativeBackend: "agg", NativeCapabilities: []string{"pathclip", "quadmeshbatch"}, MaxMeanAbs: 0.22, MaxRMSE: 0.87},

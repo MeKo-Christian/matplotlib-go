@@ -77,9 +77,15 @@ type legendEntry struct {
 	markerEdge      render.Color
 	markerEdgeWidth float64
 	markerSize      float64
-	markerLineJoin  render.LineJoin
-	markerLineCap   render.LineCap
-	markerSnap      render.SnapMode
+	// markerScaleMin/markerScaleMax bracket a collection's per-item marker
+	// scales, in the same pixel unit as markerSize. HandlerRegularPolyCollection
+	// derives every sample point's size from that pair; zero means the entry did
+	// not come from a collection and markerSize is the only size there is.
+	markerScaleMin float64
+	markerScaleMax float64
+	markerLineJoin render.LineJoin
+	markerLineCap  render.LineCap
+	markerSnap     render.SnapMode
 
 	patchFill       render.Color
 	patchEdge       render.Color
@@ -475,8 +481,11 @@ func (s *Scatter2D) legendEntry() (legendEntry, bool) {
 	if size <= 0 {
 		size = 36
 	}
-	if legendSize, ok := legendCollectionArea(s.Sizes, size); ok {
-		size = legendSize
+	minArea, maxArea, ok := legendCollectionAreaRange(s.Sizes, size)
+	if ok {
+		size = 0.5 * (minArea + maxArea)
+		entry.markerScaleMin = pointsToPixels(style.Default, math.Sqrt(minArea))
+		entry.markerScaleMax = pointsToPixels(style.Default, math.Sqrt(maxArea))
 	}
 	entry.markerSize = pointsToPixels(style.Default, math.Sqrt(size))
 	entry.markerLineJoin = s.markerLineJoin()
@@ -485,12 +494,15 @@ func (s *Scatter2D) legendEntry() (legendEntry, bool) {
 	return entry, true
 }
 
-func legendCollectionArea(sizes []float64, fallback float64) (float64, bool) {
+// legendCollectionAreaRange returns the smallest and largest positive entry of
+// a scatter's per-point areas, in Matplotlib's points² unit — the size_min and
+// size_max HandlerRegularPolyCollection.get_sizes builds its sample sizes from.
+func legendCollectionAreaRange(sizes []float64, fallback float64) (float64, float64, bool) {
 	if len(sizes) == 0 {
 		if fallback > 0 {
-			return fallback, true
+			return fallback, fallback, true
 		}
-		return 0, false
+		return 0, 0, false
 	}
 	minSize := math.Inf(1)
 	maxSize := 0.0
@@ -507,11 +519,11 @@ func legendCollectionArea(sizes []float64, fallback float64) (float64, bool) {
 	}
 	if maxSize <= 0 || math.IsInf(minSize, 1) {
 		if fallback > 0 {
-			return fallback, true
+			return fallback, fallback, true
 		}
-		return 0, false
+		return 0, 0, false
 	}
-	return 0.5 * (minSize + maxSize), true
+	return minSize, maxSize, true
 }
 
 func (b *Bar2D) legendEntry() (legendEntry, bool) {

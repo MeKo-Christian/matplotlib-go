@@ -1,6 +1,8 @@
 package core
 
 import (
+	"math"
+
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
@@ -45,8 +47,10 @@ func (l *Legend) drawSampleWithFontPixels(r render.Renderer, rc *style.RC, entry
 		}
 		patch.drawStyledPath(r, rc, pixelRectPath(patchRect), geom.Path{})
 	case legendEntryMarker:
-		for _, pt := range l.markerSampleCentersForHandle(sample, center, sampleIsHandleBox) {
-			l.drawMarkerSample(r, rc, entry, pt, l.markerSampleScale(*entry, 5), legendMarkerCollection)
+		centers := l.markerSampleCentersForHandle(sample, center, sampleIsHandleBox)
+		scales := l.collectionSampleScales(entry, len(centers))
+		for i, pt := range centers {
+			l.drawMarkerSample(r, rc, entry, pt, scales[i], legendMarkerCollection)
 		}
 	default:
 		lineWidth := entry.lineWidth
@@ -162,6 +166,43 @@ func (l *Legend) markerSampleScale(entry legendEntry, base float64) float64 {
 		markerScale = l.MarkerScale
 	}
 	return scale * markerScale
+}
+
+// collectionSampleScales sizes each of a collection handle's sample points,
+// porting HandlerRegularPolyCollection.get_sizes: fewer than four points take
+// the mean, largest and smallest area in that order, more spread linearly over
+// the area range. The port works in linear path scale rather than area, so
+// every area is carried as its square root; markerscale multiplies the scale,
+// which is Matplotlib's markerscale**2 on the area.
+func (l *Legend) collectionSampleScales(entry *legendEntry, points int) []float64 {
+	if points <= 0 {
+		return nil
+	}
+	scales := make([]float64, points)
+	minScale, maxScale := entry.markerScaleMin, entry.markerScaleMax
+	if minScale <= 0 || maxScale <= 0 {
+		fallback := l.markerSampleScale(*entry, 5)
+		for i := range scales {
+			scales[i] = fallback
+		}
+		return scales
+	}
+	markerScale := 1.0
+	if l != nil && (l.MarkerScale > 0 || l.defaultsSet) {
+		markerScale = l.MarkerScale
+	}
+	minArea, maxArea := minScale*minScale, maxScale*maxScale
+	for i := range scales {
+		var area float64
+		switch {
+		case points < 4:
+			area = [...]float64{0.5 * (maxArea + minArea), maxArea, minArea}[i]
+		default:
+			area = minArea + (maxArea-minArea)*float64(i)/float64(points-1)
+		}
+		scales[i] = math.Sqrt(area) * markerScale
+	}
+	return scales
 }
 
 func (l *Legend) markerSampleCenters(sample geom.Rect, center geom.Pt) []geom.Pt {
@@ -280,7 +321,7 @@ func (l *Legend) drawMarkerSample(r render.Renderer, rc *style.RC, entry *legend
 		}
 	}
 	if entry.markerHasAlt {
-		drawLegendMarkerPath(r, markerPath, center, markerScale, snap, route, render.Paint{
+		drawLegendMarkerPath(r, markerPath, center, markerScale, snap, route, &render.Paint{
 			Fill:      entry.markerFill,
 			Stroke:    entry.markerEdge,
 			LineWidth: markerEdgeWidthPx,
@@ -288,7 +329,7 @@ func (l *Legend) drawMarkerSample(r render.Renderer, rc *style.RC, entry *legend
 			LineCap:   lineCap,
 		})
 		if len(entry.markerAltPath.C) > 0 {
-			drawLegendMarkerPath(r, entry.markerAltPath, center, radius, snap, route, render.Paint{
+			drawLegendMarkerPath(r, entry.markerAltPath, center, radius, snap, route, &render.Paint{
 				Fill:      entry.markerAltFill,
 				Stroke:    entry.markerEdge,
 				LineWidth: markerEdgeWidthPx,
@@ -306,7 +347,7 @@ func (l *Legend) drawMarkerSample(r render.Renderer, rc *style.RC, entry *legend
 		}
 		fill.A = 0
 	}
-	drawLegendMarkerPath(r, markerPath, center, markerScale, snap, route, render.Paint{
+	drawLegendMarkerPath(r, markerPath, center, markerScale, snap, route, &render.Paint{
 		Fill:      fill,
 		Stroke:    edge,
 		LineWidth: markerEdgeWidthPx,
@@ -315,7 +356,7 @@ func (l *Legend) drawMarkerSample(r render.Renderer, rc *style.RC, entry *legend
 	})
 }
 
-func drawLegendMarkerPath(r render.Renderer, markerPath geom.Path, center geom.Pt, scale float64, snap render.SnapMode, route legendMarkerRoute, paint render.Paint) {
+func drawLegendMarkerPath(r render.Renderer, markerPath geom.Path, center geom.Pt, scale float64, snap render.SnapMode, route legendMarkerRoute, paint *render.Paint) {
 	if len(markerPath.C) == 0 || scale <= 0 {
 		return
 	}
@@ -326,7 +367,7 @@ func drawLegendMarkerPath(r render.Renderer, markerPath geom.Path, center geom.P
 			Items: []render.MarkerItem{{
 				Offset:      center,
 				Transform:   geom.Affine{A: scale, D: scale},
-				Paint:       paint,
+				Paint:       *paint,
 				Antialiased: true,
 			}},
 		}) {
@@ -334,5 +375,5 @@ func drawLegendMarkerPath(r render.Renderer, markerPath geom.Path, center geom.P
 		}
 	}
 	path := scaleAndTranslatePath(markerPath, scale, center)
-	r.Path(path, &paint)
+	r.Path(path, paint)
 }

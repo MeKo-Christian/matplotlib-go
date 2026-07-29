@@ -1127,17 +1127,74 @@ mentioned (`basic_line`) carry real divergences. Findings:
         port computes its own mask-aware neighbours; `tri/analyzer.go` still
         uses the mask-blind version and was left alone.
 
-  - [ ] **3.4.10 `legend_layout_matrix`: scatter handle geometry.** 585/198 px,
-        RMSE 1.657 against 1.90 (1.15x) — re-measured after 3.4.2, which removed
-        the frame and handle-edge residual and left this as the whole case: the
-        four largest clusters, now 32-50 px each, are all inside y[94:113]
-        x[80:118] — one legend entry's three-circle scatter handle, and they are
-        4 of the 14 clusters left. `dx=+1` partly cancels each, and magnified
-        the port's circles are slightly smaller and closer together than
-        matplotlib's. Check the legend handle's marker sizing against
-        `HandlerPathCollection` (`_default_update_prop` scales by
-        `legend.markerscale`, and the sample x positions come from
-        `handlelength`/`scatterpoints`, all in points).
+  - [x] **3.4.10 `legend_layout_matrix`: the scatter handle was drawn through
+        the wrong AGG entry point.** Done 2026-07-29. The entry this replaces
+        said the handle's circles were "slightly smaller and closer together"
+        and asked whether the sizing followed `HandlerPathCollection`. **The
+        sizing and the layout were already exact**, to the last bit:
+        instrumenting matplotlib for the handler-built `PathCollection` gives
+        device offsets `(88.6667, 316.2569)`, `(98.3889, 317.4722)`,
+        `(108.1111, 315.6493)` and a transform scale of `15`, and the port
+        computed the identical six numbers before anything changed. So the
+        premise was stale a fifth time — `handlelength`, `scatterpoints`,
+        `markerscale` and `_scatteryoffsets` all already agreed.
+
+        **The handle went through `draw_markers` instead of
+        `draw_path_collection`.** The two differ by a pixel and the difference
+        is deliberate on matplotlib's side. `_backend_agg.h::draw_markers`
+        rasterizes the marker once and stamps the cache at `floor(x), floor(y)`
+        after `translate(0.5, height+0.5)` — the comment there says the values
+        "are correctly snapped above … we really only want to truncate" — while
+        `_draw_path_collection_generic` transforms each path by its raw offset
+        and flips with `translate(0, height)`, keeping the subpixel part. A
+        `Line2D` legend handle is drawn the first way and a scatter handle the
+        second, because `HandlerPathCollection` builds a `PathCollection`.
+        `drawLegendMarkerPath` used `render.MarkerDrawer` for both, so the
+        circle centred at device `(88.6667, 103.7431)` was stamped at
+        `(89.5, 104.5)`. `core/legend_samples.go` now carries a
+        `legendMarkerRoute`; the collection route skips `DrawMarkers`, and with
+        it the `markerSnapMode` size-threshold table, which has no matplotlib
+        counterpart — a collection carries `SNAP_AUTO`.
+
+        A `center.X += 0.5; center.Y += 0.5` fudge in `drawMarkerSample`, live
+        only for this branch, was removed with it; like the two in 3.4.1 it was
+        compensating the real defect, and the pinned expectation in
+        `TestLegendMarkerSampleScaleAndScatterPoints` had recorded the fudged
+        `19.5/40.5/61.5` instead of matplotlib's `19/40/61`.
+
+        **A lone sample point ignored `_scatteryoffsets`.** `legend.py` tiles
+        `[3/8, 4/8, 2.5/8]` to `scatterpoints` and truncates, so one point sits
+        at 3/8 of the handle box, not at its centre; the port centred it. Worth
+        1.16 px of vertical offset, which is the whole of `large_scatter`'s
+        residual — that case is now **byte-identical** to its matplotlib
+        reference (RMSE 1.303 to 0, 143 differing pixels to 0).
+
+        Result: `legend_layout_matrix` re-measured 547/198 px to 205/33, RMSE 1.656 to
+        0.719, and every cluster left is text or hatch antialiasing outside the
+        legend handles. Tolerances 1.9/700/420 to 0.9/260/80. `-update-golden`
+        over all 190 cases moved exactly three: this case, `large_scatter`
+        (whose golden lives behind `TestAGGNativeGolden`, not `TestGolden`), and
+        `mixed_raster_vector` (RMSE 1.088 to 0.907, amplitude>32 pixels 53 to 4;
+        ratcheted 1.608 to 1.15). `mixed_raster_vector` also carries Go-authored
+        PDF and SVG goldens, regenerated: the legend marker is now an inline
+        `<path>` rather than a `<defs>` symbol plus `<use>`, which is what
+        leaving the marker-stamp route means for the vector backends.
+
+        Two matplotlib divergences fixed alongside, neither of which moves a
+        pixel in this suite because no case pairs a size-varying scatter with
+        `scatterpoints > 1`: `HandlerRegularPolyCollection.get_sizes` gives the
+        sample points `[mean, max, min]` areas (and a `linspace` beyond three),
+        where the port drew every point at the mean — now `collectionSampleScales`
+        with `markerScaleMin`/`markerScaleMax` on the entry; and
+        `PathCollection.legendEntry` ignored `Sizes` outright, always handing the
+        legend a 5 px base marker.
+
+        Latent divergence found and **not** fixed: `Scatter2D.legendEntry`
+        converts points to pixels with `style.Default` rather than the drawing
+        `ctx.RC` (`core/legend_entries.go`), so a legend marker is sized for DPI
+        100 whatever the figure's DPI. Every parity case renders at DPI 100, so
+        nothing here can see it; the `legendEntryProvider` interface takes no
+        RC, which is why it is still there.
 
   - [ ] **3.4.11 `colorbar_boundary_values`: the two extreme ticks.** 76/63 px,
         RMSE 1.555 against 3.10 (1.99x, `ok`) — the smallest residual in this

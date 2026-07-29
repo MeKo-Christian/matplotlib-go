@@ -1,6 +1,8 @@
 package core
 
 import (
+	"math"
+
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/optional"
 	"github.com/cwbudde/matplotlib-go/render"
@@ -199,14 +201,43 @@ func (c *PathCollection) legendEntry() (legendEntry, bool) {
 			edge = mapped
 		}
 	}
-	return legendEntry{
+	// Collection sizes are stored as linear path scales, so the size_min and
+	// size_max HandlerRegularPolyCollection works in are their squares; the
+	// mean of the two areas is the scale of a lone sample point.
+	minScale, maxScale := c.scaleRange()
+	entry := legendEntry{
 		Label:           c.label(),
 		kind:            legendEntryMarker,
 		markerPath:      c.pathAt(0),
 		markerFill:      fill,
 		markerEdge:      edge,
 		markerEdgeWidth: c.edgeWidthAt(0),
-	}, true
+		markerScaleMin:  minScale,
+		markerScaleMax:  maxScale,
+	}
+	entry.markerSize = math.Sqrt(0.5 * (minScale*minScale + maxScale*maxScale))
+	return entry, true
+}
+
+// scaleRange returns the smallest and largest per-item path scale.
+func (c *PathCollection) scaleRange() (float64, float64) {
+	count := c.itemCount()
+	if count <= 0 {
+		count = 1
+	}
+	minScale, maxScale := math.Inf(1), 0.0
+	for i := 0; i < count; i++ {
+		scale := c.sizeAt(i)
+		if scale <= 0 || math.IsNaN(scale) || math.IsInf(scale, 0) {
+			continue
+		}
+		minScale = math.Min(minScale, scale)
+		maxScale = math.Max(maxScale, scale)
+	}
+	if maxScale <= 0 || math.IsInf(minScale, 1) {
+		return 0, 0
+	}
+	return minScale, maxScale
 }
 
 // SetArray stores scalar values and refreshes mapped path-collection face

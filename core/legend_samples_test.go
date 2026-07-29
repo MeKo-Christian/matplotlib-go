@@ -644,3 +644,75 @@ func TestLegendSampleCentersUseMatplotlibHandleBaseline(t *testing.T) {
 	}
 	t.Fatalf("legend line sample was not drawn; paths=%+v", r.paths)
 }
+
+// TestLegendScatterHandleMatchesMatplotlibHandlerPathCollection pins the
+// scatter legend handle's geometry against Matplotlib 3.10.9 rendering
+// test/matplotlib_ref/plots/legend_layout_matrix.py. The handle box and the
+// expected offsets/scale were read off the handler-built PathCollection there:
+// p.get_offsets() through p.get_offset_transform(), and p.get_transforms().
+func TestLegendScatterHandleMatchesMatplotlibHandlerPathCollection(t *testing.T) {
+	sample := geom.Rect{
+		Min: geom.Pt{X: 84.5, Y: 312.6111111111111},
+		Max: geom.Pt{X: 112.27777777777777, Y: 322.3333333333333},
+	}
+	center := geom.Pt{X: sample.Min.X + sample.W()/2, Y: sample.Min.Y + sample.H()/2}
+	legend := &Legend{ScatterPoints: 3, MarkerScale: 1.8, defaultsSet: true}
+
+	centers := legend.markerSampleCentersForHandle(sample, center, true)
+	want := []geom.Pt{
+		{X: 88.66666666666667, Y: 316.2569444444444},
+		{X: 98.38888888888889, Y: 317.4722222222222},
+		{X: 108.11111111111111, Y: 315.6493055555555},
+	}
+	if len(centers) != len(want) {
+		t.Fatalf("scatter sample centers = %d, want %d", len(centers), len(want))
+	}
+	for i, w := range want {
+		if !floatApprox(centers[i].X, w.X, 1e-9) || !floatApprox(centers[i].Y, w.Y, 1e-9) {
+			t.Fatalf("scatter sample %d = %+v, want Matplotlib offset %+v", i, centers[i], w)
+		}
+	}
+
+	// s=36 for every point, so get_sizes' [mean, max, min] collapse to one
+	// value: sqrt(36 * 1.8**2) * 100/72 = 15, the transform scale Matplotlib
+	// puts on the unit-diameter marker path.
+	markerScale := pointsToPixels(style.Default, 6)
+	entry := legendEntry{kind: legendEntryMarker, markerSize: markerScale, markerScaleMin: markerScale, markerScaleMax: markerScale}
+	for i, got := range legend.collectionSampleScales(&entry, len(centers)) {
+		if !floatApprox(got, 15, 1e-9) {
+			t.Fatalf("scatter sample %d scale = %g, want Matplotlib 15", i, got)
+		}
+	}
+}
+
+// TestLegendScatterHandleSizesFollowMatplotlibGetSizes covers the size-varying
+// case HandlerRegularPolyCollection.get_sizes exists for: three sample points
+// take the mean, largest and smallest area, in that order.
+func TestLegendScatterHandleSizesFollowMatplotlibGetSizes(t *testing.T) {
+	entry := legendEntry{kind: legendEntryMarker, markerScaleMin: 3, markerScaleMax: 5}
+	got := (&Legend{ScatterPoints: 3, MarkerScale: 1, defaultsSet: true}).collectionSampleScales(&entry, 3)
+	want := []float64{math.Sqrt(0.5 * (25 + 9)), 5, 3}
+	for i := range want {
+		if !floatApprox(got[i], want[i], 1e-9) {
+			t.Fatalf("sample %d scale = %g, want %g", i, got[i], want[i])
+		}
+	}
+}
+
+// TestLegendSingleScatterSampleUsesFirstScatterYOffset pins the lone-sample
+// case: Matplotlib tiles _scatteryoffsets to scatterpoints, so one point sits
+// at 3/8 of the handle box height, not at its centre.
+func TestLegendSingleScatterSampleUsesFirstScatterYOffset(t *testing.T) {
+	sample := geom.Rect{Min: geom.Pt{X: 10, Y: 100}, Max: geom.Pt{X: 70, Y: 120}}
+	center := geom.Pt{X: 40, Y: 110}
+	centers := (&Legend{ScatterPoints: 1, defaultsSet: true}).markerSampleCentersForHandle(sample, center, true)
+	if len(centers) != 1 {
+		t.Fatalf("scatter sample centers = %d, want 1", len(centers))
+	}
+	if !floatApprox(centers[0].X, 40, 1e-9) {
+		t.Fatalf("single scatter sample x = %g, want handle box centre 40", centers[0].X)
+	}
+	if want := 100 + 0.375*20.0; !floatApprox(centers[0].Y, want, 1e-9) {
+		t.Fatalf("single scatter sample y = %g, want 3/8 of the handle box %g", centers[0].Y, want)
+	}
+}
