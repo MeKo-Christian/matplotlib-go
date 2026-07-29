@@ -142,8 +142,11 @@ func newAnchoredTextBox(text string, rc style.RC, opt AnchoredTextOptions) *Anch
 	}
 }
 
-// Draw renders the anchored text box.
-func (a *AnchoredTextBox) Draw(r render.Renderer, ctx *DrawContext) {
+// Draw is a no-op because anchored offset boxes render outside the axes clip.
+func (a *AnchoredTextBox) Draw(render.Renderer, *DrawContext) {}
+
+// DrawOverlay renders the anchored text box without the axes clip applied.
+func (a *AnchoredTextBox) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 	if a == nil || ctx == nil {
 		return
 	}

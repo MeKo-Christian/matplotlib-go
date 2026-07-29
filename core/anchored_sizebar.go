@@ -167,7 +167,11 @@ func newAnchoredSizeBar(size float64, label string, rc style.RC, opt AnchoredSiz
 	}
 }
 
-func (a *AnchoredSizeBar) Draw(r render.Renderer, ctx *DrawContext) {
+// Draw is a no-op because anchored offset boxes render outside the axes clip.
+func (a *AnchoredSizeBar) Draw(render.Renderer, *DrawContext) {}
+
+// DrawOverlay renders the anchored size bar without the axes clip applied.
+func (a *AnchoredSizeBar) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 	if a == nil || r == nil || ctx == nil {
 		return
 	}

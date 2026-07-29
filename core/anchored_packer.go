@@ -216,8 +216,11 @@ func (a *AnchoredPacker) AddImage(img render.Image, zoom float64) *AnchoredPacke
 	return a
 }
 
-// Draw renders the packed anchored box.
-func (a *AnchoredPacker) Draw(r render.Renderer, ctx *DrawContext) {
+// Draw is a no-op because anchored offset boxes render outside the axes clip.
+func (a *AnchoredPacker) Draw(render.Renderer, *DrawContext) {}
+
+// DrawOverlay renders the packed anchored box without the axes clip applied.
+func (a *AnchoredPacker) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 	if a == nil || r == nil || ctx == nil {
 		return
 	}

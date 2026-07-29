@@ -123,7 +123,11 @@ func (a *AnchoredDrawingArea) AddPath(path geom.Path, paint render.Paint) *Ancho
 	return a
 }
 
-func (a *AnchoredDrawingArea) Draw(r render.Renderer, ctx *DrawContext) {
+// Draw is a no-op because anchored offset boxes render outside the axes clip.
+func (a *AnchoredDrawingArea) Draw(render.Renderer, *DrawContext) {}
+
+// DrawOverlay renders the anchored drawing area without the axes clip applied.
+func (a *AnchoredDrawingArea) DrawOverlay(r render.Renderer, ctx *DrawContext) {
 	if a == nil || r == nil || ctx == nil {
 		return
 	}
