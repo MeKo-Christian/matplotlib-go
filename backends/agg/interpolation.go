@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	agglib "github.com/cwbudde/agg_go"
+	"github.com/cwbudde/matplotlib-go/internal/imageinterp"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -88,16 +89,20 @@ func resolveInterpolationName(name string, srcW, srcH, dstW, dstH float64) (aggl
 	return filter, true
 }
 
+// shouldUseNearestForAutoResample defers to the shared policy in imageinterp so
+// the AGG and SVG backends cannot disagree about when an "antialiased" image is
+// drawn unfiltered.
 func shouldUseNearestForAutoResample(srcW, srcH, dstW, dstH float64) bool {
 	if srcW <= 0 || srcH <= 0 || dstW <= 0 || dstH <= 0 {
 		return false
 	}
-	return (dstW > 3*srcW || floatAlmostEqual(dstW, srcW) || floatAlmostEqual(dstW, 2*srcW)) &&
-		(dstH > 3*srcH || floatAlmostEqual(dstH, srcH) || floatAlmostEqual(dstH, 2*srcH))
+
+	return imageinterp.Resolve("antialiased", srcW, srcH, dstW, dstH) == imageinterp.Nearest
 }
 
 func floatAlmostEqual(a, b float64) bool {
 	const eps = 1e-9
+
 	return math.Abs(a-b) <= eps*math.Max(1.0, math.Max(math.Abs(a), math.Abs(b)))
 }
 

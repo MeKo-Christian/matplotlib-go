@@ -7,9 +7,11 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"math"
 	"strings"
 
 	"github.com/cwbudde/matplotlib-go/geom"
+	"github.com/cwbudde/matplotlib-go/internal/imageinterp"
 	"github.com/cwbudde/matplotlib-go/render"
 )
 
@@ -29,7 +31,7 @@ func (r *Renderer) DrawImage(img render.Image, dst geom.Rect) {
 		Min: geom.Pt{X: dst.Min.X, Y: r.flipY(dst.Max.Y)},
 		Max: geom.Pt{X: dst.Max.X, Y: r.flipY(dst.Min.Y)},
 	}
-	r.renderImageNode(rgba, flipped, "")
+	r.renderImageNode(rgba, flipped, "", imageRenderingHint(img, flipped.W(), flipped.H()))
 }
 
 func (r *Renderer) ImageTransformed(img render.Image, dst geom.Rect, transform geom.Affine) {
@@ -47,10 +49,69 @@ func (r *Renderer) ImageTransformed(img render.Image, dst geom.Rect, transform g
 	}
 	// Compose the device y-flip so the placement maps image space -> y-down
 	// device space, mirroring the AGG backend (deviceFlipAffine().Mul(affine)).
-	r.renderImageNode(rgba, dst, matrixTransform(r.deviceFlip().Mul(transform)))
+	// The transform scales dst, so measure the on-canvas size through it: the raw
+	// rect would understate how far the raster is stretched and push every
+	// transformed image towards a filtered draw.
+	drawnW, drawnH := transformedExtent(dst, transform)
+
+	r.renderImageNode(rgba, dst, matrixTransform(r.deviceFlip().Mul(transform)), imageRenderingHint(img, drawnW, drawnH))
 }
 
-func (r *Renderer) renderImageNode(rgba *image.RGBA, dst geom.Rect, transform string) {
+// transformedExtent returns the axis-aligned width and height that dst covers
+// once transform is applied.
+func transformedExtent(dst geom.Rect, transform geom.Affine) (float64, float64) {
+	corners := [4]geom.Pt{
+		transform.Apply(geom.Pt{X: dst.Min.X, Y: dst.Min.Y}),
+		transform.Apply(geom.Pt{X: dst.Max.X, Y: dst.Min.Y}),
+		transform.Apply(geom.Pt{X: dst.Min.X, Y: dst.Max.Y}),
+		transform.Apply(geom.Pt{X: dst.Max.X, Y: dst.Max.Y}),
+	}
+
+	minX, maxX := float64(corners[0].X), float64(corners[0].X)
+	minY, maxY := float64(corners[0].Y), float64(corners[0].Y)
+
+	for _, corner := range corners[1:] {
+		minX = math.Min(minX, float64(corner.X))
+		maxX = math.Max(maxX, float64(corner.X))
+		minY = math.Min(minY, float64(corner.Y))
+		maxY = math.Max(maxY, float64(corner.Y))
+	}
+
+	return maxX - minX, maxY - minY
+}
+
+// imageRenderingHint returns the value for the SVG image-rendering property, or
+// "" to leave the viewer's default in place.
+//
+// Unlike Matplotlib's SVG backend, which resamples the raster to output
+// resolution before embedding it, this backend embeds the source pixels and
+// lets the viewer scale them. That is far smaller on disk, but it also hands
+// the resampling decision to the viewer, which always smooths - so a 24x7
+// heatmap blown up to ~1200x880 arrived as a blur instead of discrete cells.
+// Carrying the resolved interpolation across as a rendering hint restores it.
+func imageRenderingHint(img render.Image, dstW, dstH float64) string {
+	if img == nil {
+		return ""
+	}
+
+	srcW, srcH := img.Size()
+
+	resolved := imageinterp.Resolve(
+		img.Interpolation(),
+		float64(srcW), float64(srcH),
+		math.Abs(dstW), math.Abs(dstH),
+	)
+	if !imageinterp.IsNearest(resolved) {
+		return ""
+	}
+
+	// SVG 1.1 only defines optimizeSpeed; pixelated and crisp-edges come from
+	// CSS Images 3. Emit all three in cascade order so old and new viewers each
+	// pick up the last one they understand.
+	return "image-rendering:optimizeSpeed;image-rendering:crisp-edges;image-rendering:pixelated"
+}
+
+func (r *Renderer) renderImageNode(rgba *image.RGBA, dst geom.Rect, transform, style string) {
 	x := dst.Min.X
 	y := dst.Min.Y
 	w := dst.W()
@@ -92,6 +153,11 @@ func (r *Renderer) renderImageNode(rgba *image.RGBA, dst geom.Rect, transform st
 	if transform != "" {
 		writeAttr(&b, "transform", transform)
 	}
+
+	if style != "" {
+		writeAttr(&b, "style", style)
+	}
+
 	b.WriteString(` />`)
 
 	r.nodes = append(r.nodes, r.newNode(b.String()))

@@ -329,7 +329,7 @@ func TestTransformedImageAggRasterAlignmentIsDocumented(t *testing.T) {
 func TestTransformedImageVectorBackendBehaviorIsDocumented(t *testing.T) {
 	sourceRequirements := map[string][]string{
 		filepath.Join("..", "backends", "svg", "image.go"): {
-			"r.renderImageNode(rgba, flipped, \"\")",
+			"r.renderImageNode(rgba, flipped, \"\", imageRenderingHint(img, flipped.W(), flipped.H()))",
 			"preserveAspectRatio=\"none\"",
 			"uri := \"data:image/png;base64,\" + encoded",
 			"matrixTransform(r.deviceFlip().Mul(transform))",

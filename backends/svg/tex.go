@@ -46,7 +46,7 @@ func (r *Renderer) DrawTeX(text string, origin geom.Pt, size float64, textColor 
 	r.renderImageNode(img, geom.Rect{
 		Min: topLeft,
 		Max: geom.Pt{X: topLeft.X + float64(img.Bounds().Dx()), Y: topLeft.Y + float64(img.Bounds().Dy())},
-	}, "")
+	}, "", "")
 	return true
 }
 
@@ -80,7 +80,7 @@ func (r *Renderer) DrawTeXRotated(text string, anchor geom.Pt, size, angle float
 	r.renderImageNode(img, geom.Rect{
 		Min: topLeft,
 		Max: geom.Pt{X: topLeft.X + float64(img.Bounds().Dx()), Y: topLeft.Y + float64(img.Bounds().Dy())},
-	}, transform)
+	}, transform, "")
 	return true
 }
 

@@ -125,3 +125,69 @@ func TestHelperImageBranches(t *testing.T) {
 		t.Fatalf("expected RGBA image conversion to preserve bounds, got %#v", converted)
 	}
 }
+
+// A heatmap embeds a tiny raster - 24x7 for weekday x hour - and lets the viewer
+// scale it up. Viewers smooth by default, so without a rendering hint the cells
+// arrive as a blur instead of discrete blocks.
+func TestDrawImageMarksUpscaledImagesAsUnfiltered(t *testing.T) {
+	content := renderSVGDocument(t, func(r *Renderer) {
+		img := image.NewRGBA(image.Rect(0, 0, 24, 7))
+		img.SetRGBA(0, 0, color.RGBA{R: 200, G: 100, B: 50, A: 255})
+		r.DrawImage(render.NewImageData(img), geom.Rect{
+			Min: geom.Pt{X: 10, Y: 10},
+			Max: geom.Pt{X: 890, Y: 610},
+		})
+	})
+
+	if !strings.Contains(content, "image-rendering:pixelated") {
+		t.Fatalf("expected an unfiltered rendering hint on a heavily upscaled image, got %q", content)
+	}
+}
+
+// Under the antialiased policy a mild upscale is filtered, so the hint must stay
+// off: forcing nearest there would make output coarser than Matplotlib's, not
+// more faithful. 2.5x in x and ~2.43x in y is neither an integer factor nor past
+// the 3x cutoff.
+func TestDrawImageLeavesFilteredImagesAlone(t *testing.T) {
+	content := renderSVGDocument(t, func(r *Renderer) {
+		img := image.NewRGBA(image.Rect(0, 0, 24, 7))
+		data := render.NewImageData(img)
+		data.SetInterpolation("antialiased")
+		r.DrawImage(data, geom.Rect{
+			Min: geom.Pt{X: 0, Y: 0},
+			Max: geom.Pt{X: 60, Y: 17},
+		})
+	})
+
+	if strings.Contains(content, "image-rendering") {
+		t.Fatalf("expected no rendering hint on a filtered image, got %q", content)
+	}
+}
+
+// An explicit interpolation must win over the scale-based policy in both
+// directions, exactly as it does in the AGG backend.
+func TestDrawImageHonoursExplicitInterpolation(t *testing.T) {
+	for _, tc := range []struct {
+		interpolation string
+		wantHint      bool
+	}{
+		{interpolation: "nearest", wantHint: true},
+		{interpolation: "bilinear", wantHint: false},
+	} {
+		t.Run(tc.interpolation, func(t *testing.T) {
+			content := renderSVGDocument(t, func(r *Renderer) {
+				img := image.NewRGBA(image.Rect(0, 0, 24, 7))
+				data := render.NewImageData(img)
+				data.SetInterpolation(tc.interpolation)
+				r.DrawImage(data, geom.Rect{
+					Min: geom.Pt{X: 0, Y: 0},
+					Max: geom.Pt{X: 880, Y: 600},
+				})
+			})
+
+			if got := strings.Contains(content, "image-rendering"); got != tc.wantHint {
+				t.Fatalf("interpolation %q: hint present = %v, want %v", tc.interpolation, got, tc.wantHint)
+			}
+		})
+	}
+}

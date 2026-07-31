@@ -4,5 +4,5 @@ width="100" height="100" viewBox="0 0 100 100"
 preserveAspectRatio="xMidYMid meet">
   <metadata></metadata>
   <rect x="0" y="0" width="100%" height="100%" fill="rgb(255,255,255)" />
-  <image x="0" y="0" width="2" height="2" preserveAspectRatio="none" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAGElEQVR4nGI6kWL0nwEGjFJO/AcEAAD//ykhBL1TD8QHAAAAAElFTkSuQmCC" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAGElEQVR4nGI6kWL0nwEGjFJO/AcEAAD//ykhBL1TD8QHAAAAAElFTkSuQmCC" transform="matrix(10 0 0 -10 30 60)" />
+  <image x="0" y="0" width="2" height="2" preserveAspectRatio="none" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAGElEQVR4nGI6kWL0nwEGjFJO/AcEAAD//ykhBL1TD8QHAAAAAElFTkSuQmCC" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAGElEQVR4nGI6kWL0nwEGjFJO/AcEAAD//ykhBL1TD8QHAAAAAElFTkSuQmCC" transform="matrix(10 0 0 -10 30 60)" style="image-rendering:optimizeSpeed;image-rendering:crisp-edges;image-rendering:pixelated" />
 </svg>
