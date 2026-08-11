@@ -1,8 +1,8 @@
 package pyplot
 
 import (
-	"errors"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -136,56 +136,84 @@ func defaultManagerFactory(fig *core.Figure) (canvas.FigureManager, error) {
 
 func saveFigure(fig *core.Figure, path string, opts ...render.SaveOption) error {
 	if fig == nil {
-		return errors.New("pyplot: nil figure")
+		return fmt.Errorf("pyplot: nil figure")
 	}
 
-	ext := strings.ToLower(filepath.Ext(path))
+	ext := pyplotSaveFormat(fig, path, opts...)
 	if ext == "" {
-		return fmt.Errorf("pyplot: savefig path %q has no extension", path)
+		return fmt.Errorf("pyplot: savefig path %q has no extension and no savefig.format set", path)
 	}
-
 	choice := strings.TrimSpace(os.Getenv("MATPLOTLIB_BACKEND"))
-	cfg := rendererConfig(fig)
-
 	backend, err := backends.SelectBackendForExtension(choice, ext, nil)
+	if err != nil && choice != "" {
+		// A display backend may be pinned globally without supporting the requested
+		// file format. Match the historical pyplot behavior by choosing an output
+		// backend for that format in that case.
+		backend, err = backends.SelectBackendForExtension("", ext, nil)
+	}
 	if err != nil {
-		// If the user pinned a backend that does not handle this extension,
-		// retry with auto so the registry picks any backend that can.
-		if choice != "" {
-			backend, err = backends.SelectBackendForExtension("", ext, nil)
-		}
-		if err != nil {
-			return fmt.Errorf("pyplot: %w", err)
-		}
+		return fmt.Errorf("pyplot: %w", err)
 	}
 
-	renderer, err := backends.Create(backend, cfg)
+	cfg := saveRendererConfig(fig, ext, opts...)
+	r, err := backends.Create(backend, cfg)
 	if err != nil {
 		return fmt.Errorf("pyplot: create %s renderer: %w", backend, err)
 	}
-
-	saveOptions := render.ResolveSaveOptions(opts...)
-	if err := saveOptions.ValidateForExtension(ext); err != nil {
-		return fmt.Errorf("pyplot: %w", err)
-	}
-	if setter, ok := renderer.(render.SVGOptionSetter); ok {
-		setter.SetSVGOptions(saveOptions.SVG)
-	}
-	if setter, ok := renderer.(render.PDFOptionSetter); ok {
-		setter.SetPDFOptions(saveOptions.PDF)
-	}
-	if setter, ok := renderer.(render.PSOptionSetter); ok {
-		setter.SetPSOptions(saveOptions.PS)
-	}
-	if setter, ok := renderer.(render.PGFOptionSetter); ok {
-		setter.SetPGFOptions(saveOptions.PGF)
-	}
-	core.DrawFigure(fig, renderer)
-
-	if err := backends.DefaultRegistry.SaveViaExtension(backend, renderer, path, opts...); err != nil {
+	if err := core.SaveFig(fig, r, path, opts...); err != nil {
 		return fmt.Errorf("pyplot: %w", err)
 	}
 	return nil
+}
+
+func pyplotSaveFormat(fig *core.Figure, path string, opts ...render.SaveOption) string {
+	format := strings.TrimSpace(strings.ToLower(render.ResolveSaveOptions(opts...).Figure.Format))
+	if format == "" && fig != nil {
+		format = strings.TrimSpace(strings.ToLower(fig.RC.Savefig.Format))
+	}
+	if format == "" {
+		format = strings.ToLower(filepath.Ext(path))
+	}
+	if format != "" && !strings.HasPrefix(format, ".") {
+		format = "." + format
+	}
+	return format
+}
+
+func saveRendererConfig(fig *core.Figure, ext string, opts ...render.SaveOption) backends.Config {
+	cfg := rendererConfig(fig)
+	resolved := render.ResolveSaveOptions(opts...).Figure
+	dpi := fig.RC.DPI
+	if resolved.HasDPI && resolved.DPI > 0 {
+		dpi = resolved.DPI
+	} else if fig.RC.Savefig.Dpi > 0 {
+		dpi = fig.RC.Savefig.Dpi
+	}
+	if vectorSaveFormat(ext) {
+		dpi = 72
+	}
+	if fig.RC.DPI > 0 && dpi > 0 {
+		cfg.Width = int(math.Round(fig.SizePx.X * dpi / fig.RC.DPI))
+		cfg.Height = int(math.Round(fig.SizePx.Y * dpi / fig.RC.DPI))
+	}
+	cfg.DPI = dpi
+	if resolved.HasFacecolor {
+		cfg.Background = resolved.Facecolor
+	}
+	if resolved.HasTransparent && resolved.Transparent {
+		cfg.Background = render.Color{}
+		cfg.Transparent = true
+	}
+	return cfg
+}
+
+func vectorSaveFormat(ext string) bool {
+	switch strings.ToLower(ext) {
+	case ".pdf", ".svg", ".ps", ".eps", ".pgf":
+		return true
+	default:
+		return false
+	}
 }
 
 func rendererConfig(fig *core.Figure) backends.Config {

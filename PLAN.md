@@ -3,8 +3,48 @@
 This file tracks only unresolved work required for a stable v1.0 release.
 Completed implementation history is available in git.
 
+## Immediate: Cross-Backend Vector Export Correctness
+
+**Goal:** make one figure retain the same physical size, layout, opacity, and
+marker styling across raster and vector output before further visual QA relies
+on PDF/SVG artifacts. A 1400×1150 figure at 160 DPI currently becomes a
+1400×1150-point PDF instead of 630×517.5 points; SVG likewise writes the
+pixel extent as an unqualified viewport. PDF transparency state leaks from a
+translucent artist into later opaque artists, and the released SVG marker batch
+path scales marker strokes with marker geometry.
+
+- [x] **Fix the vector DPI and page-size contract centrally.** Derive PDF, SVG,
+      PS/EPS, and PGF physical dimensions from figure inches rather than passing
+      raster pixel dimensions through as points or vector user units. Resolve
+      save-time DPI before constructing or sizing the renderer; save DPI should
+      control raster output and rasterized vector sub-artists without changing
+      a vector document's physical page size.
+- [x] **Reset PDF transparency between artists.** Ensure an opaque paint after
+      a translucent paint selects an opaque ExtGState (or scopes the prior
+      state), so a legend frame, patch, image, or path cannot fade later output.
+- [x] **Finish the SVG marker-transform correction.** Bake marker-size
+      transforms into marker geometry while keeping stroke widths in display
+      space, and retain reusable marker definitions where possible.
+- [x] **Add cross-backend regression coverage.** At minimum, compare a shared
+      multi-panel figure at 72 and 160 DPI after rasterizing PDF/SVG, assert PDF
+      MediaBox and SVG physical dimensions, test opaque-after-translucent PDF
+      drawing, and test that SVG marker transforms do not scale edge widths.
+
+**Done when:** PNG and rasterized vector outputs agree in physical geometry and
+artist state at multiple DPIs; all vector page/viewports represent the figure's
+inch size consistently; and the affected backend/unit and visual tests pass.
+
+Completed 2026-08-11: vector saves now use a 72-point display coordinate space
+with independent mixed-raster save DPI, all built-in vector pages preserve
+figure inches (including fractional dimensions), PDF resets opaque graphics
+state, and SVG marker transforms preserve display-space strokes. Production
+save-path structural goldens and 72/160-DPI PDF/SVG raster comparisons cover the
+contract.
+
 ## Execution Order
 
+0. The immediate cross-backend vector export task is complete; subsequent
+   visual QA may rely on the corrected vector artifacts.
 1. Phase 1 completes Skia GPU support and can proceed independently.
 2. Phase 2 performs the breaking API and package rework.
 3. Phase 3 runs visual QA against the final pre-v1.0 renderer/API state.

@@ -22,8 +22,8 @@ func New(width, height int, background render.Color) (*Renderer, error) {
 		background = render.Color{R: 1, G: 1, B: 1, A: 1}
 	}
 	return &Renderer{
-		width:      width,
-		height:     height,
+		width:      float64(width),
+		height:     float64(height),
 		background: background,
 		resolution: 72,
 		pgfOpts:    render.DefaultPGFOptions(),
@@ -36,6 +36,21 @@ func (r *Renderer) SetResolution(dpi uint) {
 		dpi = 72
 	}
 	r.resolution = dpi
+}
+
+// Clear replaces the page background used by the next drawing session.
+func (r *Renderer) Clear(c render.Color) {
+	if r != nil {
+		r.background = c
+	}
+}
+
+// SetPageSize sets the physical PGF page in PostScript points.
+func (r *Renderer) SetPageSize(widthPoints, heightPoints float64) {
+	if r != nil && widthPoints > 0 && heightPoints > 0 {
+		r.width = widthPoints
+		r.height = heightPoints
+	}
 }
 
 // Begin starts a drawing session.
@@ -59,8 +74,11 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 	r.writeDocumentComments(&r.content)
 	r.content.WriteString("\\begingroup\n")
 	r.content.WriteString("\\begin{pgfpicture}\n")
+	// Display coordinates use PostScript points (72 per inch), while TeX's pt
+	// is 1/72.27 inch. Scale geometry once so the page remains physically exact.
+	r.content.WriteString("\\pgftransformscale{1.00375}\n")
 	fmt.Fprintf(&r.content, "\\pgfpathrectangle{\\pgfpoint{0pt}{0pt}}{\\pgfpoint{%spt}{%spt}}\n",
-		shortFloat(float64(r.width)), shortFloat(float64(r.height)))
+		shortFloat(r.width), shortFloat(r.height))
 	r.content.WriteString("\\pgfusepath{use as bounding box}\n")
 	// All \definecolor declarations are injected here, at the pgfpicture's
 	// outermost group, so every nested \pgfscope can see them.
@@ -72,7 +90,7 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 		writeFillOpacity(&r.content, r.background.A)
 		writeFillColor(&r.content, r.colorName(r.background))
 		fmt.Fprintf(&r.content, "\\pgfpathrectangle{\\pgfpoint{0pt}{0pt}}{\\pgfpoint{%spt}{%spt}}\n",
-			shortFloat(float64(r.width)), shortFloat(float64(r.height)))
+			shortFloat(r.width), shortFloat(r.height))
 		r.content.WriteString("\\pgfusepath{fill}\n")
 	}
 	return nil

@@ -699,7 +699,12 @@ func artistRasterizationOptions(r render.Renderer, art Artist, ctx *DrawContext)
 }
 
 func withRasterizationDPI(options render.Rasterization, ctx *DrawContext) render.Rasterization {
-	if options.DPI <= 0 && ctx != nil && ctx.RC.DPI > 0 {
+	if options.DPI > 0 || ctx == nil {
+		return options
+	}
+	if ctx.DrawOptions.rasterDPI > 0 {
+		options.DPI = ctx.DrawOptions.rasterDPI
+	} else if ctx.RC.DPI > 0 {
 		options.DPI = ctx.RC.DPI
 	}
 	return options

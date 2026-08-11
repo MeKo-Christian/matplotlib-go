@@ -46,6 +46,11 @@ const (
 type DrawOptions struct {
 	AnimatedFilter AnimatedFilter
 
+	// rasterDPI keeps savefig.dpi separate from the 72-DPI display coordinate
+	// system used by vector backends. It is intentionally internal: callers set
+	// artist-specific rasterization through render.Rasterization instead.
+	rasterDPI float64
+
 	// Transparent forces axes patch backgrounds to be transparent at save time
 	// (savefig.transparent). The figure background is handled by the save path.
 	Transparent bool

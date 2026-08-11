@@ -142,6 +142,9 @@ It still needs release framing and a version heading before it seeds the v1.0
 - Added `Figure.Save`, `Figure.WriteTo`, and `Figure.Image` as the common
   figure-output surface. Import `backends/all` or a specific output backend to
   register the desired formats.
+- Added the optional `render.VectorPageSizer` capability, implemented by PDF,
+  SVG, PS/EPS, and PGF renderers. The central save path now configures exact
+  fractional point dimensions independently of mixed-raster save DPI.
 - Added `render.Color.WithAlphaMultiplier` as the shared non-mutating color
   alpha composition primitive used by core and 3D artists.
 - Added `core.PlotOptions.ScalarMapConfig` so core and 3D plotting paths use
@@ -172,9 +175,10 @@ It still needs release framing and a version heading before it seeds the v1.0
   fix added the
   `transform.AffineScale`/`IsAffineScale` pair, bringing the freeze to 3,180;
   the figure-size fidelity fix then added `core.Figure.CanvasSize`, bringing it
-  to 3,181.
+  to 3,181. Subsequent dash, overlay, and vector page-sizing capabilities bring
+  the live reconciled freeze to 3,199.
 - Reconciled that freeze against the tiering decisions symbol by
   symbol in `docs/plans/api-freeze-delta.{md,json}`. All 19 `delete` rows are
   absent and the one `demote` row landed in `backends`; every one of the 402
-  removed and 480 added names carries a category and, where it is a rename or a
+  removed and 499 added names carries a category and, where it is a rename or a
   move, a replacement that the test verifies is frozen.

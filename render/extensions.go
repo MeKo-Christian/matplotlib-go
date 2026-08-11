@@ -630,9 +630,9 @@ func (opts SaveOptions) applySaveOptions(dst *SaveOptions) {
 	}
 }
 
-// BackgroundClearer is implemented by raster renderers that can re-clear their
-// surface to a new background color before drawing. The save pipeline uses it to
-// apply savefig.facecolor and savefig.transparent.
+// BackgroundClearer is implemented by renderers that can replace their page or
+// surface background before drawing. The save pipeline uses it to apply
+// savefig.facecolor and savefig.transparent.
 type BackgroundClearer interface {
 	Clear(Color)
 }
@@ -642,6 +642,12 @@ type BackgroundClearer interface {
 // output (where the canvas grows with resolution).
 type Resizer interface {
 	Resize(width, height int) error
+}
+
+// VectorPageSizer is implemented by vector renderers whose physical page can
+// have fractional PostScript-point dimensions (1 point = 1/72 inch).
+type VectorPageSizer interface {
+	SetPageSize(widthPoints, heightPoints float64)
 }
 
 // SVGExporter is implemented by renderers that can export their output to SVG.

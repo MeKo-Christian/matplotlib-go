@@ -1,46 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-width="640" height="360" viewBox="0 0 640 360"
+width="460.8pt" height="259.2pt" viewBox="0 0 460.8 259.2"
 preserveAspectRatio="xMidYMid meet">
   <metadata></metadata>
   <defs>
-    <clipPath id="clip1" clipPathUnits="userSpaceOnUse"><rect x="64" y="36" width="512" height="288" /></clipPath>
+    <clipPath id="clip1" clipPathUnits="userSpaceOnUse"><rect x="46.08" y="25.92" width="368.64" height="207.36" /></clipPath>
   </defs>
   <rect x="0" y="0" width="100%" height="100%" fill="rgb(255,255,255)" />
-  <g clip-path="url(#clip1)"><path d="M 123.733333 324 L 174.933333 324 L 174.933333 237.6 L 123.733333 237.6 Z" fill="rgb(51,153,204)" stroke="none" /></g>
-  <g clip-path="url(#clip1)"><path d="M 209.066667 324 L 260.266667 324 L 260.266667 122.4 L 209.066667 122.4 Z" fill="rgb(51,153,204)" stroke="none" /></g>
-  <g clip-path="url(#clip1)"><path d="M 294.4 324 L 345.6 324 L 345.6 266.4 L 294.4 266.4 Z" fill="rgb(51,153,204)" stroke="none" /></g>
-  <g clip-path="url(#clip1)"><path d="M 379.733333 324 L 430.933333 324 L 430.933333 93.6 L 379.733333 93.6 Z" fill="rgb(51,153,204)" stroke="none" /></g>
-  <g clip-path="url(#clip1)"><path d="M 465.066667 324 L 516.266667 324 L 516.266667 180 L 465.066667 180 Z" fill="rgb(51,153,204)" stroke="none" /></g>
-  <path d="M 64.5 324.5 L 64.5 329.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 149.5 324.5 L 149.5 329.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 235.5 324.5 L 235.5 329.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 320.5 324.5 L 320.5 329.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 405.5 324.5 L 405.5 329.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 491.5 324.5 L 491.5 329.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 576.5 324.5 L 576.5 329.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <text x="60.820312" y="341.319878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">0</text>
-  <text x="146.153646" y="341.319878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">1</text>
-  <text x="231.486979" y="341.319878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">2</text>
-  <text x="316.820312" y="341.319878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">3</text>
-  <text x="402.153646" y="341.319878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">4</text>
-  <text x="487.486979" y="341.319878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">5</text>
-  <text x="572.820312" y="341.319878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">6</text>
-  <path d="M 64.5 324.5 L 59.5 324.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 64.5 266.5 L 59.5 266.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 64.5 209.5 L 59.5 209.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 64.5 151.5 L 59.5 151.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 64.5 94.5 L 59.5 94.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 64.5 36.5 L 59.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <text x="47.918403" y="327.798828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">0</text>
-  <text x="47.918403" y="270.198828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">2</text>
-  <text x="47.918403" y="212.598828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">4</text>
-  <text x="47.918403" y="154.998828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">6</text>
-  <text x="47.918403" y="97.398828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">8</text>
-  <text x="41.559028" y="39.798828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">10</text>
-  <path d="M 64.5 324.5 L 576.5 324.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
-  <path d="M 64.5 324.5 L 64.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
-  <path d="M 64.5 36.5 L 576.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
-  <path d="M 576.5 324.5 L 576.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
-  <text x="288.820312" y="27.666667" font-size="12" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">Basic Bars</text>
+  <g clip-path="url(#clip1)"><path d="M 89.088 233.28 L 125.952 233.28 L 125.952 171.072 L 89.088 171.072 Z" fill="rgb(51,153,204)" stroke="none" /></g>
+  <g clip-path="url(#clip1)"><path d="M 150.528 233.28 L 187.392 233.28 L 187.392 88.128 L 150.528 88.128 Z" fill="rgb(51,153,204)" stroke="none" /></g>
+  <g clip-path="url(#clip1)"><path d="M 211.968 233.28 L 248.832 233.28 L 248.832 191.808 L 211.968 191.808 Z" fill="rgb(51,153,204)" stroke="none" /></g>
+  <g clip-path="url(#clip1)"><path d="M 273.408 233.28 L 310.272 233.28 L 310.272 67.392 L 273.408 67.392 Z" fill="rgb(51,153,204)" stroke="none" /></g>
+  <g clip-path="url(#clip1)"><path d="M 334.848 233.28 L 371.712 233.28 L 371.712 129.6 L 334.848 129.6 Z" fill="rgb(51,153,204)" stroke="none" /></g>
+  <path d="M 46.5 233.5 L 46.5 238.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 108.5 233.5 L 108.5 238.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 169.5 233.5 L 169.5 238.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 230.5 233.5 L 230.5 238.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 292.5 233.5 L 292.5 238.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 353.5 233.5 L 353.5 238.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 415.5 233.5 L 415.5 238.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <text x="42.900313" y="250.599878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">0</text>
+  <text x="104.340313" y="250.599878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">1</text>
+  <text x="165.780313" y="250.599878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">2</text>
+  <text x="227.220313" y="250.599878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">3</text>
+  <text x="288.660313" y="250.599878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">4</text>
+  <text x="350.100313" y="250.599878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">5</text>
+  <text x="411.540313" y="250.599878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">6</text>
+  <path d="M 46.5 233.5 L 41.5 233.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 46.5 192.5 L 41.5 192.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 46.5 150.5 L 41.5 150.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 46.5 109.5 L 41.5 109.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 46.5 67.5 L 41.5 67.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 46.5 26.5 L 41.5 26.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <text x="29.998403" y="237.078828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">0</text>
+  <text x="29.998403" y="195.606828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">2</text>
+  <text x="29.998403" y="154.134828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">4</text>
+  <text x="29.998403" y="112.662828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">6</text>
+  <text x="29.998403" y="71.190828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">8</text>
+  <text x="23.639028" y="29.718828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">10</text>
+  <path d="M 46.5 233.5 L 415.5 233.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 46.5 233.5 L 46.5 26.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 46.5 26.5 L 415.5 26.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 415.5 233.5 L 415.5 26.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <text x="199.220313" y="17.586667" font-size="12" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">Basic Bars</text>
 </svg>

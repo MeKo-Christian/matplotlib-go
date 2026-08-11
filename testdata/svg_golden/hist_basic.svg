@@ -1,47 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-width="640" height="360" viewBox="0 0 640 360"
+width="460.8pt" height="259.2pt" viewBox="0 0 460.8 259.2"
 preserveAspectRatio="xMidYMid meet">
   <metadata></metadata>
   <defs>
-    <clipPath id="clip1" clipPathUnits="userSpaceOnUse"><rect x="76.8" y="36" width="531.2" height="280.8" /></clipPath>
+    <clipPath id="clip1" clipPathUnits="userSpaceOnUse"><rect x="55.296" y="25.92" width="382.464" height="202.176" /></clipPath>
   </defs>
   <rect x="0" y="0" width="100%" height="100%" fill="rgb(255,255,255)" />
-  <g clip-path="url(#clip1)"><path d="M 100.945455 316.8 L 149.236364 316.8 L 149.236364 308.03185 L 100.945455 308.03185 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 149.236364 316.8 L 197.527273 316.8 L 197.527273 268.575176 L 149.236364 268.575176 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 197.527273 316.8 L 245.818182 316.8 L 245.818182 261.999063 L 197.527273 261.999063 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 245.818182 316.8 L 294.109091 316.8 L 294.109091 194.045902 L 245.818182 194.045902 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 294.109091 316.8 L 342.4 316.8 L 342.4 95.404215 L 294.109091 95.404215 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 342.4 316.8 L 390.690909 316.8 L 390.690909 49.371429 L 342.4 49.371429 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 390.690909 316.8 L 438.981818 316.8 L 438.981818 121.708665 L 390.690909 121.708665 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 438.981818 316.8 L 487.272727 316.8 L 487.272727 202.814052 L 438.981818 202.814052 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 487.272727 316.8 L 535.563636 316.8 L 535.563636 266.383138 L 487.272727 266.383138 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <g clip-path="url(#clip1)"><path d="M 535.563636 316.8 L 583.854545 316.8 L 583.854545 303.647775 L 535.563636 303.647775 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" /></g>
-  <path d="M 181.5 317.5 L 181.5 322.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 296.5 317.5 L 296.5 322.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 411.5 317.5 L 411.5 322.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 527.5 317.5 L 527.5 322.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <text x="177.543611" y="334.119878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">2</text>
-  <text x="292.911541" y="334.119878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">4</text>
-  <text x="408.27947" y="334.119878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">6</text>
-  <text x="523.647399" y="334.119878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">8</text>
-  <path d="M 77.5 317.5 L 72.5 317.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 77.5 273.5 L 72.5 273.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 77.5 229.5 L 72.5 229.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 77.5 185.5 L 72.5 185.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 77.5 141.5 L 72.5 141.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 77.5 98.5 L 72.5 98.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 77.5 54.5 L 72.5 54.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <text x="60.718403" y="320.598828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">0</text>
-  <text x="54.359028" y="276.758079" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">20</text>
-  <text x="54.359028" y="232.917329" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">40</text>
-  <text x="54.359028" y="189.07658" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">60</text>
-  <text x="54.359028" y="145.23583" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">80</text>
-  <text x="47.999653" y="101.395081" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">100</text>
-  <text x="47.999653" y="57.554332" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">120</text>
-  <path d="M 77.5 317.5 L 608.5 317.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
-  <path d="M 77.5 317.5 L 77.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
-  <path d="M 77.5 36.5 L 608.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
-  <path d="M 608.5 317.5 L 608.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
-  <text x="293.478125" y="27.666667" font-size="12" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">Basic Histogram</text>
+  <g clip-path="url(#clip1)"><path d="M 72.680727 228.096 L 107.450182 228.096 L 107.450182 221.782932 L 72.680727 221.782932 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 107.450182 228.096 L 142.219636 228.096 L 142.219636 193.374126 L 107.450182 193.374126 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 142.219636 228.096 L 176.989091 228.096 L 176.989091 188.639326 L 142.219636 188.639326 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 176.989091 228.096 L 211.758545 228.096 L 211.758545 139.713049 L 176.989091 139.713049 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 211.758545 228.096 L 246.528 228.096 L 246.528 68.691035 L 211.758545 68.691035 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 246.528 228.096 L 281.297455 228.096 L 281.297455 35.547429 L 246.528 35.547429 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 281.297455 228.096 L 316.066909 228.096 L 316.066909 87.630239 L 281.297455 87.630239 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 316.066909 228.096 L 350.836364 228.096 L 350.836364 146.026117 L 316.066909 146.026117 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 350.836364 228.096 L 385.605818 228.096 L 385.605818 191.795859 L 350.836364 191.795859 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <g clip-path="url(#clip1)"><path d="M 385.605818 228.096 L 420.375273 228.096 L 420.375273 218.626398 L 385.605818 218.626398 Z" fill="rgb(66,135,204)" fill-opacity="0.8" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" /></g>
+  <path d="M 130.5 228.5 L 130.5 233.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 213.5 228.5 L 213.5 233.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 296.5 228.5 L 296.5 233.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 379.5 228.5 L 379.5 233.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <text x="126.941088" y="245.415878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">2</text>
+  <text x="210.005997" y="245.415878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">4</text>
+  <text x="293.070906" y="245.415878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">6</text>
+  <text x="376.135815" y="245.415878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">8</text>
+  <path d="M 55.5 228.5 L 50.5 228.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 55.5 197.5 L 50.5 197.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 55.5 165.5 L 50.5 165.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 55.5 133.5 L 50.5 133.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 55.5 102.5 L 50.5 102.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 55.5 70.5 L 50.5 70.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 55.5 39.5 L 50.5 39.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <text x="39.214403" y="231.894828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">0</text>
+  <text x="32.855028" y="200.329489" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">20</text>
+  <text x="32.855028" y="168.764149" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">40</text>
+  <text x="32.855028" y="137.198809" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">60</text>
+  <text x="32.855028" y="105.63347" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">80</text>
+  <text x="26.495653" y="74.06813" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">100</text>
+  <text x="26.495653" y="42.502791" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">120</text>
+  <path d="M 55.5 228.5 L 438.5 228.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 55.5 228.5 L 55.5 26.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 55.5 26.5 L 438.5 26.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 438.5 228.5 L 438.5 26.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <text x="197.606125" y="17.586667" font-size="12" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">Basic Histogram</text>
 </svg>

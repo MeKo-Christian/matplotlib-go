@@ -8,8 +8,8 @@
   },
   "freeze": {
     "path": "test/testdata/public_api/stable_public_api.json",
-    "sha256": "196f4274cd0f2b7139402a51bcb7844fff3bc4518d899c28f647efe9db754025",
-    "symbol_count": 3190
+    "sha256": "ca8b859cdd4483539c5c6d8eb0188c10ad2e600085b56c0886a1a663ab98bfa5",
+    "symbol_count": 3199
   },
   "counts": {
     "removed": {
@@ -25,8 +25,8 @@
       "audit-scope": 30,
       "rename-target": 43,
       "renamed-draw-method": 3,
+      "post-freeze-addition": 23,
       "typed-enum": 24,
-      "post-freeze-addition": 14,
       "split-export": 19,
       "options-model": 5,
       "figure-output": 5,
@@ -3698,9 +3698,30 @@
     {
       "direction": "added",
       "package": "backends/pdf",
+      "id": "method Renderer.Clear",
+      "category": "post-freeze-addition",
+      "note": "Backend implementation of the additive vector page-sizing and save-background capabilities introduced by the physical-size fix."
+    },
+    {
+      "direction": "added",
+      "package": "backends/pdf",
       "id": "method Renderer.DrawImage",
       "category": "rename-target",
       "note": "Replacement for a renamed or relocated baseline symbol."
+    },
+    {
+      "direction": "added",
+      "package": "backends/pdf",
+      "id": "method Renderer.SetPageSize",
+      "category": "post-freeze-addition",
+      "note": "Backend implementation of the additive vector page-sizing and save-background capabilities introduced by the physical-size fix."
+    },
+    {
+      "direction": "added",
+      "package": "backends/pgf",
+      "id": "method Renderer.Clear",
+      "category": "post-freeze-addition",
+      "note": "Backend implementation of the additive vector page-sizing and save-background capabilities introduced by the physical-size fix."
     },
     {
       "direction": "added",
@@ -3711,10 +3732,31 @@
     },
     {
       "direction": "added",
+      "package": "backends/pgf",
+      "id": "method Renderer.SetPageSize",
+      "category": "post-freeze-addition",
+      "note": "Backend implementation of the additive vector page-sizing and save-background capabilities introduced by the physical-size fix."
+    },
+    {
+      "direction": "added",
+      "package": "backends/ps",
+      "id": "method Renderer.Clear",
+      "category": "post-freeze-addition",
+      "note": "Backend implementation of the additive vector page-sizing and save-background capabilities introduced by the physical-size fix."
+    },
+    {
+      "direction": "added",
       "package": "backends/ps",
       "id": "method Renderer.DrawImage",
       "category": "rename-target",
       "note": "Replacement for a renamed or relocated baseline symbol."
+    },
+    {
+      "direction": "added",
+      "package": "backends/ps",
+      "id": "method Renderer.SetPageSize",
+      "category": "post-freeze-addition",
+      "note": "Backend implementation of the additive vector page-sizing and save-background capabilities introduced by the physical-size fix."
     },
     {
       "direction": "added",
@@ -3873,9 +3915,23 @@
     {
       "direction": "added",
       "package": "backends/svg",
+      "id": "method Renderer.Clear",
+      "category": "post-freeze-addition",
+      "note": "Backend implementation of the additive vector page-sizing and save-background capabilities introduced by the physical-size fix."
+    },
+    {
+      "direction": "added",
+      "package": "backends/svg",
       "id": "method Renderer.DrawImage",
       "category": "rename-target",
       "note": "Replacement for a renamed or relocated baseline symbol."
+    },
+    {
+      "direction": "added",
+      "package": "backends/svg",
+      "id": "method Renderer.SetPageSize",
+      "category": "post-freeze-addition",
+      "note": "Backend implementation of the additive vector page-sizing and save-background capabilities introduced by the physical-size fix."
     },
     {
       "direction": "added",
@@ -5221,6 +5277,13 @@
       "id": "method NullRenderer.DrawImage",
       "category": "rename-target",
       "note": "Replacement for a renamed or relocated baseline symbol."
+    },
+    {
+      "direction": "added",
+      "package": "render",
+      "id": "type VectorPageSizer",
+      "category": "post-freeze-addition",
+      "note": "Added after the freeze by the vector physical-size correction. Vector documents use fractional PostScript-point page dimensions derived from figure inches, while savefig.dpi remains available for mixed-raster groups. VectorPageSizer is the optional renderer capability used by the central save path; the four SetPageSize methods implement it, and Clear lets savefig.facecolor/transparent replace constructor-time backgrounds. All additions are capability methods; existing constructors and renderer interfaces remain source-compatible."
     },
     {
       "direction": "added",

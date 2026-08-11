@@ -17,7 +17,7 @@ type Session struct {
 }
 
 // Start creates a transparent raster surface sized to the vector page.
-func Start(width, height int, viewport geom.Rect, options render.Rasterization, fallbackDPI uint, clipRect *geom.Rect, clipPaths []geom.Path) (*Session, bool) {
+func Start(width, height float64, viewport geom.Rect, options render.Rasterization, fallbackDPI uint, clipRect *geom.Rect, clipPaths []geom.Path) (*Session, bool) {
 	if width <= 0 || height <= 0 {
 		return nil, false
 	}
@@ -32,8 +32,8 @@ func Start(width, height int, viewport geom.Rect, options render.Rasterization, 
 	if scale <= 0 || math.IsNaN(scale) || math.IsInf(scale, 0) {
 		scale = 1
 	}
-	surfaceWidth := int(math.Ceil(float64(width) * scale))
-	surfaceHeight := int(math.Ceil(float64(height) * scale))
+	surfaceWidth := int(math.Ceil(width * scale))
+	surfaceHeight := int(math.Ceil(height * scale))
 	if surfaceWidth <= 0 {
 		surfaceWidth = 1
 	}
@@ -61,7 +61,7 @@ func Start(width, height int, viewport geom.Rect, options render.Rasterization, 
 		renderer: scaled,
 		rect: geom.Rect{
 			Min: geom.Pt{},
-			Max: geom.Pt{X: float64(width), Y: float64(height)},
+			Max: geom.Pt{X: width, Y: height},
 		},
 	}, true
 }

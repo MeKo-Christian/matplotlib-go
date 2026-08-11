@@ -12,10 +12,14 @@ func DrawFigure(fig *Figure, r render.Renderer) {
 }
 
 func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
+	drawFigureWithOptionsAtDPI(fig, r, opts, 0)
+}
+
+func drawFigureWithOptionsAtDPI(fig *Figure, r render.Renderer, opts DrawOptions, rendererDPI float64) {
 	vp := geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: fig.SizePx.X, Y: fig.SizePx.Y}}
+	setRendererResolution(r, effectiveRendererDPI(rendererDPI, fig.RC.DPI))
 	_ = r.Begin(vp)
 	defer r.End()
-	setRendererResolution(r, fig.RC.DPI)
 	setRendererSketch(r, fig.RC.PathSketch)
 	drawFigureBackground(r, vp, opts, fig)
 
@@ -39,7 +43,7 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 		// Build DrawContext with composed transform
 		ctx := newAxesDrawContext(ax, fig, vp, px)
 		ctx.DrawOptions = opts
-		setRendererResolution(r, ctx.RC.DPI)
+		setRendererResolution(r, effectiveRendererDPI(rendererDPI, ctx.RC.DPI))
 
 		// In an animated-overlay pass we only redraw the animated artists on
 		// top of a previously captured background, so skip backgrounds,
@@ -70,7 +74,7 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 					drawOverlayArtist(r, ctx, art, overlay)
 				}
 			}
-			drawSecondaryChildAxes(ax, fig, r, vp, opts, alignment)
+			drawSecondaryChildAxes(ax, fig, r, vp, opts, alignment, rendererDPI)
 			continue
 		}
 
@@ -176,13 +180,13 @@ func DrawFigureWithOptions(fig *Figure, r render.Renderer, opts DrawOptions) {
 			}
 		}
 
-		drawSecondaryChildAxes(ax, fig, r, vp, opts, alignment)
+		drawSecondaryChildAxes(ax, fig, r, vp, opts, alignment, rendererDPI)
 
 		// Draw axes text labels outside the clip rect.
 		drawAxesLabels(ax, r, ctx, px, alignment)
 	}
 
-	setRendererResolution(r, fig.RC.DPI)
+	setRendererResolution(r, effectiveRendererDPI(rendererDPI, fig.RC.DPI))
 	drawFigureArtistsWithOptions(fig, r, vp, opts)
 	if opts.AnimatedFilter != AnimatedFilterOnlyAnimated {
 		drawFigureLabels(fig, r, vp)
@@ -236,7 +240,7 @@ func drawClippedAxesArtistsInZRange(r render.Renderer, ctx *DrawContext, px geom
 	r.Restore()
 }
 
-func drawSecondaryChildAxes(parent *Axes, fig *Figure, r render.Renderer, vp geom.Rect, opts DrawOptions, alignment figureTextAlignment) {
+func drawSecondaryChildAxes(parent *Axes, fig *Figure, r render.Renderer, vp geom.Rect, opts DrawOptions, alignment figureTextAlignment, rendererDPI float64) {
 	if parent == nil || fig == nil {
 		return
 	}
@@ -247,7 +251,7 @@ func drawSecondaryChildAxes(parent *Axes, fig *Figure, r render.Renderer, vp geo
 		px := child.adjustedLayout(fig)
 		ctx := newAxesDrawContext(child, fig, vp, px)
 		ctx.DrawOptions = opts
-		setRendererResolution(r, ctx.RC.DPI)
+		setRendererResolution(r, effectiveRendererDPI(rendererDPI, ctx.RC.DPI))
 
 		r.Save()
 		r.ClipRect(px)
@@ -320,6 +324,13 @@ func drawSecondaryChildAxes(parent *Axes, fig *Figure, r render.Renderer, vp geo
 		}
 		drawAxesLabels(child, r, ctx, px, alignment)
 	}
+}
+
+func effectiveRendererDPI(override, fallback float64) float64 {
+	if override > 0 {
+		return override
+	}
+	return fallback
 }
 
 func isSecondaryAxes(ax *Axes) bool {

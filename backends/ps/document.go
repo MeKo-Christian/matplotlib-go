@@ -3,6 +3,7 @@ package ps
 import (
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,7 +22,7 @@ func (r *Renderer) SavePS(path string) error {
 	return os.WriteFile(path, data, 0o644)
 }
 
-func buildDocument(width, height int, content string, eps bool) []byte {
+func buildDocument(width, height float64, content string, eps bool) []byte {
 	var b strings.Builder
 	if eps {
 		b.WriteString("%!PS-Adobe-3.0 EPSF-3.0\n")
@@ -29,7 +30,8 @@ func buildDocument(width, height int, content string, eps bool) []byte {
 		b.WriteString("%!PS-Adobe-3.0\n")
 	}
 	b.WriteString("%%Creator: matplotlib-go\n")
-	fmt.Fprintf(&b, "%%%%BoundingBox: 0 0 %d %d\n", width, height)
+	fmt.Fprintf(&b, "%%%%BoundingBox: 0 0 %d %d\n", int(math.Ceil(width)), int(math.Ceil(height)))
+	fmt.Fprintf(&b, "%%%%HiResBoundingBox: 0 0 %s %s\n", shortFloat(width), shortFloat(height))
 	b.WriteString("%%LanguageLevel: 2\n")
 	if !eps {
 		b.WriteString("%%Pages: 1\n")
@@ -37,6 +39,7 @@ func buildDocument(width, height int, content string, eps bool) []byte {
 	b.WriteString("%%EndComments\n")
 	if !eps {
 		b.WriteString("%%Page: 1 1\n")
+		fmt.Fprintf(&b, "<< /PageSize [%s %s] >> setpagedevice\n", shortFloat(width), shortFloat(height))
 	}
 	b.WriteString(content)
 	if !eps {

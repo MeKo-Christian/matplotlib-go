@@ -16,7 +16,7 @@ func SaveSVG(fig *Figure, r render.Renderer, path string, opts ...render.SaveOpt
 	if err := saveOptions.ValidateForExtension(".svg"); err != nil {
 		return err
 	}
-	eff, drawOpts, resolved := prepareSaveFigure(fig, r, &saveOptions.Figure)
+	eff, drawOpts, resolved, rendererDPI := prepareVectorSaveFigure(fig, r, &saveOptions.Figure)
 	if err := rejectTightBboxForVector(resolved.bboxTight, "SVG"); err != nil {
 		return err
 	}
@@ -26,7 +26,7 @@ func SaveSVG(fig *Figure, r render.Renderer, path string, opts ...render.SaveOpt
 	}
 
 	// Draw the figure using the renderer.
-	DrawFigureWithOptions(eff, r, drawOpts)
+	drawFigureWithOptionsAtDPI(eff, r, drawOpts, rendererDPI)
 
 	// Check if this renderer supports SVG export.
 	if exporter, ok := r.(render.SVGOptionExporter); ok {

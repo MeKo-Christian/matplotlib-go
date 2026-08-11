@@ -20,12 +20,6 @@ func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 	if !batch.Marker.Validate() {
 		return false
 	}
-	d := buildPathData(batch.Marker)
-	if d == "" {
-		return false
-	}
-	markerID := r.registerMarker(d)
-
 	var b strings.Builder
 	emitted := 0
 	for i := range batch.Items {
@@ -37,15 +31,19 @@ func (r *Renderer) DrawMarkers(batch render.MarkerBatch) bool {
 			continue
 		}
 
-		// Combined transform: apply per-item Transform first, then translate by Offset.
-		t := geom.Affine{
-			A: item.Transform.A,
-			B: item.Transform.B,
-			C: item.Transform.C,
-			D: item.Transform.D,
-			E: item.Transform.E + item.Offset.X,
-			F: item.Transform.F + item.Offset.Y,
+		// Bake the per-item transform into the geometry. Applying it on <use>
+		// would also scale the SVG stroke, although Paint.LineWidth is already
+		// expressed in display space. This mirrors the PDF and raster backends.
+		marker := affinePath(batch.Marker, item.Transform)
+		if !marker.Validate() || len(marker.C) == 0 {
+			continue
 		}
+		d := buildPathData(marker)
+		if d == "" {
+			continue
+		}
+		markerID := r.registerMarker(d)
+		t := geom.Affine{A: 1, D: 1, E: item.Offset.X, F: item.Offset.Y}
 
 		b.WriteString(`<use href="#`)
 		b.WriteString(markerID)

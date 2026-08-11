@@ -2,10 +2,14 @@ package core_test
 
 import (
 	"bytes"
+	"encoding/base64"
+	"fmt"
+	"image"
 	"image/color"
 	"image/png"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -17,6 +21,7 @@ import (
 	"github.com/cwbudde/matplotlib-go/core"
 	"github.com/cwbudde/matplotlib-go/geom"
 	"github.com/cwbudde/matplotlib-go/render"
+	"github.com/cwbudde/matplotlib-go/style"
 )
 
 func outputTestFigure() *core.Figure {
@@ -144,5 +149,104 @@ func TestFigureOutputRejectsInvalidInputs(t *testing.T) {
 	}
 	if err := outputTestFigure().WriteTo(&bytes.Buffer{}, "gif"); err == nil {
 		t.Fatal("WriteTo with unsupported format succeeded")
+	}
+}
+
+func TestFigureSaveKeepsVectorPageSizeIndependentOfSaveDPI(t *testing.T) {
+	fig := core.NewFigure(1400, 1150, style.WithDPI(160))
+	wants := map[string]string{
+		".pdf": "/MediaBox [0 0 630 517.5]",
+		".svg": `width="630pt" height="517.5pt" viewBox="0 0 630 517.5"`,
+		".ps":  "%%HiResBoundingBox: 0 0 630 517.5",
+		".eps": "%%HiResBoundingBox: 0 0 630 517.5",
+		".pgf": `\pgfpathrectangle{\pgfpoint{0pt}{0pt}}{\pgfpoint{630pt}{517.5pt}}`,
+	}
+
+	for ext, want := range wants {
+		ext, want := ext, want
+		t.Run(ext, func(t *testing.T) {
+			for _, dpi := range []float64{72, 160} {
+				path := filepath.Join(t.TempDir(), "figure"+ext)
+				if err := fig.Save(path, render.WithSaveDPI(dpi)); err != nil {
+					t.Fatalf("Save(%s, dpi=%v): %v", ext, dpi, err)
+				}
+				data, err := os.ReadFile(path)
+				if err != nil {
+					t.Fatalf("ReadFile(%s): %v", ext, err)
+				}
+				if !bytes.Contains(data, []byte(want)) {
+					t.Fatalf("%s at dpi=%v missing physical size %q", ext, dpi, want)
+				}
+				if ext == ".ps" && !bytes.Contains(data, []byte("<< /PageSize [630 517.5] >> setpagedevice")) {
+					t.Fatalf("PS at dpi=%v missing exact PageSize", dpi)
+				}
+				if ext == ".pgf" && !bytes.Contains(data, []byte(`\pgftransformscale{1.00375}`)) {
+					t.Fatalf("PGF at dpi=%v missing PostScript-point to TeX-point conversion", dpi)
+				}
+			}
+		})
+	}
+}
+
+func TestFigureSaveDPIControlsRasterAndSVGEmbeddedImageResolution(t *testing.T) {
+	fig := core.NewFigure(160, 80, style.WithDPI(160))
+	ax := fig.AddAxes(geom.Rect{Min: geom.Pt{X: 0.1, Y: 0.15}, Max: geom.Pt{X: 0.9, Y: 0.85}})
+	line, err := ax.Plot([]float64{0, 1}, []float64{0, 1}, core.PlotOptions{})
+	if err != nil {
+		t.Fatalf("Plot: %v", err)
+	}
+	line.SetRasterized(true)
+
+	wantPixels := map[int]image.Point{
+		72:  {X: 72, Y: 36},
+		160: {X: 160, Y: 80},
+	}
+	dataURI := regexp.MustCompile(`data:image/png;base64,([^" ]+)`)
+	for _, dpi := range []int{72, 160} {
+		t.Run(fmt.Sprintf("dpi_%d", dpi), func(t *testing.T) {
+			pngPath := filepath.Join(t.TempDir(), "figure.png")
+			if err := fig.Save(pngPath, render.WithSaveDPI(float64(dpi))); err != nil {
+				t.Fatalf("Save PNG: %v", err)
+			}
+			pngFile, err := os.Open(pngPath)
+			if err != nil {
+				t.Fatalf("Open PNG: %v", err)
+			}
+			cfg, err := png.DecodeConfig(pngFile)
+			_ = pngFile.Close()
+			if err != nil {
+				t.Fatalf("DecodeConfig PNG: %v", err)
+			}
+			if got := image.Pt(cfg.Width, cfg.Height); got != wantPixels[dpi] {
+				t.Fatalf("PNG size at %d DPI = %v, want %v", dpi, got, wantPixels[dpi])
+			}
+
+			svgPath := filepath.Join(t.TempDir(), "figure.svg")
+			if err := fig.Save(svgPath, render.WithSaveDPI(float64(dpi))); err != nil {
+				t.Fatalf("Save SVG: %v", err)
+			}
+			svgData, err := os.ReadFile(svgPath)
+			if err != nil {
+				t.Fatalf("Read SVG: %v", err)
+			}
+			if !bytes.Contains(svgData, []byte(`width="72pt" height="36pt" viewBox="0 0 72 36"`)) {
+				t.Fatalf("SVG physical page changed at %d DPI", dpi)
+			}
+			match := dataURI.FindSubmatch(svgData)
+			if len(match) != 2 {
+				t.Fatalf("SVG at %d DPI has no embedded rasterized PNG", dpi)
+			}
+			raw, err := base64.StdEncoding.DecodeString(string(match[1]))
+			if err != nil {
+				t.Fatalf("decode SVG image data: %v", err)
+			}
+			embedded, err := png.DecodeConfig(bytes.NewReader(raw))
+			if err != nil {
+				t.Fatalf("decode embedded SVG PNG: %v", err)
+			}
+			if got := image.Pt(embedded.Width, embedded.Height); got != wantPixels[dpi] {
+				t.Fatalf("embedded SVG raster at %d DPI = %v, want %v", dpi, got, wantPixels[dpi])
+			}
+		})
 	}
 }

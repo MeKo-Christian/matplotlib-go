@@ -36,11 +36,11 @@ func (r *Renderer) renderSVG() string {
 	var b strings.Builder
 	b.WriteString(`<?xml version="1.0" encoding="UTF-8"?>`)
 	b.WriteString("\n")
-	fmt.Fprintf(&b, `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"`+"\n"+`width="%s" height="%s" viewBox="0 0 %d %d"`+"\n"+`preserveAspectRatio="xMidYMid meet">`+"\n",
-		formatFloat(float64(r.width)),
-		formatFloat(float64(r.height)),
-		r.width,
-		r.height)
+	fmt.Fprintf(&b, `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"`+"\n"+`width="%spt" height="%spt" viewBox="0 0 %s %s"`+"\n"+`preserveAspectRatio="xMidYMid meet">`+"\n",
+		formatFloat(r.width),
+		formatFloat(r.height),
+		formatFloat(r.width),
+		formatFloat(r.height))
 	writeMetadata(&b, r.options)
 
 	if len(r.clipOrder) > 0 || len(r.markerOrder) > 0 || len(r.pathOrder) > 0 || len(r.hatchOrder) > 0 || len(r.gradientOrder) > 0 || len(r.patternFillOrder) > 0 || len(r.fontFaceOrder) > 0 || len(r.filterOrder) > 0 {

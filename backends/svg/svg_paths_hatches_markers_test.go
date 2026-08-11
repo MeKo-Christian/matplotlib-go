@@ -106,6 +106,56 @@ func TestDrawMarkersDedupesIdenticalMarkerGeometry(t *testing.T) {
 	}
 }
 
+func TestDrawMarkersBakesGeometryTransformWithoutScalingStroke(t *testing.T) {
+	content := renderSVGDocument(t, func(r *Renderer) {
+		ok := r.DrawMarkers(render.MarkerBatch{
+			Marker: circleMarkerPath(),
+			Items: []render.MarkerItem{
+				{
+					Offset:    geom.Pt{X: 10, Y: 20},
+					Transform: geom.Affine{A: 10, D: 10},
+					Paint: render.Paint{
+						Fill:      render.Color{R: 1, A: 1},
+						Stroke:    render.Color{A: 1},
+						LineWidth: 2,
+					},
+				},
+				{
+					Offset:    geom.Pt{X: 30, Y: 40},
+					Transform: geom.Affine{A: 10, D: 10},
+					Paint: render.Paint{
+						Fill:      render.Color{R: 1, A: 1},
+						Stroke:    render.Color{A: 1},
+						LineWidth: 2,
+					},
+				},
+			},
+		})
+		if !ok {
+			t.Fatal("DrawMarkers returned false")
+		}
+	})
+
+	if !strings.Contains(content, `<path id="marker1" d="M -10 0 L 10 0 L 0 10 Z" />`) {
+		t.Fatalf("expected scaled marker geometry, got %q", content)
+	}
+	if !strings.Contains(content, `transform="matrix(1 0 0 -1 10 100)"`) {
+		t.Fatalf("expected translation-only item transform, got %q", content)
+	}
+	if !strings.Contains(content, `stroke-width="2"`) {
+		t.Fatalf("expected display-space stroke width, got %q", content)
+	}
+	if strings.Contains(content, `transform="matrix(10`) {
+		t.Fatalf("marker-size scale must not affect SVG stroke, got %q", content)
+	}
+	if got := strings.Count(content, `<path id="marker`); got != 1 {
+		t.Fatalf("identical transformed marker geometry should share one definition, got %d in %q", got, content)
+	}
+	if got := strings.Count(content, `<use href="#marker1"`); got != 2 {
+		t.Fatalf("expected two uses of the shared transformed marker, got %d in %q", got, content)
+	}
+}
+
 func TestDrawMarkersHonorsActiveClip(t *testing.T) {
 	content := renderSVGDocument(t, func(r *Renderer) {
 		r.ClipRect(geom.Rect{Min: geom.Pt{X: 0, Y: 0}, Max: geom.Pt{X: 100, Y: 100}})

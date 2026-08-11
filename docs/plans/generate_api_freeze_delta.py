@@ -540,6 +540,29 @@ _add(
     "method AnchoredTextBox.DrawOverlay",
 )
 
+_add(
+    "post-freeze-addition",
+    "Added after the freeze by the vector physical-size correction. Vector "
+    "documents use fractional PostScript-point page dimensions derived from "
+    "figure inches, while savefig.dpi remains available for mixed-raster "
+    "groups. VectorPageSizer is the optional renderer capability used by the "
+    "central save path; the four SetPageSize methods implement it, and Clear "
+    "lets savefig.facecolor/transparent replace constructor-time backgrounds. "
+    "All additions are capability methods; existing constructors and renderer "
+    "interfaces remain source-compatible.",
+    "render",
+    "type VectorPageSizer",
+)
+for _backend in ("backends/pdf", "backends/pgf", "backends/ps", "backends/svg"):
+    _add(
+        "post-freeze-addition",
+        "Backend implementation of the additive vector page-sizing and "
+        "save-background capabilities introduced by the physical-size fix.",
+        _backend,
+        "method Renderer.SetPageSize",
+        "method Renderer.Clear",
+    )
+
 
 def load(path: Path) -> tuple[bytes, dict]:
     raw = path.read_bytes()

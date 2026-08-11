@@ -20,7 +20,7 @@ import (
 
 // buildDocument assembles the PDF bytes for one page given the encoded
 // content stream.
-func buildDocument(width, height int, contentStream []byte, images []pdfImage, hatches []pdfHatchPattern, fillPatterns []pdfFillPattern, shadings []pdfShading, forms []pdfFormXObject, alphaStates []pdfAlphaState, fonts []pdfEmbeddedFont, annotations []pdfLinkAnnotation, opts render.PDFOptions) ([]byte, error) {
+func buildDocument(width, height float64, contentStream []byte, images []pdfImage, hatches []pdfHatchPattern, fillPatterns []pdfFillPattern, shadings []pdfShading, forms []pdfFormXObject, alphaStates []pdfAlphaState, fonts []pdfEmbeddedFont, annotations []pdfLinkAnnotation, opts render.PDFOptions) ([]byte, error) {
 	imageObjects := assignImageObjects(images, 6)
 	hatchObjects := assignHatchObjects(hatches, nextImageObjectID(imageObjects, 6))
 	fillPatternObjects := assignFillPatternObjects(fillPatterns, nextHatchObjectID(hatchObjects, nextImageObjectID(imageObjects, 6)))
@@ -47,8 +47,8 @@ func buildDocument(width, height int, contentStream []byte, images []pdfImage, h
 	w.endObject()
 
 	w.beginObject(3)
-	fmt.Fprintf(&w.buf, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %d %d] /Contents 4 0 R /Resources %s",
-		width, height, pageResources(imageObjects, hatchObjects, fillPatternObjects, shadingObjects, formObjects, alphaStates, fontObjects))
+	fmt.Fprintf(&w.buf, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %s %s] /Contents 4 0 R /Resources %s",
+		shortFloat(width), shortFloat(height), pageResources(imageObjects, hatchObjects, fillPatternObjects, shadingObjects, formObjects, alphaStates, fontObjects))
 	if len(annotations) > 0 {
 		w.buf.WriteString(" /Annots [")
 		for i := range annotations {

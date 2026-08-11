@@ -15,14 +15,14 @@ func SavePGF(fig *Figure, r render.Renderer, path string, opts ...render.SaveOpt
 	if err := saveOptions.ValidateForExtension(".pgf"); err != nil {
 		return err
 	}
-	eff, drawOpts, resolved := prepareSaveFigure(fig, r, &saveOptions.Figure)
+	eff, drawOpts, resolved, rendererDPI := prepareVectorSaveFigure(fig, r, &saveOptions.Figure)
 	if err := rejectTightBboxForVector(resolved.bboxTight, "PGF"); err != nil {
 		return err
 	}
 	if setter, ok := r.(render.PGFOptionSetter); ok {
 		setter.SetPGFOptions(saveOptions.PGF)
 	}
-	DrawFigureWithOptions(eff, r, drawOpts)
+	drawFigureWithOptionsAtDPI(eff, r, drawOpts, rendererDPI)
 	if exporter, ok := r.(render.PGFOptionExporter); ok {
 		return exporter.SavePGFWithOptions(path, saveOptions.PGF)
 	}

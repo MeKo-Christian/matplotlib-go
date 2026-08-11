@@ -20,7 +20,7 @@ func (r *Renderer) MeasureTeX(text string, size float64, fontKey string) (render
 	if !ok {
 		return render.TextMetrics{}, false
 	}
-	return result.Metrics, true
+	return scaleTextMetrics(result.Metrics, r.texPointScale()), true
 }
 
 func (r *Renderer) DrawTeX(text string, origin geom.Pt, size float64, textColor render.Color, fontKey string) bool {
@@ -42,10 +42,11 @@ func (r *Renderer) DrawTeX(text string, origin geom.Pt, size float64, textColor 
 	if img == nil {
 		return false
 	}
-	topLeft := geom.Pt{X: origin.X, Y: origin.Y - result.Metrics.Ascent}
+	metrics := scaleTextMetrics(result.Metrics, r.texPointScale())
+	topLeft := geom.Pt{X: origin.X, Y: origin.Y - metrics.Ascent}
 	r.renderImageNode(img, geom.Rect{
 		Min: topLeft,
-		Max: geom.Pt{X: topLeft.X + float64(img.Bounds().Dx()), Y: topLeft.Y + float64(img.Bounds().Dy())},
+		Max: geom.Pt{X: topLeft.X + metrics.W, Y: topLeft.Y + metrics.H},
 	}, "", "")
 	return true
 }
@@ -73,13 +74,13 @@ func (r *Renderer) DrawTeXRotated(text string, anchor geom.Pt, size, angle float
 		return false
 	}
 
-	metrics := result.Metrics
+	metrics := scaleTextMetrics(result.Metrics, r.texPointScale())
 	origin := geom.Pt{X: anchor.X - metrics.W/2, Y: anchor.Y - metrics.Descent}
 	topLeft := geom.Pt{X: origin.X, Y: origin.Y - metrics.Ascent}
 	transform := rotateTransform(-angle*180/math.Pi, anchor.X, anchor.Y)
 	r.renderImageNode(img, geom.Rect{
 		Min: topLeft,
-		Max: geom.Pt{X: topLeft.X + float64(img.Bounds().Dx()), Y: topLeft.Y + float64(img.Bounds().Dy())},
+		Max: geom.Pt{X: topLeft.X + metrics.W, Y: topLeft.Y + metrics.H},
 	}, transform, "")
 	return true
 }
@@ -98,4 +99,21 @@ func (r *Renderer) renderTeX(text string, size float64, fontKey string) (tex.Ren
 	}
 	r.texErr = nil
 	return result, true
+}
+
+func (r *Renderer) texPointScale() float64 {
+	dpi := r.resolution
+	if dpi == 0 {
+		dpi = 72
+	}
+	return 72 / float64(dpi)
+}
+
+func scaleTextMetrics(metrics render.TextMetrics, scale float64) render.TextMetrics {
+	return render.TextMetrics{
+		W:       metrics.W * scale,
+		H:       metrics.H * scale,
+		Ascent:  metrics.Ascent * scale,
+		Descent: metrics.Descent * scale,
+	}
 }

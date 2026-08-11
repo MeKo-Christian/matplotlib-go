@@ -151,11 +151,11 @@ func rotationAffine(angleDeg, cx, cy float64) geom.Affine {
 }
 
 func (r *Renderer) deviceFlip() geom.Affine {
-	return geom.Affine{A: 1, D: -1, F: float64(r.height)}
+	return geom.Affine{A: 1, D: -1, F: r.height}
 }
 
 func (r *Renderer) flipY(y float64) float64 {
-	return float64(r.height) - y
+	return r.height - y
 }
 
 func affinePath(path geom.Path, affine geom.Affine) geom.Path {

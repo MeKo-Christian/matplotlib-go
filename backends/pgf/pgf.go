@@ -22,8 +22,8 @@ type state struct {
 
 // Renderer implements render.Renderer by emitting PGF/TikZ commands.
 type Renderer struct {
-	width      int
-	height     int
+	width      float64
+	height     float64
 	background render.Color
 	resolution uint
 

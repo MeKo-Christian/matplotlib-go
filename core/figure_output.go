@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/draw"
 	"io"
+	"math"
 	"os"
 	"strings"
 	"sync"
@@ -47,7 +48,7 @@ func (f *Figure) Save(path string, opts ...render.SaveOption) error {
 		return fmt.Errorf("figure save: nil figure")
 	}
 	ext := resolveSaveFormat(f, path, opts)
-	r, err := f.newOutputRenderer(ext)
+	r, err := f.newOutputRenderer(ext, opts...)
 	if err != nil {
 		return err
 	}
@@ -145,11 +146,16 @@ func normalizeOutputFormat(format string) string {
 	return format
 }
 
-func (f *Figure) newOutputRenderer(ext string) (render.Renderer, error) {
-	width, height := f.CanvasSize()
+func (f *Figure) newOutputRenderer(ext string, opts ...render.SaveOption) (render.Renderer, error) {
+	width, height := f.outputCanvasSize(ext, opts...)
 	background := f.RC.FigureBackground()
-	if !f.RC.Figure.FrameOn {
+	saveOptions := render.ResolveSaveOptions(opts...)
+	resolved := resolveSaveFigureOptions(f, &saveOptions.Figure)
+	switch {
+	case !f.RC.Figure.FrameOn || resolved.transparent:
 		background = render.Color{}
+	case resolved.hasFacecolor:
+		background = resolved.facecolor
 	}
 	ext = normalizeOutputFormat(ext)
 	figureOutputRenderers.RLock()
@@ -167,4 +173,32 @@ func (f *Figure) newOutputRenderer(ext string) (render.Renderer, error) {
 		)
 	}
 	return factory(width, height, background)
+}
+
+func (f *Figure) outputCanvasSize(ext string, opts ...render.SaveOption) (width, height int) {
+	if f == nil {
+		return 0, 0
+	}
+	dpi := f.RC.DPI
+	saveOptions := render.ResolveSaveOptions(opts...)
+	resolved := resolveSaveFigureOptions(f, &saveOptions.Figure)
+	if resolved.dpi > 0 {
+		dpi = resolved.dpi
+	}
+	if isVectorSaveExtension(ext) {
+		dpi = 72
+	}
+	if f.RC.DPI <= 0 || dpi <= 0 {
+		return f.CanvasSize()
+	}
+	return int(math.Round(f.SizePx.X * dpi / f.RC.DPI)), int(math.Round(f.SizePx.Y * dpi / f.RC.DPI))
+}
+
+func isVectorSaveExtension(ext string) bool {
+	switch normalizeOutputFormat(ext) {
+	case ".pdf", ".svg", ".ps", ".eps", ".pgf":
+		return true
+	default:
+		return false
+	}
 }

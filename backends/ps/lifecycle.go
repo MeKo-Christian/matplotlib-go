@@ -21,8 +21,8 @@ func New(width, height int, background render.Color) (*Renderer, error) {
 		background = render.Color{R: 1, G: 1, B: 1, A: 1}
 	}
 	return &Renderer{
-		width:      width,
-		height:     height,
+		width:      float64(width),
+		height:     float64(height),
 		background: background,
 		resolution: 72,
 		psOpts:     render.DefaultPSOptions(),
@@ -35,6 +35,21 @@ func (r *Renderer) SetResolution(dpi uint) {
 		dpi = 72
 	}
 	r.resolution = dpi
+}
+
+// Clear replaces the page background used by the next drawing session.
+func (r *Renderer) Clear(c render.Color) {
+	if r != nil {
+		r.background = c
+	}
+}
+
+// SetPageSize sets the physical PostScript page in PostScript points.
+func (r *Renderer) SetPageSize(widthPoints, heightPoints float64) {
+	if r != nil && widthPoints > 0 && heightPoints > 0 {
+		r.width = widthPoints
+		r.height = heightPoints
+	}
 }
 
 // SetPSOptions implements render.PSOptionSetter.
@@ -68,10 +83,10 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 		writeFillColor(&r.content, r.background)
 		fmt.Fprintf(
 			&r.content, "newpath 0 0 moveto %s 0 lineto %s %s lineto 0 %s lineto closepath fill\n",
-			shortFloat(float64(r.width)),
-			shortFloat(float64(r.width)),
-			shortFloat(float64(r.height)),
-			shortFloat(float64(r.height)),
+			shortFloat(r.width),
+			shortFloat(r.width),
+			shortFloat(r.height),
+			shortFloat(r.height),
 		)
 	}
 	return nil

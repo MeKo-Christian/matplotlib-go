@@ -1172,6 +1172,10 @@
           "declaration": "func (Renderer) Bytes() ([]byte, error)"
         },
         {
+          "id": "method Renderer.Clear",
+          "declaration": "func (Renderer) Clear(c render.Color)"
+        },
+        {
           "id": "method Renderer.ClipPath",
           "declaration": "func (Renderer) ClipPath(p geom.Path)"
         },
@@ -1300,6 +1304,10 @@
           "declaration": "func (Renderer) SetPDFOptions(opts render.PDFOptions)"
         },
         {
+          "id": "method Renderer.SetPageSize",
+          "declaration": "func (Renderer) SetPageSize(widthPoints, heightPoints float64)"
+        },
+        {
           "id": "method Renderer.SetResolution",
           "declaration": "func (Renderer) SetResolution(dpi uint)"
         },
@@ -1356,6 +1364,10 @@
         {
           "id": "method Renderer.Begin",
           "declaration": "func (Renderer) Begin(viewport geom.Rect) error"
+        },
+        {
+          "id": "method Renderer.Clear",
+          "declaration": "func (Renderer) Clear(c render.Color)"
         },
         {
           "id": "method Renderer.ClipPath",
@@ -1462,6 +1474,10 @@
           "declaration": "func (Renderer) SetPGFOptions(opts render.PGFOptions)"
         },
         {
+          "id": "method Renderer.SetPageSize",
+          "declaration": "func (Renderer) SetPageSize(widthPoints, heightPoints float64)"
+        },
+        {
           "id": "method Renderer.SetResolution",
           "declaration": "func (Renderer) SetResolution(dpi uint)"
         },
@@ -1502,6 +1518,10 @@
         {
           "id": "method Renderer.Begin",
           "declaration": "func (Renderer) Begin(viewport geom.Rect) error"
+        },
+        {
+          "id": "method Renderer.Clear",
+          "declaration": "func (Renderer) Clear(c render.Color)"
         },
         {
           "id": "method Renderer.ClipPath",
@@ -1598,6 +1618,10 @@
         {
           "id": "method Renderer.SetPSOptions",
           "declaration": "func (Renderer) SetPSOptions(opts render.PSOptions)"
+        },
+        {
+          "id": "method Renderer.SetPageSize",
+          "declaration": "func (Renderer) SetPageSize(widthPoints, heightPoints float64)"
         },
         {
           "id": "method Renderer.SetResolution",
@@ -1864,6 +1888,10 @@
           "declaration": "func (Renderer) Begin(viewport geom.Rect) error"
         },
         {
+          "id": "method Renderer.Clear",
+          "declaration": "func (Renderer) Clear(c render.Color)"
+        },
+        {
           "id": "method Renderer.ClipPath",
           "declaration": "func (Renderer) ClipPath(p geom.Path)"
         },
@@ -1978,6 +2006,10 @@
         {
           "id": "method Renderer.SetGID",
           "declaration": "func (Renderer) SetGID(gid string)"
+        },
+        {
+          "id": "method Renderer.SetPageSize",
+          "declaration": "func (Renderer) SetPageSize(widthPoints, heightPoints float64)"
         },
         {
           "id": "method Renderer.SetResolution",
@@ -10460,6 +10492,10 @@
         {
           "id": "type URLMarker",
           "declaration": "type URLMarker interface{ SetURL func(url string); URL func() string; SetGID func(gid string); GID func() string }"
+        },
+        {
+          "id": "type VectorPageSizer",
+          "declaration": "type VectorPageSizer interface{ SetPageSize func(widthPoints, heightPoints float64) }"
         },
         {
           "id": "type VerticalTextDrawer",

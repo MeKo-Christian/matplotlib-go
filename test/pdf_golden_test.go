@@ -1,15 +1,14 @@
 package test
 
 import (
+	"bytes"
 	"flag"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/cwbudde/matplotlib-go/backends/pdf"
-	"github.com/cwbudde/matplotlib-go/core"
+	_ "github.com/cwbudde/matplotlib-go/backends/pdf"
 	"github.com/cwbudde/matplotlib-go/internal/pdfcompare"
-	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/test/parity"
 )
 
@@ -128,14 +127,9 @@ func renderParityPDF(t *testing.T, id string) []byte {
 	if err != nil {
 		t.Fatalf("parity figure %s: %v", id, err)
 	}
-	r, err := pdf.New(int(fig.SizePx.X), int(fig.SizePx.Y), render.Color{R: 1, G: 1, B: 1, A: 1})
-	if err != nil {
-		t.Fatalf("pdf.New: %v", err)
+	var data bytes.Buffer
+	if err := fig.WriteTo(&data, "pdf"); err != nil {
+		t.Fatalf("render PDF for %s: %v", id, err)
 	}
-	core.DrawFigure(fig, r)
-	data, err := r.Bytes()
-	if err != nil {
-		t.Fatalf("PDF bytes for %s: %v", id, err)
-	}
-	return data
+	return data.Bytes()
 }

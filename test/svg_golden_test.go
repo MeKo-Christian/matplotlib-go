@@ -6,11 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cwbudde/matplotlib-go/backends/svg"
-	"github.com/cwbudde/matplotlib-go/core"
+	_ "github.com/cwbudde/matplotlib-go/backends/svg"
 	"github.com/cwbudde/matplotlib-go/internal/examplecatalog"
 	"github.com/cwbudde/matplotlib-go/internal/svgcompare"
-	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/test/parity"
 )
 
@@ -81,15 +79,9 @@ func renderParitySVG(t *testing.T, id string) []byte {
 	if err != nil {
 		t.Fatalf("parity figure %s: %v", id, err)
 	}
-	r, err := svg.New(int(fig.SizePx.X), int(fig.SizePx.Y), render.Color{R: 1, G: 1, B: 1, A: 1})
-	if err != nil {
-		t.Fatalf("svg.New: %v", err)
-	}
-	core.DrawFigure(fig, r)
-
 	path := filepath.Join(t.TempDir(), id+".svg")
-	if err := r.SaveSVG(path); err != nil {
-		t.Fatalf("SaveSVG %s: %v", path, err)
+	if err := fig.Save(path); err != nil {
+		t.Fatalf("render SVG %s: %v", path, err)
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {

@@ -137,6 +137,58 @@ func prepareSaveFigure(fig *Figure, r render.Renderer, figOpts *render.FigureOpt
 	return &eff, drawOpts, resolved
 }
 
+// prepareVectorSaveFigure expresses the effective figure in PDF points. Vector
+// page geometry is tied to figure inches, not to either the figure's raster DPI
+// or savefig.dpi. The latter is returned separately for rasterized sub-artists.
+func prepareVectorSaveFigure(fig *Figure, r render.Renderer, figOpts *render.FigureOptions) (*Figure, DrawOptions, resolvedSaveFigure, float64) {
+	resolved := resolveSaveFigureOptions(fig, figOpts)
+	eff := *fig
+	renderDPI := resolved.dpi
+	if renderDPI <= 0 {
+		renderDPI = fig.RC.DPI
+	}
+	if renderDPI <= 0 {
+		renderDPI = 72
+	}
+	if fig.RC.DPI > 0 {
+		eff.SizePx = geom.Pt{
+			X: fig.SizePx.X * 72 / fig.RC.DPI,
+			Y: fig.SizePx.Y * 72 / fig.RC.DPI,
+		}
+	}
+	eff.RC.DPI = 72
+	if sizer, ok := r.(render.VectorPageSizer); ok {
+		sizer.SetPageSize(eff.SizePx.X, eff.SizePx.Y)
+	}
+
+	var effBg render.Color
+	switch {
+	case resolved.transparent || !fig.RC.Figure.FrameOn:
+		effBg = render.Color{}
+	case resolved.hasFacecolor:
+		effBg = resolved.facecolor
+	default:
+		effBg = fig.RC.FigureBackground()
+	}
+	eff.RC.Background = [4]float64{effBg.R, effBg.G, effBg.B, effBg.A}
+
+	drawOpts := DrawOptions{
+		Transparent: resolved.transparent || !fig.RC.Figure.FrameOn,
+		rasterDPI:   renderDPI,
+	}
+	if clearer, ok := r.(render.BackgroundClearer); ok && (resolved.transparent || !fig.RC.Figure.FrameOn || resolved.hasFacecolor) {
+		clearer.Clear(effBg)
+	} else if resolved.hasFacecolor && !resolved.transparent {
+		drawOpts.FigureBackground = optional.Of(effBg)
+	}
+	if resolved.hasEdgecolor && resolved.edgecolor.A > 0 {
+		drawOpts.FigureEdge = optional.Of(resolved.edgecolor)
+		drawOpts.FigureEdgeWidth = pointsToPixels(eff.RC, 1)
+	}
+
+	return &eff, drawOpts, resolved, renderDPI
+}
+
 func almostEqualSaveDPI(a, b float64) bool {
 	return math.Abs(a-b) < 1e-9
 }

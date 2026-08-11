@@ -80,8 +80,8 @@ type filterDef struct {
 }
 
 type Renderer struct {
-	width      int
-	height     int
+	width      float64
+	height     float64
 	viewport   geom.Rect
 	began      bool
 	stack      []state
@@ -190,8 +190,8 @@ func New(w, h int, bg render.Color) (*Renderer, error) {
 	}
 
 	return &Renderer{
-		width:           w,
-		height:          h,
+		width:           float64(w),
+		height:          float64(h),
 		background:      bg,
 		resolution:      72,
 		clipDefs:        map[string]string{},
@@ -335,5 +335,20 @@ func (r *Renderer) Restore() {
 func (r *Renderer) SetResolution(dpi uint) {
 	if dpi > 0 {
 		r.resolution = dpi
+	}
+}
+
+// Clear replaces the document background.
+func (r *Renderer) Clear(c render.Color) {
+	if r != nil {
+		r.background = c
+	}
+}
+
+// SetPageSize sets the physical SVG viewport in PostScript points.
+func (r *Renderer) SetPageSize(widthPoints, heightPoints float64) {
+	if r != nil && widthPoints > 0 && heightPoints > 0 {
+		r.width = widthPoints
+		r.height = heightPoints
 	}
 }

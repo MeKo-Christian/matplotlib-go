@@ -1,44 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-width="640" height="360" viewBox="0 0 640 360"
+width="460.8pt" height="259.2pt" viewBox="0 0 460.8 259.2"
 preserveAspectRatio="xMidYMid meet">
   <metadata></metadata>
   <defs>
-    <clipPath id="clip1" clipPathUnits="userSpaceOnUse"><rect x="64" y="36" width="544" height="270" /></clipPath>
+    <clipPath id="clip1" clipPathUnits="userSpaceOnUse"><rect x="46.08" y="25.92" width="391.68" height="194.4" /></clipPath>
   </defs>
   <rect x="0" y="0" width="100%" height="100%" fill="rgb(255,255,255)" />
-  <g clip-path="url(#clip1)"><image x="64" y="36" width="544" height="270" preserveAspectRatio="none" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAiAAAAEOCAIAAAA/pTuQAAAEPklEQVR4nOzXsS1GcRyFYReFRCPRfyUFY+gp1BIrGMReKsPcW4sJlG9+/8jzTHC6N+fy7ev9DP7wfPs9PYF1vVwf0xNY2vn0AAD+J4EBICEwACQEBoCEwACQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAASAgNAQmAASAgMAAmBASAhMAAkBAaAhMAAkBAYABICA0BCYABICAwACYEBICEwACQEBoCEwACQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAASAgNAQmAASAgMAAmBASAhMAAkBAaAhMAAkBAYABICA0BCYABICAwACYEBICEwACQEBoCEwACQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAASAgNAQmAASAgMAAmBASAhMAAkBAaAhMAAkBAYABICA0BCYABICAwACYEBICEwACQEBoCEwACQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAASAgNAQmAASAgMAInt8eNzegPrOk4/0xNY19Vpn57A0jwYABICA0BCYABICAwACYEBICEwACQEBoCEwACQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAASAgNAQmAASAgMAAmBASAhMAAkBAaAhMAAkBAYABICA0BCYABICAwACYEBICEwACQEBoCEwACQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAASAgNAQmAASAgMAAmBASAhMAAkBAaAhMAAkBAYABICA0BCYABICAwACYEBICEwACQEBoCEwACQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAASAgNAQmAASAgMAAmBASAhMAAkBAaAhMAAkBAYABICA0BCYABICAwACYEBICEwACQEBoCEwACQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAAS29P2Or2BdV083E9PYF373c30BJbmwQCQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAASAgNAQmAASAgMAAmBASAhMAAkBAaAhMAAkBAYABICA0BCYABICAwACYEBICEwACQEBoCEwACQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAASAgNAQmAASAgMAAmBASAhMAAkBAaAhMAAkBAYABICA0BCYABICAwACYEBICEwACQEBoCEwACQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAASAgNAQmAASAgMAAmBASAhMAAkBAaAhMAAkBAYABICA0BCYABICAwACYEBICEwACQEBoCEwACQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAASAgNAQmAASAgMAAmBASAhMAAkBAaAhMAAkPgNAAD//yVDDJHlco/TAAAAAElFTkSuQmCC" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAiAAAAEOCAIAAAA/pTuQAAAEPklEQVR4nOzXsS1GcRyFYReFRCPRfyUFY+gp1BIrGMReKsPcW4sJlG9+/8jzTHC6N+fy7ev9DP7wfPs9PYF1vVwf0xNY2vn0AAD+J4EBICEwACQEBoCEwACQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAASAgNAQmAASAgMAAmBASAhMAAkBAaAhMAAkBAYABICA0BCYABICAwACYEBICEwACQEBoCEwACQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAASAgNAQmAASAgMAAmBASAhMAAkBAaAhMAAkBAYABICA0BCYABICAwACYEBICEwACQEBoCEwACQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAASAgNAQmAASAgMAAmBASAhMAAkBAaAhMAAkBAYABICA0BCYABICAwACYEBICEwACQEBoCEwACQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAASAgNAQmAASAgMAInt8eNzegPrOk4/0xNY19Vpn57A0jwYABICA0BCYABICAwACYEBICEwACQEBoCEwACQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAASAgNAQmAASAgMAAmBASAhMAAkBAaAhMAAkBAYABICA0BCYABICAwACYEBICEwACQEBoCEwACQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAASAgNAQmAASAgMAAmBASAhMAAkBAaAhMAAkBAYABICA0BCYABICAwACYEBICEwACQEBoCEwACQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAASAgNAQmAASAgMAAmBASAhMAAkBAaAhMAAkBAYABICA0BCYABICAwACYEBICEwACQEBoCEwACQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAAS29P2Or2BdV083E9PYF373c30BJbmwQCQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAASAgNAQmAASAgMAAmBASAhMAAkBAaAhMAAkBAYABICA0BCYABICAwACYEBICEwACQEBoCEwACQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAASAgNAQmAASAgMAAmBASAhMAAkBAaAhMAAkBAYABICA0BCYABICAwACYEBICEwACQEBoCEwACQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAASAgNAQmAASAgMAAmBASAhMAAkBAaAhMAAkBAYABICA0BCYABICAwACYEBICEwACQEBoCEwACQEBgAEgIDQEJgAEgIDAAJgQEgITAAJAQGgITAAJAQGAASAgNAQmAASAgMAAmBASAhMAAkBAaAhMAAkPgNAAD//yVDDJHlco/TAAAAAElFTkSuQmCC" style="image-rendering:optimizeSpeed;image-rendering:crisp-edges;image-rendering:pixelated" /></g>
-  <path d="M 64.5 306.5 L 64.5 311.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 155.5 306.5 L 155.5 311.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 245.5 306.5 L 245.5 311.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 336.5 306.5 L 336.5 311.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 427.5 306.5 L 427.5 311.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 517.5 306.5 L 517.5 311.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 608.5 306.5 L 608.5 311.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <text x="56.054688" y="323.319878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">0.0</text>
-  <text x="146.721354" y="323.319878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">0.5</text>
-  <text x="237.388021" y="323.319878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">1.0</text>
-  <text x="328.054688" y="323.319878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">1.5</text>
-  <text x="418.721354" y="323.319878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">2.0</text>
-  <text x="509.388021" y="323.319878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">2.5</text>
-  <text x="600.054688" y="323.319878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">3.0</text>
-  <path d="M 64.5 306.5 L 59.5 306.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 64.5 261.5 L 59.5 261.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 64.5 216.5 L 59.5 216.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 64.5 171.5 L 59.5 171.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 64.5 126.5 L 59.5 126.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 64.5 81.5 L 59.5 81.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <path d="M 64.5 36.5 L 59.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
-  <text x="38.387153" y="309.798828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">0.0</text>
-  <text x="38.387153" y="264.798828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">0.5</text>
-  <text x="38.387153" y="219.798828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">1.0</text>
-  <text x="38.387153" y="174.798828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">1.5</text>
-  <text x="38.387153" y="129.798828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">2.0</text>
-  <text x="38.387153" y="84.798828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">2.5</text>
-  <text x="38.387153" y="39.798828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">3.0</text>
-  <path d="M 64.5 306.5 L 608.5 306.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
-  <path d="M 64.5 306.5 L 64.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
-  <path d="M 64.5 36.5 L 608.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
-  <path d="M 608.5 306.5 L 608.5 36.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
-  <text x="287.710938" y="27.666667" font-size="12" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">Image Heatmap</text>
+  <g clip-path="url(#clip1)"><image x="46.08" y="25.32" width="392" height="195" preserveAspectRatio="none" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYgAAADDCAIAAAAXyRFqAAAC4UlEQVR4nOzWoU0EYRhF0X8AQYIhwa8EAWXgQaBJaIFC6AtFMTuakLE08F1xTgVP3byr9++PxbSXu5/pCRxeb/bpCRwupgcA/CdMQI4wATnCBOQIE5AjTECOMAE5wgTkCBOQI0xAjjABOcIE5AgTkCNMQI4wATnCBOQIE5AjTECOMAE5wgTkCBOQI0xAjjABOcIE5AgTkCNMQI4wATnCBOQIE5AjTECOMAE5wgTkCBOQI0xAjjABOcIE5AgTkCNMQI4wATnCBOQIE5AjTECOMAE5wgTkCBOQI0xAjjABOcIE5AgTkCNMQI4wATnCBOQIE5AjTECOMAE5wgTkCBOQI0xAjjABOcIE5AgTkCNMQI4wATnCBORsT59f0xtY++l3egKH69N5egLLYwKKhAnIESYgR5iAHGECcoQJyBEmIEeYgBxhAnKECcgRJiBHmIAcYQJyhAnIESYgR5iAHGECcoQJyBEmIEeYgBxhAnKECcgRJiBHmIAcYQJyhAnIESYgR5iAHGECcoQJyBEmIEeYgBxhAnKECcgRJiBHmIAcYQJyhAnIESYgR5iAHGECcoQJyBEmIEeYgBxhAnKECcgRJiBHmIAcYQJyhAnIESYgR5iAHGECcoQJyBEmIEeYgBxhAnKECcgRJiBHmIAcYQJyhAnIESYgR5iAnO15e5vewLp8fJiewOF8fzs9geUxAUXCBOQIE5AjTECOMAE5wgTkCBOQI0xAjjABOcIE5AgTkCNMQI4wATnCBOQIE5AjTECOMAE5wgTkCBOQI0xAjjABOcIE5AgTkCNMQI4wATnCBOQIE5AjTECOMAE5wgTkCBOQI0xAjjABOcIE5AgTkCNMQI4wATnCBOQIE5AjTECOMAE5wgTkCBOQI0xAjjABOcIE5AgTkCNMQI4wATnCBOQIE5AjTECOMAE5wgTkCBOQI0xAjjABOcIE5AgTkCNMQI4wATnCBOQIE5AjTEDOXwAAAP//pYcL+4fCQG8AAAAASUVORK5CYII=" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYgAAADDCAIAAAAXyRFqAAAC4UlEQVR4nOzWoU0EYRhF0X8AQYIhwa8EAWXgQaBJaIFC6AtFMTuakLE08F1xTgVP3byr9++PxbSXu5/pCRxeb/bpCRwupgcA/CdMQI4wATnCBOQIE5AjTECOMAE5wgTkCBOQI0xAjjABOcIE5AgTkCNMQI4wATnCBOQIE5AjTECOMAE5wgTkCBOQI0xAjjABOcIE5AgTkCNMQI4wATnCBOQIE5AjTECOMAE5wgTkCBOQI0xAjjABOcIE5AgTkCNMQI4wATnCBOQIE5AjTECOMAE5wgTkCBOQI0xAjjABOcIE5AgTkCNMQI4wATnCBOQIE5AjTECOMAE5wgTkCBOQI0xAjjABOcIE5AgTkCNMQI4wATnCBORsT59f0xtY++l3egKH69N5egLLYwKKhAnIESYgR5iAHGECcoQJyBEmIEeYgBxhAnKECcgRJiBHmIAcYQJyhAnIESYgR5iAHGECcoQJyBEmIEeYgBxhAnKECcgRJiBHmIAcYQJyhAnIESYgR5iAHGECcoQJyBEmIEeYgBxhAnKECcgRJiBHmIAcYQJyhAnIESYgR5iAHGECcoQJyBEmIEeYgBxhAnKECcgRJiBHmIAcYQJyhAnIESYgR5iAHGECcoQJyBEmIEeYgBxhAnKECcgRJiBHmIAcYQJyhAnIESYgR5iAnO15e5vewLp8fJiewOF8fzs9geUxAUXCBOQIE5AjTECOMAE5wgTkCBOQI0xAjjABOcIE5AgTkCNMQI4wATnCBOQIE5AjTECOMAE5wgTkCBOQI0xAjjABOcIE5AgTkCNMQI4wATnCBOQIE5AjTECOMAE5wgTkCBOQI0xAjjABOcIE5AgTkCNMQI4wATnCBOQIE5AjTECOMAE5wgTkCBOQI0xAjjABOcIE5AgTkCNMQI4wATnCBOQIE5AjTECOMAE5wgTkCBOQI0xAjjABOcIE5AgTkCNMQI4wATnCBOQIE5AjTEDOXwAAAP//pYcL+4fCQG8AAAAASUVORK5CYII=" style="image-rendering:optimizeSpeed;image-rendering:crisp-edges;image-rendering:pixelated" /></g>
+  <path d="M 46.5 220.5 L 46.5 225.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 111.5 220.5 L 111.5 225.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 177.5 220.5 L 177.5 225.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 242.5 220.5 L 242.5 225.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 307.5 220.5 L 307.5 225.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 372.5 220.5 L 372.5 225.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 438.5 220.5 L 438.5 225.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <text x="38.134688" y="237.639878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">0.0</text>
+  <text x="103.414688" y="237.639878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">0.5</text>
+  <text x="168.694688" y="237.639878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">1.0</text>
+  <text x="233.974688" y="237.639878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">1.5</text>
+  <text x="299.254687" y="237.639878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">2.0</text>
+  <text x="364.534687" y="237.639878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">2.5</text>
+  <text x="429.814687" y="237.639878" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">3.0</text>
+  <path d="M 46.5 220.5 L 41.5 220.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 46.5 188.5 L 41.5 188.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 46.5 156.5 L 41.5 156.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 46.5 123.5 L 41.5 123.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 46.5 91.5 L 41.5 91.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 46.5 58.5 L 41.5 58.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <path d="M 46.5 26.5 L 41.5 26.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="butt" />
+  <text x="20.467153" y="224.118828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">0.0</text>
+  <text x="20.467153" y="191.718828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">0.5</text>
+  <text x="20.467153" y="159.318828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">1.0</text>
+  <text x="20.467153" y="126.918828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">1.5</text>
+  <text x="20.467153" y="94.518828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">2.0</text>
+  <text x="20.467153" y="62.118828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">2.5</text>
+  <text x="20.467153" y="29.718828" font-size="10" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">3.0</text>
+  <path d="M 46.5 220.5 L 438.5 220.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 46.5 220.5 L 46.5 26.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 46.5 26.5 L 438.5 26.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <path d="M 438.5 220.5 L 438.5 26.5" fill="none" stroke="rgb(0,0,0)" stroke-width="1.111111" stroke-linejoin="miter" stroke-linecap="square" />
+  <text x="193.630938" y="17.586667" font-size="12" font-family="DejaVu Sans, Arial, sans-serif" fill="rgb(0,0,0)">Image Heatmap</text>
 </svg>

@@ -1,7 +1,7 @@
 # API Freeze Delta Reconciliation
 
 The API-reduction pass was meant to shrink the surface, yet the public API
-freeze grew from 3,102 symbols to 3,190. This document reconciles that growth:
+freeze grew from 3,102 symbols to 3,199. This document reconciles that growth:
 it walks the difference between the tiering decisions in `api-tiering.json` and
 the live freeze in `test/testdata/public_api/stable_public_api.json`, symbol by
 symbol, so the release can tag a surface whose every name is accounted for.
@@ -20,8 +20,8 @@ Both directions are fully accounted for; the residue is empty.
 | --------- | ----- |
 | Baseline  | 3,102 |
 | Removed   | 402   |
-| Added     | 490   |
-| Freeze    | 3,190 |
+| Added     | 499   |
+| Freeze    | 3,199 |
 
 The two tiering decisions hold:
 
@@ -44,7 +44,7 @@ The two tiering decisions hold:
 | `unexported`    | 1     | `core.WidgetArtist`                            |
 | `tiered-demote` | 1     | The tiering `demote` decision                  |
 
-### Added (490)
+### Added (499)
 
 | Category               | Count | What it is                                                                                                                                                                                           |
 | ---------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -59,7 +59,7 @@ The two tiering decisions hold:
 | `optional-package`     | 4     | `optional.Value[T]` and its constructors                                                                                                                                                             |
 | `renamed-draw-method`  | 3     | `Renderer.Image` → `Renderer.DrawImage` on raster backends                                                                                                                                           |
 | `shared-helper`        | 2     | `Color.WithAlphaMultiplier`, `PlotOptions.ScalarMapConfig`                                                                                                                                           |
-| `post-freeze-addition` | 14    | The contour scalar-map helpers, the `transform.AffineScale` pair, `core.Figure.CanvasSize`, the dash-phase pattern and normalization helpers, and the four anchored-offset-box `DrawOverlay` methods |
+| `post-freeze-addition` | 23    | The contour, affine, figure-size, dash-phase, overlay, and vector page-sizing capability additions                                                                                                  |
 
 ## Why a reduction pass grew the count
 
@@ -107,12 +107,16 @@ some moved to an `internal/` shim instead. Left as is for now — the split is
 already shipped and the helpers are coherent — but flagged here so the release
 tags them deliberately rather than by default.
 
-**4. Five symbols added after the freeze.** The contour unification exported
+**4. Additions after the freeze.** The contour unification exported
 `core.ResolveContourScalarMap` and `core.ContourFillScalarMap` so `plot3d` and
 `core` could share one contour scalar-map resolver; the affine-flattening fix
 added the `transform.AffineScale`/`IsAffineScale` pair; and the figure-size
 fidelity fix added `core.Figure.CanvasSize`, the single place that decides how
-the derived `SizePx` rounds to an integer canvas.
+the derived `SizePx` rounds to an integer canvas. Later dash-phase and overlay
+work added nine names. The vector physical-size correction adds
+`render.VectorPageSizer` plus `SetPageSize` and `Clear` on the four vector
+renderers so fractional point pages and save-time backgrounds are configured
+without changing their constructors.
 
 ## Findings not previously recorded
 
@@ -131,14 +135,15 @@ Three differences were real and undocumented before this walk:
   `GetImage` took the vacated name. Symbol-id comparison shows no change; the
   signature did change. Any future audit that diffs ids alone will miss this
   class of break.
-- **The freeze is 3,190, not the 3,176 recorded when the pass closed.** The
+- **The freeze is 3,199, not the 3,176 recorded when the pass closed.** The
   contour unification added the two contour helpers; the affine-flattening fix
   added the `transform.AffineScale`/`IsAffineScale` pair; the figure-size
   fidelity fix added `core.Figure.CanvasSize`; dash-phase support added
   `DashPattern.WithOffset`/`ScaledOffset`, `Line2D.SetLineStyleDashes`, and
   `render.NormalizeDashes`/`NormalizeDashOffset`; and moving the anchored
   offset boxes into the unclipped overlay pass added their four `DrawOverlay`
-  methods. Every one is purely additive. The roadmap and
+  methods; vector physical sizing added the nine page-sizing and background
+  capability names. Every one is purely additive. The roadmap and
   `docs/plans/changelog-draft.md` quote 3,181, the figure as of the phase that
   closed the reduction pass; this file tracks the live freeze.
 

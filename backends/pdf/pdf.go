@@ -139,8 +139,8 @@ type pdfEmbeddedFontObject struct {
 // The buffer is reusable: callers can Begin/End again to overwrite the
 // previous document.
 type Renderer struct {
-	width      int
-	height     int
+	width      float64
+	height     float64
 	viewport   geom.Rect
 	background render.Color
 	resolution uint
@@ -247,8 +247,8 @@ func New(width, height int, background render.Color) (*Renderer, error) {
 		return nil, fmt.Errorf("pdf: invalid size %dx%d", width, height)
 	}
 	r := &Renderer{
-		width:      width,
-		height:     height,
+		width:      float64(width),
+		height:     float64(height),
 		background: background,
 		resolution: 72,
 		pdfOpts:    render.DefaultPDFOptions(),
@@ -265,6 +265,21 @@ func (r *Renderer) SetResolution(dpi uint) {
 		dpi = 72
 	}
 	r.resolution = dpi
+}
+
+// Clear replaces the page background used by the next drawing session.
+func (r *Renderer) Clear(c render.Color) {
+	if r != nil {
+		r.background = c
+	}
+}
+
+// SetPageSize sets the physical PDF page in PostScript points.
+func (r *Renderer) SetPageSize(widthPoints, heightPoints float64) {
+	if r != nil && widthPoints > 0 && heightPoints > 0 {
+		r.width = widthPoints
+		r.height = heightPoints
+	}
 }
 
 // SetPDFOptions implements render.PDFOptionSetter.
@@ -314,8 +329,8 @@ func (r *Renderer) Begin(viewport geom.Rect) error {
 		writeFillColor(&r.content, r.background)
 		fmt.Fprintf(
 			&r.content, "0 0 %s %s re f\n",
-			shortFloat(float64(r.width)),
-			shortFloat(float64(r.height)),
+			shortFloat(r.width),
+			shortFloat(r.height),
 		)
 	}
 	return nil
@@ -610,9 +625,6 @@ func (r *Renderer) writeAlphaState(paint *render.Paint) {
 		} else if paint.FillPattern.ID != "" || len(paint.FillPattern.Path.V) > 0 {
 			fillAlpha = patternAlpha(paint.FillPattern)
 		}
-	}
-	if strokeAlpha >= 1 && fillAlpha >= 1 {
-		return
 	}
 	name := r.registerAlphaState(strokeAlpha, fillAlpha)
 	fmt.Fprintf(&r.content, "/%s gs\n", name)
@@ -933,8 +945,10 @@ func (r *Renderer) drawImageWithMatrix(img render.Image, matrix geom.Affine) {
 }
 
 func (r *Renderer) writeImageInvocation(matrix geom.Affine, name string) {
+	opaque := r.registerAlphaState(1, 1)
 	fmt.Fprintf(
-		&r.content, "q\n%s %s %s %s %s %s cm\n/%s Do\nQ\n",
+		&r.content, "q\n/%s gs\n%s %s %s %s %s %s cm\n/%s Do\nQ\n",
+		opaque,
 		shortFloat(matrix.A),
 		shortFloat(matrix.B),
 		shortFloat(matrix.C),

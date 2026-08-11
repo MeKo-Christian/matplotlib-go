@@ -69,6 +69,31 @@ func TestRendererPathAlphaEmitsExtGState(t *testing.T) {
 	}
 }
 
+func TestRendererOpaquePathResetsExtGStateAfterTranslucentPath(t *testing.T) {
+	r := newTestRenderer(t)
+	_ = r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}})
+	r.Path(pdfTestRectPath(10, 10, 50, 40), &render.Paint{
+		Fill: render.Color{R: 1, A: 0.25},
+	})
+	r.Path(pdfTestRectPath(60, 10, 100, 40), &render.Paint{
+		Fill: render.Color{B: 1, A: 1},
+	})
+
+	raw := r.content.String()
+	translucent := strings.Index(raw, "/A1 gs")
+	opaque := strings.Index(raw, "/A2 gs")
+	if translucent < 0 || opaque <= translucent {
+		t.Fatalf("expected opaque ExtGState after translucent state, got %q", raw)
+	}
+	if err := r.End(); err != nil {
+		t.Fatalf("End: %v", err)
+	}
+	resources := pdfDocumentObjectBodyContaining(mustParsePDF(t, r), "/ExtGState <<")
+	if !strings.Contains(resources, "/A2 << /Type /ExtGState /CA 1 /ca 1 >>") {
+		t.Fatalf("opaque ExtGState missing from page resources:\n%s", resources)
+	}
+}
+
 func TestPathEffectIdentityFilterEmitsTransparencyGroup(t *testing.T) {
 	r := newTestRenderer(t)
 	_ = r.Begin(geom.Rect{Max: geom.Pt{X: 200, Y: 100}})

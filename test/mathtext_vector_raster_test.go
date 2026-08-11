@@ -8,11 +8,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cwbudde/matplotlib-go/backends/pdf"
-	"github.com/cwbudde/matplotlib-go/backends/ps"
-	"github.com/cwbudde/matplotlib-go/backends/svg"
+	_ "github.com/cwbudde/matplotlib-go/backends/pdf"
+	_ "github.com/cwbudde/matplotlib-go/backends/ps"
+	_ "github.com/cwbudde/matplotlib-go/backends/svg"
 	"github.com/cwbudde/matplotlib-go/core"
-	"github.com/cwbudde/matplotlib-go/render"
 	"github.com/cwbudde/matplotlib-go/test/imagecmp"
 	"github.com/cwbudde/matplotlib-go/test/parity"
 )
@@ -78,12 +77,7 @@ func TestMathTextVectorBackendsRasterizeCloseToAGGGoldens(t *testing.T) {
 func renderMathTextPDF(t *testing.T, id, path string) {
 	t.Helper()
 	fig := mathTextFigure(t, id)
-	r, err := pdf.New(int(fig.SizePx.X), int(fig.SizePx.Y), render.Color{R: 1, G: 1, B: 1, A: 1})
-	if err != nil {
-		t.Fatalf("pdf.New: %v", err)
-	}
-	core.DrawFigure(fig, r)
-	if err := r.SavePDF(path); err != nil {
+	if err := fig.Save(path); err != nil {
 		t.Fatalf("SavePDF %s: %v", path, err)
 	}
 }
@@ -91,12 +85,7 @@ func renderMathTextPDF(t *testing.T, id, path string) {
 func renderMathTextPS(t *testing.T, id, path string) {
 	t.Helper()
 	fig := mathTextFigure(t, id)
-	r, err := ps.New(int(fig.SizePx.X), int(fig.SizePx.Y), render.Color{R: 1, G: 1, B: 1, A: 1})
-	if err != nil {
-		t.Fatalf("ps.New: %v", err)
-	}
-	core.DrawFigure(fig, r)
-	if err := r.SavePS(path); err != nil {
+	if err := fig.Save(path); err != nil {
 		t.Fatalf("SavePS %s: %v", path, err)
 	}
 }
@@ -104,12 +93,7 @@ func renderMathTextPS(t *testing.T, id, path string) {
 func renderMathTextSVG(t *testing.T, id, path string) {
 	t.Helper()
 	fig := mathTextFigure(t, id)
-	r, err := svg.New(int(fig.SizePx.X), int(fig.SizePx.Y), render.Color{R: 1, G: 1, B: 1, A: 1})
-	if err != nil {
-		t.Fatalf("svg.New: %v", err)
-	}
-	core.DrawFigure(fig, r)
-	if err := r.SaveSVG(path); err != nil {
+	if err := fig.Save(path); err != nil {
 		t.Fatalf("SaveSVG %s: %v", path, err)
 	}
 }
@@ -123,11 +107,11 @@ func mathTextFigure(t *testing.T, id string) *core.Figure {
 	return fig
 }
 
-func rasterizePDF(t *testing.T, path string, _ image.Point) image.Image {
+func rasterizePDF(t *testing.T, path string, size image.Point) image.Image {
 	t.Helper()
 	pdftoppm := requireRasterizer(t, "pdftoppm")
 	outBase := filepath.Join(t.TempDir(), "page")
-	runRasterizer(t, pdftoppm, "-singlefile", "-png", "-r", "72", path, outBase)
+	runRasterizer(t, pdftoppm, "-singlefile", "-png", "-scale-to-x", fmt.Sprint(size.X), "-scale-to-y", fmt.Sprint(size.Y), path, outBase)
 	return loadRasterPNG(t, outBase+".png")
 }
 
@@ -151,11 +135,11 @@ func rasterizePS(t *testing.T, path string, size image.Point) image.Image {
 	return loadRasterPNG(t, outPath)
 }
 
-func rasterizeSVG(t *testing.T, path string, _ image.Point) image.Image {
+func rasterizeSVG(t *testing.T, path string, size image.Point) image.Image {
 	t.Helper()
 	convert := requireRasterizer(t, "convert")
 	outPath := filepath.Join(t.TempDir(), "page.png")
-	runRasterizer(t, convert, "-background", "white", "-alpha", "remove", path, outPath)
+	runRasterizer(t, convert, "-background", "white", "-alpha", "remove", path, "-resize", fmt.Sprintf("%dx%d!", size.X, size.Y), outPath)
 	return loadRasterPNG(t, outPath)
 }
 
